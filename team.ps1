@@ -58,7 +58,11 @@ function Get-Config {
     return $cfg
 }
 
-function Get-Projects { @(Read-Json (Join-Path $Root "projects.json")) }
+function Get-Projects {
+    # PowerShell 5.1: ConvertFrom-Json trả mảng JSON như MỘT đối tượng → phải "trải" ra từng phần tử.
+    $raw = Read-Json (Join-Path $Root "projects.json")
+    return @($raw | ForEach-Object { $_ })
+}
 
 function Save-Projects($list) {
     $json = ConvertTo-Json @($list) -Depth 6
