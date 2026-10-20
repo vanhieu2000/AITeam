@@ -1,4 +1,5 @@
 @page
+@model AITeam.Hub.Pages.AgentsModel
 @{
     ViewData["Title"] = "Tiến trình Agent";
 }
@@ -10,13 +11,134 @@
 </div>
 
 <div class="page-header">
-    <h1 class="page-title">🤖 Tiến trình Agent đang chạy</h1>
+    <div>
+        <h1 class="page-title">🤖 Quản lý tiến trình Agent</h1>
+        <div class="page-subtitle">Theo dõi tiến trình agy đang chạy, dừng tiến trình và xem lịch sử 20 lần chạy gần nhất</div>
+    </div>
 </div>
 
-<div class="under-construction">
-    <h2>Trang đang xây dựng</h2>
-    <p>Màn hình quản lý tiến trình agy và lịch sử 20 lần chạy gần nhất sẽ được phát triển trong Giai đoạn 2 (Task H-003).</p>
-    <div style="margin-top: 16px;">
-        <a href="/" class="btn btn-primary">← Về trang Tổng quan</a>
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-success">
+        <span style="font-weight: 700;">✓</span>
+        <span>@Model.Message</span>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <span style="font-weight: 700;">✗</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Bảng tiến trình đang chạy (Tự làm mới mỗi 15s qua HTMX) -->
+    <partial name="_AgentsRunningTablePartial" model="Model.RunningAgents" />
+
+    <!-- Bảng 20 lần chạy gần nhất -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">⏱️ 20 lần chạy gần nhất</div>
+            <span style="font-size: 11.5px; color: var(--text-muted);">Tất cả dự án</span>
+        </div>
+        <div class="card-body">
+            @if (Model.RecentRuns.Count == 0)
+            {
+                <div style="color: var(--text-muted); font-size: 13.5px; text-align: center; padding: 20px;">
+                    Chưa có lịch sử lần chạy agent nào.
+                </div>
+            }
+            else
+            {
+                <div class="table-container" style="margin: 0;">
+                    <table class="hub-table">
+                        <thead>
+                            <tr>
+                                <th>Dự án</th>
+                                <th>Task</th>
+                                <th>Lần</th>
+                                <th>Trạng thái</th>
+                                <th>Thời lượng</th>
+                                <th>Token</th>
+                                <th>Thời điểm</th>
+                                <th style="min-width: 200px;">Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var run in Model.RecentRuns)
+                            {
+                                <tr>
+                                    <td>
+                                        <span style="font-weight: 600;">@run.Project</span>
+                                    </td>
+                                    <td>
+                                        <a href="/p/@run.Project/t/@run.Task" style="font-weight: 600;">@run.Task</a>
+                                    </td>
+                                    <td>
+                                        <code class="inline-code">#@run.Attempt</code>
+                                    </td>
+                                    <td>
+                                        @if (run.State == AITeam.Hub.Models.RunState.Success)
+                                        {
+                                            <span class="badge badge-success">✓ Thành công</span>
+                                        }
+                                        else if (run.State == AITeam.Hub.Models.RunState.Error)
+                                        {
+                                            <span class="badge badge-danger">✗ Lỗi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-assigned">⏳ Đang chạy</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @(run.DurationSeconds.HasValue ? $"{run.DurationSeconds.Value:F1}s" : "-")
+                                    </td>
+                                    <td>
+                                        @(run.TotalTokens.HasValue ? run.TotalTokens.Value.ToString("N0") : "-")
+                                    </td>
+                                    <td style="font-size: 12.5px; color: var(--text-muted);">
+                                        @run.Time.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </td>
+                                    <td>
+                                        <details class="run-details">
+                                            <summary class="run-details-summary">Xem phản hồi / lỗi</summary>
+                                            <div class="run-details-content">
+                                                @if (!string.IsNullOrWhiteSpace(run.Response))
+                                                {
+                                                    <div class="details-section">
+                                                        <div class="details-section-title">Phản hồi của agent:</div>
+                                                        <div class="markdown-body">
+                                                            @AITeam.Hub.Pages.Shared.MarkdownRenderer.Render(run.Response)
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(run.Error))
+                                                {
+                                                    <div class="details-section">
+                                                        <div class="details-section-title" style="color: var(--state-needsfix);">Thông báo lỗi:</div>
+                                                        <div class="markdown-body error-box">
+                                                            @AITeam.Hub.Pages.Shared.MarkdownRenderer.Render(run.Error)
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (string.IsNullOrWhiteSpace(run.Response) && string.IsNullOrWhiteSpace(run.Error))
+                                                {
+                                                    <div style="color: var(--text-muted); font-size: 12px; font-style: italic;">
+                                                        (Không có nội dung phản hồi hoặc lỗi)
+                                                    </div>
+                                                }
+                                            </div>
+                                        </details>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
     </div>
 </div>

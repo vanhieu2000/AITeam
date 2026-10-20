@@ -323,7 +323,19 @@ function Invoke-Status {
 function Invoke-Cleanup {
     $r = Resolve-Project $Project
     $dirs = Get-ChildItem $r.Work -Directory -Filter "*-$($Task.ToLower())" -ErrorAction SilentlyContinue
-    foreach ($d in $dirs) { git -C $r.Path worktree remove $d.FullName --force; Say "Đã xóa worktree $($d.FullName)" }
+    $ErrorActionPreference = "Continue"   # git in ra stderr; PowerShell 5.1 + Stop coi là lỗi
+    foreach ($d in $dirs) {
+        git -C $r.Path worktree remove $d.FullName --force 2>$null
+        git -C $r.Path worktree prune 2>$null
+        # Windows có thể còn khóa thư mục vài giây sau khi tắt app đang chạy từ đó → thử xóa lại phần còn sót.
+        foreach ($try in 1..5) {
+            if (-not (Test-Path $d.FullName)) { break }
+            Remove-Item $d.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            if (Test-Path $d.FullName) { Start-Sleep -Seconds 2 }
+        }
+        if (Test-Path $d.FullName) { Say "Chưa xóa được $($d.FullName) (đang bị khóa) — xóa tay sau." Yellow }
+        else { Say "Đã xóa worktree $($d.FullName)" }
+    }
 }
 
 function Invoke-SwitchAccount {

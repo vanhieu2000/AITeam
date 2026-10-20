@@ -22,7 +22,7 @@ public sealed class PageTests
         var page = new IndexModel(_config, _board, _run, _health);
         page.OnGet();
 
-        Assert.Equal(2, page.TotalProjects);
+        Assert.Equal(3, page.TotalProjects);
         Assert.True(page.TotalAssigned >= 1);
         Assert.True(page.TotalReview >= 1);
         Assert.Equal(1, page.TotalRunningAgents);
