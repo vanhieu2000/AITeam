@@ -1,0 +1,142 @@
+@page "/p/{name}"
+@model AITeam.Hub.Pages.ProjectModel
+@{
+    ViewData["Title"] = $"Dự án {Model.Name}";
+}
+
+@if (Model.Board == null)
+{
+    <div class="under-construction">
+        <h2>Không tìm thấy dự án "@Model.Name"</h2>
+        <p><a href="/" class="btn btn-secondary">Quay lại Tổng quan</a></p>
+    </div>
+}
+else
+{
+    <div class="breadcrumb">
+        <a href="/">Tổng quan</a>
+        <span>›</span>
+        <span>@Model.Board.Project.Name</span>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <h1 class="page-title">@Model.Board.Project.Name</h1>
+                <span class="badge" style="background: var(--surface-2); font-family: var(--font-mono); font-size: 12px;">
+                    @Model.Board.Project.Stack
+                </span>
+            </div>
+            <div class="page-subtitle" style="font-family: var(--font-mono); font-size: 12.5px;">
+                <span>Thư mục: @Model.Board.Project.Path</span> ·
+                <a href="@Model.Board.Project.GitHubUrl" target="_blank" rel="noopener noreferrer">@Model.Board.Project.Repo ↗</a>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <a href="/" class="btn btn-secondary">← Tổng quan</a>
+        </div>
+    </div>
+
+    <!-- Thanh chuyển Tab: Kanban / Kế hoạch -->
+    <div class="tabs-nav">
+        <button type="button" class="tab-btn @(Model.Tab != "plan" ? "active" : "")" id="tabKanbanBtn" onclick="switchProjectTab('kanban')">
+            📋 Bảng việc (Kanban)
+        </button>
+        <button type="button" class="tab-btn @(Model.Tab == "plan" ? "active" : "")" id="tabPlanBtn" onclick="switchProjectTab('plan')">
+            📝 Kế hoạch
+        </button>
+    </div>
+
+    <!-- Tab 1: Kanban 4 cột -->
+    <div id="tabKanbanContent" style="display: @(Model.Tab != "plan" ? "block" : "none");">
+        <div class="kanban-board">
+            <!-- Cột 1: 🟡 Đã giao -->
+            <div class="kanban-column">
+                <div class="kanban-column-header col-assigned">
+                    <span>🟡 Đã giao (@Model.AssignedTasks.Count)</span>
+                </div>
+                <div class="kanban-tasks">
+                    @foreach (var task in Model.AssignedTasks)
+                    {
+                        @await Html.PartialAsync("_TaskCardPartial", task)
+                    }
+                </div>
+            </div>
+
+            <!-- Cột 2: 🔵 Chờ review -->
+            <div class="kanban-column">
+                <div class="kanban-column-header col-review">
+                    <span>🔵 Chờ review (@Model.ReviewTasks.Count)</span>
+                </div>
+                <div class="kanban-tasks">
+                    @foreach (var task in Model.ReviewTasks)
+                    {
+                        @await Html.PartialAsync("_TaskCardPartial", task)
+                    }
+                </div>
+            </div>
+
+            <!-- Cột 3: 🔴 Cần sửa -->
+            <div class="kanban-column">
+                <div class="kanban-column-header col-needsfix">
+                    <span>🔴 Cần sửa (@Model.NeedsFixTasks.Count)</span>
+                </div>
+                <div class="kanban-tasks">
+                    @foreach (var task in Model.NeedsFixTasks)
+                    {
+                        @await Html.PartialAsync("_TaskCardPartial", task)
+                    }
+                </div>
+            </div>
+
+            <!-- Cột 4: ✅ Đã merge -->
+            <div class="kanban-column">
+                <div class="kanban-column-header col-merged">
+                    <span>✅ Đã merge (@Model.MergedTasks.Count)</span>
+                </div>
+                <div class="kanban-tasks">
+                    @foreach (var task in Model.MergedTasks)
+                    {
+                        @await Html.PartialAsync("_TaskCardPartial", task)
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Kế hoạch (Markdown) -->
+    <div id="tabPlanContent" style="display: @(Model.Tab == "plan" ? "block" : "none");">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📖 Kế hoạch triển khai</div>
+            </div>
+            <div class="card-body">
+                <div class="markdown-body">
+                    @MarkdownRenderer.Render(Model.Board.PlanMarkdown)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchProjectTab(tabName) {
+            var kanbanContent = document.getElementById('tabKanbanContent');
+            var planContent = document.getElementById('tabPlanContent');
+            var kanbanBtn = document.getElementById('tabKanbanBtn');
+            var planBtn = document.getElementById('tabPlanBtn');
+
+            if (tabName === 'plan') {
+                kanbanContent.style.display = 'none';
+                planContent.style.display = 'block';
+                kanbanBtn.classList.remove('active');
+                planBtn.classList.add('active');
+            } else {
+                kanbanContent.style.display = 'block';
+                planContent.style.display = 'none';
+                kanbanBtn.classList.add('active');
+                planBtn.classList.remove('active');
+            }
+        }
+    </script>
+}

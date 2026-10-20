@@ -8,9 +8,14 @@ builder.Services.AddSingleton(HubPaths.Detect());
 builder.Services.AddRazorPages();
 builder.Services.AddAntiforgery();
 
-// H-001 (Agent A): đăng ký các dịch vụ thật khi biến môi trường HUB_FAKE khác 1
-if (Environment.GetEnvironmentVariable("HUB_FAKE") != "1")
+if (Environment.GetEnvironmentVariable("HUB_FAKE") == "1")
 {
+    // H-002: dữ liệu giả để làm / xem giao diện.
+    AITeam.Hub.DevData.FakeServices.Register(builder.Services);
+}
+else
+{
+    // H-001: dịch vụ thật đọc file AITeam + repo dự án.
     builder.Services.AddSingleton<ITeamConfigService, TeamConfigService>();
     builder.Services.AddSingleton<IAgentRunService, AgentRunService>();
     builder.Services.AddSingleton<ITaskBoardService, TaskBoardService>();

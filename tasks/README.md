@@ -11,7 +11,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | Task | Agent | Nhánh | Trạng thái |
 |---|---|---|---|
 | [H-001 Hub: các dịch vụ dữ liệu](H-001-hub-services.md) | A | `agent-a/H-001-hub-services` | 🟡 Đã giao |
-| [H-002 Hub: giao diện khung + 3 trang](H-002-hub-ui.md) | B | `agent-b/H-002-hub-ui` | 🟡 Đã giao |
+| [H-002 Hub: giao diện khung + 3 trang](H-002-hub-ui.md) | B | `agent-b/H-002-hub-ui` | ✅ Đã merge (vòng 1) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
