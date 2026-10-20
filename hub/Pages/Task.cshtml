@@ -1,0 +1,175 @@
+@page "/p/{name}/t/{id}"
+@model AITeam.Hub.Pages.TaskModel
+@{
+    ViewData["Title"] = $"{Model.Id} · {Model.Detail?.Card.Title}";
+}
+
+@if (Model.Detail == null)
+{
+    <div class="under-construction">
+        <h2>Không tìm thấy task "@Model.Id"</h2>
+        <p><a href="/p/@Model.Name" class="btn btn-secondary">Quay lại Dự án</a></p>
+    </div>
+}
+else
+{
+    <div class="breadcrumb">
+        <a href="/">Tổng quan</a>
+        <span>›</span>
+        <a href="/p/@Model.Name">@Model.Name</a>
+        <span>›</span>
+        <span>@Model.Id</span>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h1 class="page-title">@Model.Id · @Model.Detail.Card.Title</h1>
+                
+                @if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.Assigned)
+                {
+                    <span class="badge badge-assigned">🟡 Đã giao</span>
+                }
+                else if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.Review)
+                {
+                    <span class="badge badge-review">🔵 Chờ review</span>
+                }
+                else if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.NeedsFix)
+                {
+                    <span class="badge badge-needsfix">🔴 Cần sửa</span>
+                }
+                else if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.Merged)
+                {
+                    <span class="badge badge-merged">✅ Đã merge</span>
+                }
+
+                <span class="badge badge-agent">Agent @Model.Detail.Card.Agent</span>
+            </div>
+
+            <div class="page-subtitle" style="margin-top: 6px; display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: 13px;">
+                <span>Nhánh: <strong>@Model.Detail.Card.Branch</strong></span>
+                @if (!string.IsNullOrEmpty(Model.BranchGitHubUrl))
+                {
+                    <span>· <a href="@Model.BranchGitHubUrl" target="_blank" rel="noopener noreferrer">Xem trên GitHub ↗</a></span>
+                }
+            </div>
+        </div>
+
+        <div>
+            <a href="/p/@Model.Name" class="btn btn-secondary">← Bảng việc @Model.Name</a>
+        </div>
+    </div>
+
+    <!-- Tiêu chí hoàn thành (Checklist chỉ xem) -->
+    @if (Model.Detail.Criteria.Count > 0)
+    {
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🎯 Tiêu chí hoàn thành (Chỉ xem)</div>
+            </div>
+            <div class="card-body">
+                <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 8px;">
+                    @foreach (var criterion in Model.Detail.Criteria)
+                    {
+                        <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px;">
+                            <input type="checkbox" @(criterion.Done ? "checked" : "") disabled style="margin-top: 3px;" />
+                            <span style="@(criterion.Done ? "text-decoration: none;" : "")">@MarkdownRenderer.RenderInline(criterion.Text)</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    <!-- Các mục nội dung chi tiết dạng Markdown (Bối cảnh, Mục tiêu, Phạm vi, Báo cáo, Review...) -->
+    @foreach (var sec in Model.Detail.Sections)
+    {
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📌 @sec.Title</div>
+            </div>
+            <div class="card-body">
+                <div class="markdown-body">
+                    @MarkdownRenderer.Render(sec.Markdown)
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Lịch sử các lần chạy của Agent -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">⏱️ Lịch sử lần chạy (@Model.Detail.Runs.Count)</div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            @if (Model.Detail.Runs.Count == 0)
+            {
+                <div style="padding: 16px; color: var(--text-muted); text-align: center;">Chưa có lần chạy nào.</div>
+            }
+            else
+            {
+                <div class="table-container" style="border: none; margin: 0;">
+                    <table class="hub-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Lần</th>
+                                <th style="width: 120px;">Trạng thái</th>
+                                <th>Thời điểm</th>
+                                <th>Thời lượng</th>
+                                <th>Token</th>
+                                <th>Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var run in Model.Detail.Runs)
+                            {
+                                <tr>
+                                    <td><strong>#@run.Attempt</strong></td>
+                                    <td>
+                                        @if (run.State == AITeam.Hub.Models.RunState.Running)
+                                        {
+                                            <span class="badge badge-assigned">⏳ Đang chạy</span>
+                                        }
+                                        else if (run.State == AITeam.Hub.Models.RunState.Success)
+                                        {
+                                            <span class="badge badge-merged">✓ Thành công</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-needsfix">✗ Lỗi</span>
+                                        }
+                                    </td>
+                                    <td>@run.Time.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>@(run.DurationSeconds.HasValue ? $"{run.DurationSeconds.Value:F1}s" : "-")</td>
+                                    <td>@(run.TotalTokens.HasValue ? $"{run.TotalTokens.Value:N0}" : "-")</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(run.Error))
+                                        {
+                                            <div style="color: var(--state-needsfix); font-size: 13px; margin-bottom: 4px;">
+                                                <strong>Lỗi:</strong> @run.Error
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(run.Response))
+                                        {
+                                            <details class="details-box">
+                                                <summary>Xem kết quả</summary>
+                                                <div class="markdown-body" style="margin-top: 10px; padding: 10px; background-color: var(--surface); border-radius: var(--radius);">
+                                                    @MarkdownRenderer.Render(run.Response)
+                                                </div>
+                                            </details>
+                                        }
+                                        else if (string.IsNullOrEmpty(run.Error))
+                                        {
+                                            <span style="color: var(--text-muted); font-size: 12px;">Không có kết quả văn bản</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}

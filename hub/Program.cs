@@ -9,6 +9,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddAntiforgery();
 // H-001 (Agent A): đăng ký các dịch vụ thật ở đây.
 // H-002 (Agent B): khi chưa có dịch vụ thật, đăng ký bản giả trong hub/DevData nếu biến môi trường HUB_FAKE=1.
+if (Environment.GetEnvironmentVariable("HUB_FAKE") == "1")
+{
+    AITeam.Hub.DevData.FakeServices.Register(builder.Services);
+}
 
 var app = builder.Build();
 app.UseStaticFiles();

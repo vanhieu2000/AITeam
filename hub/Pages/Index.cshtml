@@ -1,0 +1,108 @@
+@page
+@model AITeam.Hub.Pages.IndexModel
+@{
+    ViewData["Title"] = "Tổng quan";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Tổng quan hệ thống</h1>
+        <div class="page-subtitle">Theo dõi tiến độ toàn bộ dự án, trạng thái agent và tình trạng môi trường máy</div>
+    </div>
+</div>
+
+<!-- 4 thẻ số liệu thống kê -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Dự án</div>
+        <div class="stat-value">@Model.TotalProjects</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Task đang làm</div>
+        <div class="stat-value" style="color: var(--state-assigned);">@Model.TotalAssigned</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Chờ review</div>
+        <div class="stat-value" style="color: var(--state-review);">@Model.TotalReview</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Agent đang chạy</div>
+        <div class="stat-value" style="color: var(--primary);">@Model.TotalRunningAgents</div>
+    </div>
+</div>
+
+<!-- Lưới thẻ dự án -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">📦 Danh sách dự án (@Model.Projects.Count)</div>
+    </div>
+    <div class="card-body">
+        <div class="projects-grid">
+            @foreach (var p in Model.Projects)
+            {
+                <div class="project-card">
+                    <div class="project-card-header">
+                        <a href="/p/@p.Info.Name" class="project-name">@p.Info.Name</a>
+                        <a href="@p.Info.GitHubUrl" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--text-muted);" title="Xem trên GitHub">
+                            GitHub ↗
+                        </a>
+                    </div>
+                    <div class="project-stack">@p.Info.Stack</div>
+                    <div class="project-task-counts">
+                        <span title="Đã giao / Đang làm">🟡 @p.AssignedCount</span>
+                        <span title="Chờ review">🔵 @p.ReviewCount</span>
+                        <span title="Cần sửa">🔴 @p.NeedsFixCount</span>
+                        <span title="Đã hoàn thành">✅ @p.MergedCount</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <!-- Khối Agent đang chạy (HTMX cập nhật 15s) -->
+    <partial name="_RunningAgentsPartial" model="Model.RunningAgents" />
+
+    <!-- Khối Tình trạng máy -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">🖥️ Tình trạng máy</div>
+            <span style="font-size: 11.5px; color: var(--text-muted);">team.ps1 doctor</span>
+        </div>
+        <div class="card-body">
+            <div class="health-list">
+                @foreach (var item in Model.HealthItems)
+                {
+                    <div class="health-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            @if (item.Level == AITeam.Hub.Models.HealthLevel.Ok)
+                            {
+                                <span class="health-status-ok" title="Bình thường">✓</span>
+                            }
+                            else if (item.Level == AITeam.Hub.Models.HealthLevel.Warning)
+                            {
+                                <span class="health-status-warning" title="Cảnh báo">!</span>
+                            }
+                            else
+                            {
+                                <span class="health-status-error" title="Lỗi">✗</span>
+                            }
+                            <div>
+                                <div style="font-weight: 600; font-size: 13.5px;">@item.Name</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">@item.Detail</div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(item.Fix))
+                        {
+                            <div>
+                                <code class="fix-instruction">Fix: @item.Fix</code>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
