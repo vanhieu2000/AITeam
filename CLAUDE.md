@@ -18,7 +18,8 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 ## Cách chạy lệnh
 - `team.ps1` và `agy` phải chạy **ngoài sandbox**: PowerShell với `dangerouslyDisableSandbox: true`. App Claude ảo hóa AppData, và đăng nhập agy nằm trong Windows Credential Manager.
 - Việc giao task chạy lâu (5–60 phút): luôn dùng `run_in_background: true`, đợi thông báo hoàn thành. Không vòng lặp sleep.
-- Đầu mỗi phiên làm việc với team: chạy `team.ps1 doctor`. Lỗi đăng nhập thì nhờ người dùng xử lý (xem mục "Cần người dùng").
+- Đầu mỗi phiên làm việc với team: đọc `inbox.md`. Đây là các yêu cầu người dùng gửi từ AITeam Hub, dòng `- [ ]` là chưa xử lý. Nhận việc nào thì đánh `[x]` kèm mã task.
+- Cũng đầu mỗi phiên: chạy `team.ps1 doctor`. Lỗi đăng nhập thì nhờ người dùng xử lý (xem mục "Cần người dùng").
 
 ## Quy trình cho mỗi yêu cầu
 1. **Tiếp nhận**
