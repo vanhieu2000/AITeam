@@ -91,4 +91,16 @@ Khởi động Hub với `HUB_FAKE=1`, kiểm tra các route `/Settings`, `/Acco
 - Không có. Toàn bộ tính năng và tiêu chí kiểm thử đã hoàn thành đầy đủ, chính xác.
 
 ## Review (Claude)
-<!-- Claude điền -->
+**Vòng 1 — ĐẠT** (20/10/2026)
+
+Đã kiểm tra:
+- Diff đúng phạm vi (3 trang, partial, CSS chỉ thêm, test, lệnh `hub` trong team.ps1, README).
+- Build 0 warning; test 60 → 109.
+- Trang Bí mật:
+  - giá trị bí mật không gán vào thuộc tính model, không trả về HTML, xóa khỏi ModelState sau khi lưu;
+  - mọi thao tác đi qua `VaultService` đã gia cố ở H-001 (kho hỏng không ghi đè, chỉ xuất cho dự án đã biết).
+- `team.ps1 hub`: build khi mã nguồn mới hơn, chạy ẩn, chờ cổng 5057, mở trình duyệt; Hub đang chạy thì chỉ mở trình duyệt.
+
+Quản lý sửa khi gộp `main` (có H-003):
+- Xung đột `hub.css`: cả hai cùng nối thêm CSS. Gộp máy móc làm hỏng 1 khối (thiếu `}`).
+- Dựng lại = CSS của `main` + phần H-004, bỏ các quy tắc trùng với H-003 (`.alert*`, `.btn-danger`, `.btn-sm`). Số `{` và `}` khớp.
