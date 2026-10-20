@@ -1,4 +1,5 @@
 @page "/Secrets"
+@model AITeam.Hub.Pages.VaultModel
 @{
     ViewData["Title"] = "Quản lý Bí mật";
 }
@@ -13,10 +14,135 @@
     <h1 class="page-title">🔑 Quản lý kho bí mật (Vault)</h1>
 </div>
 
-<div class="under-construction">
-    <h2>Trang đang xây dựng</h2>
-    <p>Chức năng mã hóa DPAPI và xuất .env.local sẽ được phát triển trong Giai đoạn 2 (Task H-004).</p>
-    <div style="margin-top: 16px;">
-        <a href="/" class="btn btn-primary">← Về trang Tổng quan</a>
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">
+        <span>✅ @Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <span>⚠️ @Model.ErrorMessage</span>
+    </div>
+}
+
+<div class="settings-layout">
+    <!-- Form thêm bí mật -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <h2>Thêm bí mật mới</h2>
+            <p class="settings-card-subtitle">Mã hóa bằng DPAPI (CurrentUser) và lưu trong kho <code>%USERPROFILE%\.aiteam\vault.json</code>. Hệ thống không bao giờ hiển thị lại giá trị.</p>
+        </div>
+        <div class="settings-card-body">
+            <form method="post" asp-page-handler="Add">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="secretName">Tên bí mật</label>
+                        <input type="text" id="secretName" name="secretName" class="form-control font-mono" placeholder="Ví dụ: DB_PASSWORD, API_KEY" required pattern="^[A-Za-z_][A-Za-z0-9_]*$" />
+                        <span class="form-hint">Dạng chữ hoa và gạch dưới (A-Z, 0-9, _).</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="secretValue">Giá trị bí mật</label>
+                        <input type="password" id="secretValue" name="secretValue" autocomplete="off" required class="form-control" placeholder="Nhập giá trị bí mật" />
+                        <span class="form-hint">Được bảo vệ bằng mã hóa Windows DPAPI, không lưu dưới dạng văn bản rõ.</span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Lưu bí mật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách bí mật -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <h2>Danh sách bí mật đã lưu (@Model.SecretNames.Count)</h2>
+            <p class="settings-card-subtitle">Chỉ hiển thị tên khóa, tuyệt đối không hiển thị giá trị bí mật.</p>
+        </div>
+        <div class="settings-card-body">
+            @if (Model.SecretNames.Count == 0)
+            {
+                <p class="text-muted">Kho bí mật đang trống. Thêm một bí mật ở trên hoặc dùng lệnh <code>team.ps1 secret-set</code>.</p>
+            }
+            else
+            {
+                <table class="vault-table">
+                    <thead>
+                        <tr>
+                            <th>Tên bí mật</th>
+                            <th style="width: 140px; text-align: right;">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var name in Model.SecretNames)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="secret-tag font-mono">🔑 @name</span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bí mật \'@name\' không?');" style="display: inline;">
+                                        <input type="hidden" name="name" value="@name" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <!-- Xuất .env.local -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <h2>Xuất file .env.local cho dự án</h2>
+            <p class="settings-card-subtitle">Giải mã các bí mật được chọn và ghi vào <code>&lt;dự án&gt;\.env.local</code>. Chỉ hoạt động nếu file đã nằm trong <code>.gitignore</code>.</p>
+        </div>
+        <div class="settings-card-body">
+            @if (Model.Projects.Count == 0 || Model.SecretNames.Count == 0)
+            {
+                <p class="text-muted">Cần có ít nhất một dự án và một bí mật trong kho để thực hiện xuất file.</p>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="ExportEnv">
+                    <div class="form-group">
+                        <label class="form-label" for="exportProject">Chọn dự án</label>
+                        <select id="exportProject" name="project" class="form-control" required>
+                            <option value="">-- Chọn dự án --</option>
+                            @foreach (var p in Model.Projects)
+                            {
+                                <option value="@p.Name">@p.Name (@p.Path)</option>
+                            }
+                        </select>
+                        <span class="form-hint">Dự án đích nhận file .env.local.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Chọn các bí mật cần xuất:</label>
+                        <div class="secret-checkbox-grid">
+                            @foreach (var name in Model.SecretNames)
+                            {
+                                <label class="checkbox-label font-mono">
+                                    <input type="checkbox" name="selectedNames" value="@name" />
+                                    <span>@name</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-secondary">Xuất .env.local</button>
+                    </div>
+                </form>
+            }
+        </div>
     </div>
 </div>

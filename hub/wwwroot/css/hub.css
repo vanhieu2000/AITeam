@@ -843,3 +843,400 @@ details.details-box summary {
     padding: 16px;
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   Phần thêm cho Task H-004: Cài đặt, Tài khoản, Bí mật
+   ───────────────────────────────────────────────────────────── */
+
+/* Thông báo (Alerts) */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.alert-success {
+  background-color: var(--state-merged-bg);
+  border: 1px solid var(--state-merged-border);
+  color: var(--state-merged);
+}
+
+.alert-danger {
+  background-color: var(--state-needsfix-bg);
+  border: 1px solid var(--state-needsfix-border);
+  color: var(--state-needsfix);
+}
+
+.alert-warning {
+  background-color: var(--state-assigned-bg);
+  border: 1px solid var(--state-assigned-border);
+  color: var(--state-assigned);
+}
+
+/* Thẻ cài đặt & Layout */
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.settings-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-2);
+}
+
+.settings-card-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.settings-card-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.settings-card-body {
+  padding: 20px;
+}
+
+/* Form controls */
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row > .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.form-control.font-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.form-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 16px 0 10px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.form-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Developer rows */
+.developer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background-color: var(--surface-2);
+  border-radius: var(--radius);
+}
+
+.developer-tag {
+  min-width: 160px;
+  font-size: 13px;
+}
+
+.developer-focus-input {
+  flex: 1;
+}
+
+/* Project settings card */
+.project-settings-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: var(--surface);
+}
+
+.project-settings-box:last-child {
+  margin-bottom: 0;
+}
+
+.project-settings-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.project-settings-title h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Nút bổ sung */
+.btn-danger {
+  background-color: var(--state-needsfix);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+  text-decoration: none;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Tài khoản (Accounts) */
+.accounts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.account-info-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.info-label {
+  min-width: 170px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.info-value {
+  flex: 1;
+  font-size: 14px;
+}
+
+.account-labels-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.account-labels-list li {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.account-actions-box {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.account-instructions {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background-color: var(--surface-2);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+}
+
+.instruction-icon {
+  font-size: 16px;
+}
+
+/* Health Result Partial */
+.health-result-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  background-color: var(--surface-2);
+}
+
+.health-result-card.badge-success {
+  border-color: var(--state-merged-border);
+  background-color: var(--state-merged-bg);
+}
+
+.health-result-card.badge-warning {
+  border-color: var(--state-assigned-border);
+  background-color: var(--state-assigned-bg);
+}
+
+.health-result-card.badge-danger {
+  border-color: var(--state-needsfix-border);
+  background-color: var(--state-needsfix-bg);
+}
+
+.health-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.health-result-body p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.health-result-fix {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.health-result-fix code {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}
+
+/* Badges */
+.badge-success {
+  color: var(--state-merged);
+  font-weight: 600;
+}
+
+.badge-warning {
+  color: var(--state-assigned);
+  font-weight: 600;
+}
+
+.badge-danger {
+  color: var(--state-needsfix);
+  font-weight: 600;
+}
+
+/* Vault (Bí mật) */
+.vault-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vault-table th,
+.vault-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.vault-table th {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.secret-tag {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.secret-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+  padding: 10px;
+  background-color: var(--surface-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* HTMX Indicator */
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+  display: inline-block;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.htmx-request .htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
