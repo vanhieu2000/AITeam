@@ -1,0 +1,72 @@
+@model IReadOnlyList<AITeam.Hub.Models.RunningAgent>
+
+<div id="running-agents-table-container" class="card" hx-get="/Agents?handler=RunningTable" hx-trigger="every 15s" hx-swap="outerHTML">
+    <div class="card-header">
+        <div class="card-title">
+            <span class="pulse-indicator"></span>
+            <span>Tiến trình đang chạy (@Model.Count)</span>
+        </div>
+        <span style="font-size: 11.5px; color: var(--text-muted);">Tự làm mới mỗi 15s</span>
+    </div>
+    <div class="card-body">
+        @if (Model.Count == 0)
+        {
+            <div style="color: var(--text-muted); font-size: 13.5px; text-align: center; padding: 18px;">
+                Hiện không có tiến trình agent nào đang chạy.
+            </div>
+        }
+        else
+        {
+            <div class="table-container" style="margin: 0;">
+                <table class="hub-table">
+                    <thead>
+                        <tr>
+                            <th>Dự án</th>
+                            <th>Task</th>
+                            <th>PID</th>
+                            <th>Bắt đầu</th>
+                            <th>Đã chạy</th>
+                            <th style="text-align: right;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var agent in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span style="font-weight: 600;">@(agent.Project ?? "N/A")</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(agent.Task) && !string.IsNullOrEmpty(agent.Project))
+                                    {
+                                        <a href="/p/@agent.Project/t/@agent.Task" style="font-weight: 600;">@agent.Task</a>
+                                    }
+                                    else
+                                    {
+                                        <span>@(agent.Task ?? "N/A")</span>
+                                    }
+                                </td>
+                                <td>
+                                    <code class="inline-code">@agent.Pid</code>
+                                </td>
+                                <td>@agent.StartedAt.ToString("HH:mm:ss")</td>
+                                <td>
+                                    <span class="badge badge-assigned">
+                                        ⏳ @AITeam.Hub.Pages.IndexModel.FormatElapsed(agent.Elapsed)
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <form method="post" asp-page-handler="Stop" style="display: inline; margin: 0;" onsubmit="return confirm('Dừng agent đang làm @(agent.Task ?? $"PID {agent.Pid}")?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="pid" value="@agent.Pid" />
+                                        <button type="submit" class="btn btn-danger btn-sm">🛑 Dừng</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
