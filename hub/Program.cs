@@ -7,8 +7,17 @@ builder.WebHost.UseUrls("http://127.0.0.1:5057");
 builder.Services.AddSingleton(HubPaths.Detect());
 builder.Services.AddRazorPages();
 builder.Services.AddAntiforgery();
-// H-001 (Agent A): đăng ký các dịch vụ thật ở đây.
-// H-002 (Agent B): khi chưa có dịch vụ thật, đăng ký bản giả trong hub/DevData nếu biến môi trường HUB_FAKE=1.
+
+// H-001 (Agent A): đăng ký các dịch vụ thật khi biến môi trường HUB_FAKE khác 1
+if (Environment.GetEnvironmentVariable("HUB_FAKE") != "1")
+{
+    builder.Services.AddSingleton<ITeamConfigService, TeamConfigService>();
+    builder.Services.AddSingleton<IAgentRunService, AgentRunService>();
+    builder.Services.AddSingleton<ITaskBoardService, TaskBoardService>();
+    builder.Services.AddSingleton<IHealthService, HealthService>();
+    builder.Services.AddSingleton<IVaultService, VaultService>();
+    builder.Services.AddSingleton<IInboxService, InboxService>();
+}
 
 var app = builder.Build();
 app.UseStaticFiles();

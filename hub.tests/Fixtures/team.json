@@ -1,0 +1,23 @@
+{
+  "_ghichu": "Ghi chú cấu hình mẫu",
+  "projectsRoot": "D:\\Projects",
+  "workRoot": "D:\\Work",
+  "github": {
+    "owner": "test-owner",
+    "private": true
+  },
+  "agy": {
+    "exe": "C:\\Tools\\agy\\bin\\agy.exe",
+    "model": "gemini-test",
+    "accounts": [ "Account1", "Account2" ]
+  },
+  "developers": [
+    { "id": "A", "name": "Agent A", "focus": "Backend" },
+    { "id": "B", "name": "Agent B", "focus": "Frontend" }
+  ],
+  "review": {
+    "maxRounds": 3,
+    "_ghichu": "Ghi chú review"
+  },
+  "customField": "giữ nguyên"
+}
