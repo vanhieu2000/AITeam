@@ -48,6 +48,20 @@ public sealed class FakeTeamConfigService : ITeamConfigService
                 ["A"] = "src/Core/, src/Services/",
                 ["B"] = "src/UI/, src/Modules/"
             },
+            ExistsLocally: true),
+        new ProjectInfo(
+            Name: "ChinaAndroidToolbox",
+            Repo: "HieuDV/ChinaAndroidToolbox",
+            Path: @"D:\ChinaAndroidToolbox",
+            WorkDir: @"D:\AITeam-work\ChinaAndroidToolbox",
+            Stack: "C# .NET WinForms, ADB, SQLite",
+            Build: "dotnet build ChinaAndroidToolbox.sln",
+            Test: "dotnet test ChinaAndroidToolbox.sln",
+            Areas: new Dictionary<string, string>
+            {
+                ["A"] = "Core, Adb, Device (hồ sơ), FixCenter (engine + actions), Data, build",
+                ["B"] = "App/Views, Diagnostics (khảo sát), Backup, resources/debloat, resources/packs"
+            },
             ExistsLocally: true)
     };
 
@@ -280,6 +294,8 @@ public sealed class FakeAgentRunService : IAgentRunService
 {
     private static readonly DateTime Now = DateTime.Now;
 
+    public int? LastStoppedPid { get; private set; }
+
     public IReadOnlyList<AgentRun> GetRuns(string project, string? taskId = null)
     {
         var board = new FakeTaskBoardService().GetBoard(project);
@@ -316,7 +332,11 @@ public sealed class FakeAgentRunService : IAgentRunService
         };
     }
 
-    public bool Stop(int pid) => true;
+    public bool Stop(int pid)
+    {
+        LastStoppedPid = pid;
+        return true;
+    }
 }
 
 public sealed class FakeHealthService : IHealthService
