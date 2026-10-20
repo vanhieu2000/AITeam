@@ -129,5 +129,6 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - agy treo vĩnh viễn nếu stdin là pipe đang mở → `team.ps1` luôn đưa stdin là file rỗng.
 - Chế độ in kết quả (print) của agy im lặng tới khi xong. Log rỗng giữa chừng là bình thường; việc lớn mất 10–30 phút.
 - Agent hay viết test có nhánh `return` sớm khiến test luôn pass → review phải đọc kỹ test, không chỉ nhìn "pass".
+- Mẫu `.gitignore` không có dấu `/` ở đầu (ví dụ `logs/`, `Data/`, `team.local.json`) chặn ở MỌI thư mục, kể cả file mẫu của test. Đã gây lỗi 2 lần → luôn neo mẫu cho file / thư mục ở gốc: `/logs/`. Kiểm tra bằng clone sạch là bước bắt được lỗi này.
 - Agent hay sửa lấn sang vùng của agent khác để hết warning → chấp nhận nếu nhỏ, nhưng phải kiểm tra xung đột khi merge.
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).

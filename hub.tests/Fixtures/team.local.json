@@ -1,0 +1,8 @@
+{
+  "projectsRoot": "E:\\MyProjects",
+  "workRoot": "E:\\MyWork",
+  "agyExe": "D:\\CustomAgy\\agy.exe",
+  "paths": {
+    "CustomPathProject": "F:\\Special\\CustomPathProject"
+  }
+}

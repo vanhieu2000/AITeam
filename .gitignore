@@ -1,6 +1,6 @@
-team.local.json
+/team.local.json
 *.log
-logs/
+/logs/
 bin/
 obj/
 .vs/
