@@ -295,10 +295,18 @@ public static class MarkdownRenderer
     }
 
     /// <summary>
-    /// Xử lý định dạng nội dòng (inline): Bold, Italic, Code, Link.
-    /// Lưu ý chuỗi đầu vào đã qua EscapeHtml.
+    /// Dùng trong Razor cho văn bản THÔ (chưa mã hóa): mã hóa HTML trước rồi mới định dạng nội dòng,
+    /// trả HtmlString để Razor không mã hóa lần nữa. (Review H-002: gọi thẳng RenderInline trong Razor bị mã hóa 2 lần
+    /// và nếu bọc Html.Raw thì thành lỗ hổng XSS vì RenderInline giả định đầu vào đã mã hóa.)
     /// </summary>
-    public static string RenderInline(string text)
+    public static HtmlString RenderInlineSafe(string? raw) =>
+        new(RenderInline(EscapeHtml(raw ?? string.Empty)));
+
+    /// <summary>
+    /// Xử lý định dạng nội dòng (inline): Bold, Italic, Code, Link.
+    /// Lưu ý chuỗi đầu vào PHẢI đã qua EscapeHtml — trong Razor dùng <see cref="RenderInlineSafe"/>.
+    /// </summary>
+    internal static string RenderInline(string text)
     {
         if (string.IsNullOrEmpty(text)) return string.Empty;
 

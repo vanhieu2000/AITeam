@@ -130,4 +130,23 @@ Trang dùng các interface trong `Contracts.cs` qua DI, để khi có dịch v�
 - Không có. Toàn bộ giao diện đã kết nối hoàn chỉnh thông qua DI interfaces (`ITeamConfigService`, `ITaskBoardService`, `IAgentRunService`, `IHealthService`). Khi Agent A triển khai xong Task H-001 trên nhánh `agent-a`, hệ thống chỉ cần bỏ cờ `HUB_FAKE=1` là giao diện sẽ chạy trực tiếp với dữ liệu thật.
 
 ## Review (Claude)
-<!-- Claude điền -->
+**Vòng 1 — ĐẠT** (20/10/2026)
+
+Đã kiểm tra:
+- Diff đúng phạm vi: Pages, wwwroot, DevData, 1 khối `if` trong Program.cs. Không sửa hợp đồng.
+- htmx 2.0.4 là file cục bộ.
+- Build 0 warning; test 15 → 18.
+- Chạy thật `HUB_FAKE=1`, mở bằng trình duyệt:
+  - Tổng quan (4 thẻ số liệu, dự án, agent đang chạy, tình trạng máy), kanban 4 cột, trang Task: đúng thiết kế, đẹp, gọn;
+  - chế độ tối: màu nền / chữ đúng.
+- Bộ chuyển markdown:
+  - mã hóa HTML trước khi xử lý;
+  - link `javascript:` bị chặn;
+  - thuộc tính `language-` an toàn vì dấu ngoặc kép đã mã hóa.
+
+Lỗi quản lý tự sửa (đã có test `MarkdownInlineSafeTests`):
+- Trang Task, mục **Tiêu chí**: gọi `RenderInline` trong Razor ⇒ bị mã hóa 2 lần, hiện chữ `<code class=...>`.
+  - Nếu sửa bằng `Html.Raw` sẽ thành lỗ hổng XSS, vì `RenderInline` giả định đầu vào đã mã hóa.
+  - Thêm `RenderInlineSafe` (mã hóa trước, trả `HtmlString`) và đổi `RenderInline` thành `internal`.
+
+Ghi chú cho agent lần sau: hàm nào giả định đầu vào đã mã hóa thì không để `public`; trong Razor chỉ dùng hàm trả `HtmlString` đã tự mã hóa.

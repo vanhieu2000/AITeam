@@ -73,7 +73,7 @@ else
                     {
                         <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px;">
                             <input type="checkbox" @(criterion.Done ? "checked" : "") disabled style="margin-top: 3px;" />
-                            <span style="@(criterion.Done ? "text-decoration: none;" : "")">@MarkdownRenderer.RenderInline(criterion.Text)</span>
+                            <span style="@(criterion.Done ? "text-decoration: none;" : "")">@MarkdownRenderer.RenderInlineSafe(criterion.Text)</span>
                         </li>
                     }
                 </ul>
