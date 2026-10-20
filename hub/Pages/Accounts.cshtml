@@ -1,4 +1,5 @@
 @page
+@model AITeam.Hub.Pages.AccountsModel
 @{
     ViewData["Title"] = "Quản lý Tài khoản";
 }
@@ -10,13 +11,176 @@
 </div>
 
 <div class="page-header">
-    <h1 class="page-title">👤 Quản lý tài khoản GitHub & Antigravity</h1>
+    <h1 class="page-title">👤 Quản lý tài khoản GitHub, Antigravity &amp; Claude</h1>
 </div>
 
-<div class="under-construction">
-    <h2>Trang đang xây dựng</h2>
-    <p>Chức năng kiểm tra đăng nhập và đổi tài khoản Antigravity sẽ được phát triển trong Giai đoạn 2 (Task H-004).</p>
-    <div style="margin-top: 16px;">
-        <a href="/" class="btn btn-primary">← Về trang Tổng quan</a>
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-success">
+        <span>✅ @Model.Message</span>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <span>⚠️ @Model.ErrorMessage</span>
+    </div>
+}
+
+<div class="accounts-grid">
+    <!-- GitHub -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <h2>🐙 GitHub</h2>
+            <p class="settings-card-subtitle">Trạng thái đăng nhập GitHub CLI và chủ sở hữu kho (owner).</p>
+        </div>
+        <div class="settings-card-body">
+            <div class="account-info-box">
+                <div class="info-row">
+                    <span class="info-label">Tài khoản CLI:</span>
+                    <span class="info-value">
+                        @if (Model.GitHubHealth != null)
+                        {
+                            var badgeClass = Model.GitHubHealth.Level switch
+                            {
+                                AITeam.Hub.Models.HealthLevel.Ok => "badge-success",
+                                AITeam.Hub.Models.HealthLevel.Warning => "badge-warning",
+                                _ => "badge-danger"
+                            };
+                            <span class="badge @badgeClass">@Model.GitHubHealth.Detail</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có thông tin</span>
+                        }
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Chủ sở hữu (team.json):</span>
+                    <span class="info-value"><strong>@(string.IsNullOrEmpty(Model.GitHubOwner) ? "(chưa đặt)" : Model.GitHubOwner)</strong></span>
+                </div>
+            </div>
+            @if (Model.GitHubHealth?.Fix != null)
+            {
+                <div class="health-result-fix" style="margin-top: 12px;">
+                    <span>Cách sửa:</span>
+                    <code>@Model.GitHubHealth.Fix</code>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Antigravity -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <h2>🚀 Antigravity (agy)</h2>
+            <p class="settings-card-subtitle">Công cụ AI agent thực thi task. Kiểm tra đăng nhập và đổi tài khoản.</p>
+        </div>
+        <div class="settings-card-body">
+            <div class="account-info-box">
+                <div class="info-row">
+                    <span class="info-label">Trạng thái CLI:</span>
+                    <span class="info-value">
+                        @if (Model.AgyHealth != null)
+                        {
+                            var badgeClass = Model.AgyHealth.Level switch
+                            {
+                                AITeam.Hub.Models.HealthLevel.Ok => "badge-success",
+                                AITeam.Hub.Models.HealthLevel.Warning => "badge-warning",
+                                _ => "badge-danger"
+                            };
+                            <span class="badge @badgeClass">@Model.AgyHealth.Detail</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có thông tin</span>
+                        }
+                    </span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Danh sách nhãn tài khoản:</span>
+                    <div class="info-value">
+                        @if (Model.AgyAccounts.Count == 0)
+                        {
+                            <span class="text-muted">Chưa cấu hình tài khoản nào trong team.json</span>
+                        }
+                        else
+                        {
+                            <ul class="account-labels-list">
+                                @foreach (var acc in Model.AgyAccounts)
+                                {
+                                    <li>🏷️ @acc</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-actions-box">
+                <div class="action-item">
+                    <form method="post" asp-page-handler="CheckAgyLogin" hx-post="/Accounts?handler=CheckAgyLogin" hx-target="#agy-check-result" hx-indicator="#agy-spinner">
+                        <button type="submit" class="btn btn-secondary">⚡ Kiểm tra đăng nhập</button>
+                        <span id="agy-spinner" class="htmx-indicator">⏳ Đang ping Antigravity (tối đa 2 phút)...</span>
+                    </form>
+                    <div id="agy-check-result" style="margin-top: 8px;">
+                        @if (Model.AgyLoginCheckResult != null)
+                        {
+                            <partial name="_AgyLoginResult" model="Model.AgyLoginCheckResult" />
+                        }
+                    </div>
+                </div>
+
+                <div class="action-item" style="margin-top: 16px;">
+                    <form method="post" asp-page-handler="SwitchAccount">
+                        <button type="submit" class="btn btn-secondary">🔄 Đổi tài khoản Antigravity</button>
+                    </form>
+                    <div class="account-instructions">
+                        <span class="instruction-icon">💡</span>
+                        <span>Hướng dẫn đổi tài khoản: Khi cửa sổ Antigravity mở ra, gõ <code>/logout</code> → đăng nhập tài khoản khác → gõ <code>/quit</code> để hoàn tất.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claude -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <h2>🧠 Claude (Quản lý)</h2>
+            <p class="settings-card-subtitle">Tích hợp kỹ năng (skill aiteam) và sổ tay quy trình trong CLAUDE.md.</p>
+        </div>
+        <div class="settings-card-body">
+            <div class="account-info-box">
+                <div class="info-row">
+                    <span class="info-label">Trạng thái tích hợp:</span>
+                    <span class="info-value">
+                        @if (Model.ClaudeHealth != null)
+                        {
+                            var badgeClass = Model.ClaudeHealth.Level switch
+                            {
+                                AITeam.Hub.Models.HealthLevel.Ok => "badge-success",
+                                AITeam.Hub.Models.HealthLevel.Warning => "badge-warning",
+                                _ => "badge-danger"
+                            };
+                            <span class="badge @badgeClass">@Model.ClaudeHealth.Detail</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có thông tin</span>
+                        }
+                    </span>
+                </div>
+            </div>
+
+            <div class="account-actions-box" style="margin-top: 16px;">
+                <form method="post" asp-page-handler="InstallClaude">
+                    <button type="submit" class="btn btn-secondary">📦 Cài / sửa tích hợp Claude</button>
+                </form>
+                <span class="form-hint" style="margin-top: 6px; display: block;">Cài đặt skill 'aiteam' vào ~/.claude/skills/aiteam và gắn quy trình team vào ~/.claude/CLAUDE.md.</span>
+            </div>
+        </div>
     </div>
 </div>

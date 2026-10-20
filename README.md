@@ -57,6 +57,7 @@ Claude chỉ hỏi bạn khi:
 
 | Việc | Lệnh (chạy trong `D:\AITeam`) |
 |---|---|
+| Mở bảng điều khiển Hub | `.\team.ps1 hub` |
 | Kiểm tra mọi thứ sẵn sàng | `.\team.ps1 doctor` |
 | Xem tiến độ, agent đang chạy | `.\team.ps1 status` |
 | Đổi tài khoản Antigravity (hết hạn mức) | `.\team.ps1 switch-account` |

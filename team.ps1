@@ -19,6 +19,7 @@
   .\team.ps1 secret-set -Name DB_PASSWORD           Lưu bí mật vào kho CỤC BỘ (DPAPI, chỉ user Windows này giải mã được)
   .\team.ps1 secret-list | secret-remove -Name X    Xem tên (không xem giá trị) / xóa bí mật
   .\team.ps1 secret-env -Project Ten -Names A,B     Ghi .env.local (đã bị .gitignore) cho dự án chạy thử trên máy
+  .\team.ps1 hub                                    Mở bảng điều khiển AITeam Hub (chạy ngầm)
 #>
 param(
     [Parameter(Position = 0)] [string] $Command = "help",
@@ -476,6 +477,75 @@ function Install-Skill {
     Say "  [OK] Skill 'aiteam' cho Claude: $dir" Green
 }
 
+
+function Test-PortOpen([string]$hostName, [int]$port) {
+    try {
+        $tcp = New-Object System.Net.Sockets.TcpClient
+        $iar = $tcp.BeginConnect($hostName, $port, $null, $null)
+        $wait = $iar.AsyncWaitHandle.WaitOne(400, $false)
+        if (-not $wait) { $tcp.Close(); return $false }
+        $tcp.EndConnect($iar)
+        $tcp.Close()
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Invoke-Hub {
+    $hubUrl = "http://127.0.0.1:5057"
+    if (Test-PortOpen "127.0.0.1" 5057) {
+        Say "Hub đang chạy tại $hubUrl — đang mở trình duyệt." Green
+        Start-Process $hubUrl
+        return
+    }
+
+    $hubDir = Join-Path $Root "hub"
+    $hubProj = Join-Path $hubDir "AITeam.Hub.csproj"
+    $hubDll = Join-Path $hubDir "bin\Debug\net10.0-windows\AITeam.Hub.dll"
+
+    $needBuild = $false
+    if (-not (Test-Path $hubDll)) {
+        $needBuild = $true
+    } else {
+        $dllTime = (Get-Item $hubDll).LastWriteTimeUtc
+        $srcFiles = Get-ChildItem -Path $hubDir -Recurse -File | Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }
+        foreach ($f in $srcFiles) {
+            if ($f.LastWriteTimeUtc -gt $dllTime) {
+                $needBuild = $true
+                break
+            }
+        }
+    }
+
+    if ($needBuild) {
+        Say "Đang build AITeam Hub..." Cyan
+        dotnet build $hubProj --verbosity minimal
+        if ($LASTEXITCODE -ne 0) { throw "Build Hub thất bại." }
+    }
+
+    Say "Đang khởi động AITeam Hub ở nền..." Cyan
+    Start-Process dotnet -ArgumentList "`"$hubDll`"" -WorkingDirectory $hubDir -WindowStyle Hidden
+
+    $timeoutSeconds = 30
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $opened = $false
+    while ($sw.Elapsed.TotalSeconds -lt $timeoutSeconds) {
+        if (Test-PortOpen "127.0.0.1" 5057) {
+            $opened = $true
+            break
+        }
+        Start-Sleep -Milliseconds 500
+    }
+
+    if ($opened) {
+        Say "AITeam Hub đã mở tại $hubUrl" Green
+        Start-Process $hubUrl
+    } else {
+        throw "Hub không mở cổng 5057 sau $timeoutSeconds giây."
+    }
+}
+
 switch ($Command) {
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
     "ask" { Invoke-Ask }
@@ -492,5 +562,6 @@ switch ($Command) {
     "status" { Invoke-Status }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
+    "hub" { Invoke-Hub }
     default { Get-Help $PSCommandPath -Detailed | Out-String | Write-Host }
 }
