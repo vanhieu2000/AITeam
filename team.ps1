@@ -178,8 +178,11 @@ function Invoke-AddProject {
     $repoName = if ($Repo) { $Repo } else { "$owner/$Project" }
     $target = if ($Path) { $Path } else { Join-Path $cfg.projectsRoot $Project }
 
+    # Lệnh git/gh in thông báo ra stderr (ví dụ "repo không tồn tại"); PowerShell 5.1 + Stop coi là lỗi → tạm Continue.
+    $ErrorActionPreference = "Continue"
     if (-not (Test-Path (Join-Path $target ".git"))) {
-        $exists = $gh -and ((& $gh repo view $repoName --json name 2>$null) -ne $null)
+        $exists = $false
+        if ($gh) { & $gh repo view $repoName --json name *> $null; $exists = ($LASTEXITCODE -eq 0) }
         if ($exists -and -not (Test-Path $target)) {
             Say "Clone $repoName → $target"
             & $gh repo clone $repoName $target
@@ -198,6 +201,11 @@ function Invoke-AddProject {
     # Kho GitHub private
     $remote = git -C $target remote get-url origin 2>$null
     if (-not $remote -and $gh) {
+        if (-not (git -C $target config user.name)) {
+            git -C $target config user.name "HieuDV"
+            git -C $target config user.email "$owner@users.noreply.github.com"
+        }
+        Install-Hook $target   # hook chặn bí mật có hiệu lực ngay từ commit đầu tiên
         git -C $target add -A
         git -C $target commit -q -m "Khởi tạo dự án $Project (team AI)" 2>$null
         & $gh repo create $repoName --private --source $target --remote origin --push | Out-Null
