@@ -1,0 +1,39 @@
+@model AITeam.Hub.Models.TaskCard
+
+<div class="task-card">
+    <div class="task-card-header">
+        <a href="/p/@Model.Project/t/@Model.Id" class="task-id">@Model.Id</a>
+        <span class="badge badge-agent">Agent @Model.Agent</span>
+    </div>
+
+    <a href="/p/@Model.Project/t/@Model.Id" class="task-title">@Model.Title</a>
+
+    <div style="font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono);">
+        🌿 @Model.Branch
+    </div>
+
+    <div class="task-meta">
+        <span>🔄 @Model.Runs lần</span>
+        @if (Model.LastRun != null)
+        {
+            <span>
+                @if (Model.LastRun.State == AITeam.Hub.Models.RunState.Running)
+                {
+                    <span style="color: var(--primary);">⏳ Đang chạy</span>
+                }
+                else if (Model.LastRun.State == AITeam.Hub.Models.RunState.Success)
+                {
+                    <span style="color: var(--state-merged);">
+                        ✓ @(Model.LastRun.DurationSeconds.HasValue ? $"{Model.LastRun.DurationSeconds.Value:F1}s" : "")
+                    </span>
+                }
+                else
+                {
+                    <span style="color: var(--state-needsfix);">
+                        ✗ Lỗi
+                    </span>
+                }
+            </span>
+        }
+    </div>
+</div>

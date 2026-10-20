@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AITeam Hub</title>
+    <script>
+        // Khôi phục giao diện sáng/tối từ localStorage ngay khi nạp trang
+        (function() {
+            var theme = localStorage.getItem('hub-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/hub.css" />
+    <script src="~/lib/htmx.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Thanh bên trái rộng 220px -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="brand">
+                    <span>⚡ AITeam</span>
+                    <span class="brand-badge">HUB</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active" : "")">
+                    <span>📊 Tổng quan</span>
+                </a>
+
+                <div style="margin-top: 8px; padding: 4px 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                    Dự án
+                </div>
+                <a href="/p/AITeam" class="nav-item @(ViewContext.RouteData.Values["name"]?.ToString() == "AITeam" ? "active" : "")">
+                    <span>📦 AITeam</span>
+                </a>
+                <a href="/p/HDVTool" class="nav-item @(ViewContext.RouteData.Values["name"]?.ToString() == "HDVTool" ? "active" : "")">
+                    <span>🛠️ HDVTool</span>
+                </a>
+
+                <div style="margin-top: 8px; padding: 4px 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                    Hệ thống
+                </div>
+                <a href="/Agents" class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Agents" ? "active" : "")">
+                    <span>🤖 Agent</span>
+                    <span class="nav-badge">GĐ 2</span>
+                </a>
+                <a href="/Inbox" class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Inbox" ? "active" : "")">
+                    <span>📬 Hộp thư</span>
+                    <span class="nav-badge">GĐ 2</span>
+                </a>
+                <a href="/Settings" class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Settings" ? "active" : "")">
+                    <span>⚙️ Cài đặt</span>
+                    <span class="nav-badge">GĐ 2</span>
+                </a>
+                <a href="/Accounts" class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Accounts" ? "active" : "")">
+                    <span>👤 Tài khoản</span>
+                    <span class="nav-badge">GĐ 2</span>
+                </a>
+                <a href="/Secrets" class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Secrets" ? "active" : "")">
+                    <span>🔑 Bí mật</span>
+                    <span class="nav-badge">GĐ 2</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi chế độ sáng / tối">
+                    <span id="themeIcon">🌓</span>
+                    <span id="themeText">Giao diện</span>
+                </button>
+                <span style="font-size: 11px; color: var(--text-muted);">v0.1.0</span>
+            </div>
+        </aside>
+
+        <!-- Vùng nội dung chính -->
+        <main class="main-wrapper">
+            <div class="main-content">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function updateThemeUI() {
+            var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            var icon = document.getElementById('themeIcon');
+            var text = document.getElementById('themeText');
+            if (icon && text) {
+                if (currentTheme === 'dark') {
+                    icon.textContent = '🌙';
+                    text.textContent = 'Tối';
+                } else {
+                    icon.textContent = '☀️';
+                    text.textContent = 'Sáng';
+                }
+            }
+        }
+
+        function toggleTheme() {
+            var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('hub-theme', nextTheme);
+            updateThemeUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', updateThemeUI);
+    </script>
+</body>
+</html>
