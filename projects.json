@@ -4,12 +4,25 @@
     "repo": "vanhieu2000/HDVTool",
     "path": "D:\\HDVTool",
     "workDir": "D:\\HDVTool-agents",
-    "stack": "C# .NET WinForms, SQLite",
+    "stack": "C# .NET 10 WinForms, SQLite",
     "build": "dotnet build HDVTool.sln",
     "test": "dotnet test",
     "areas": {
       "A": "src/, tools/, Directory.*.props, tests của Core",
       "B": "modules/, tests của module"
+    }
+  },
+  {
+    "name": "AITeam",
+    "repo": "vanhieu2000/AITeam",
+    "path": "D:\\AITeam",
+    "workDir": "D:\\AITeam-work\\AITeam",
+    "stack": "ASP.NET Core .NET 10 Razor Pages + HTMX (AITeam Hub)",
+    "build": "dotnet build AITeam.sln",
+    "test": "dotnet test AITeam.sln",
+    "areas": {
+      "A": "hub/Services/, hub/Program.cs, hub.tests/ (dịch vụ, dữ liệu)",
+      "B": "hub/Pages/, hub/wwwroot/, hub/DevData/ (giao diện)"
     }
   }
 ]

@@ -1,3 +1,9 @@
 team.local.json
 *.log
 logs/
+bin/
+obj/
+.vs/
+*.user
+inbox.md.bak
+*.bak
