@@ -1,0 +1,24 @@
+[
+  {
+    "name": "ProjectAlpha",
+    "repo": "test-owner/ProjectAlpha",
+    "path": "D:\\Projects\\ProjectAlpha",
+    "workDir": "D:\\Work\\ProjectAlpha",
+    "stack": "C# .NET 10",
+    "build": "dotnet build",
+    "test": "dotnet test",
+    "areas": {
+      "A": "src/Core",
+      "B": "src/UI"
+    }
+  },
+  {
+    "name": "CustomPathProject",
+    "repo": "test-owner/CustomPathProject",
+    "path": "D:\\Projects\\CustomPathProject",
+    "stack": "Node.js",
+    "build": "npm build",
+    "test": "npm test",
+    "areas": {}
+  }
+]
