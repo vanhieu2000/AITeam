@@ -67,15 +67,10 @@ public sealed class VaultService : IVaultService
 
     public void ExportEnv(string project, IReadOnlyList<string> names)
     {
-        string projectPath = project;
-        if (_configService != null)
-        {
-            var p = _configService.FindProject(project);
-            if (p != null)
-            {
-                projectPath = p.Path;
-            }
-        }
+        // Review H-001: chỉ ghi vào dự án có trong projects.json — không nhận đường dẫn tùy ý từ form web.
+        var known = _configService?.FindProject(project)
+            ?? throw new InvalidOperationException($"Không có dự án '{project}' trong projects.json.");
+        string projectPath = known.Path;
 
         if (!Directory.Exists(projectPath))
         {
@@ -143,9 +138,11 @@ public sealed class VaultService : IVaultService
                 }
             }
         }
-        catch
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException)
         {
-            // Bỏ qua nếu file hỏng
+            // Review H-001: KHÔNG được coi file hỏng là kho rỗng — lần Set() sau sẽ ghi đè và xóa sạch mọi bí mật.
+            throw new InvalidOperationException(
+                $"Kho bí mật {_paths.VaultFile} bị hỏng, không đọc được. Hãy sao lưu / sửa file này trước; Hub sẽ không ghi đè.", ex);
         }
 
         return dict;

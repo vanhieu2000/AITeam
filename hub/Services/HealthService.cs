@@ -154,6 +154,7 @@ public sealed class HealthService : IHealthService
             return new HealthItem("Antigravity Login", HealthLevel.Error, $"Thiếu Antigravity CLI tại {exe}", null);
         }
 
+        int? startedPid = null;
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -172,6 +173,7 @@ public sealed class HealthService : IHealthService
 
             using var proc = new Process { StartInfo = psi };
             proc.Start();
+            startedPid = proc.Id;
             // Đóng stdin ngay để pipe không bị mở (tránh agy treo)
             proc.StandardInput.Close();
 
@@ -196,6 +198,8 @@ public sealed class HealthService : IHealthService
         }
         catch (OperationCanceledException)
         {
+            // Review H-001: hủy chờ không tự dừng tiến trình → phải tự kill, nếu không agy chạy ngầm mãi.
+            try { if (startedPid is int pid) Process.GetProcessById(pid).Kill(entireProcessTree: true); } catch { }
             return new HealthItem("Antigravity Login", HealthLevel.Error, "Kiểm tra Antigravity quá thời gian (2 phút)", null);
         }
         catch (Exception ex)
@@ -208,14 +212,18 @@ public sealed class HealthService : IHealthService
     {
         var settings = _configService.GetSettings();
         string exe = settings.AgyExe;
-        var psi = new ProcessStartInfo
-        {
-            FileName = "powershell.exe",
-            Arguments = $"-NoExit -Command \"& '{exe}'\"",
-            UseShellExecute = true
-        };
-        Process.Start(psi);
+        // Review H-001: đường dẫn lấy từ cấu hình (sau này sửa được trên trang Cài đặt) — không ghép vào lệnh PowerShell
+        // (chèn được lệnh), chỉ chạy thẳng đúng file agy.exe có thật, trong cửa sổ console mới.
+        if (!IsValidAgyExe(exe))
+            throw new InvalidOperationException($"Đường dẫn Antigravity CLI không hợp lệ: {exe}");
+        Process.Start(new ProcessStartInfo { FileName = exe, UseShellExecute = true });
     }
+
+    internal static bool IsValidAgyExe(string? exe) =>
+        !string.IsNullOrWhiteSpace(exe)
+        && Path.IsPathFullyQualified(exe)
+        && string.Equals(Path.GetFileName(exe), "agy.exe", StringComparison.OrdinalIgnoreCase)
+        && File.Exists(exe);
 
     public void InstallClaudeIntegration()
     {

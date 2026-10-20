@@ -84,19 +84,23 @@ public sealed class VaultServiceTests : IDisposable
         });
         initProc?.WaitForExit(5000);
 
-        var service = new VaultService(_env.Paths);
+        // Đăng ký repo tạm là một dự án thật trong projects.json (ExportEnv chỉ nhận dự án đã biết — review H-001).
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "team.json"), _env.Paths.TeamJson, overwrite: true);
+        File.WriteAllText(_env.Paths.ProjectsJson,
+            "[ { \"name\": \"TestRepo\", \"repo\": \"x/TestRepo\", \"path\": " + System.Text.Json.JsonSerializer.Serialize(testRepo) + " } ]");
+        var service = new VaultService(_env.Paths, new TeamConfigService(_env.Paths));
         service.Set("TEST_SECRET", "super_secret_value");
 
         // 1. Khi chưa có .gitignore hoặc chưa ignore .env.local -> ném ngoại lệ
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            service.ExportEnv(testRepo, new[] { "TEST_SECRET" }));
+            service.ExportEnv("TestRepo", new[] { "TEST_SECRET" }));
         Assert.Contains(".env.local CHƯA bị .gitignore", ex.Message);
 
         // 2. Thêm .env.* vào .gitignore
         File.WriteAllText(Path.Combine(testRepo, ".gitignore"), ".env.*\r\n");
 
         // Gọi lại ExportEnv
-        service.ExportEnv(testRepo, new[] { "TEST_SECRET" });
+        service.ExportEnv("TestRepo", new[] { "TEST_SECRET" });
 
         string envLocalPath = Path.Combine(testRepo, ".env.local");
         Assert.True(File.Exists(envLocalPath));

@@ -141,4 +141,24 @@ Passed!  - Failed:     0, Passed:    21, Skipped:     0, Total:    21, Duration:
 - Không có vấn đề tồn đọng. Toàn bộ 6 dịch vụ đã thỏa mãn đúng hợp đồng interface, tài liệu `docs/HUB-DESIGN.md` và vượt qua 21 test case.
 
 ## Review (Claude)
-<!-- Claude điền -->
+**Vòng 2 — ĐẠT** (20/10/2026). Vòng 1 agent dừng xin duyệt kế hoạch do quy tắc trong GEMINI.md; quản lý duyệt rồi giao tiếp.
+
+Đã kiểm tra:
+- Diff đúng phạm vi (Services, Program.cs, tests). Không sửa hợp đồng.
+- Gộp `main` (H-002): xung đột ở `Program.cs`, quản lý gộp thành "dữ liệu giả HOẶC dịch vụ thật".
+- Build 0 warning; test 38 → 47.
+- Chạy thật với dữ liệu thật (`AITEAM_HOME=D:\AITeam`):
+  - đủ 3 dự án; nhận đúng 2 agent đang chạy (C-001, C-002) từ tiến trình thật;
+  - tình trạng máy đúng; kanban ChinaAndroidToolbox đúng.
+
+Lỗi quản lý tự sửa (có test `ReviewH001SecurityTests`):
+1. **Mất dữ liệu:** `VaultService` gặp kho hỏng thì coi là kho rỗng → lần lưu sau ghi đè, xóa sạch bí mật. Nay báo lỗi và không ghi đè.
+2. **Ghi bí mật ra thư mục tùy ý:** `ExportEnv` nhận tên dự án lạ thì dùng luôn làm đường dẫn → form web có thể ghi `.env.local` chứa bí mật vào bất kỳ repo nào. Nay chỉ nhận dự án có trong `projects.json`.
+3. **Chèn lệnh:** `OpenSwitchAccountWindow` ghép đường dẫn agy từ cấu hình vào lệnh PowerShell. Nay chỉ chạy thẳng file `agy.exe` có thật, đường dẫn đầy đủ.
+4. **Tiến trình mồ côi:** `CheckAgyLoginAsync` hết thời gian không tắt tiến trình agy. Nay kill cả cây tiến trình.
+
+Ghi chú cho lần sau:
+- Không `catch {}` nuốt lỗi ở chỗ đọc dữ liệu sẽ bị ghi lại.
+- Mọi giá trị từ cấu hình / form web coi là không tin cậy khi đưa vào tiến trình ngoài hay đường dẫn ghi file.
+
+Việc cho H-003: thanh bên đang ghi cứng danh sách dự án (thiếu ChinaAndroidToolbox) → lấy từ `ITeamConfigService.GetProjects()`.
