@@ -1,0 +1,22 @@
+{
+  "_ghichu": "Cấu hình chung của team (đưa lên git). Đường dẫn riêng từng máy để trong team.local.json (không đưa lên git).",
+  "projectsRoot": "D:\\",
+  "workRoot": "D:\\AITeam-work",
+  "github": {
+    "owner": "vanhieu2000",
+    "private": true
+  },
+  "agy": {
+    "exe": "C:\\Tools\\agy\\bin\\agy.exe",
+    "model": "",
+    "accounts": [ "Antigravity Pro 1", "Antigravity Pro 2" ]
+  },
+  "developers": [
+    { "id": "A", "name": "Agent A", "focus": "Nền tảng: kiến trúc, build, đóng gói, CSDL, hạ tầng" },
+    { "id": "B", "name": "Agent B", "focus": "Tính năng: module, màn hình, nghiệp vụ" }
+  ],
+  "review": {
+    "maxRounds": 3,
+    "_ghichu": "Quá số vòng trả về mà vẫn chưa đạt thì quản lý tự sửa hoặc hỏi chủ dự án."
+  }
+}

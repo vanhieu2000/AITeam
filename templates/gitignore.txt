@@ -1,0 +1,25 @@
+# Build
+bin/
+obj/
+node_modules/
+dist/
+build/
+__pycache__/
+.venv/
+artifacts/
+publish/
+*.log
+.vs/
+.idea/
+*.user
+
+# BÍ MẬT — không bao giờ đưa lên git
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.key
+*.lic
+secrets.*
+appsettings.*.local.json

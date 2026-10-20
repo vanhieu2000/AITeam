@@ -1,0 +1,15 @@
+[
+  {
+    "name": "HDVTool",
+    "repo": "vanhieu2000/HDVTool",
+    "path": "D:\\HDVTool",
+    "workDir": "D:\\HDVTool-agents",
+    "stack": "C# .NET WinForms, SQLite",
+    "build": "dotnet build HDVTool.sln",
+    "test": "dotnet test",
+    "areas": {
+      "A": "src/, tools/, Directory.*.props, tests của Core",
+      "B": "modules/, tests của module"
+    }
+  }
+]
