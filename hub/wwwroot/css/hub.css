@@ -845,19 +845,6 @@ details.details-box summary {
 }
 
 
-/* ─────────────────────────────────────────────────────────────
-   Phần thêm cho Task H-004: Cài đặt, Tài khoản, Bí mật
-   ───────────────────────────────────────────────────────────── */
-
-/* Thông báo (Alerts) */
-.alert {
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
 /* Bổ sung cho Task H-003: Nút Danger, Form, Alerts, Lần chạy Agent và Hộp thư */
 .btn-danger {
   background-color: var(--state-needsfix);
@@ -888,23 +875,152 @@ details.details-box summary {
 
 .alert-success {
   background-color: var(--state-merged-bg);
-  border: 1px solid var(--state-merged-border);
-  color: var(--state-merged);
   color: var(--state-merged);
   border: 1px solid var(--state-merged-border);
 }
 
 .alert-danger {
   background-color: var(--state-needsfix-bg);
-  border: 1px solid var(--state-needsfix-border);
   color: var(--state-needsfix);
+  border: 1px solid var(--state-needsfix-border);
 }
 
-.alert-warning {
-  background-color: var(--state-assigned-bg);
-  border: 1px solid var(--state-assigned-border);
-  color: var(--state-assigned);
+.form-group {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+
+.form-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-control:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.run-details {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+}
+
+.run-details-summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--primary);
+  user-select: none;
+}
+
+.run-details-content {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.details-section {
+  margin-bottom: 8px;
+}
+
+.details-section-title {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.error-box {
+  background-color: var(--state-needsfix-bg);
+  color: var(--state-needsfix);
+  border: 1px solid var(--state-needsfix-border);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.badge-success {
+  background-color: var(--state-merged-bg);
+  color: var(--state-merged);
+  border: 1px solid var(--state-merged-border);
+}
+
+.badge-danger {
+  background-color: var(--state-needsfix-bg);
+  color: var(--state-needsfix);
+  border: 1px solid var(--state-needsfix-border);
+}
+
+.inbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.15s;
+}
+
+.inbox-item:last-child {
+  border-bottom: none;
+}
+
+.inbox-item:hover {
+  background-color: var(--surface-2);
+}
+
+.inbox-item-done {
+  opacity: 0.75;
+}
+
+.inbox-item-check {
+  font-size: 16px;
+  margin-top: 1px;
+  user-select: none;
+}
+
+.inbox-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.inbox-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.inbox-item-text {
+  font-size: 13.5px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+/* ===== H-004: Cài đặt, Tài khoản, Bí mật ===== */
+/* ─────────────────────────────────────────────────────────────
+   Phần thêm cho Task H-004: Cài đặt, Tài khoản, Bí mật
+   ───────────────────────────────────────────────────────────── */
 
 /* Thẻ cài đặt & Layout */
 .settings-layout {
@@ -966,21 +1082,6 @@ details.details-box summary {
   font-weight: 600;
   color: var(--text);
   margin-bottom: 6px;
-  color: var(--state-needsfix);
-  border: 1px solid var(--state-needsfix-border);
-}
-
-.form-group {
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-label {
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--text);
 }
 
 .form-control {
@@ -992,9 +1093,6 @@ details.details-box summary {
   color: var(--text);
   font-size: 14px;
   font-family: inherit;
-  font-family: inherit;
-  font-size: 13.5px;
-  outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -1074,22 +1172,6 @@ details.details-box summary {
 .project-settings-title h3 {
   font-size: 15px;
   font-weight: 700;
-}
-
-/* Nút bổ sung */
-.btn-danger {
-  background-color: var(--state-needsfix);
-  color: #ffffff;
-}
-
-.btn-danger:hover {
-  background-color: #b91c1c;
-  text-decoration: none;
-}
-
-.btn-sm {
-  padding: 4px 10px;
-  font-size: 12px;
 }
 
 /* Tài khoản (Accounts) */
@@ -1285,103 +1367,5 @@ details.details-box summary {
 
 .htmx-request.htmx-indicator {
   opacity: 1;
-.run-details {
-  background-color: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 6px 10px;
 }
 
-.run-details-summary {
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 12.5px;
-  color: var(--primary);
-  user-select: none;
-}
-
-.run-details-content {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: 13px;
-}
-
-.details-section {
-  margin-bottom: 8px;
-}
-
-.details-section-title {
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.error-box {
-  background-color: var(--state-needsfix-bg);
-  color: var(--state-needsfix);
-  border: 1px solid var(--state-needsfix-border);
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-}
-
-.badge-success {
-  background-color: var(--state-merged-bg);
-  color: var(--state-merged);
-  border: 1px solid var(--state-merged-border);
-}
-
-.badge-danger {
-  background-color: var(--state-needsfix-bg);
-  color: var(--state-needsfix);
-  border: 1px solid var(--state-needsfix-border);
-}
-
-.inbox-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  transition: background-color 0.15s;
-}
-
-.inbox-item:last-child {
-  border-bottom: none;
-}
-
-.inbox-item:hover {
-  background-color: var(--surface-2);
-}
-
-.inbox-item-done {
-  opacity: 0.75;
-}
-
-.inbox-item-check {
-  font-size: 16px;
-  margin-top: 1px;
-  user-select: none;
-}
-
-.inbox-item-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.inbox-item-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.inbox-item-text {
-  font-size: 13.5px;
-  color: var(--text);
-  word-break: break-word;
-}
