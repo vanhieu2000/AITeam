@@ -85,4 +85,15 @@ Passed!  - Failed:     0, Passed:    60, Skipped:     0, Total:    60, Duration:
 - Không có vấn đề tồn đọng; toàn bộ mục tiêu và tiêu chí hoàn thành đều đã được kiểm tra thực tế và xác minh tự động bằng unit test.
 
 ## Review (Claude)
-<!-- Claude điền -->
+**Vòng 1 — ĐẠT** (20/10/2026)
+
+Đã kiểm tra:
+- Diff đúng phạm vi (Pages, partial, CSS, DevData, test). Không sửa Services / hợp đồng.
+- Build 0 warning; test 47 → 60. Không có `Html.Raw`.
+- Nút Dừng:
+  - POST có antiforgery (Razor Pages tự kiểm + kiểm thêm thủ công);
+  - dịch vụ chỉ dừng tiến trình `agy.exe` (H-001).
+- Chạy `HUB_FAKE=1`, mở trình duyệt:
+  - trang Agent (bảng đang chạy, tự làm mới, 20 lần chạy gần nhất có xem phản hồi) đúng thiết kế;
+  - trang Hộp thư (form gửi, danh sách Chưa xử lý / Đã nhận) đúng thiết kế;
+  - thanh bên lấy dự án động, có ChinaAndroidToolbox.
