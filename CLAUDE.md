@@ -28,10 +28,22 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - Đã có trong `projects.json`: `git pull` trước khi làm.
    - Chưa có: chạy `team.ps1 add-project` (dự án mới `-New`, có trên GitHub `-Repo`, có trên máy `-Path`). Lệnh này tự tạo kho GitHub **private**, `AGENTS.md`, `tasks/`, `.gitignore`.
    - Sau đó điền `build` / `test` / `stack` / `areas` trong `projects.json`.
-3. **Ý tưởng + kế hoạch**
+3. **Ý tưởng + THIẾT KẾ (chỉ Claude làm, bắt buộc trước khi giao)**
+   Chủ dự án chỉ tin Claude lên ý tưởng và thiết kế. Agent CHỈ hiện thực hóa thiết kế đã có, không tự nghĩ sản phẩm.
    - Đọc code và tài liệu hiện có.
-   - Viết kế hoạch vào `tasks/README.md` (mục "Kế hoạch / hàng chờ"). Dự án lớn thì viết thêm `docs/PLAN.md`.
+   - Viết `docs/DESIGN.md` (dự án mới) hoặc `docs/design/<tính-năng>.md` (tính năng mới), gồm:
+     - mục tiêu, người dùng;
+     - luồng sử dụng;
+     - màn hình: mô tả bố cục từng vùng, nút, trạng thái rỗng / lỗi; nếu cần thì kèm mockup HTML tĩnh trong `docs/design/`;
+     - mô hình dữ liệu / bảng CSDL;
+     - API / hợp đồng vào-ra;
+     - quy ước code;
+     - rủi ro.
+   - Quyết định kỹ thuật (stack, thư viện, cấu trúc thư mục) ghi rõ trong thiết kế. Agent không tự đổi.
+   - Thiết kế lớn, hoặc có lựa chọn sản phẩm quan trọng: tóm tắt cho chủ dự án duyệt trước. Thay đổi nhỏ: tự quyết.
+   - Viết kế hoạch vào `tasks/README.md` (mục "Kế hoạch / hàng chờ").
 4. **Chia task**
+   - Mỗi task trỏ tới phần thiết kế tương ứng: "làm theo docs/DESIGN.md mục X". Review đối chiếu với thiết kế.
    - Mỗi task nhỏ, làm xong trong 1 lần chạy (khoảng ≤ 1 giờ agent).
    - Mỗi task phải có phạm vi file rõ ràng và tiêu chí hoàn thành kiểm chứng được (lệnh, test, hành vi cụ thể).
    - Giao **A và B ở vùng code khác nhau** theo `areas`, để chạy song song không xung đột. Task phụ thuộc nhau thì giao tuần tự.
@@ -68,6 +80,32 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - còn rủi ro gì;
    - việc tiếp theo.
 
+## Việc chỉ đọc: ý kiến thứ hai, phân tích, nghiên cứu
+- `team.ps1 ask -Project X -Prompt "…" [-Model "…"]`: agy chạy `--sandbox` trong repo, không được sửa file. Lệnh tự kiểm tra `git status` trước và sau.
+- Dùng cho:
+  - review độc lập bằng model khác (Gemini) trước khi merge thay đổi lớn;
+  - kiểm tra bảo mật, phụ thuộc;
+  - tìm hiểu repo lạ vừa clone về.
+- Chia nhỏ thay vì một việc to: 2–4 việc hẹp chạy song song (ví dụ đúng đắn / hiệu năng / bảo mật). Nhanh hơn, kết quả về dần. Tự tổng hợp lại.
+- Kết quả của agent CHƯA được tin: tự kiểm chứng từng phát hiện trước khi báo người dùng.
+- `team.ps1 models` liệt kê model. Đặt model mặc định trong `team.json` → `agy.model`. Việc nặng dùng bản "High", việc thường dùng "Medium".
+
+## Bảo mật (bắt buộc)
+- Tài khoản, mật khẩu, khóa API, chuỗi kết nối CSDL… CHỈ nằm ở:
+  - **kho cục bộ**: `team.ps1 secret-set -Name X`, người dùng tự gõ trong terminal; lưu DPAPI tại `%USERPROFILE%\.aiteam\vault.json`, ngoài mọi repo;
+  - **`.env.local`** của dự án (đã bị gitignore), tạo bằng `team.ps1 secret-env`;
+  - hoặc **mã hóa trong cấu hình của ứng dụng** (ví dụ DPAPI `secrets.dat` của HDVTool).
+- KHÔNG BAO GIỜ:
+  - viết bí mật vào code, tài liệu, file task, prompt cho agent, log;
+  - hiển thị giá trị bí mật trong trả lời.
+  - Code phải đọc bí mật từ biến môi trường / `.env.local` / kho mã hóa; repo chỉ có `.env.example` với giá trị giả.
+- Mọi repo có **pre-commit hook** `tools/secret-scan.ps1` (cài bằng `team.ps1 install-hooks`). Agent commit có bí mật sẽ bị chặn.
+- Trước khi merge, chạy thêm:
+  ```
+  powershell -File <AITeam>\tools\secret-scan.ps1 -Repo <dự án> -Range origin/main..origin/<nhánh>
+  ```
+- Người dùng cần nhập bí mật: đưa họ lệnh `secret-set` để tự gõ. Không bao giờ yêu cầu họ dán bí mật vào chat.
+
 ## Git (bắt buộc)
 - Mọi dự án nằm trên GitHub **private** của `vanhieu2000`. Không bao giờ public.
 - Cuối mỗi đợt việc: commit + push, không cần hỏi.
@@ -87,3 +125,8 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - agy in trạng thái ra stderr → chạy bằng `Start-Process` có chuyển hướng output, không gọi trực tiếp.
 - agy mặc định hay dừng để xin duyệt kế hoạch → prompt đã ghi "kế hoạch coi như đã duyệt". Nếu agent vẫn dừng thì `-Resume` kèm câu duyệt.
 - Script `.ps1` phải lưu UTF-8 **có BOM** (PowerShell 5.1 đọc sai tiếng Việt nếu không có).
+- agy treo vĩnh viễn nếu stdin là pipe đang mở → `team.ps1` luôn đưa stdin là file rỗng.
+- Chế độ in kết quả (print) của agy im lặng tới khi xong. Log rỗng giữa chừng là bình thường; việc lớn mất 10–30 phút.
+- Agent hay viết test có nhánh `return` sớm khiến test luôn pass → review phải đọc kỹ test, không chỉ nhìn "pass".
+- Agent hay sửa lấn sang vùng của agent khác để hết warning → chấp nhận nếu nhỏ, nhưng phải kiểm tra xung đột khi merge.
+- Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).

@@ -13,6 +13,12 @@
   .\team.ps1 status [-Project Ten]                  Agent đang chạy, nhánh, kết quả lần chạy gần nhất
   .\team.ps1 cleanup -Project Ten -Task T-003       Xóa worktree sau khi đã merge
   .\team.ps1 switch-account                         Mở agy để /logout và đăng nhập tài khoản Antigravity khác
+  .\team.ps1 ask -Project Ten -Prompt "..."          Việc CHỈ ĐỌC (review, phân tích, ý kiến thứ hai) — agy chạy --sandbox, không sửa file
+  .\team.ps1 models                                 Danh sách model Antigravity dùng được
+  .\team.ps1 install-hooks [-Project Ten]           Cài git hook chặn commit có bí mật (mặc định: mọi dự án)
+  .\team.ps1 secret-set -Name DB_PASSWORD           Lưu bí mật vào kho CỤC BỘ (DPAPI, chỉ user Windows này giải mã được)
+  .\team.ps1 secret-list | secret-remove -Name X    Xem tên (không xem giá trị) / xóa bí mật
+  .\team.ps1 secret-env -Project Ten -Names A,B     Ghi .env.local (đã bị .gitignore) cho dự án chạy thử trên máy
 #>
 param(
     [Parameter(Position = 0)] [string] $Command = "help",
@@ -27,7 +33,11 @@ param(
     [string] $Test = "",
     [string] $Stack = "",
     [string] $Title = "",
-    [string] $Agent = "A"
+    [string] $Agent = "A",
+    [string] $Name = "",
+    [string[]] $Names = @(),
+    [string] $Prompt = "",
+    [string] $Model = ""
 )
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
@@ -101,7 +111,7 @@ function Invoke-Doctor {
         Say "  [OK] Antigravity CLI $ver ($($cfg.agy.exe))" Green
         $tmp = Join-Path $env:TEMP "agy-ping.json"
         $proc = Start-Process $cfg.agy.exe -ArgumentList '-p "Tra loi dung mot chu: OK" --output-format json --print-timeout 2m' `
-            -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tmp -RedirectStandardError "$tmp.err"
+            -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) -RedirectStandardOutput $tmp -RedirectStandardError "$tmp.err"
         $out = (Get-Content $tmp -Raw -ErrorAction SilentlyContinue) + (Get-Content "$tmp.err" -Raw -ErrorAction SilentlyContinue)
         if ($out -match '"status":"SUCCESS"') { Say "  [OK] Antigravity đã đăng nhập, chạy ngầm được" Green }
         elseif ($out -match "auth|login|credential") { Say "  [CHƯA ĐĂNG NHẬP] Antigravity: chạy  .\team.ps1 switch-account" Yellow; $ok = $false }
@@ -135,7 +145,7 @@ function Invoke-Setup {
 Khi người dùng giao việc cho "team" / "đội" / nhắc tới Antigravity, agent, dự án mới, hoặc làm việc trong dự án có trong
 $Root\projects.json: ĐỌC VÀ LÀM THEO $playbook (bạn là quản lý team, điều phối bằng $Root\team.ps1).
 "@
-    $current = if (Test-Path $claudeMd) { Get-Content $claudeMd -Raw } else { "" }
+    $current = if (Test-Path $claudeMd) { [IO.File]::ReadAllText($claudeMd) } else { "" }
     if ($current -notmatch [regex]::Escape("AITeam: quy trình team")) {
         [IO.File]::AppendAllText($claudeMd, $block, $Utf8)
         Say "Đã gắn quy trình team vào $claudeMd" Green
@@ -197,6 +207,7 @@ function Invoke-AddProject {
         areas = [pscustomobject]@{ A = "nền tảng / hạ tầng"; B = "tính năng" }
     })
     Save-Projects $list
+    Install-Hook $target
     Say "Đã thêm dự án $Project vào projects.json" Green
 }
 
@@ -266,7 +277,7 @@ Nếu bị chặn thật sự, ghi lý do vào báo cáo, commit, push rồi d�
     Say "[$(Get-Date -Format HH:mm:ss)] $($r.Info.name) $Task → $($dev.name), nhánh $branch, thư mục $work" Cyan
     # Start-Process: agy in trạng thái ra stderr; gọi trực tiếp thì PowerShell 5.1 coi là lỗi và dừng script.
     $err = $log -replace '\.json$', '.stderr.txt'
-    $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru `
+    $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
         -RedirectStandardOutput $log -RedirectStandardError $err
     $all = (Get-Content $log -Raw -ErrorAction SilentlyContinue) + (Get-Content $err -Raw -ErrorAction SilentlyContinue)
     Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
@@ -311,8 +322,145 @@ function Invoke-SwitchAccount {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "& '$($cfg.agy.exe)'"
 }
 
+# ───────────────────────── Việc chỉ đọc, model ─────────────────────────
+
+function Get-EmptyInput {
+    # agy treo vĩnh viễn nếu stdin là pipe đang mở → luôn đưa stdin là một file rỗng.
+    $f = Join-Path $env:TEMP "aiteam-empty-stdin.txt"
+    if (-not (Test-Path $f)) { [IO.File]::WriteAllText($f, "") }
+    return $f
+}
+
+function Invoke-Ask {
+    $cfg = Get-Config
+    $r = Resolve-Project $Project
+    if (-not $Prompt) { throw "Thiếu -Prompt" }
+    New-Item -ItemType Directory -Force $r.Logs | Out-Null
+    $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $promptFile = Join-Path $r.Logs "ask-$stamp.prompt.md"
+    $full = @"
+VIỆC CHỈ ĐỌC trong dự án $($r.Info.name) ($($r.Path)). TUYỆT ĐỐI KHÔNG sửa, tạo hay xóa file nào; không chạy lệnh làm thay đổi hệ thống.
+Trả lời bằng tiếng Việt, kết thúc bằng báo cáo markdown: Phát hiện / Mức độ / File:dòng / Đề xuất.
+
+$Prompt
+"@
+    [IO.File]::WriteAllText($promptFile, $full, $Utf8)
+    $log = Join-Path $r.Logs "ask-$stamp.json"
+    $argLine = "-p `"Doc file $promptFile (UTF-8) va lam dung theo do.`" --output-format json --print-timeout 0 --sandbox --dangerously-skip-permissions --add-dir `"$($r.Logs)`""
+    $m = if ($Model) { $Model } else { $cfg.agy.model }
+    if ($m) { $argLine += " --model `"$m`"" }
+    $before = git -C $r.Path status --porcelain
+    Start-Process $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $r.Path -NoNewWindow -Wait `
+        -RedirectStandardInput (Get-EmptyInput) -RedirectStandardOutput $log -RedirectStandardError "$log.err" | Out-Null
+    $after = git -C $r.Path status --porcelain
+    if ("$before" -ne "$after") { Say "CẢNH BÁO: việc chỉ đọc đã làm thay đổi file trong $($r.Path)! Kiểm tra git status." Red }
+    $resp = [regex]::Match("$(Get-Content $log -Raw -Encoding UTF8)", '"response":"((?:[^"\\]|\\.)*)"').Groups[1].Value
+    if ($resp) { ('"' + $resp + '"' | ConvertFrom-Json) } else { Get-Content $log, "$log.err" -ErrorAction SilentlyContinue }
+    Say "Log: $log" DarkGray
+}
+
+function Invoke-Models { & (Get-Config).agy.exe models }
+
+# ───────────────────────── Bảo mật: hook + kho bí mật cục bộ ─────────────────────────
+
+function Install-Hook([string]$repoPath) {
+    $common = git -C $repoPath rev-parse --git-common-dir
+    if (-not [IO.Path]::IsPathRooted($common)) { $common = Join-Path $repoPath $common }
+    $hooks = Join-Path $common "hooks"
+    New-Item -ItemType Directory -Force $hooks | Out-Null
+    $scan = (Join-Path $Root "tools\secret-scan.ps1") -replace '\\', '/'
+    $hook = "#!/bin/sh`n# AITeam: chặn commit có bí mật`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$scan`" -Repo `"`$(git rev-parse --show-toplevel)`"`n"
+    [IO.File]::WriteAllText((Join-Path $hooks "pre-commit"), $hook.Replace("`r", ""), $Utf8)
+    Say "  [OK] Hook chặn bí mật: $repoPath" Green
+}
+
+function Invoke-InstallHooks {
+    foreach ($p in Get-Projects | Where-Object { -not $Project -or $_.name -eq $Project }) {
+        $r = Resolve-Project $p.name
+        if (Test-Path (Join-Path $r.Path ".git")) { Install-Hook $r.Path }
+    }
+    if (Test-Path (Join-Path $Root ".git")) { Install-Hook $Root }
+}
+
+$VaultFile = Join-Path $env:USERPROFILE ".aiteam\vault.json"
+$VaultEntropy = [Text.Encoding]::UTF8.GetBytes("AITeam.vault.v1")
+
+function Read-Vault {
+    if (Test-Path $VaultFile) { Get-Content $VaultFile -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+}
+
+function Write-Vault($vault) {
+    New-Item -ItemType Directory -Force (Split-Path $VaultFile) | Out-Null
+    [IO.File]::WriteAllText($VaultFile, ($vault | ConvertTo-Json), $Utf8)
+}
+
+function Protect-Text([string]$plain) {
+    Add-Type -AssemblyName System.Security
+    $bytes = [Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes($plain), $VaultEntropy, "CurrentUser")
+    [Convert]::ToBase64String($bytes)
+}
+
+function Unprotect-Text([string]$cipher) {
+    Add-Type -AssemblyName System.Security
+    $bytes = [Security.Cryptography.ProtectedData]::Unprotect([Convert]::FromBase64String($cipher), $VaultEntropy, "CurrentUser")
+    [Text.Encoding]::UTF8.GetString($bytes)
+}
+
+function Invoke-SecretSet {
+    if ($Name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') { throw "Tên bí mật dạng CHU_HOA_GACH_DUOI, ví dụ DB_PASSWORD" }
+    $secure = Read-Host "Nhập giá trị cho $Name (không hiện trên màn hình)" -AsSecureString
+    $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
+    if (-not $plain) { throw "Giá trị rỗng" }
+    $vault = Read-Vault
+    $vault | Add-Member -NotePropertyName $Name -NotePropertyValue (Protect-Text $plain) -Force
+    Write-Vault $vault
+    Say "Đã lưu $Name vào kho cục bộ $VaultFile (mã hóa DPAPI, không nằm trong repo nào)." Green
+}
+
+function Invoke-SecretList {
+    $names = (Read-Vault).PSObject.Properties.Name
+    if (-not $names) { Say "Kho bí mật trống." } else { Say "Bí mật đã lưu (chỉ hiện tên): $($names -join ', ')" }
+}
+
+function Invoke-SecretRemove {
+    $vault = Read-Vault
+    $vault.PSObject.Properties.Remove($Name)
+    Write-Vault $vault
+    Say "Đã xóa $Name" Green
+}
+
+function Invoke-SecretEnv {
+    $r = Resolve-Project $Project
+    $target = Join-Path $r.Path ".env.local"
+    git -C $r.Path check-ignore -q ".env.local"
+    if ($LASTEXITCODE -ne 0) { throw ".env.local CHƯA bị .gitignore trong $($r.Path) — thêm dòng '.env.*' vào .gitignore trước." }
+    $vault = Read-Vault
+    $lines = foreach ($n in $Names) {
+        $c = $vault.$n
+        if (-not $c) { throw "Không có bí mật $n (team.ps1 secret-list)" }
+        "$n=$(Unprotect-Text $c)"
+    }
+    [IO.File]::WriteAllText($target, ($lines -join "`r`n") + "`r`n", $Utf8)
+    Say "Đã ghi $($Names.Count) bí mật vào $target (bị .gitignore, chỉ dùng trên máy này)." Green
+}
+
+function Install-Skill {
+    $dir = Join-Path $env:USERPROFILE ".claude\skills\aiteam"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $text = (Get-Content (Join-Path $Root "skill\SKILL.md") -Raw -Encoding UTF8).Replace("{{AITEAM}}", $Root)
+    [IO.File]::WriteAllText((Join-Path $dir "SKILL.md"), $text, $Utf8)
+    Say "  [OK] Skill 'aiteam' cho Claude: $dir" Green
+}
+
 switch ($Command) {
-    "setup" { Invoke-Setup }
+    "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
+    "ask" { Invoke-Ask }
+    "models" { Invoke-Models }
+    "install-hooks" { Invoke-InstallHooks }
+    "secret-set" { Invoke-SecretSet }
+    "secret-list" { Invoke-SecretList }
+    "secret-remove" { Invoke-SecretRemove }
+    "secret-env" { Invoke-SecretEnv }
     "doctor" { Invoke-Doctor }
     "add-project" { Invoke-AddProject }
     "new-task" { Invoke-NewTask }
