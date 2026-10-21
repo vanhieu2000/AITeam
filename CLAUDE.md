@@ -134,4 +134,6 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - App chỉ chạy 1 bản (mutex, ví dụ HDV Tool): review giao diện phải kiểm tra không có bản thật đang mở. Nếu có thì hỏi người dùng đóng giúp; KHÔNG tự tắt cưỡng bức. Cửa sổ chụp được có thể là bản thật của người dùng. Khi đóng app thử, chỉ dừng tiến trình có đường dẫn trong thư mục worktree.
 - Máy mới lấy dự án đã có về: `add-project -Repo` chỉ clone, không bao giờ `git init`, và giữ nguyên mục trong `projects.json`. (Bản cũ từng git init lại ChinaAndroidToolbox và xóa workDir/build/test/areas.) Đường dẫn riêng từng máy để trong `team.local.json` (`paths`, `workDirs`), không sửa `projects.json`.
 - Agent hay làm mất BOM UTF-8 của file .cs / .json → kiểm tra BOM khi review.
+- Worktree của agent dùng chung `.git/config` với repo chính: agent tự đặt tên commit làm lẫn với HieuDV. `assign` bật `extensions.worktreeConfig`, đặt tên agent riêng cho worktree, giữ HieuDV ở repo chính và tự trả lại nếu agent ghi đè.
+- Cảnh báo hết hạn mức chỉ khi lần chạy KHÔNG báo `"status":"SUCCESS"`; "429" / "quota" phải đứng riêng (trước đây khớp nhầm số token "42953").
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).

@@ -37,6 +37,7 @@ Chủ dự án: HieuDV.
 - Đang chạy tự động thì không có ai trả lời câu hỏi. Tự quyết hợp lý theo tài liệu và ghi lại lý do trong báo cáo.
 
 ## Tuyệt đối không
+- Không chạy `git config` (tên / email commit đã được đặt sẵn cho thư mục làm việc của bạn; sửa sẽ lan sang repo của chủ dự án).
 - Không đưa lên git: mật khẩu, khóa API, token, khóa ký, file `.pem` / `.pfx` / `.lic`, file `.env` thật, dữ liệu cá nhân.
 - Không làm thay đổi máy thật khi test:
   - không tắt service, không gỡ phần mềm;

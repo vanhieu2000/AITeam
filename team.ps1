@@ -275,6 +275,8 @@ function Invoke-Assign {
     }
 
     $dev = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
+    $null = Set-ManagerIdentity $r.Path $cfg.github.owner
+    Set-AgentIdentity $r.Path $work $dev $r.Info.name
     $prompt = @"
 Bạn là $($dev.name) (chuyên: $($dev.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.
 Thư mục hiện tại là bản làm việc riêng của bạn, đã ở đúng nhánh $branch.
@@ -307,13 +309,41 @@ Nếu bị chặn thật sự, ghi lý do vào báo cáo, commit, push rồi d�
     $err = $log -replace '\.json$', '.stderr.txt'
     $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
         -RedirectStandardOutput $log -RedirectStandardError $err
-    $all = (Get-Content $log -Raw -ErrorAction SilentlyContinue) + (Get-Content $err -Raw -ErrorAction SilentlyContinue)
+    $logText = Get-Content $log -Raw -ErrorAction SilentlyContinue
+    $errText = Get-Content $err -Raw -ErrorAction SilentlyContinue
     Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
-    if ($all -match 'RESOURCE_EXHAUSTED|quota|rate.?limit|429') {
+    if (Test-QuotaExhausted $logText $errText) {
         Say "HẾT HẠN MỨC tài khoản Antigravity hiện tại → chạy .\team.ps1 switch-account rồi giao lại với -Resume" Yellow
+    }
+    if (Set-ManagerIdentity $r.Path $cfg.github.owner) {
+        Say "Agent đã ghi đè tên commit chung của repo → đã trả lại HieuDV (agent chỉ dùng tên riêng của worktree)." Yellow
     }
     $pushed = git -C $r.Path ls-remote --heads origin $branch
     Say ("Nhánh trên GitHub: " + $(if ($pushed) { "đã push" } else { "CHƯA push" }))
+}
+
+# Agent hết hạn mức? Lần chạy báo SUCCESS thì không. Còn lại dò từ khóa, "429"/"quota" phải đứng riêng
+# (trước đây "429" khớp nhầm vào số token như "thinking_tokens":42953).
+function Test-QuotaExhausted([string]$logText, [string]$errText) {
+    if ($logText -match '"status"\s*:\s*"SUCCESS"') { return $false }
+    return ("$logText`n$errText") -match '(?i)RESOURCE_EXHAUSTED|\bquota\b|rate.?limit|\b429\b'
+}
+
+# Repo chính luôn commit bằng tên chủ dự án. Đặt lại khi chưa có hoặc bị agent ghi đè (tên "Agent …").
+# Trả về $true nếu đã phải sửa.
+function Set-ManagerIdentity([string]$repoPath, [string]$owner) {
+    $name = git -C $repoPath config --local user.name 2>$null
+    if ($name -and $name -notmatch '^Agent\b') { return $false }
+    git -C $repoPath config --local user.name "HieuDV"
+    git -C $repoPath config --local user.email "$owner@users.noreply.github.com"
+    return [bool]$name
+}
+
+# Worktree của agent dùng chung .git/config với repo chính → đặt tên agent ở cấu hình riêng của worktree.
+function Set-AgentIdentity([string]$repoPath, [string]$work, $dev, [string]$project) {
+    git -C $repoPath config extensions.worktreeConfig true
+    git -C $work config --worktree user.name $dev.name
+    git -C $work config --worktree user.email ("agent-{0}@{1}.local" -f $dev.id.ToLower(), ($project.ToLower() -replace '[^a-z0-9]+', '-'))
 }
 
 function Invoke-Status {
