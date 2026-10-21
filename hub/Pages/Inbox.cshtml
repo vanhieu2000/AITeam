@@ -1,160 +1,138 @@
 @page
 @model AITeam.Hub.Pages.InboxModel
 @{
-    ViewData["Title"] = "Hộp thư yêu cầu";
+    ViewData["Title"] = "Hộp thư";
 }
-
-<div class="breadcrumb">
-    <a href="/">Tổng quan</a>
-    <span>›</span>
-    <span>Hộp thư</span>
-</div>
-
-<div class="page-header">
-    <div>
-        <h1 class="page-title">📬 Hộp thư yêu cầu cho team AI</h1>
-        <div class="page-subtitle">Gửi yêu cầu hoặc task mới vào inbox.md để Claude xem xét, lên kế hoạch và phân công</div>
-    </div>
-</div>
 
 @if (!string.IsNullOrEmpty(Model.Message))
 {
-    <div class="alert alert-success">
-        <span style="font-weight: 700;">✓</span>
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(46, 160, 67, 0.15); border: 1px solid var(--ok); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--ok); margin-right: 8px;">✓</span>
         <span>@Model.Message</span>
     </div>
 }
 
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
-    <div class="alert alert-danger">
-        <span style="font-weight: 700;">✗</span>
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--err); margin-right: 8px;">✗</span>
         <span>@Model.ErrorMessage</span>
     </div>
 }
 
-<div style="display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start;">
-    <!-- Form gửi yêu cầu -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">✍️ Gửi yêu cầu mới</div>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                @Html.AntiForgeryToken()
-
-                <div class="form-group">
-                    <label class="form-label" for="projectSelect">Dự án áp dụng</label>
-                    <select id="projectSelect" asp-for="Project" class="form-control">
-                        @foreach (var p in Model.Projects)
-                        {
-                            <option value="@p.Name">📦 @p.Name</option>
-                        }
-                        <option value="Dự án mới">✨ Dự án mới</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="textContent">Nội dung yêu cầu</label>
-                    <textarea id="textContent" asp-for="Text" class="form-control" rows="5" placeholder="Mô tả công việc, tính năng, hoặc sửa lỗi cần giao cho team AI..."></textarea>
-                    <span asp-validation-for="Text" style="color: var(--state-needsfix); font-size: 12.5px;"></span>
-                </div>
-
-                <div style="margin-top: 18px;">
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        ✉️ Gửi vào hộp thư
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Danh sách yêu cầu -->
-    <div style="display: flex; flex-direction: column; gap: 20px;">
-        <!-- Chưa xử lý ([ ]) trước -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span>🟡 Chưa xử lý</span>
-                    <span style="font-size: 13px; font-weight: normal; color: var(--text-muted);">(@Model.PendingItems.Count)</span>
-                </div>
-                <span style="font-size: 11.5px; color: var(--text-muted);">Dòng [ ] trong inbox.md</span>
+<section class="screen on" id="s-inbox">
+    <div class="grid" style="grid-template-columns: 420px 1fr; gap: 14px; align-items: start;">
+        <!-- Cột trái: Form gửi yêu cầu -->
+        <div class="panel">
+            <div class="hd">
+                <span>Yêu cầu mới</span>
+                <span class="info" title="Ghi vào inbox.md, Claude đọc đầu mỗi phiên rồi lập kế hoạch và giao việc.">i</span>
             </div>
-            <div class="card-body" style="padding: 0;">
+            <div class="bd grid" style="gap: 10px;">
+                <form method="post" id="inboxForm">
+                    @Html.AntiForgeryToken()
+                    <div class="field" style="margin-bottom: 10px;">
+                        <label>Dự án</label>
+                        <select class="inp" asp-for="Project">
+                            @foreach (var p in Model.Projects)
+                            {
+                                <option value="@p.Name">@p.Name</option>
+                            }
+                            <option value="Dự án mới">+ Dự án mới</option>
+                        </select>
+                    </div>
+                    <div class="field" style="margin-bottom: 10px;">
+                        <label>Nội dung</label>
+                        <textarea class="inp" asp-for="Text" rows="7" placeholder="Mô tả việc cần làm…" required></textarea>
+                        <span asp-validation-for="Text" style="color: var(--err); font-size: 12px;"></span>
+                    </div>
+                    <div class="row" style="justify-content: flex-end;">
+                        <button type="submit" class="btn pri">Gửi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cột phải: Tabs Chưa xử lý / Đã nhận -->
+        <div class="panel">
+            <div class="tabs" style="padding: 0 10px; margin: 0;">
+                <span class="tab on" id="tab-btn-pending" onclick="switchInboxTab('pending')">
+                    Chưa xử lý<span class="c">@Model.PendingItems.Count</span>
+                </span>
+                <span class="tab" id="tab-btn-done" onclick="switchInboxTab('done')">
+                    Đã nhận<span class="c">@Model.DoneItems.Count</span>
+                </span>
+            </div>
+
+            <!-- Tab Chưa xử lý -->
+            <div id="tab-content-pending" style="max-height: 640px; overflow-y: auto;">
                 @if (Model.PendingItems.Count == 0)
                 {
-                    <div style="color: var(--text-muted); font-size: 13.5px; text-align: center; padding: 24px;">
-                        Không có yêu cầu nào đang chờ xử lý.
-                    </div>
+                    <div class="empty" style="padding: 40px 0;">Không có yêu cầu nào đang chờ</div>
                 }
                 else
                 {
-                    <div>
-                        @foreach (var item in Model.PendingItems)
-                        {
-                            <div class="inbox-item">
-                                <div class="inbox-item-check" title="Chưa xử lý">🟡</div>
-                                <div class="inbox-item-content">
-                                    <div class="inbox-item-header">
-                                        <span class="badge badge-assigned">@item.Project</span>
-                                        @if (item.Time.HasValue)
-                                        {
-                                            <span>@item.Time.Value.ToString("yyyy-MM-dd HH:mm")</span>
-                                        }
-                                        <span style="color: var(--text-muted); font-size: 11px;">#Dòng @item.LineNumber</span>
-                                    </div>
-                                    <div class="inbox-item-text">
-                                        @AITeam.Hub.Pages.Shared.MarkdownRenderer.RenderInlineSafe(item.Text)
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                    <table>
+                        <tbody>
+                            @foreach (var item in Model.PendingItems)
+                            {
+                                <tr>
+                                    <td style="width: 20px;"><span class="dot run"></span></td>
+                                    <td style="width: 140px;">
+                                        <b>@item.Project</b>
+                                        <div class="muted" style="font-size: 11.5px;">
+                                            @(item.Time.HasValue ? item.Time.Value.ToString("HH:mm dd/MM") : $"#Dòng {item.LineNumber}")
+                                        </div>
+                                    </td>
+                                    <td style="white-space: pre-wrap; word-break: break-word;">
+                                        @item.Text
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
             </div>
-        </div>
 
-        <!-- Đã nhận ([x]) sau -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span>✅ Đã nhận việc</span>
-                    <span style="font-size: 13px; font-weight: normal; color: var(--text-muted);">(@Model.DoneItems.Count)</span>
-                </div>
-                <span style="font-size: 11.5px; color: var(--text-muted);">Dòng [x] trong inbox.md</span>
-            </div>
-            <div class="card-body" style="padding: 0;">
+            <!-- Tab Đã nhận -->
+            <div id="tab-content-done" style="display: none; max-height: 640px; overflow-y: auto;">
                 @if (Model.DoneItems.Count == 0)
                 {
-                    <div style="color: var(--text-muted); font-size: 13.5px; text-align: center; padding: 24px;">
-                        Chưa có yêu cầu nào đã nhận.
-                    </div>
+                    <div class="empty" style="padding: 40px 0;">Chưa có yêu cầu nào đã nhận</div>
                 }
                 else
                 {
-                    <div>
-                        @foreach (var item in Model.DoneItems)
-                        {
-                            <div class="inbox-item inbox-item-done">
-                                <div class="inbox-item-check" title="Đã nhận việc">✅</div>
-                                <div class="inbox-item-content">
-                                    <div class="inbox-item-header">
-                                        <span class="badge badge-merged">@item.Project</span>
-                                        @if (item.Time.HasValue)
-                                        {
-                                            <span>@item.Time.Value.ToString("yyyy-MM-dd HH:mm")</span>
-                                        }
-                                        <span style="color: var(--text-muted); font-size: 11px;">#Dòng @item.LineNumber</span>
-                                    </div>
-                                    <div class="inbox-item-text">
-                                        @AITeam.Hub.Pages.Shared.MarkdownRenderer.RenderInlineSafe(item.Text)
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                    <table>
+                        <tbody>
+                            @foreach (var item in Model.DoneItems)
+                            {
+                                <tr>
+                                    <td style="width: 20px;"><span class="dot ok"></span></td>
+                                    <td style="width: 140px;">
+                                        <b class="muted">@item.Project</b>
+                                        <div class="muted" style="font-size: 11.5px;">
+                                            @(item.Time.HasValue ? item.Time.Value.ToString("HH:mm dd/MM") : $"#Dòng {item.LineNumber}")
+                                        </div>
+                                    </td>
+                                    <td class="muted" style="white-space: pre-wrap; word-break: break-word;">
+                                        @item.Text
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<script>
+    function switchInboxTab(tab) {
+        var isPending = tab === 'pending';
+        document.getElementById('tab-btn-pending').classList.toggle('on', isPending);
+        document.getElementById('tab-btn-done').classList.toggle('on', !isPending);
+        document.getElementById('tab-content-pending').style.display = isPending ? 'block' : 'none';
+        document.getElementById('tab-content-done').style.display = !isPending ? 'block' : 'none';
+    }
+</script>
