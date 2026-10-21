@@ -44,5 +44,13 @@
 | 19:51 | Giao lại thất bại cả 2 | [CK] (công cụ) `-Task` gõ tên đầy đủ khác lần trước ⇒ `team.ps1` tìm thư mục làm việc khác ⇒ lỗi. Đã sửa `team.ps1`: tự dùng lại thư mục của nhánh |
 | 19:52 | Giao lại C-011 (Lan) vòng 3, T-005 (Minh) vòng 3 | Tiếp tục hội thoại cũ, có chốt chặn treo |
 
+| 20:32–20:37 | T-005 (Minh) lượt 4 xong, cổng kiểm tra ĐẠT | 245 test / 18 giây, hết treo |
+| 20:41 | C-011 (Lan) cổng kiểm tra KHÔNG ĐẠT ⇒ tự giao lại | 648 test pass nhưng 1037/600 dòng + csproj ngoài phạm vi. [TK] (phạm vi) ngân sách Claude ước thấp, phạm vi thiếu csproj |
+| 20:45 | Chủ dự án góp ý trang Task trên Hub (trùng lặp, tiêu chí không tích, sai agent) | Claude tự sửa Hub (~120 dòng): 3 tab, đọc tiêu chí từ worktree, lấy agent/nhánh từ file task |
+| 20:55 | Review T-005: ĐẠT, merge, clone sạch 245/245 | Sót thẻ "Hệ thống" bị cắt ⇒ tách task nhỏ T-007 thay vì vòng 4 |
+| 21:00 | Giao T-007 (Minh) | Ngân sách ~80 dòng |
+| 21:02 | Dừng lượt tự giao lại của Lan (đang cắt code cho vừa ngân sách); review C-011: ĐẠT, merge, clone sạch 648/648 | Cải tiến: vượt ngân sách chỉ cảnh báo, Claude quyết |
+| 21:08 | Ghi đánh giá Minh / Lan vào hồ sơ + lưu ý riêng; viết `BAN-GIAO.md` | |
+
 ## 4. Đánh giá sau khi xong (Claude)
 (điền khi xong)

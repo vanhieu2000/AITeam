@@ -840,7 +840,8 @@ function Invoke-Verify {
             }
         }
         [void]$notes.Add("Code thêm mới: $added dòng / ngân sách $limit")
-        if ($added -gt [math]::Ceiling($limit * 1.5)) { [void]$fails.Add("Vượt NGÂN SÁCH code: thêm $added dòng, ngân sách $limit (tối đa x1.5). Bỏ phần làm thêm ngoài yêu cầu, gộp test trùng lặp, không viết lại code có sẵn.") }
+        # Vượt ngân sách KHÔNG tự trả agent: ngân sách có thể do Claude ước sai (C-011, 21/10). Claude xem và quyết khi review.
+        if ($added -gt [math]::Ceiling($limit * 1.5)) { [void]$warns.Add("VƯỢT NGÂN SÁCH quá 1,5 lần: thêm $added dòng / $limit — Claude xem: code dư hay ngân sách ước thấp?") }
         elseif ($added -gt $limit) { [void]$warns.Add("Code thêm $added dòng, vượt ngân sách $limit (chưa quá x1.5).") }
     }
 

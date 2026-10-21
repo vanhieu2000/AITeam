@@ -9,10 +9,12 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 
 ## Lưu ý riêng
 <!-- Mỗi dòng "- ..." được tự đưa vào lời giao việc lần sau. Chỉ ghi lỗi AG đã lặp ≥ 2 lần hoặc nghiêm trọng (bảo mật). Bỏ dòng khi 3 nhiệm vụ liền không tái phạm. -->
+- Test giao diện: KHÔNG Show()/ShowDialog()/MessageBox/Application.Run trên luồng test; luôn chạy qua helper `UiThread` (STA + timeout); `dotnet test` luôn kèm `--blame-hang-timeout 2m`. (Lỗi 21/10 làm treo 2 lượt × 30 phút.)
 
 ## Nhận xét theo nhiệm vụ
 | Ngày | Yêu cầu / Task | Kết quả (lượt · phút · vòng · dòng/ngân sách) | Làm tốt | Lỗi (AG) | Hướng cải thiện |
 |---|---|---|---|---|---|
+| 21/10 | R-001 / T-005-ui-layout-tests (HDVTool) | 4 lượt · ~95 phút (2 lượt treo ~30 phút) · 3 vòng · 803/800 dòng | Bộ kiểm tra bố cục đủ 3 tỉ lệ DPI; sửa bố cục thật (ô tìm kiếm, thẻ Trang chủ, Người dùng); tắt hộp chào mừng bằng cờ internal, không đổi app thật | [AG] (test) test mở form/hộp thoại thật trên luồng MTA + chạy test nền ⇒ treo · [AG] (giao diện) sót thẻ "Hệ thống" bị cắt ở Giới thiệu | Dùng helper UiThread cho mọi test giao diện; xem kỹ ảnh chụp trước khi nộp |
 
 ## Đề xuất cải tiến cho nhân viên này
 <!-- Claude cập nhật sau mỗi kỳ: đổi model, chia task kiểu khác, thêm lưu ý riêng, đổi vùng code phụ trách... -->
