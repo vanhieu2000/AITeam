@@ -1075,7 +1075,8 @@ function Invoke-NewRequest {
     New-Item -ItemType Directory -Force $dir | Out-Null
     $last = @(Get-ChildItem $dir -Filter "R-*.md" | ForEach-Object { [int]([regex]::Match($_.Name, '^R-(\d+)').Groups[1].Value) } | Sort-Object)[-1]
     $id = "R-{0:D3}" -f ($last + 1)
-    $slug = (($Title -replace '[^\p{L}\p{Nd} ]', '').Trim() -replace '\s+', '-').ToLower()
+    $plain = (($Title.Normalize([Text.NormalizationForm]::FormD).ToCharArray() | Where-Object { [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne "NonSpacingMark" }) -join "").Replace("đ", "d").Replace("Đ", "D")
+    $slug = (($plain -replace '[^A-Za-z0-9 ]', '').Trim() -replace '\s+', '-').ToLower()
     if ($slug.Length -gt 40) { $slug = $slug.Substring(0, 40).Trim('-') }
     $file = Join-Path $dir "$id-$slug.md"
     $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\request.md"))
