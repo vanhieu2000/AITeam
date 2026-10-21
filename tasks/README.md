@@ -14,7 +14,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H-002 Hub: giao diện khung + 3 trang](H-002-hub-ui.md) | B | `agent-b/H-002-hub-ui` | ✅ Đã merge (vòng 1) |
 | [H-003 Hub: menu dự án động, Agent, Hộp thư](H-003-hub-agents-inbox.md) | B | `agent-b/H-003-hub-agents-inbox` | ✅ Đã merge (vòng 1) |
 | [H-004 Hub: Cài đặt, Tài khoản, Bí mật, team.ps1 hub](H-004-hub-settings-accounts-secrets.md) | A | `agent-a/H-004-hub-settings` | ✅ Đã merge (vòng 1) |
-| [H-006 Hub v2: khung phẳng + Tổng quan](H-006-hub-v2-shell-home.md) | A | `agent-a/H-006-hub-v2-shell-home` | 🟡 Đang chạy · máy HIEUDV · 16:38 21/10/2026 |
+| [H-006 Hub v2: khung phẳng + Tổng quan](H-006-hub-v2-shell-home.md) | A | `agent-a/H-006-hub-v2-shell-home` | 🔵 Chờ review · cổng kiểm tra KHÔNG ĐẠT |
 | [H-007 Hub v2: Dự án + Task](H-007-hub-v2-project-task.md) | A | `agent-a/H-007-hub-v2-project-task` | ⏳ Chờ H-006 |
 | [H-008 Hub v2: Agent, Hộp thư, Tài khoản, Bí mật, Cài đặt](H-008-hub-v2-agents-inbox-secrets-settings.md) | A | `agent-a/H-008-hub-v2-other-pages` | ⏳ Chờ H-006 |
 
