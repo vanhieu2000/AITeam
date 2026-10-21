@@ -9,7 +9,11 @@
   .\team.ps1 add-project -Project Ten -Path D:\Ten           Thêm dự án có sẵn trên máy (tự tạo kho GitHub private nếu chưa có)
   .\team.ps1 add-project -Project Ten -New                   Tạo dự án mới (thư mục + git + kho private)
   .\team.ps1 new-task -Project Ten -Task T-003 -Title "..." -Agent B
-  .\team.ps1 assign -Project Ten -Task T-003 [-Resume] [-Feedback "..."]   Giao task (chờ tới khi agent xong)
+  .\team.ps1 assign -Project Ten -Task T-003 [-Resume] [-Feedback "..."] [-NoVerify] [-Force]
+                                                    Giao task (chờ tới khi agent xong). Ghi "đang chạy · máy X" lên bảng việc;
+                                                    xong thì tự chạy cổng kiểm tra, không đạt thì tự giao lại 1 lần.
+  .\team.ps1 verify -Project Ten -Task T-003        Cổng kiểm tra: commit/push, BOM (tự sửa), phạm vi, test nghiệm thu, build 0 warning, test
+  .\team.ps1 metrics [-Project Ten]                 Số liệu review: số vòng, đạt vòng 1, Claude tự sửa, lỗi bảo mật / giao diện / BOM
   .\team.ps1 status [-Project Ten]                  Agent đang chạy, nhánh, kết quả lần chạy gần nhất
   .\team.ps1 cleanup -Project Ten -Task T-003       Xóa worktree sau khi đã merge
   .\team.ps1 switch-account                         Mở agy để /logout và đăng nhập tài khoản Antigravity khác
@@ -38,7 +42,9 @@ param(
     [string] $Name = "",
     [string[]] $Names = @(),
     [string] $Prompt = "",
-    [string] $Model = ""
+    [string] $Model = "",
+    [switch] $NoVerify,
+    [switch] $Force
 )
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
@@ -263,6 +269,9 @@ function Invoke-Assign {
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
     if (-not $branch) { throw 'File task thiếu dòng **Nhánh:** `tên-nhánh`' }
 
+    Assert-NotClaimedElsewhere $r $Task
+    Set-BoardStatus $r $Task (Get-ClaimText)
+
     New-Item -ItemType Directory -Force $r.Logs | Out-Null
     $work = Join-Path $r.Work ("$agentId-$Task".ToLower())
     git -C $r.Path fetch origin --quiet
@@ -286,6 +295,10 @@ Xong thì điền mục "Báo cáo của agent" trong file task, commit rồi gi
 Bạn đang chạy tự động, KHÔNG có người trả lời câu hỏi: tự quyết theo AGENTS.md.
 Kế hoạch của bạn coi như ĐÃ ĐƯỢC DUYỆT: không dừng lại xin xác nhận, làm luôn tới khi push xong.
 Nếu bị chặn thật sự, ghi lý do vào báo cáo, commit, push rồi dừng.
+File trong mục "Test nghiệm thu" của task do Claude viết trước: KHÔNG sửa, KHÔNG xóa; chỉ sửa code cho chúng pass.
+Báo cáo của agent: điền bảng từng tiêu chí hoàn thành → bằng chứng (lệnh đã chạy + kết quả thật). Chưa chạy thì ghi chưa chạy.
+Làm theo mục "Lỗi hay gặp" trong AGENTS.md (giữ BOM UTF-8 của file, không test return sớm, giao diện không đặt tọa độ cố định...).
+Sau khi bạn push, cổng kiểm tra tự động chạy: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên.
 "@
     if ($Feedback) { $prompt += "`nYÊU CẦU CỦA QUẢN LÝ: $Feedback`nĐọc kỹ mục 'Review (Claude)' trong file task nếu có." }
 
@@ -320,6 +333,20 @@ Nếu bị chặn thật sự, ghi lý do vào báo cáo, commit, push rồi d�
     }
     $pushed = git -C $r.Path ls-remote --heads origin $branch
     Say ("Nhánh trên GitHub: " + $(if ($pushed) { "đã push" } else { "CHƯA push" }))
+
+    if (Test-QuotaExhausted $logText $errText) { Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
+    if ($NoVerify) { Set-BoardStatus $r $Task "🔵 Chờ review"; return }
+    $v = Invoke-Verify
+    if (-not $v.Ok -and -not $script:VerifyRetried) {
+        # Lỗi cơ học (chưa commit / build / test / BOM...) → trả agent sửa luôn 1 lần, không tốn lượt review của Claude.
+        $script:VerifyRetried = $true
+        Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $($dev.name) 1 lần kèm danh sách lỗi." Yellow
+        $script:Resume = $true
+        $script:Feedback = "Cổng kiểm tra tự động KHÔNG ĐẠT. Sửa hết các mục sau, chạy lại build + test, cập nhật báo cáo, commit và push:`n- " + ($v.Fails -join "`n- ")
+        Invoke-Assign
+        return
+    }
+    Set-BoardStatus $r $Task ("🔵 Chờ review · cổng kiểm tra " + $(if ($v.Ok) { "ĐẠT" } else { "KHÔNG ĐẠT" }))
 }
 
 # Agent hết hạn mức? Lần chạy báo SUCCESS thì không. Còn lại dò từ khóa, "429"/"quota" phải đứng riêng
@@ -354,7 +381,25 @@ function Invoke-Status {
     foreach ($p in Get-Projects | Where-Object { -not $Project -or $_.name -eq $Project }) {
         $r = Resolve-Project $p.name
         Say "== $($p.name) ==" Cyan
-        if (Test-Path (Join-Path $r.Path ".git")) { git -C $r.Path worktree list | ForEach-Object { Say "  $_" } }
+        if (Test-Path (Join-Path $r.Path ".git")) {
+            git -C $r.Path worktree list | ForEach-Object { Say "  $_" }
+            git -C $r.Path fetch origin --quiet 2>$null
+            $board = git -C $r.Path show origin/main:tasks/README.md 2>$null | Out-String
+            foreach ($row in ($board -split "`r?`n" | Where-Object { $_ -match '^\|' -and $_ -match '🟡' })) {
+                $id = [regex]::Match($row, '\[([A-Za-z]+-\d+)').Groups[1].Value
+                $br = [regex]::Match($row, '`([^`]+)`').Groups[1].Value
+                $hasBranch = [bool]($br -and (git -C $r.Path ls-remote --heads origin $br 2>$null))
+                $m = [regex]::Match($row, $ClaimPattern)
+                if ($m.Success) {
+                    $since = [datetime]::ParseExact($m.Groups['t'].Value, 'HH:mm dd/MM/yyyy', $null)
+                    $mins = [int]((Get-Date) - $since).TotalMinutes
+                    if ($mins -gt 120 -and -not $hasBranch) { Say "  [KẸT?] $id chạy trên máy $($m.Groups['m'].Value.Trim()) đã $mins phút mà chưa có nhánh $br trên GitHub → kiểm tra máy đó / giao lại với -Force" Yellow }
+                    else { Say "  [ĐANG CHẠY] $id · máy $($m.Groups['m'].Value.Trim()) · $mins phút · nhánh $(if ($hasBranch) { 'đã có' } else { 'chưa có' })" }
+                } elseif (-not $hasBranch) {
+                    Say "  [KẸT?] $id ghi 🟡 nhưng chưa có nhánh $br trên GitHub, không rõ máy nào đang chạy" Yellow
+                }
+            }
+        }
         if (Test-Path $r.Logs) {
             Get-ChildItem $r.Logs -Filter "*.json" | Where-Object { $_.Name -notmatch 'prompt' } | Sort-Object LastWriteTime | Select-Object -Last 6 | ForEach-Object {
                 $content = "$(Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue)"
@@ -591,6 +636,322 @@ function Invoke-Hub {
     }
 }
 
+# ───────────────────────── Cổng kiểm tra tự động (verify) ─────────────────────────
+# Chạy ngay sau khi agent xong, TRƯỚC khi Claude review: bắt hết lỗi cơ học để Claude chỉ còn review nội dung.
+
+function Get-TaskContext {
+    $r = Resolve-Project $Project
+    if (-not $Task) { throw "Thiếu -Task" }
+    $taskFile = Get-ChildItem (Join-Path $r.Path "tasks") -Filter "$Task-*.md" | Select-Object -First 1
+    if (-not $taskFile) { throw "Không thấy tasks\$Task-*.md trong $($r.Path)" }
+    $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
+    $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
+    $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
+    [pscustomobject]@{
+        R = $r; TaskFile = $taskFile; Text = $text; Branch = $branch; AgentId = $agentId
+        Work = (Join-Path $r.Work ("$agentId-$Task".ToLower()))
+    }
+}
+
+# Nội dung dưới tiêu đề "## <tên>" (khớp phần đầu tên) cho tới tiêu đề "## " kế tiếp.
+function Get-Section([string]$text, [string]$heading) {
+    $m = [regex]::Match($text, "(?ms)^##\s+" + [regex]::Escape($heading) + "[^\r\n]*\r?\n(.*?)(?=^##\s|\z)")
+    if ($m.Success) { return $m.Groups[1].Value } else { return "" }
+}
+
+# Các đường dẫn viết trong `…` (có / hoặc có đuôi file).
+function Get-BacktickPaths([string]$section) {
+    $section = [regex]::Replace($section, '(?s)<!--.*?-->', '')
+    @([regex]::Matches($section, '`([^`\s]+)`') | ForEach-Object { $_.Groups[1].Value } |
+        Where-Object { $_ -match '[/\\]' -or $_ -match '\.[A-Za-z0-9]{1,8}$' } |
+        ForEach-Object { ($_ -replace '\\', '/') -replace '^\./', '' } | Select-Object -Unique)
+}
+
+function Test-PathInScope([string]$file, [string[]]$scope) {
+    foreach ($s in $scope) {
+        $p = $s.TrimEnd('/')
+        if ($p -match '[\*\?]') {
+            $rx = '^' + [regex]::Escape($p).Replace('\*\*', '.*').Replace('\*', '[^/]*').Replace('\?', '.') + '(/|$)'
+            if ($file -match $rx) { return $true }
+        } elseif ($file -eq $p -or $file.StartsWith("$p/")) { return $true }
+    }
+    return $false
+}
+
+function Get-PsExe { (Get-Process -Id $PID).Path }
+
+# Chạy lệnh build/test của dự án trong thư mục cho trước, lấy mã thoát + toàn bộ output.
+function Invoke-ShellCapture([string]$command, [string]$dir) {
+    Push-Location $dir
+    try {
+        if ($env:OS -eq 'Windows_NT') { $out = cmd /c "$command 2>&1" | Out-String }
+        else { $out = sh -c "$command 2>&1" | Out-String }
+        return [pscustomobject]@{ Code = $LASTEXITCODE; Output = $out }
+    } finally { Pop-Location }
+}
+
+# 3 byte đầu của file trong một commit (Start-Process ghi stdout nguyên byte, không bị đổi mã như pipe của PowerShell).
+function Get-GitBlobHead([string]$repo, [string]$rev, [string]$file) {
+    $tmp = [IO.Path]::GetTempFileName()
+    try {
+        $p = Start-Process git -ArgumentList "-C `"$repo`" show `"${rev}:$file`"" -NoNewWindow -Wait -PassThru `
+            -RedirectStandardOutput $tmp -RedirectStandardError "$tmp.err"
+        if ($p.ExitCode -ne 0) { return $null }
+        $b = [IO.File]::ReadAllBytes($tmp)
+        return ,($b | Select-Object -First 3)
+    } finally { Remove-Item $tmp, "$tmp.err" -ErrorAction SilentlyContinue }
+}
+
+function Test-HasBom([byte[]]$bytes) { $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF }
+
+function Invoke-Verify {
+    $cfg = Get-Config
+    $ctx = Get-TaskContext
+    $r = $ctx.R; $work = $ctx.Work; $branch = $ctx.Branch
+    if (-not (Test-Path $work)) { throw "Chưa có thư mục làm việc $work (task chưa được giao trên máy này)." }
+    $ErrorActionPreference = "Continue"   # git / dotnet in ra stderr
+    $fails = New-Object Collections.ArrayList
+    $warns = New-Object Collections.ArrayList
+    $notes = New-Object Collections.ArrayList
+    Say "== Cổng kiểm tra $($r.Info.name) $Task ($work) ==" Cyan
+
+    git -C $work fetch origin --quiet 2>$null
+    $base = (git -C $work merge-base origin/main HEAD 2>$null | Select-Object -First 1)
+    if (-not $base) { $base = "origin/main" }
+    $changed = @(git -C $work diff --name-only --diff-filter=ACMR $base HEAD 2>$null | Where-Object { $_ })
+    [void]$notes.Add("File thay đổi so với main: $($changed.Count)")
+    if ($changed.Count -eq 0) { [void]$fails.Add("Nhánh không có thay đổi nào so với main (agent chưa làm hoặc chưa commit).") }
+
+    # 1. Agent đã commit hết chưa
+    $dirty = @(git -C $work status --porcelain 2>$null | Where-Object { $_ })
+    if ($dirty.Count -gt 0) {
+        [void]$fails.Add("Agent CHƯA COMMIT $($dirty.Count) file: " + (($dirty | Select-Object -First 8 | ForEach-Object { $_.Trim() }) -join ', '))
+    }
+
+    # 2. BOM: file vốn có BOM phải giữ; .ps1 có chữ ngoài ASCII phải có BOM (PowerShell 5.1). Tự sửa + commit.
+    $bomFixed = @()
+    foreach ($f in $changed) {
+        $full = Join-Path $work $f
+        if (-not (Test-Path $full -PathType Leaf)) { continue }
+        $bytes = [IO.File]::ReadAllBytes($full)
+        if (Test-HasBom $bytes) { continue }
+        $need = $false
+        $old = Get-GitBlobHead $work $base $f
+        if ($old -and (Test-HasBom ([byte[]]$old))) { $need = $true }
+        elseif ($f -match '\.ps1$' -and ($bytes | Where-Object { $_ -gt 127 } | Select-Object -First 1)) { $need = $true }
+        if ($need) {
+            [IO.File]::WriteAllBytes($full, [byte[]](0xEF, 0xBB, 0xBF) + $bytes)
+            $bomFixed += $f
+        }
+    }
+    if ($bomFixed.Count -gt 0) {
+        if ($dirty.Count -eq 0) {
+            git -C $work add -- $bomFixed
+            git -C $work commit -q -m "verify: trả lại BOM UTF-8 ($($bomFixed.Count) file)" 2>$null
+            [void]$notes.Add("ĐÃ TỰ SỬA: trả lại BOM UTF-8 cho " + ($bomFixed -join ', '))
+        } else {
+            [void]$fails.Add("Mất BOM UTF-8 (đã ghi lại BOM nhưng chưa commit vì còn file agent chưa commit): " + ($bomFixed -join ', '))
+        }
+    }
+
+    # 3. Test nghiệm thu do Claude viết trước: phải còn nguyên
+    $accept = Get-BacktickPaths (Get-Section $ctx.Text "Test nghiệm thu")
+    foreach ($a in $accept) {
+        if (-not (Test-Path (Join-Path $work $a))) { [void]$fails.Add("Thiếu file test nghiệm thu: $a"); continue }
+        git -C $work diff --quiet $base HEAD -- $a 2>$null
+        if ($LASTEXITCODE -ne 0) { [void]$fails.Add("Agent đã SỬA test nghiệm thu (không được phép): $a") }
+    }
+    if ($accept.Count -gt 0 -and -not ($fails | Where-Object { $_ -match 'test nghiệm thu' })) { [void]$notes.Add("Test nghiệm thu còn nguyên: $($accept.Count) file") }
+
+    # 4. Phạm vi
+    $scope = Get-BacktickPaths (Get-Section $ctx.Text "Phạm vi")
+    if ($scope.Count -gt 0) {
+        $always = @("tasks/$($ctx.TaskFile.Name)", "docs/screenshots/$Task", "CHANGELOG.md") + $accept
+        $out = @($changed | Where-Object { -not (Test-PathInScope $_ ($scope + $always)) })
+        if ($out.Count -gt 0) { [void]$warns.Add("Sửa ngoài phạm vi task ($($out.Count) file): " + (($out | Select-Object -First 10) -join ', ')) }
+    } else { [void]$notes.Add("Task không ghi đường dẫn trong mục Phạm vi → bỏ qua kiểm tra phạm vi.") }
+
+    # 5. Test có nhánh return sớm / assert luôn đúng (chỉ xét dòng mới thêm trong file test)
+    $testFiles = @($changed | Where-Object { $_ -match '(?i)(^|/)tests?/|tests?\.cs$' })
+    if ($testFiles.Count -gt 0) {
+        $cur = ""; $sus = @()
+        foreach ($line in (git -C $work diff -U0 $base HEAD -- $testFiles 2>$null)) {
+            if ($line -match '^\+\+\+ b/(.+)$') { $cur = $Matches[1]; continue }
+            if ($line -notmatch '^\+') { continue }
+            if ($line -match '^\+\s*if\s*\(.+\)\s*\{?\s*return\s*;' -or $line -match 'Assert\.True\(\s*true\s*\)') { $sus += "$cur → $($line.Substring(1).Trim())" }
+        }
+        if ($sus.Count -gt 0) { [void]$warns.Add("Test có thể luôn pass (return sớm / Assert.True(true)): " + (($sus | Select-Object -First 5) -join ' | ')) }
+    }
+
+    # 6. Báo cáo của agent
+    $report = [regex]::Replace((Get-Section $ctx.Text "Báo cáo của agent"), '(?s)<!--.*?-->', '').Trim()
+    $reportNow = ""
+    $taskInWork = Join-Path (Join-Path $work "tasks") $ctx.TaskFile.Name
+    if (Test-Path $taskInWork) { $reportNow = [regex]::Replace((Get-Section (Get-Content $taskInWork -Raw -Encoding UTF8) "Báo cáo của agent"), '(?s)<!--.*?-->', '').Trim() }
+    if ($reportNow.Length -lt 40 -and $report.Length -lt 40) { [void]$fails.Add("Agent chưa điền mục 'Báo cáo của agent' trong file task.") }
+
+    # 7. Quét bí mật trên phần thay đổi (chạy tiến trình riêng: script dùng exit)
+    $scan = Join-Path (Join-Path $Root "tools") "secret-scan.ps1"
+    if (Test-Path $scan) {
+        $sc = Invoke-ShellCapture "`"$(Get-PsExe)`" -NoProfile -ExecutionPolicy Bypass -File `"$scan`" -Repo `"$work`" -Range $base..HEAD" $work
+        if ($sc.Code -ne 0) { [void]$fails.Add("Quét bí mật: CHẶN`n" + $sc.Output.Trim()) } else { [void]$notes.Add("Quét bí mật: sạch") }
+    }
+
+    # 8. Build (0 warning) + test
+    if ($r.Info.build) {
+        $b = Invoke-ShellCapture $r.Info.build $work
+        $w = @([regex]::Matches($b.Output, '(?m)^.*: warning [A-Za-z]+\d+:.*$') | ForEach-Object { ($_.Value -replace '\s*\[[^\]]+\]\s*$', '').Trim() } | Select-Object -Unique)
+        if ($b.Code -ne 0) {
+            $errs = @([regex]::Matches($b.Output, '(?m)^.*: error [A-Za-z]+\d+:.*$') | ForEach-Object { $_.Value.Trim() } | Select-Object -Unique -First 10)
+            [void]$fails.Add("Build LỖI (mã $($b.Code)):`n  " + ($errs -join "`n  "))
+        } elseif ($w.Count -gt 0) {
+            [void]$fails.Add("Build có $($w.Count) warning (yêu cầu 0):`n  " + (($w | Select-Object -First 10) -join "`n  "))
+        } else { [void]$notes.Add("Build: OK, 0 warning") }
+    }
+    if ($r.Info.test -and -not ($fails | Where-Object { $_ -like 'Build LỖI*' })) {
+        $t = Invoke-ShellCapture $r.Info.test $work
+        $summary = @($t.Output -split "`r?`n" | Where-Object { $_ -match '(?i)(Passed!|Failed!|Total tests|Tổng số|Đạt!|Không đạt!)' } | ForEach-Object { $_.Trim() })
+        if ($t.Code -ne 0) {
+            $failed = @($t.Output -split "`r?`n" | Where-Object { $_ -match '^\s*(Failed|Không đạt)\s+\S' } | Select-Object -First 10 | ForEach-Object { $_.Trim() })
+            [void]$fails.Add("Test KHÔNG ĐẠT (mã $($t.Code)):`n  " + (($failed + $summary) -join "`n  "))
+        } else { [void]$notes.Add("Test: OK " + ($summary -join ' ; ')) }
+    }
+
+    # 9. Đã push bản mới nhất chưa (sau khi có thể đã tự commit BOM)
+    if ($dirty.Count -eq 0) {
+        $local = git -C $work rev-parse HEAD
+        $remote = (git -C $work ls-remote origin "refs/heads/$branch" 2>$null | Select-Object -First 1) -replace '\s.*$', ''
+        if ($bomFixed.Count -gt 0 -or ($remote -and $remote -ne $local)) {
+            $ahead = if ($remote) { git -C $work rev-list --count "$remote..HEAD" 2>$null } else { "?" }
+            if (-not $remote -or $bomFixed.Count -gt 0) { git -C $work push -q -u origin $branch 2>$null }
+            $remote = (git -C $work ls-remote origin "refs/heads/$branch" 2>$null | Select-Object -First 1) -replace '\s.*$', ''
+            if ($remote -ne $local) { [void]$fails.Add("Nhánh $branch trên GitHub chưa có commit mới nhất (local đi trước $ahead commit).") }
+            elseif ($bomFixed.Count -gt 0) { [void]$notes.Add("Đã push commit sửa BOM lên $branch") }
+        } elseif (-not $remote) { [void]$fails.Add("Nhánh $branch CHƯA được push lên GitHub.") }
+    }
+
+    # Kết quả
+    $ok = ($fails.Count -eq 0)
+    New-Item -ItemType Directory -Force $r.Logs | Out-Null
+    $n = @(Get-ChildItem $r.Logs -Filter "$Task-verify-*.md" -ErrorAction SilentlyContinue).Count + 1
+    $reportPath = Join-Path $r.Logs "$Task-verify-$n.md"
+    $md = @("# Cổng kiểm tra $Task — $(if ($ok) { 'ĐẠT' } else { 'KHÔNG ĐẠT' })", "", "- Máy: $env:COMPUTERNAME · $(Get-Date -Format 'HH:mm dd/MM/yyyy')", "- Nhánh: ``$branch``", "")
+    if ($fails.Count) { $md += "## Phải sửa"; $fails | ForEach-Object { $md += "- $_" }; $md += "" }
+    if ($warns.Count) { $md += "## Cảnh báo (Claude xem khi review)"; $warns | ForEach-Object { $md += "- $_" }; $md += "" }
+    $md += "## Đã kiểm tra"; $notes | ForEach-Object { $md += "- $_" }
+    [IO.File]::WriteAllText($reportPath, ($md -join "`r`n"), $Utf8)
+
+    foreach ($f in $fails) { Say "  [PHẢI SỬA] $f" Red }
+    foreach ($w in $warns) { Say "  [CẢNH BÁO] $w" Yellow }
+    foreach ($x in $notes) { Say "  [OK] $x" Green }
+    Say ("Cổng kiểm tra: " + $(if ($ok) { "ĐẠT → Claude review nội dung" } else { "KHÔNG ĐẠT" }) + "  ($reportPath)") $(if ($ok) { "Green" } else { "Red" })
+    return [pscustomobject]@{ Ok = $ok; Fails = @($fails); Warns = @($warns); Report = $reportPath }
+}
+
+# ───────────────────────── Bảng việc: giữ chỗ theo máy ─────────────────────────
+# Hai máy (nhà / công ty) dùng chung git → ghi "đang chạy ở máy nào" lên bảng việc trên GitHub để không giao trùng.
+
+$ClaimPattern = 'Đang chạy · máy (?<m>[^·|]+?) · (?<t>\d{2}:\d{2} \d{2}/\d{2}/\d{4})'
+
+function Get-BoardRow([string]$board, [string]$taskId) {
+    ($board -split "`r?`n") | Where-Object { $_ -match '^\|' -and $_ -match ("(\[|\|\s*)" + [regex]::Escape($taskId) + "\b") } | Select-Object -First 1
+}
+
+function Get-BoardClaim($r, [string]$taskId) {
+    $board = git -C $r.Path show origin/main:tasks/README.md 2>$null | Out-String
+    $row = Get-BoardRow $board $taskId
+    if (-not $row) { return $null }
+    $m = [regex]::Match($row, $ClaimPattern)
+    if (-not $m.Success) { return [pscustomobject]@{ Row = $row; Machine = $null; Since = $null } }
+    $since = [datetime]::ParseExact($m.Groups['t'].Value, 'HH:mm dd/MM/yyyy', $null)
+    [pscustomobject]@{ Row = $row; Machine = $m.Groups['m'].Value.Trim(); Since = $since }
+}
+
+# Đổi ô cuối (trạng thái) của dòng task trên bảng việc, commit riêng file bảng việc và push lên main.
+function Set-BoardStatus($r, [string]$taskId, [string]$status) {
+    $ErrorActionPreference = "Continue"
+    $boardRel = "tasks/README.md"
+    $board = Join-Path $r.Path $boardRel
+    if (-not (Test-Path $board)) { return }
+    foreach ($try in 1..2) {
+        git -C $r.Path fetch origin --quiet 2>$null
+        $branchNow = git -C $r.Path rev-parse --abbrev-ref HEAD 2>$null
+        $dirtyBoard = git -C $r.Path status --porcelain -- $boardRel 2>$null
+        if ($branchNow -ne "main" -or $dirtyBoard) { Say "  (Bỏ qua cập nhật bảng việc: repo chính không ở main hoặc bảng việc đang sửa dở.)" Yellow; return }
+        git -C $r.Path merge --ff-only origin/main --quiet 2>$null
+        $text = [IO.File]::ReadAllText($board)
+        $lines = $text -split "`r?`n"
+        $idx = -1
+        for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|' -and $lines[$i] -match ("(\[|\|\s*)" + [regex]::Escape($taskId) + "\b")) { $idx = $i; break } }
+        if ($idx -lt 0) { Say "  (Bảng việc chưa có dòng $taskId — không cập nhật.)" Yellow; return }
+        $cells = $lines[$idx].TrimEnd().TrimEnd('|') -split '\|'
+        $cells[$cells.Count - 1] = " $status "
+        $newLine = ($cells -join '|') + '|'
+        if ($newLine -eq $lines[$idx]) { return }
+        $lines[$idx] = $newLine
+        $nl = if ($text -match "`r`n") { "`r`n" } else { "`n" }
+        $bom = Test-HasBom ([IO.File]::ReadAllBytes($board))
+        [IO.File]::WriteAllText($board, ($lines -join $nl), (New-Object Text.UTF8Encoding $bom))
+        git -C $r.Path add -- $boardRel
+        git -C $r.Path commit -q -m "Bảng việc: $taskId $status" -- $boardRel 2>$null
+        git -C $r.Path push -q origin main 2>$null
+        if ($LASTEXITCODE -eq 0) { return }
+        git -C $r.Path reset -q --hard origin/main 2>$null   # bị máy khác push trước → làm lại trên bản mới
+    }
+    Say "  Không push được bảng việc (máy khác vừa đổi?). Cập nhật tay sau." Yellow
+}
+
+function Get-ClaimText { "🟡 Đang chạy · máy $env:COMPUTERNAME · $(Get-Date -Format 'HH:mm dd/MM/yyyy')" }
+
+# Trả lỗi nếu task đang chạy ở MÁY KHÁC trong vòng 3 giờ (trừ khi -Force).
+function Assert-NotClaimedElsewhere($r, [string]$taskId) {
+    git -C $r.Path fetch origin --quiet 2>$null
+    $c = Get-BoardClaim $r $taskId
+    if (-not $c -or -not $c.Machine) { return }
+    if ($c.Machine -eq $env:COMPUTERNAME) { return }
+    $age = (Get-Date) - $c.Since
+    if ($age.TotalHours -lt 3 -and -not $Force) {
+        throw "Task $taskId đang chạy trên máy $($c.Machine) từ $($c.Since.ToString('HH:mm dd/MM')) ($([int]$age.TotalMinutes) phút trước). Nếu chắc máy kia đã dừng: thêm -Force."
+    }
+}
+
+# ───────────────────────── Số liệu hiệu quả ─────────────────────────
+
+function Invoke-Metrics {
+    $rows = @()
+    foreach ($p in Get-Projects | Where-Object { -not $Project -or $_.name -eq $Project }) {
+        $r = Resolve-Project $p.name
+        $dir = Join-Path $r.Path "tasks"
+        if (-not (Test-Path $dir)) { continue }
+        foreach ($f in Get-ChildItem $dir -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }) {
+            $t = Get-Content $f.FullName -Raw -Encoding UTF8
+            $review = Get-Section $t "Review (Claude)"
+            $rounds = @([regex]::Matches($review, 'Vòng\s+(\d+)') | ForEach-Object { [int]$_.Groups[1].Value })
+            $max = if ($rounds) { ($rounds | Measure-Object -Maximum).Maximum } else { 0 }
+            $passed = $review -match 'Vòng\s+\d+\s*[—–-]+\s*ĐẠT'
+            $selfFix = $review -match '(?i)(Claude|quản lý)\s+(tự\s+)?(sửa|hoàn tất)|Lỗi quản lý'
+            $sec = $review -match '(?i)lỗi bảo mật|zip slip|traversal|chèn lệnh|bị lộ|ghi bí mật ra'
+            $ui = $review -match '(?i)bố cục|chồng (nút|nhau|lên)|(nút|nhãn|chữ)[^.\r\n]{0,40}(bị|đè|che)[^.\r\n]{0,20}(đè|che)|che chữ|xuống dòng giữa'
+            $bom = $review -match 'BOM'
+            $rows += [pscustomobject]@{ Project = $p.name; Task = ($f.BaseName -split '-')[0..1] -join '-'; Rounds = $max; Passed = $passed; SelfFix = $selfFix; Security = $sec; UI = $ui; Bom = $bom }
+        }
+    }
+    $done = @($rows | Where-Object { $_.Passed })
+    Say "== Số liệu review (task đã ĐẠT: $($done.Count), đang làm: $(@($rows | Where-Object { -not $_.Passed }).Count)) ==" Cyan
+    $yn = { param($b) if ($b) { "có" } else { "-" } }
+    Say ("  {0,-22} {1,-7} {2,4}  {3,-7} {4,-7} {5,-9} {6}" -f "Dự án", "Task", "Vòng", "Tự sửa", "B.mật", "Giao diện", "BOM")
+    foreach ($x in $done | Sort-Object Project, Task) {
+        Say ("  {0,-22} {1,-7} {2,4}  {3,-7} {4,-7} {5,-9} {6}" -f $x.Project, $x.Task, $x.Rounds, (& $yn $x.SelfFix), (& $yn $x.Security), (& $yn $x.UI), (& $yn $x.Bom))
+    }
+    if ($done.Count) {
+        $pct = { param($n) "{0:P0}" -f ($n / $done.Count) }
+        Say ("Số vòng trung bình: {0:N2}" -f (($done | Measure-Object Rounds -Average).Average))
+        Say ("Đạt ngay vòng 1: " + (& $pct @($done | Where-Object { $_.Rounds -le 1 }).Count))
+        Say ("Claude phải tự sửa: " + (& $pct @($done | Where-Object { $_.SelfFix }).Count))
+        Say ("Review có lỗi bảo mật: " + (& $pct @($done | Where-Object { $_.Security }).Count) + " · giao diện: " + (& $pct @($done | Where-Object { $_.UI }).Count) + " · mất BOM: " + (& $pct @($done | Where-Object { $_.Bom }).Count))
+    }
+}
+
 switch ($Command) {
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
     "ask" { Invoke-Ask }
@@ -605,6 +966,8 @@ switch ($Command) {
     "new-task" { Invoke-NewTask }
     "assign" { Invoke-Assign }
     "status" { Invoke-Status }
+    "verify" { $null = Invoke-Verify }
+    "metrics" { Invoke-Metrics }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }
