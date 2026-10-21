@@ -172,4 +172,5 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Worktree của agent dùng chung `.git/config` với repo chính: agent tự đặt tên commit làm lẫn với HieuDV. `assign` bật `extensions.worktreeConfig`, đặt tên agent riêng cho worktree, giữ HieuDV ở repo chính và tự trả lại nếu agent ghi đè.
 - Cảnh báo hết hạn mức chỉ khi lần chạy KHÔNG báo `"status":"SUCCESS"`; "429" / "quota" phải đứng riêng (trước đây khớp nhầm số token "42953").
 - Mã task trùng (vd. hai file C-011-…): giao bằng tên đầy đủ `-Task C-011-ui-layout-tests`. `team.ps1` báo lỗi nếu mã khớp nhiều file. Khi tạo task mới luôn dùng mã chưa có.
+- Muốn dừng một agent: dừng **cả lệnh `assign` bao ngoài** (shell nền đang chạy `team.ps1 assign`), không chỉ tiến trình `agy` — nếu không, cổng kiểm tra sẽ tự giao lại và agent chạy tiếp (21/10: Lan đẩy thêm commit sau khi task đã merge).
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).
