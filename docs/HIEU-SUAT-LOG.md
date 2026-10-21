@@ -1,32 +1,20 @@
-# Nhật ký đánh giá hiệu suất
+# Nhật ký hiệu suất — mỗi yêu cầu một mục
 
-Mỗi kỳ (5 task merge hoặc 1 tuần): số liệu `team.ps1 metrics`, nhận xét, quyết định. Kế hoạch: `docs/VAN-HANH-HIEU-SUAT.md`.
+Đơn vị theo dõi: **một yêu cầu của chủ dự án (R-xxx)**. Phiếu chi tiết: `requests/R-xxx-*.md`; số liệu: `team.ps1 request-report -Request R-xxx`.
 
-## Kỳ 0 — Mốc ban đầu (21/10/2026)
+Sau mỗi yêu cầu, Claude thêm 1 mục theo mẫu dưới đây. Cột "Cải tiến" là thay đổi quy trình áp dụng từ yêu cầu kế tiếp. Yêu cầu sau phải đo lại xem cải tiến đó có tác dụng không.
 
-**Số liệu:**
-- 25 task đã đạt, 3 đang làm.
-- 17 lượt chạy có số đo; chỉ có số đo của máy nhà, máy công ty chưa `metrics-import`.
+| Yêu cầu | Ngày | Tổng thời gian | Claude / Agent (phút) | Lượt agent / vòng review | Tự sửa | Lỗi TK / AG / CK | Tốn nhất ở | Cải tiến áp dụng | Cải tiến trước có tác dụng? |
+|---|---|---|---|---|---|---|---|---|---|
 
-| Chỉ số | Giá trị |
-|---|---|
-| Thời gian TB / lượt | 20,1 phút (trung vị 20) |
-| Thời gian agent / task | 24 phút |
-| Token TB / lượt | ~630 nghìn |
-| Lượt / task | 1,21 |
-| Số vòng review TB | 1,44 |
-| Đạt vòng 1 | 68% |
-| Claude tự sửa | 76% task |
-| Lỗi bảo mật / giao diện / mất BOM trong review | 16% / 8% / 28% |
-
-**Nhận xét:**
-- Thời gian tỉ lệ với lượng code agent phải viết. Ví dụ C-008: ~1.450 dòng, 23 phút, 100k token đầu ra.
-- Lãng phí lớn nhất là vòng sửa lại: C-010, T-003, T-006 mỗi task 3 vòng, mỗi vòng thêm 20–30 phút.
-- Code dư (test nhân bản, file giao diện ~1.000 dòng) vì chưa có ngân sách.
-- Agent còn tự thiết kế phần chi tiết vì task chỉ mô tả hành vi, chưa có khung code.
-
-**Quyết định:** áp dụng E1, E2, E3, E7 từ 21/10 (xem kế hoạch). Kỳ 1 so sánh sau 5 task giao theo cách mới.
-
-**Việc của chủ dự án:**
-- Trên máy công ty chạy `git pull` trong `D:\AITeam` rồi `.\team.ps1 metrics-import` để cộng số đo máy đó.
-- Quyết định có thử E5 (3–4 agent song song) không.
+## Quy trình hiện hành (cập nhật dần sau mỗi yêu cầu)
+Phiên bản 1 — 21/10/2026, trước yêu cầu đầu tiên được theo dõi:
+1. Nhận yêu cầu ⇒ `team.ps1 new-request -Title "…"`, chép nguyên văn lời chủ dự án, ghi giờ.
+2. Phân tích + thiết kế: Claude.
+3. Chia việc:
+   - mỗi task ≤ ~500 dòng, có ngân sách, khung code + test nghiệm thu viết trước;
+   - A và B làm song song ở vùng code khác nhau;
+   - việc ≤ ~100 dòng Claude tự làm.
+4. Giao ⇒ cổng kiểm tra tự động ⇒ Claude review. Lỗi ≤ ~50 dòng Claude tự sửa ngay; còn lại trả agent kèm Blocker / Required.
+5. Mỗi sự kiện ghi 1 dòng vào nhật ký phiếu yêu cầu. Mỗi lỗi ghi nguyên nhân gốc TK / AG / CK.
+6. Xong ⇒ merge, clone sạch, báo chủ dự án ⇒ đánh giá trong phiếu ⇒ 1 dòng trong bảng trên ⇒ áp dụng tối đa 2 cải tiến (sửa sổ tay / mẫu / `team.ps1` ngay) ⇒ tăng số phiên bản quy trình ở mục này.

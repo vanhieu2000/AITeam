@@ -14,7 +14,8 @@
                                                     xong thì tự chạy cổng kiểm tra, không đạt thì tự giao lại 1 lần.
   .\team.ps1 verify -Project Ten -Task T-003        Cổng kiểm tra: commit/push, BOM (tự sửa), phạm vi, test nghiệm thu, build 0 warning, test
   .\team.ps1 metrics [-Project Ten]                 Số liệu review (vòng, tự sửa, lỗi) + hiệu suất lượt chạy (phút, token, dòng code, cổng kiểm tra)
-  .\team.ps1 metrics-import                         Nhập log agent cũ của máy này vào metrics/runs (1 lần mỗi máy)
+  .\team.ps1 new-request -Title "..."               Tạo phiếu yêu cầu R-xxx (requests/) để theo dõi 1 yêu cầu của chủ dự án
+  .\team.ps1 request-report -Request R-001          Tổng hợp mọi task của yêu cầu: lượt, phút agent, token, dòng / ngân sách, cổng kiểm tra, vòng review
   .\team.ps1 status [-Project Ten]                  Agent đang chạy, nhánh, kết quả lần chạy gần nhất
   .\team.ps1 cleanup -Project Ten -Task T-003       Xóa worktree sau khi đã merge
   .\team.ps1 switch-account                         Mở agy để /logout và đăng nhập tài khoản Antigravity khác
@@ -40,6 +41,7 @@ param(
     [string] $Stack = "",
     [string] $Title = "",
     [string] $Agent = "A",
+    [string] $Request = "",
     [string] $Name = "",
     [string[]] $Names = @(),
     [string] $Prompt = "",
@@ -1000,6 +1002,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         verifyFails = $(if ($verify) { @($verify.Fails).Count } else { $null })
         autoRetry = $autoRetry
         log = [IO.Path]::GetFileName($logFile)
+        request = $(try { [regex]::Match((Get-Content (Find-TaskFile $r $TaskName).FullName -Raw -Encoding UTF8), '\*\*Yêu cầu:\*\*\s*(R-\d+)').Groups[1].Value } catch { "" })
     }
 }
 
@@ -1066,6 +1069,64 @@ function Show-RunMetrics {
     $perTask = $runs | Group-Object { "$($_.project)/$($_.task)" }
     Say ("  Thời gian agent cho 1 task (cộng mọi lượt): TB {0:N0} phút · lượt / task TB {1:N2}" -f (($perTask | ForEach-Object { ($_.Group | Measure-Object durationSec -Sum).Sum / 60 }) | Measure-Object -Average).Average, (($perTask | ForEach-Object { $_.Count }) | Measure-Object -Average).Average)
 }
+# ===== Yêu cầu của chủ dự án (R-xxx): đơn vị theo dõi + đánh giá hiệu suất =====
+function Invoke-NewRequest {
+    $dir = Join-Path $Root "requests"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $last = @(Get-ChildItem $dir -Filter "R-*.md" | ForEach-Object { [int]([regex]::Match($_.Name, '^R-(\d+)').Groups[1].Value) } | Sort-Object)[-1]
+    $id = "R-{0:D3}" -f ($last + 1)
+    $slug = (($Title -replace '[^\p{L}\p{Nd} ]', '').Trim() -replace '\s+', '-').ToLower()
+    if ($slug.Length -gt 40) { $slug = $slug.Substring(0, 40).Trim('-') }
+    $file = Join-Path $dir "$id-$slug.md"
+    $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\request.md"))
+    $tpl = $tpl.Replace("{{ID}}", $id).Replace("{{TITLE}}", $Title).Replace("{{NOW}}", (Get-Date -Format "HH:mm dd/MM/yyyy")).Replace("{{MACHINE}}", $env:COMPUTERNAME)
+    [IO.File]::WriteAllText($file, $tpl, $Utf8)
+    Say "Đã tạo ${id}: $file" Green
+    $id
+}
+
+function Invoke-RequestReport {
+    if (-not $Request) { throw "Thiếu -Request R-xxx" }
+    $runs = @(Get-ChildItem (Join-Path $Root "metrics\runs") -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
+        try { Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { } })
+    $rows = @()
+    foreach ($p in Get-Projects) {
+        $r = Resolve-Project $p.name
+        $dir = Join-Path $r.Path "tasks"
+        if (-not (Test-Path $dir)) { continue }
+        foreach ($tf in Get-ChildItem $dir -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }) {
+            $tx = Get-Content $tf.FullName -Raw -Encoding UTF8
+            if ($tx -notmatch "\*\*Yêu cầu:\*\*\s*$([regex]::Escape($Request))\b") { continue }
+            $review = Get-Section $tx "Review (Claude)"
+            $rounds = @([regex]::Matches($review, 'Vòng\s+(\d+)') | ForEach-Object { [int]$_.Groups[1].Value })
+            $mine = @($runs | Where-Object { $_.project -eq $p.name -and $tf.BaseName.StartsWith($_.task) })
+            $budget = [regex]::Match($tx, '\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
+            $rows += [pscustomobject]@{
+                Project = $p.name; Task = $tf.BaseName
+                Runs = $mine.Count
+                AgentMin = [math]::Round((($mine | Measure-Object durationSec -Sum).Sum) / 60, 1)
+                TokensK = [math]::Round((($mine | Measure-Object totalTokens -Sum).Sum) / 1000)
+                Lines = ($mine | Sort-Object at | Select-Object -Last 1).linesAdded
+                Budget = $budget
+                VerifyFirst = $(if ($mine) { ($mine | Sort-Object at | Select-Object -First 1).verifyOk } else { $null })
+                Rounds = $(if ($rounds) { ($rounds | Measure-Object -Maximum).Maximum } else { 0 })
+                Passed = [bool]($review -match 'Vòng\s+\d+\s*[—–-]+\s*ĐẠT')
+                ClaudeFix = ([regex]::Matches($review, '(?im)^\s*[-*]?\s*(Claude|Quản lý) sửa')).Count
+            }
+        }
+    }
+    if (-not $rows) { Say "Không có task nào ghi **Yêu cầu:** $Request" Yellow; return }
+    Say "== Báo cáo $Request ==" Cyan
+    Say ("  {0,-22} {1,-34} {2,4} {3,8} {4,8} {5,11} {6,7} {7,5} {8,6}" -f "Dự án", "Task", "Lượt", "Phút AG", "Token k", "Dòng/ngân", "Cổng v1", "Vòng", "ĐẠT")
+    foreach ($x in $rows) {
+        $ln = if ($x.Lines) { "$($x.Lines)/$(if ($x.Budget) { $x.Budget } else { '-' })" } else { "-" }
+        $vf = if ($null -eq $x.VerifyFirst) { "-" } elseif ($x.VerifyFirst) { "đạt" } else { "trượt" }
+        Say ("  {0,-22} {1,-34} {2,4} {3,8} {4,8} {5,11} {6,7} {7,5} {8,6}" -f $x.Project, $x.Task, $x.Runs, $x.AgentMin, $x.TokensK, $ln, $vf, $x.Rounds, $(if ($x.Passed) { "có" } else { "chưa" }))
+    }
+    Say ("  Tổng: {0} task · {1} lượt agent · {2} phút agent · {3}k token · vòng TB {4:N2} · đạt vòng 1: {5}/{0}" -f $rows.Count,
+        ($rows | Measure-Object Runs -Sum).Sum, ($rows | Measure-Object AgentMin -Sum).Sum, ($rows | Measure-Object TokensK -Sum).Sum,
+        ($rows | Measure-Object Rounds -Average).Average, @($rows | Where-Object { $_.Rounds -le 1 -and $_.Passed }).Count)
+}
 function Invoke-Metrics {
     $rows = @()
     foreach ($p in Get-Projects | Where-Object { -not $Project -or $_.name -eq $Project }) {
@@ -1118,6 +1179,8 @@ switch ($Command) {
     "verify" { $null = Invoke-Verify }
     "metrics" { Invoke-Metrics; Show-RunMetrics }
     "metrics-import" { Invoke-MetricsImport }
+    "new-request" { $null = Invoke-NewRequest }
+    "request-report" { Invoke-RequestReport }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }

@@ -14,35 +14,35 @@ Xem nhanh: `.\team.ps1 metrics` (hoặc `-Project X`).
 
 ## 2. Chỉ số chính (KPI) và mục tiêu
 
-| KPI | Mốc 21/10/2026 | Mục tiêu | Vì sao quan trọng |
+| KPI | Mốc (đo từ R-001) | Mục tiêu | Vì sao quan trọng |
 |---|---|---|---|
-| Thời gian agent / task (cộng mọi lượt) | 24 phút | **≤ 15 phút** | Chủ dự án chờ ít hơn |
-| Token / lượt | ~630 nghìn | **≤ 400 nghìn** | Hạn mức Antigravity (đã hết 2 lần) |
-| Lượt agent / task | 1,21 | ≤ 1,1 | Mỗi lượt thêm = 20 phút |
-| Số vòng review TB | 1,44 | **≤ 1,15** | Vòng sửa lại là lãng phí lớn nhất |
-| Đạt ngay vòng 1 | 68% | **≥ 85%** | |
-| Cổng kiểm tra tự động đạt ngay | (bắt đầu đo) | ≥ 80% | Lỗi cơ học phải hết trước khi tới Claude |
-| Mất BOM khi review | 28% | 0% | Cổng kiểm tra đã tự sửa BOM |
-| Lỗi bảo mật Claude mới bắt được khi review | 16% | 0% (bắt bằng test nghiệm thu trước) | |
-| Dòng code / lượt so với ngân sách | (bắt đầu đo) | ≤ 1,0 × ngân sách | Code dư = thời gian + lỗi |
+| Thời gian agent / task (cộng mọi lượt) | — | **≤ 15 phút** | Chủ dự án chờ ít hơn |
+| Token / lượt | — | **≤ 400 nghìn** | Hạn mức Antigravity (đã hết 2 lần) |
+| Lượt agent / task | — | ≤ 1,1 | Mỗi lượt thêm = 20 phút |
+| Số vòng review TB | — | **≤ 1,15** | Vòng sửa lại là lãng phí lớn nhất |
+| Đạt ngay vòng 1 | — | **≥ 85%** | |
+| Cổng kiểm tra tự động đạt ngay | — | ≥ 80% | Lỗi cơ học phải hết trước khi tới Claude |
+| Mất BOM khi review | — | 0% | Cổng kiểm tra đã tự sửa BOM |
+| Lỗi bảo mật Claude mới bắt được khi review | — | 0% (bắt bằng test nghiệm thu trước) | |
+| Dòng code / lượt so với ngân sách | — | ≤ 1,0 × ngân sách | Code dư = thời gian + lỗi |
 
-## 3. Nhịp vận hành
+## 3. Nhịp vận hành — theo từng yêu cầu của chủ dự án
 
-**Mỗi task (Claude tự làm, không cần nhắc):**
-1. Trước khi giao: khung code + test nghiệm thu + ngân sách + model (CLAUDE.md bước 4).
-2. Sau khi agent xong: review như cũ. Ghi rõ trong "Review (Claude)": vòng, Claude tự sửa bao nhiêu dòng, nguyên nhân gốc mỗi lỗi:
+Đơn vị theo dõi là **một yêu cầu (R-xxx)**, không phải từng task lẻ. Chủ dự án chỉ cần biết yêu cầu của mình mất bao lâu, vì sao, và lần sau nhanh hơn ra sao.
+
+1. **Nhận yêu cầu:** `team.ps1 new-request -Title "…"` ⇒ phiếu `requests/R-xxx-*.md`, chép nguyên văn, ghi giờ.
+2. **Phân tích + chia việc:** ghi vào phiếu (mục 1–2). Task nào giao A / B, việc nào Claude tự làm, và vì sao.
+3. **Trong lúc làm:** mỗi sự kiện 1 dòng nhật ký kèm giờ. Lỗi khi review ghi nguyên nhân gốc:
    - **TK** — thiết kế / task của Claude thiếu;
    - **AG** — agent làm sai dù task đã rõ;
    - **CK** — cổng kiểm tra đáng lẽ phải bắt.
-3. Lỗi loại **CK** ⇒ thêm kiểm tra vào `Invoke-Verify` ngay. Lỗi **TK** ⇒ sửa mẫu task / sổ tay ngay. Lỗi **AG** lặp ≥ 2 lần ⇒ thêm vào "Lỗi hay gặp" của AGENTS.md hoặc lời giao việc.
 
-**Mỗi 5 task merge (hoặc mỗi tuần, cái nào tới trước):**
-1. Chạy `.\team.ps1 metrics`.
-2. So với KPI và kỳ trước; ghi 1 mục vào `docs/HIEU-SUAT-LOG.md`: số liệu, 3 lỗi tốn thời gian nhất, thử nghiệm giữ / bỏ, thử nghiệm kế tiếp.
-3. Báo chủ dự án 3–5 dòng.
+   Lỗi nhỏ (≤ ~50 dòng) Claude sửa ngay, ghi số dòng + phút.
+4. **Xong yêu cầu:** `team.ps1 request-report -Request R-xxx` ⇒ điền mục 4 của phiếu ⇒ 1 dòng trong `docs/HIEU-SUAT-LOG.md` ⇒ tối đa 2 cải tiến, sửa ngay vào sổ tay / mẫu / `team.ps1` ⇒ tăng phiên bản quy trình.
+5. **Báo chủ dự án:** kết quả + 2–3 dòng hiệu suất + cải tiến vừa áp dụng.
+6. **Yêu cầu kế tiếp:** đối chiếu xem cải tiến lần trước có tác dụng không (cột cuối của nhật ký). Không tác dụng sau 2–3 yêu cầu ⇒ bỏ.
 
-**Đầu mỗi phiên:** `doctor`, `inbox.md`, `metrics` (xem có KPI nào xấu đi).
-
+Đầu mỗi phiên: `doctor`, `inbox.md`, `status`, xem phiếu R-xxx nào còn 🟡.
 ## 4. Thử nghiệm cải tiến (làm từng cái, đo trên ≥ 5 task rồi mới kết luận)
 
 | # | Thử nghiệm | Trạng thái | Kỳ vọng | Cách đo |

@@ -25,6 +25,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 
 ## Quy trình cho mỗi yêu cầu
 1. **Tiếp nhận**
+   - **Mở phiếu theo dõi:** `team.ps1 new-request -Title "…"` ⇒ `requests/R-xxx-*.md`. Chép nguyên văn lời chủ dự án, ghi giờ nhận. Từ đây mọi sự kiện (giao, agent xong, review, tự sửa, merge) ghi 1 dòng vào mục Nhật ký của phiếu, KÈM GIỜ, ngay khi xảy ra. Mọi file task của yêu cầu có dòng `- **Yêu cầu:** R-xxx`.
    - Nhắc lại mục tiêu trong 1–2 câu.
    - Chỉ hỏi người dùng khi có quyết định sản phẩm thật sự cần họ chọn. Còn lại tự chọn mặc định hợp lý.
 2. **Dự án**
@@ -92,7 +93,8 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - **CẦN SỬA**: commit phần review vào nhánh, push, rồi `team.ps1 assign … -Resume -Feedback "<tóm tắt Blocker/Required>"`. Bảng 🔴.
    - **Cùng một lỗi còn sau 2 lần sửa ⇒ dừng vá.** Đối chiếu lại thiết kế, giả định, dữ liệu mẫu; sửa thiết kế / test nghiệm thu rồi mới giao tiếp. Tổng quá `review.maxRounds` vòng (mặc định 3): tự sửa phần còn lại hoặc báo người dùng.
    - Thiết kế phải đổi giữa chừng (như C-003 bỏ `service call alarm`) ⇒ sửa luôn file `docs/design/…` trong cùng commit, để thiết kế vẫn là nguồn sự thật duy nhất.
-8. **Báo cáo** cho người dùng, ngắn gọn:
+8. **Đánh giá yêu cầu (bắt buộc, ngay sau khi xong):** chạy `team.ps1 request-report -Request R-xxx`, điền mục 4 của phiếu (thời gian Claude / agent / chờ, lượt, vòng, tự sửa, lỗi TK / AG / CK, tốn nhất ở đâu). Thêm 1 dòng vào `docs/HIEU-SUAT-LOG.md`, chọn tối đa 2 cải tiến và SỬA NGAY sổ tay / mẫu / `team.ps1`, tăng phiên bản quy trình. Yêu cầu sau đo xem cải tiến có tác dụng không.
+9. **Báo cáo** cho người dùng, ngắn gọn (kèm 2–3 dòng đánh giá hiệu suất và cải tiến vừa áp dụng):
    - xong gì;
    - kiểm chứng ra sao;
    - còn rủi ro gì;
