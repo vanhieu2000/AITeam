@@ -51,6 +51,7 @@
 | 21:00 | Giao T-007 (Minh) | Ngân sách ~80 dòng |
 | 21:02 | Dừng lượt tự giao lại của Lan (đang cắt code cho vừa ngân sách); review C-011: ĐẠT, merge, clone sạch 648/648 | Cải tiến: vượt ngân sách chỉ cảnh báo, Claude quyết |
 | 21:08 | Ghi đánh giá Minh / Lan vào hồ sơ + lưu ý riêng; viết `BAN-GIAO.md` | |
+| 21:15 | Lượt tự giao lại của Lan vẫn kịp chạy thêm (sau khi đã dừng 1 lần) ⇒ commit "gộp test bằng MemberData, giảm 354 dòng" | KHÔNG lấy: ngoài yêu cầu, mất 6 ca test (648 → 642). [CK] (công cụ) dừng agent nhưng wrapper `assign` vẫn tự giao lại — lần sau phải dừng cả tiến trình wrapper |
 
 ## 4. Đánh giá sau khi xong (Claude)
 (điền khi xong)
