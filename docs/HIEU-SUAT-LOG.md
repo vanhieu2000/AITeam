@@ -6,8 +6,11 @@ Sau mỗi yêu cầu, Claude thêm 1 mục theo mẫu dưới đây. Cột "Cả
 
 | Yêu cầu | Ngày | Tổng thời gian | Claude / Agent (phút) | Lượt agent / vòng review | Tự sửa | Lỗi TK / AG / CK | Tốn nhất ở | Cải tiến áp dụng | Cải tiến trước có tác dụng? |
 |---|---|---|---|---|---|---|---|---|---|
+| R-001 Hoàn tất kiểm tra bố cục (C-011, T-005, T-007) | 21/10 | 2 giờ 30 phút (từ lúc hỏi) | ~75 / ~372 (120 treo) | 10 / 2,33 | 1 lần, 4 dòng | 4 / 3 / 5 | Test mở hộp thoại thật ⇒ treo 30 phút / lượt | Bố cục cụ thể trong task giao diện; `team.ps1 stop`; số đo theo lượt | — (yêu cầu đầu tiên) |
 
 ## Quy trình hiện hành (cập nhật dần sau mỗi yêu cầu)
+Phiên bản 2 — 21/10/2026 sau R-001: thêm (a) task giao diện phải có bố cục cụ thể + danh sách lỗi hiện có từ UiSnapshot / LayoutChecker; (b) dừng task bằng `team.ps1 stop`; (c) số đo tính theo từng lượt khi -Resume.
+
 Phiên bản 1 — 21/10/2026, trước yêu cầu đầu tiên được theo dõi:
 1. Nhận yêu cầu ⇒ `team.ps1 new-request -Title "…"`, chép nguyên văn lời chủ dự án, ghi giờ.
 2. Phân tích + thiết kế: Claude.

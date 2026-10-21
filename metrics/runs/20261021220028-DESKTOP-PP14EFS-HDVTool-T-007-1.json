@@ -19,5 +19,6 @@
     "autoRetry":  false,
     "hungBackgroundTask":  false,
     "log":  "T-007-1.json",
-    "request":  "R-001"
+    "request":  "R-001",
+    "conversationId":  "ebe97613-feab-41e7-8bd7-181c69ef5acc"
 }

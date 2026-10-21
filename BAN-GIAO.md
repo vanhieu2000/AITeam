@@ -3,7 +3,7 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-Cập nhật lần cuối: **21/10/2026 ~21:10 · máy nhà DESKTOP-PP14EFS**
+Cập nhật lần cuối: **21/10/2026 ~22:20 · máy nhà DESKTOP-PP14EFS** · quy trình phiên bản 2 (xem `docs/HIEU-SUAT-LOG.md`)
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
 Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUAT-LOG.md`.
@@ -33,8 +33,8 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
 ## 2. Việc đang dở
 | Việc | Trạng thái | Làm tiếp thế nào |
 |---|---|---|
-| **R-001** (phiếu `requests/R-001-…`) | C-011 và T-005 ĐÃ MERGE; còn T-007 | Khi T-007 xong ⇒ review ⇒ điền mục 4 "Đánh giá" của phiếu + 1 dòng `docs/HIEU-SUAT-LOG.md` |
-| **T-007** HDVTool (Minh) — thẻ "Hệ thống" ở trang Giới thiệu bị cắt + bộ kiểm tra phải bắt được | Giao 21:00 ở máy nhà | Nếu chưa xong mà máy nhà đã tắt: `.\team.ps1 assign -Project HDVTool -Task T-007 -Force` ở máy công ty |
+| **R-001** | ✅ XONG 22:15 — C-011, T-005, T-007 đã merge; đã đánh giá (quy trình lên phiên bản 2) | — |
+| Hàng chờ HDVTool (giao diện) | Lồng tiếng video, Tóm tắt cuộc họp, Công cụ IT còn bị cắt ở cửa sổ nhỏ nhất; dòng cuối Nhật ký thay đổi | Theo quy trình v2: chạy UiSnapshot, viết bố cục cụ thể rồi mới giao |
 | Hàng chờ Toolbox | C-006 tối ưu theo ROM — chờ chủ dự án cắm vivo X200 Pro chạy "Khảo sát ROM" + "Học cài đặt" | |
 | Hàng chờ HDVTool | Trang Giới thiệu hiện người đăng nhập + vai trò; nhật ký thao tác quản trị | Chưa thiết kế |
 | Optional | Toolbox: menu trái hiện thanh cuộn ngang ở cửa sổ nhỏ nhất | Việc nhỏ, Claude có thể tự làm |

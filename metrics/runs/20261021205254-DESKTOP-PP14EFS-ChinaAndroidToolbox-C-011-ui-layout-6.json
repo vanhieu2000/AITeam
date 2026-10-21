@@ -19,5 +19,6 @@
     "autoRetry":  true,
     "hungBackgroundTask":  false,
     "log":  "C-011-ui-layout-6.json",
-    "request":  "R-001"
+    "request":  "R-001",
+    "conversationId":  "7ad7e3cb-06d2-4887-94f7-37ff2b30fc4f"
 }

@@ -69,6 +69,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - Commit và push file task lên `main` TRƯỚC khi giao.
    - **Khung code trước (tính năng mới):** cùng commit đầu tiên với test nghiệm thu, Claude đẩy lên nhánh task: interface / lớp / chữ ký hàm public (thân `throw new NotImplementedException()` hoặc `// TODO(agent)`), và bố cục giao diện (TableLayoutPanel / FlowLayoutPanel, tên control). Agent chỉ điền phần thân, không tự thiết kế.
    - **Ngân sách:** mỗi task ghi dòng `- **Ngân sách:** ~N dòng` (code thêm, không tính test nghiệm thu). Cổng kiểm tra từ chối khi vượt 1,5 lần; sửa ngoài Phạm vi cũng bị từ chối (trước đây chỉ cảnh báo).
+   - **Task giao diện phải có bố cục cụ thể** (từ R-001): Claude ghi cây control (TableLayoutPanel / FlowLayoutPanel, cột %, MinimumSize, chỗ xuống dòng) và chạy `tools/UiSnapshot` / LayoutChecker TRƯỚC khi giao để liệt kê lỗi hiện có vào task. Không có bố cục ⇒ agent thử mò (T-007: 73 phút cho 51 dòng).
    - **Không giao khi không đáng:** việc ≤ ~100 dòng Claude làm thẳng. Sửa sau review ≤ ~50 dòng Claude tự sửa (một vòng agent tốn 20–30 phút); chỉ trả agent khi phải làm lại nhiều.
 5. **Giao việc**
    - Chạy `team.ps1 assign -Project X -Task T-xxx` (nền). Lệnh tự:
@@ -172,5 +173,5 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Worktree của agent dùng chung `.git/config` với repo chính: agent tự đặt tên commit làm lẫn với HieuDV. `assign` bật `extensions.worktreeConfig`, đặt tên agent riêng cho worktree, giữ HieuDV ở repo chính và tự trả lại nếu agent ghi đè.
 - Cảnh báo hết hạn mức chỉ khi lần chạy KHÔNG báo `"status":"SUCCESS"`; "429" / "quota" phải đứng riêng (trước đây khớp nhầm số token "42953").
 - Mã task trùng (vd. hai file C-011-…): giao bằng tên đầy đủ `-Task C-011-ui-layout-tests`. `team.ps1` báo lỗi nếu mã khớp nhiều file. Khi tạo task mới luôn dùng mã chưa có.
-- Muốn dừng một agent: dừng **cả lệnh `assign` bao ngoài** (shell nền đang chạy `team.ps1 assign`), không chỉ tiến trình `agy` — nếu không, cổng kiểm tra sẽ tự giao lại và agent chạy tiếp (21/10: Lan đẩy thêm commit sau khi task đã merge).
+- Muốn dừng một agent: `team.ps1 stop -Task X` (dừng **cả lệnh `assign` bao ngoài** (shell nền đang chạy `team.ps1 assign`), không chỉ tiến trình `agy` — nếu không, cổng kiểm tra sẽ tự giao lại và agent chạy tiếp (21/10: Lan đẩy thêm commit sau khi task đã merge).
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).

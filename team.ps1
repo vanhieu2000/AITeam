@@ -27,6 +27,7 @@
   .\team.ps1 secret-list | secret-remove -Name X    Xem tên (không xem giá trị) / xóa bí mật
   .\team.ps1 secret-env -Project Ten -Names A,B     Ghi .env.local (đã bị .gitignore) cho dự án chạy thử trên máy
   .\team.ps1 hub                                    Mở bảng điều khiển AITeam Hub (chạy ngầm)
+  .\team.ps1 stop -Task T-003                       Dừng hẳn task: cả lệnh assign bao ngoài lẫn agent (không bị tự giao lại)
   .\team.ps1 try -Project Ten [-NoLaunch]           Build bản ĐÃ MERGE ra thư mục riêng (AITeam-try) rồi mở app để chủ dự án chạy thử
 #>
 param(
@@ -1033,6 +1034,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         autoRetry = $autoRetry
         hungBackgroundTask = $(try { [bool]((Get-Content ($logFile -replace '\.json$', '.stderr.txt') -Raw -ErrorAction Stop) -match 'waiting up to \d+m\d+s for \d+ background task') } catch { $false })
         log = [IO.Path]::GetFileName($logFile)
+        conversationId = $(if ($j) { [string]$j.conversation_id } else { "" })
         request = $(try { [regex]::Match((Get-Content (Find-TaskFile $r $TaskName).FullName -Raw -Encoding UTF8), '\*\*Yêu cầu:\*\*\s*(R-\d+)').Groups[1].Value } catch { "" })
     }
 }
@@ -1100,6 +1102,21 @@ function Show-RunMetrics {
     $perTask = $runs | Group-Object { "$($_.project)/$($_.task)" }
     Say ("  Thời gian agent cho 1 task (cộng mọi lượt): TB {0:N0} phút · lượt / task TB {1:N2}" -f (($perTask | ForEach-Object { ($_.Group | Measure-Object durationSec -Sum).Sum / 60 }) | Measure-Object -Average).Average, (($perTask | ForEach-Object { $_.Count }) | Measure-Object -Average).Average)
 }
+# Dừng hẳn 1 task: cả lệnh assign bao ngoài (nếu không nó tự giao lại sau cổng kiểm tra) lẫn tiến trình agy của task.
+function Invoke-Stop {
+    if (-not $Task) { throw "Thiếu -Task" }
+    $procs = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $cl = $_.CommandLine
+        $cl -and (
+            ($_.Name -match '^powershell|^pwsh' -and $cl -match 'team\.ps1' -and $cl -match '\bassign\b' -and $cl -match ("-Task\s+" + [regex]::Escape($Task) + "\b")) -or
+            ($_.Name -match '^agy' -and $cl -match ([regex]::Escape($Task) + '-\d+\.prompt\.md'))
+        ) })
+    if (-not $procs) { Say "Không thấy tiến trình nào của task $Task trên máy này." Yellow; return }
+    foreach ($p in $procs | Sort-Object { $_.Name -notmatch '^powershell|^pwsh' }) {   # dừng lệnh assign trước để nó không tự giao lại
+        Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+        Say ("Đã dừng {0} (PID {1})" -f $p.Name, $p.ProcessId) Yellow
+    }
+}
 # ===== Chạy thử app cho chủ dự án: bản ĐÃ MERGE (main), build ra thư mục riêng, không đụng việc agent đang làm =====
 function Invoke-Try {
     $cfg = Get-Config
@@ -1145,9 +1162,23 @@ function Get-ReviewFindings([string]$review) {
     @([regex]::Matches($review, '\[(AG|TK|CK)\]\s*\(([^)]+)\)') | ForEach-Object { [pscustomobject]@{ Cause = $_.Groups[1].Value; Kind = $_.Groups[2].Value.Trim().ToLower() } })
 }
 
+# agy báo thời gian / token CỘNG DỒN cả hội thoại khi giao lại bằng -Resume ⇒ đổi về số của riêng từng lượt.
+function Get-RunDeltas($runs) {
+    $out = @()
+    foreach ($g in ($runs | Group-Object { if ($_.conversationId) { $_.conversationId } else { [guid]::NewGuid().ToString() } })) {
+        $prevD = 0; $prevT = 0
+        foreach ($x in ($g.Group | Sort-Object at)) {
+            $d = [math]::Max(0, [int]$x.durationSec - $prevD); $tk = [math]::Max(0, [long]$x.totalTokens - $prevT)
+            if ($x.conversationId) { $prevD = [int]$x.durationSec; $prevT = [long]$x.totalTokens }
+            $c = $x.PSObject.Copy(); $c.durationSec = $d; $c.totalTokens = $tk; $out += $c
+        }
+    }
+    $out
+}
 function Invoke-StaffReport {
     $runs = @(Get-ChildItem (Join-Path $Root "metrics\runs") -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
         try { Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { } })
+    $runs = @(Get-RunDeltas $runs)
     $tasks = @()
     foreach ($p in Get-Projects) {
         $r = Resolve-Project $p.name
@@ -1218,6 +1249,7 @@ function Invoke-RequestReport {
     if (-not $Request) { throw "Thiếu -Request R-xxx" }
     $runs = @(Get-ChildItem (Join-Path $Root "metrics\runs") -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
         try { Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { } })
+    $runs = @(Get-RunDeltas $runs)
     $rows = @()
     foreach ($p in Get-Projects) {
         $r = Resolve-Project $p.name
@@ -1232,6 +1264,7 @@ function Invoke-RequestReport {
             $budget = [regex]::Match($tx, '\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
             $rows += [pscustomobject]@{
                 Project = $p.name; Task = $tf.BaseName
+                Staff = Get-StaffName ([regex]::Match($tx, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value)
                 Runs = $mine.Count
                 AgentMin = [math]::Round((($mine | Measure-Object durationSec -Sum).Sum) / 60, 1)
                 TokensK = [math]::Round((($mine | Measure-Object totalTokens -Sum).Sum) / 1000)
@@ -1312,6 +1345,7 @@ switch ($Command) {
     "request-report" { Invoke-RequestReport }
     "staff-report" { Invoke-StaffReport }
     "try" { Invoke-Try }
+    "stop" { Invoke-Stop }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }

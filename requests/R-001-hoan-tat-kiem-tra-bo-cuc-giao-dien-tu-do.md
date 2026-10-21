@@ -1,7 +1,7 @@
 # R-001 · Hoàn tất kiểm tra bố cục giao diện tự động (C-011 Toolbox, T-005 HDV Tool)
 
 - **Nhận lúc:** 19:45 21/10/2026 · máy DESKTOP-PP14EFS
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong 22:15 21/10/2026
 - **Lời chủ dự án:**
   > 2 phần mềm của tôi sao rồi. Tôi thấy agent dừng không chạy mà 2 task cũ chạy mất 47 phút??
 
@@ -53,5 +53,56 @@
 | 21:08 | Ghi đánh giá Minh / Lan vào hồ sơ + lưu ý riêng; viết `BAN-GIAO.md` | |
 | 21:15 | Lượt tự giao lại của Lan vẫn kịp chạy thêm (sau khi đã dừng 1 lần) ⇒ commit "gộp test bằng MemberData, giảm 354 dòng" | KHÔNG lấy: ngoài yêu cầu, mất 6 ca test (648 → 642). [CK] (công cụ) dừng agent nhưng wrapper `assign` vẫn tự giao lại — lần sau phải dừng cả tiến trình wrapper |
 
-## 4. Đánh giá sau khi xong (Claude)
-(điền khi xong)
+## 4. Đánh giá sau khi xong (Claude, 22:15 21/10/2026)
+`.\team.ps1 request-report -Request R-001` (đã sửa lỗi đo cộng dồn khi `-Resume`):
+
+| Task | Nhân viên | Lượt | Phút agent | Token | Dòng / ngân sách | Cổng KT lượt đầu | Vòng | Đạt |
+|---|---|---|---|---|---|---|---|---|
+| T-005 bộ kiểm tra bố cục HDV Tool | Minh (A) | 4* | 134 | 1,9 tr | 932 / 800 | trượt | 3 | ✅ |
+| T-007 Giới thiệu bị cắt | Minh (A) | 1 | 73 | 2,3 tr | 51 / 80 | đạt | 1 | ✅ |
+| C-011 bộ kiểm tra bố cục Toolbox | Lan (B) | 5 | 165 | 3,0 tr | ~1.037 / 600 | trượt | 3 | ✅ |
+
+\* 2 lượt đầu của T-005 chạy trước khi bắt đầu ghi số đo (~13 + ~47 phút) — chưa cộng vào bảng.
+
+| Chỉ số | Giá trị |
+|---|---|
+| Tổng thời gian | Chủ dự án hỏi 19:45 → xong 22:15 = **2 giờ 30 phút** (task bắt đầu từ 18:23 ⇒ 3 giờ 50 phút) |
+| Thời gian Claude | ~75 phút: chẩn đoán 5 · chốt chặn / sửa công cụ 20 · sửa Hub theo góp ý 25 · review 3 task + tự sửa 25 |
+| Thời gian agent | ~372 phút cộng dồn (2 agent song song), trong đó **~120 phút treo vô ích** (4 lượt × ~30 phút) |
+| Lượt / vòng review | 10 lượt agent · vòng TB 2,33 · đạt vòng 1: 1/3 |
+| Claude tự sửa | T-007: 4 dòng (cột phiên bản) · C-011: bỏ lượt tự giao lại, chấp nhận vượt ngân sách |
+| Lỗi theo nguyên nhân | **TK 4** (không quy định cách dựng form trong test ×2, ngân sách ước sai, phạm vi thiếu csproj) · **AG 3** (form thật trong test ×2, sót chữ bị cắt) · **CK 5** (test không giới hạn thời gian, `-Task` khác tên ⇒ sai thư mục, dừng agent nhưng wrapper chạy tiếp, số đo cộng dồn, bộ kiểm tra bỏ sót) |
+
+**Đánh giá nhân viên:**
+
+| Nhân viên | Task | Làm tốt | Lỗi AG | Hướng cải thiện |
+|---|---|---|---|---|
+| Minh (A) | T-005, T-007 | Sửa bố cục thật, tắt hộp chào mừng bằng cờ an toàn; T-007 qua cổng KT ngay lượt đầu | Form thật trong test; sót chữ bị cắt; T-007 thử bố cục rất lâu (73 phút / 51 dòng) | Lưu ý riêng đã thêm; task giao diện cần bố cục cụ thể |
+| Lan (B) | C-011 | Bộ kiểm tra phủ mọi view + hộp thoại, test ~20 giây | Form thật trong test (lỗi DragDrop); tự làm thêm việc ngoài yêu cầu (gộp test, mất 6 ca) | Lưu ý riêng đã thêm |
+
+**Team đang bất ổn ở đâu:**
+- **Kỹ thuật:**
+  - test giao diện WinForms dễ treo (STA, hộp thoại modal);
+  - agy chờ lệnh nền tới 30 phút mà không báo;
+  - số đo sai khi giao lại bằng `-Resume`;
+  - bộ kiểm tra bố cục còn lỗ hổng.
+- **Quy trình:**
+  - dừng agent mà không dừng lệnh giao việc ⇒ agent tự chạy tiếp sau khi đã merge;
+  - đặt tên task trùng / gõ `-Task` khác nhau giữa các lượt;
+  - task giao diện chỉ mô tả mục tiêu, không có bố cục ⇒ agent thử mò.
+- **Quản lý (Claude):**
+  - giao 3 task sửa giao diện TRƯỚC khi có bộ kiểm tra tự động (đúng ra phải ngược lại);
+  - task không quy định cách dựng form trong test;
+  - ngân sách ước thấp;
+  - trang Task trên Hub trình bày rối (chủ dự án phải góp ý).
+
+- **Tốn thời gian nhất:** treo do test mở hộp thoại thật (~120 phút agent + 1,5 giờ chủ dự án chờ). Kế đến là T-007 thử bố cục 73 phút.
+- **Làm tốt (giữ lại):**
+  - tách phần sót thành task nhỏ (T-007) thay vì vòng 4;
+  - Claude tự sửa lỗi nhỏ;
+  - chốt chặn treo hiệu quả ngay (test còn 15–20 giây);
+  - quyết định không bắt cắt code khi ngân sách do Claude ước sai.
+- **Cải tiến áp dụng cho yêu cầu sau (quy trình phiên bản 2):**
+  1. **Task giao diện phải có bố cục cụ thể** do Claude viết: cây control (TableLayoutPanel / FlowLayoutPanel, cột %, MinimumSize) + danh sách lỗi hiện có lấy từ `tools/UiSnapshot` / LayoutChecker trước khi giao. Agent không phải mò. (Sổ tay bước 4.)
+  2. **`team.ps1 stop -Task X`** dừng hẳn task (cả lệnh assign lẫn agy). Số đo tính theo từng lượt (`conversationId`). (Đã làm trong `team.ps1`.)
+- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có
