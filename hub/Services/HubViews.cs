@@ -81,3 +81,54 @@ public static class ActivityFeed
             .ToList();
     }
 }
+
+public enum RunFilter { All, Errors, Success }
+
+public sealed record RunPage(IReadOnlyList<AgentRun> Items, int Total, int Page, int PageCount);
+
+public static class RunHistory
+{
+    // Lọc: Errors = Error + CreditsExhausted; Success = Success; All = mọi lần đã kết thúc (bỏ Running).
+    // project null/rỗng ⇒ mọi dự án. Sắp Time giảm dần. page bắt đầu từ 1; page ngoài khoảng ⇒ kẹp về [1, PageCount];
+    // không có dòng ⇒ PageCount = 1, Items rỗng.
+    public static RunPage Page(IEnumerable<AgentRun> runs, RunFilter filter, string? project, int page, int pageSize = 8)
+    {
+        if (pageSize <= 0) pageSize = 8;
+
+        var query = runs.Where(r =>
+        {
+            var verdict = RunVerdicts.Classify(r);
+            if (verdict == RunVerdict.Running || r.State == RunState.Running)
+            {
+                return false;
+            }
+
+            return filter switch
+            {
+                RunFilter.Errors => verdict == RunVerdict.Error || verdict == RunVerdict.CreditsExhausted,
+                RunFilter.Success => verdict == RunVerdict.Success,
+                _ => true
+            };
+        });
+
+        if (!string.IsNullOrWhiteSpace(project))
+        {
+            string p = project.Trim();
+            query = query.Where(r => string.Equals(r.Project, p, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var filtered = query.OrderByDescending(r => r.Time).ToList();
+        int total = filtered.Count;
+
+        if (total == 0)
+        {
+            return new RunPage(Array.Empty<AgentRun>(), 0, 1, 1);
+        }
+
+        int pageCount = (total + pageSize - 1) / pageSize;
+        int clampedPage = Math.Clamp(page, 1, pageCount);
+        var items = filtered.Skip((clampedPage - 1) * pageSize).Take(pageSize).ToList();
+
+        return new RunPage(items, total, clampedPage, pageCount);
+    }
+}
