@@ -83,6 +83,14 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
       - **Optional**: không bắt sửa; ghi thành việc ở hàng chờ.
       - Không yêu cầu đổi theo sở thích khi đã đúng thiết kế và tiêu chí.
    6. Claude tự sửa chỉ khi nhanh hơn viết lại yêu cầu; ghi rõ dòng "Claude sửa: …" (được đếm trong `team.ps1 metrics`).
+   6b. **Ghi lỗi theo định dạng đếm được** (dùng cho `staff-report`): mỗi lỗi một dòng `- [AG|TK|CK] (loại) mô tả`, trong đó:
+      - AG = nhân viên làm sai dù task rõ;
+      - TK = task / thiết kế của Claude thiếu;
+      - CK = cổng kiểm tra để lọt;
+      - loại ∈ bảo mật · giao diện · test · phạm vi · chất lượng · hiệu năng · dữ liệu · BOM · tài liệu.
+   6c. **Đánh giá nhân viên sau mỗi task** (tên trong `staff/<mã>-<tên>.md`, chỉ dùng trong log / đánh giá; lời giao việc và commit vẫn là "Agent A/B"):
+      - thêm 1 dòng vào "Nhận xét theo nhiệm vụ": lượt · phút · vòng · dòng/ngân sách, làm tốt, lỗi AG, hướng cải thiện;
+      - lỗi AG lặp ≥ 2 lần hoặc lỗi bảo mật ⇒ thêm 1 dòng `- …` vào "Lưu ý riêng" (tự đưa vào lời giao việc lần sau); 3 nhiệm vụ liền không tái phạm ⇒ bỏ dòng đó.
    7. Lỗi agent mắc mà có thể lặp lại ở task khác ⇒ thêm ngay vào mục "Lỗi hay gặp" trong `AGENTS.md` của dự án (và `templates/AGENTS.md` nếu chung). Không chỉ ghi trong file task: agent task sau không đọc file task cũ.
 7. **Kết luận**
    - **ĐẠT**:
@@ -93,7 +101,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - **CẦN SỬA**: commit phần review vào nhánh, push, rồi `team.ps1 assign … -Resume -Feedback "<tóm tắt Blocker/Required>"`. Bảng 🔴.
    - **Cùng một lỗi còn sau 2 lần sửa ⇒ dừng vá.** Đối chiếu lại thiết kế, giả định, dữ liệu mẫu; sửa thiết kế / test nghiệm thu rồi mới giao tiếp. Tổng quá `review.maxRounds` vòng (mặc định 3): tự sửa phần còn lại hoặc báo người dùng.
    - Thiết kế phải đổi giữa chừng (như C-003 bỏ `service call alarm`) ⇒ sửa luôn file `docs/design/…` trong cùng commit, để thiết kế vẫn là nguồn sự thật duy nhất.
-8. **Đánh giá yêu cầu (bắt buộc, ngay sau khi xong):** chạy `team.ps1 request-report -Request R-xxx`, điền mục 4 của phiếu (thời gian Claude / agent / chờ, lượt, vòng, tự sửa, lỗi TK / AG / CK, tốn nhất ở đâu). Thêm 1 dòng vào `docs/HIEU-SUAT-LOG.md`, chọn tối đa 2 cải tiến và SỬA NGAY sổ tay / mẫu / `team.ps1`, tăng phiên bản quy trình. Yêu cầu sau đo xem cải tiến có tác dụng không.
+8. **Đánh giá yêu cầu (bắt buộc, ngay sau khi xong):** chạy `team.ps1 request-report -Request R-xxx` và `team.ps1 staff-report`, điền mục 4 của phiếu (thời gian Claude / agent / chờ, lượt, vòng, tự sửa, lỗi TK / AG / CK, tốn nhất ở đâu). Thêm 1 dòng vào `docs/HIEU-SUAT-LOG.md`, chọn tối đa 2 cải tiến và SỬA NGAY sổ tay / mẫu / `team.ps1`, tăng phiên bản quy trình. Yêu cầu sau đo xem cải tiến có tác dụng không.
 9. **Báo cáo** cho người dùng, ngắn gọn (kèm 2–3 dòng đánh giá hiệu suất và cải tiến vừa áp dụng):
    - xong gì;
    - kiểm chứng ra sao;

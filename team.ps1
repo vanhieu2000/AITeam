@@ -15,6 +15,7 @@
   .\team.ps1 verify -Project Ten -Task T-003        Cổng kiểm tra: commit/push, BOM (tự sửa), phạm vi, test nghiệm thu, build 0 warning, test
   .\team.ps1 metrics [-Project Ten]                 Số liệu review (vòng, tự sửa, lỗi) + hiệu suất lượt chạy (phút, token, dòng code, cổng kiểm tra)
   .\team.ps1 new-request -Title "..."               Tạo phiếu yêu cầu R-xxx (requests/) để theo dõi 1 yêu cầu của chủ dự án
+  .\team.ps1 staff-report                           Bảng điểm từng nhân viên (tên trong staff/) + lỗi do quản lý / công cụ
   .\team.ps1 request-report -Request R-001          Tổng hợp mọi task của yêu cầu: lượt, phút agent, token, dòng / ngân sách, cổng kiểm tra, vòng review
   .\team.ps1 status [-Project Ten]                  Agent đang chạy, nhánh, kết quả lần chạy gần nhất
   .\team.ps1 cleanup -Project Ten -Task T-003       Xóa worktree sau khi đã merge
@@ -303,10 +304,18 @@ function Invoke-Assign {
     }
 
     $dev = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
+    # Lưu ý riêng của nhân viên (rút ra từ các lần review trước) — staff/<mã>-*.md, mục "Lưu ý riêng".
+    $staffNotes = ""
+    $staffFile = Get-ChildItem (Join-Path $Root "staff") -Filter "$agentId-*.md" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($staffFile) {
+        $notes = (Get-Section (Get-Content $staffFile.FullName -Raw -Encoding UTF8) "Lưu ý riêng").Trim()
+        $notes = ($notes -split "`r?`n" | Where-Object { $_ -match '^\s*-\s+\S' }) -join "`n"
+        if ($notes) { $staffNotes = "`nLƯU Ý RIÊNG CHO BẠN (từ các lần review trước — bắt buộc tránh lặp lại):`n$notes" }
+    }
     $null = Set-ManagerIdentity $r.Path $cfg.github.owner
     Set-AgentIdentity $r.Path $work $dev $r.Info.name
     $prompt = @"
-Bạn là $($dev.name) (chuyên: $($dev.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.
+Bạn là $($dev.name) (mã $($dev.id), chuyên: $($dev.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.$staffNotes
 Thư mục hiện tại là bản làm việc riêng của bạn, đã ở đúng nhánh $branch.
 Đọc AGENTS.md rồi làm task tasks/$($taskFile.Name) đến hết "Tiêu chí hoàn thành".
 Build: $($r.Info.build)   Test: $($r.Info.test)
@@ -348,7 +357,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         if ($id) { $argLine += " --conversation $id"; Say "Tiếp tục hội thoại $id" }
     }
 
-    Say "[$(Get-Date -Format HH:mm:ss)] $($r.Info.name) $Task → $($dev.name), nhánh $branch, thư mục $work" Cyan
+    Say "[$(Get-Date -Format HH:mm:ss)] $($r.Info.name) $Task → $(Get-StaffName $agentId), nhánh $branch, thư mục $work" Cyan
     # Start-Process: agy in trạng thái ra stderr; gọi trực tiếp thì PowerShell 5.1 coi là lỗi và dừng script.
     $err = $log -replace '\.json$', '.stderr.txt'
     $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
@@ -371,7 +380,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     if (-not $v.Ok -and -not $script:VerifyRetried) {
         # Lỗi cơ học (chưa commit / build / test / BOM...) → trả agent sửa luôn 1 lần, không tốn lượt review của Claude.
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $true)
-        Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $($dev.name) 1 lần kèm danh sách lỗi." Yellow
+        Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi." Yellow
         $script:Resume = $true
         $script:Feedback = "Cổng kiểm tra tự động KHÔNG ĐẠT. Sửa hết các mục sau, chạy lại build + test, cập nhật báo cáo, commit và push:`n- " + ($v.Fails -join "`n- ")
         Invoke-Assign
@@ -387,11 +396,13 @@ function Test-QuotaExhausted([string]$logText, [string]$errText) {
     return ("$logText`n$errText") -match '(?i)RESOURCE_EXHAUSTED|\bquota\b|rate.?limit|\b429\b|credits? balance|out of credits'
 }
 
-# Repo chính luôn commit bằng tên chủ dự án. Đặt lại khi chưa có hoặc bị agent ghi đè (tên "Agent …").
+# Repo chính luôn commit bằng tên chủ dự án. Đặt lại khi chưa có hoặc bị agent ghi đè (tên "Agent …" hoặc tên nhân viên trong team.json).
 # Trả về $true nếu đã phải sửa.
 function Set-ManagerIdentity([string]$repoPath, [string]$owner) {
     $name = git -C $repoPath config --local user.name 2>$null
-    if ($name -and $name -notmatch '^Agent\b') { return $false }
+    $agentNames = @((Get-Config).developers | ForEach-Object { $_.name })
+    $isAgent = $name -match '^Agent\b' -or $agentNames -contains $name
+    if ($name -and -not $isAgent) { return $false }
     git -C $repoPath config --local user.name "HieuDV"
     git -C $repoPath config --local user.email "$owner@users.noreply.github.com"
     return [bool]$name
@@ -1069,6 +1080,71 @@ function Show-RunMetrics {
     $perTask = $runs | Group-Object { "$($_.project)/$($_.task)" }
     Say ("  Thời gian agent cho 1 task (cộng mọi lượt): TB {0:N0} phút · lượt / task TB {1:N2}" -f (($perTask | ForEach-Object { ($_.Group | Measure-Object durationSec -Sum).Sum / 60 }) | Measure-Object -Average).Average, (($perTask | ForEach-Object { $_.Count }) | Measure-Object -Average).Average)
 }
+# ===== Nhân viên: tên chỉ dùng trong log / đánh giá (staff/<mã>-<tên>.md) =====
+function Get-StaffName([string]$id) {
+    $sf = Get-ChildItem (Join-Path $Root "staff") -Filter "$id-*.md" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $sf) { return "Agent $id" }
+    $n = [regex]::Match((Get-Content $sf.FullName -Raw -Encoding UTF8), '\*\*Tên:\*\*\s*(.+)').Groups[1].Value.Trim()
+    if ($n) { "$n ($id)" } else { "Agent $id" }
+}
+
+# Lỗi trong mục Review ghi dạng: "- [AG] (bảo mật) ..." — AG: agent làm sai · TK: task / thiết kế của Claude thiếu · CK: cổng kiểm tra đáng lẽ phải bắt.
+function Get-ReviewFindings([string]$review) {
+    @([regex]::Matches($review, '\[(AG|TK|CK)\]\s*\(([^)]+)\)') | ForEach-Object { [pscustomobject]@{ Cause = $_.Groups[1].Value; Kind = $_.Groups[2].Value.Trim().ToLower() } })
+}
+
+function Invoke-StaffReport {
+    $runs = @(Get-ChildItem (Join-Path $Root "metrics\runs") -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
+        try { Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { } })
+    $tasks = @()
+    foreach ($p in Get-Projects) {
+        $r = Resolve-Project $p.name
+        $dir = Join-Path $r.Path "tasks"
+        if (-not (Test-Path $dir)) { continue }
+        foreach ($tf in Get-ChildItem $dir -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }) {
+            $tx = Get-Content $tf.FullName -Raw -Encoding UTF8
+            $req = [regex]::Match($tx, '\*\*Yêu cầu:\*\*\s*(R-\d+)').Groups[1].Value
+            if (-not $req) { continue }   # chỉ tính task theo quy trình mới (có phiếu yêu cầu)
+            $review = Get-Section $tx "Review (Claude)"
+            $rounds = @([regex]::Matches($review, 'Vòng\s+(\d+)') | ForEach-Object { [int]$_.Groups[1].Value })
+            $mine = @($runs | Where-Object { $_.project -eq $p.name -and $tf.BaseName.StartsWith($_.task) } | Sort-Object at)
+            $budget = [regex]::Match($tx, '\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
+            $tasks += [pscustomobject]@{
+                Agent = [regex]::Match($tx, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
+                Task = "$($p.name)/$($tf.BaseName)"; Request = $req
+                Runs = $mine.Count; Min = (($mine | Measure-Object durationSec -Sum).Sum) / 60; Tokens = ($mine | Measure-Object totalTokens -Sum).Sum
+                VerifyFirst = $(if ($mine) { $mine[0].verifyOk } else { $null })
+                Lines = $(if ($mine) { $mine[-1].linesAdded } else { $null }); Budget = $(if ($budget) { [int]$budget } else { $null })
+                Rounds = $(if ($rounds) { ($rounds | Measure-Object -Maximum).Maximum } else { 0 })
+                Passed = [bool]($review -match 'Vòng\s+\d+\s*[—–-]+\s*ĐẠT')
+                ClaudeFix = ([regex]::Matches($review, '(?im)^\s*[-*]?\s*(Claude|Quản lý) sửa')).Count
+                Findings = Get-ReviewFindings $review
+            }
+        }
+    }
+    if (-not $tasks) { Say "Chưa có task nào theo quy trình mới (dòng **Yêu cầu:** R-xxx)." Yellow; return }
+    $pct = { param($a, $b) if ($b) { "{0:P0}" -f ($a / $b) } else { "-" } }
+    Say "== Bảng điểm nhân viên (chỉ task có phiếu yêu cầu) ==" Cyan
+    foreach ($g in $tasks | Group-Object Agent | Sort-Object Name) {
+        $x = $g.Group; $done = @($x | Where-Object { $_.Passed })
+        $runsN = ($x | Measure-Object Runs -Sum).Sum
+        $vf = @($x | Where-Object { $null -ne $_.VerifyFirst })
+        $bud = @($x | Where-Object { $_.Budget -and $_.Lines })
+        $ag = @($x | ForEach-Object { $_.Findings } | Where-Object { $_.Cause -eq 'AG' })
+        Say ("  {0}: {1} task ({2} xong) · {3} lượt · TB {4:N1} phút/lượt · TB {5:N0}k token/lượt" -f (Get-StaffName $g.Name), $x.Count, $done.Count, $runsN,
+            $(if ($runsN) { ($x | Measure-Object Min -Sum).Sum / $runsN } else { 0 }), $(if ($runsN) { ($x | Measure-Object Tokens -Sum).Sum / $runsN / 1000 } else { 0 }))
+        Say ("     cổng kiểm tra đạt lần đầu: {0} · vòng review TB {1:N2} · đạt vòng 1: {2} · trong ngân sách: {3} · Claude tự sửa: {4} lần" -f
+            (& $pct @($vf | Where-Object { $_.VerifyFirst }).Count $vf.Count), (($done | Measure-Object Rounds -Average).Average),
+            (& $pct @($done | Where-Object { $_.Rounds -le 1 }).Count $done.Count), (& $pct @($bud | Where-Object { $_.Lines -le $_.Budget }).Count $bud.Count),
+            ($x | Measure-Object ClaudeFix -Sum).Sum)
+        if ($ag) { Say ("     lỗi do nhân viên (AG): " + (($ag | Group-Object Kind | Sort-Object Count -Descending | ForEach-Object { "$($_.Name) $($_.Count)" }) -join ' · ')) Yellow }
+    }
+    $all = @($tasks | ForEach-Object { $_.Findings })
+    $tk = @($all | Where-Object { $_.Cause -eq 'TK' }); $ck = @($all | Where-Object { $_.Cause -eq 'CK' })
+    Say "  Quản lý (Claude) + công cụ:" Cyan
+    Say ("     lỗi do task / thiết kế (TK): {0}{1}" -f $tk.Count, $(if ($tk) { " — " + (($tk | Group-Object Kind | ForEach-Object { "$($_.Name) $($_.Count)" }) -join ' · ') } else { "" }))
+    Say ("     lỗi cổng kiểm tra để lọt (CK): {0}{1}" -f $ck.Count, $(if ($ck) { " — " + (($ck | Group-Object Kind | ForEach-Object { "$($_.Name) $($_.Count)" }) -join ' · ') } else { "" }))
+}
 # ===== Yêu cầu của chủ dự án (R-xxx): đơn vị theo dõi + đánh giá hiệu suất =====
 function Invoke-NewRequest {
     $dir = Join-Path $Root "requests"
@@ -1118,11 +1194,11 @@ function Invoke-RequestReport {
     }
     if (-not $rows) { Say "Không có task nào ghi **Yêu cầu:** $Request" Yellow; return }
     Say "== Báo cáo $Request ==" Cyan
-    Say ("  {0,-22} {1,-34} {2,4} {3,8} {4,8} {5,11} {6,7} {7,5} {8,6}" -f "Dự án", "Task", "Lượt", "Phút AG", "Token k", "Dòng/ngân", "Cổng v1", "Vòng", "ĐẠT")
+    Say ("  {0,-22} {1,-34} {9,-10} {2,4} {3,8} {4,8} {5,11} {6,7} {7,5} {8,6}" -f "Dự án", "Task", "Lượt", "Phút AG", "Token k", "Dòng/ngân", "Cổng v1", "Vòng", "ĐẠT", "Nhân viên")
     foreach ($x in $rows) {
         $ln = if ($x.Lines) { "$($x.Lines)/$(if ($x.Budget) { $x.Budget } else { '-' })" } else { "-" }
         $vf = if ($null -eq $x.VerifyFirst) { "-" } elseif ($x.VerifyFirst) { "đạt" } else { "trượt" }
-        Say ("  {0,-22} {1,-34} {2,4} {3,8} {4,8} {5,11} {6,7} {7,5} {8,6}" -f $x.Project, $x.Task, $x.Runs, $x.AgentMin, $x.TokensK, $ln, $vf, $x.Rounds, $(if ($x.Passed) { "có" } else { "chưa" }))
+        Say ("  {0,-22} {1,-34} {9,-10} {2,4} {3,8} {4,8} {5,11} {6,7} {7,5} {8,6}" -f $x.Project, $x.Task, $x.Runs, $x.AgentMin, $x.TokensK, $ln, $vf, $x.Rounds, $(if ($x.Passed) { "có" } else { "chưa" }), $x.Staff)
     }
     Say ("  Tổng: {0} task · {1} lượt agent · {2} phút agent · {3}k token · vòng TB {4:N2} · đạt vòng 1: {5}/{0}" -f $rows.Count,
         ($rows | Measure-Object Runs -Sum).Sum, ($rows | Measure-Object AgentMin -Sum).Sum, ($rows | Measure-Object TokensK -Sum).Sum,
@@ -1182,6 +1258,7 @@ switch ($Command) {
     "metrics-import" { Invoke-MetricsImport }
     "new-request" { $null = Invoke-NewRequest }
     "request-report" { Invoke-RequestReport }
+    "staff-report" { Invoke-StaffReport }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }

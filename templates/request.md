@@ -47,6 +47,15 @@ Dán kết quả `.\team.ps1 request-report -Request {{ID}}`, rồi điền:
 | Claude tự sửa: số lần / tổng dòng | |
 | Lỗi theo nguyên nhân: TK / AG / CK | |
 
+**Đánh giá nhân viên** (chi tiết ghi thêm vào `staff/<mã>-<tên>.md`):
+
+| Nhân viên | Task | Lượt · phút | Vòng | Dòng / ngân sách | Làm tốt | Lỗi AG | Hướng cải thiện |
+|---|---|---|---|---|---|---|---|
+
+**Team đang bất ổn ở đâu** (mỗi mục ghi bằng chứng từ nhật ký):
+- Kỹ thuật (công cụ, build, cổng kiểm tra, môi trường, model):
+- Quy trình (thiết kế, chia task, giao việc, review, phối hợp 2 máy):
+- Quản lý (Claude: lỗi TK, quyết định sai, chậm review):
 - **Tốn thời gian nhất ở đâu:**
 - **Cái gì làm tốt (giữ lại):**
 - **Cải tiến quy trình áp dụng cho yêu cầu sau** (tối đa 2, cụ thể, sửa file nào):
