@@ -356,7 +356,7 @@ Sau khi bạn push, cổng kiểm tra tự động chạy: đã commit + push h�
 # (trước đây "429" khớp nhầm vào số token như "thinking_tokens":42953).
 function Test-QuotaExhausted([string]$logText, [string]$errText) {
     if ($logText -match '"status"\s*:\s*"SUCCESS"') { return $false }
-    return ("$logText`n$errText") -match '(?i)RESOURCE_EXHAUSTED|\bquota\b|rate.?limit|\b429\b'
+    return ("$logText`n$errText") -match '(?i)RESOURCE_EXHAUSTED|\bquota\b|rate.?limit|\b429\b|credits? balance|out of credits'
 }
 
 # Repo chính luôn commit bằng tên chủ dự án. Đặt lại khi chưa có hoặc bị agent ghi đè (tên "Agent …").
