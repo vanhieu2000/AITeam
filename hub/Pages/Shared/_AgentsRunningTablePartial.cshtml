@@ -1,72 +1,59 @@
 @model IReadOnlyList<AITeam.Hub.Models.RunningAgent>
 
-<div id="running-agents-table-container" class="card" hx-get="/Agents?handler=RunningTable" hx-trigger="every 15s" hx-swap="outerHTML">
-    <div class="card-header">
-        <div class="card-title">
-            <span class="pulse-indicator"></span>
-            <span>Tiến trình đang chạy (@Model.Count)</span>
-        </div>
-        <span style="font-size: 11.5px; color: var(--text-muted);">Tự làm mới mỗi 15s</span>
+<div class="panel" id="running-agents-table-container" hx-get="/Agents?handler=RunningTable" hx-trigger="every 15s" hx-swap="outerHTML">
+    <div class="hd">
+        <span>Đang chạy</span>
+        <span class="muted">@Model.Count</span>
+        <span class="sp"></span>
+        <span class="faint" style="font-size:12px">tự làm mới 15 giây</span>
     </div>
-    <div class="card-body">
-        @if (Model.Count == 0)
-        {
-            <div style="color: var(--text-muted); font-size: 13.5px; text-align: center; padding: 18px;">
-                Hiện không có tiến trình agent nào đang chạy.
-            </div>
-        }
-        else
-        {
-            <div class="table-container" style="margin: 0;">
-                <table class="hub-table">
-                    <thead>
-                        <tr>
-                            <th>Dự án</th>
-                            <th>Task</th>
-                            <th>PID</th>
-                            <th>Bắt đầu</th>
-                            <th>Đã chạy</th>
-                            <th style="text-align: right;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var agent in Model)
-                        {
-                            <tr>
-                                <td>
-                                    <span style="font-weight: 600;">@(agent.Project ?? "N/A")</span>
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(agent.Task) && !string.IsNullOrEmpty(agent.Project))
-                                    {
-                                        <a href="/p/@agent.Project/t/@agent.Task" style="font-weight: 600;">@agent.Task</a>
-                                    }
-                                    else
-                                    {
-                                        <span>@(agent.Task ?? "N/A")</span>
-                                    }
-                                </td>
-                                <td>
-                                    <code class="inline-code">@agent.Pid</code>
-                                </td>
-                                <td>@agent.StartedAt.ToString("HH:mm:ss")</td>
-                                <td>
-                                    <span class="badge badge-assigned">
-                                        ⏳ @AITeam.Hub.Pages.IndexModel.FormatElapsed(agent.Elapsed)
-                                    </span>
-                                </td>
-                                <td style="text-align: right;">
-                                    <form method="post" asp-page-handler="Stop" style="display: inline; margin: 0;" onsubmit="return confirm('Dừng agent đang làm @(agent.Task ?? $"PID {agent.Pid}")?');">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="pid" value="@agent.Pid" />
-                                        <button type="submit" class="btn btn-danger btn-sm">🛑 Dừng</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
+    @if (Model.Count == 0)
+    {
+        <div class="empty">Không có agent nào đang chạy</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Dự án</th>
+                    <th>Agent</th>
+                    <th>Bắt đầu</th>
+                    <th class="num">Đã chạy</th>
+                    <th>PID</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var agent in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(agent.Task) && !string.IsNullOrEmpty(agent.Project))
+                            {
+                                <a href="/p/@agent.Project/t/@agent.Task"><b>@agent.Task</b></a>
+                            }
+                            else
+                            {
+                                <b>@(agent.Task ?? "N/A")</b>
+                            }
+                        </td>
+                        <td>@(agent.Project ?? "N/A")</td>
+                        <td>@{ var devMatch = System.Text.RegularExpressions.Regex.Match(agent.CommandLine ?? "", @"\\([ab])-[a-z]+-\d+"); }<span class="tag">@(devMatch.Success ? devMatch.Groups[1].Value.ToUpperInvariant() : "—")</span></td>
+                        <td class="muted">@agent.StartedAt.ToString("HH:mm")</td>
+                        <td class="num">@AITeam.Hub.Pages.IndexModel.FormatElapsed(agent.Elapsed)</td>
+                        <td class="mono muted">@agent.Pid</td>
+                        <td class="num">
+                            <form method="post" asp-page-handler="Stop" style="display: inline; margin: 0;" onsubmit="return confirm('Dừng agent đang làm @(agent.Task ?? $"PID {agent.Pid}")?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="pid" value="@agent.Pid" />
+                                <button type="submit" class="btn sm danger">Dừng</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>

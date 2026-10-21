@@ -1,160 +1,135 @@
 @page
 @model AITeam.Hub.Pages.SettingsModel
 @{
-    ViewData["Title"] = "Cài đặt hệ thống";
+    ViewData["Title"] = "Cài đặt";
+    var isTeam = string.Equals(Model.Tab, "team", StringComparison.OrdinalIgnoreCase) || Model.CurrentProject == null;
 }
-
-<div class="breadcrumb">
-    <a href="/">Tổng quan</a>
-    <span>›</span>
-    <span>Cài đặt</span>
-</div>
-
-<div class="page-header">
-    <h1 class="page-title">⚙️ Cài đặt cấu hình Team</h1>
-</div>
 
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
-    <div class="alert alert-success">
-        <span>✅ @Model.SuccessMessage</span>
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(46, 160, 67, 0.15); border: 1px solid var(--ok); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--ok); margin-right: 8px;">✓</span>
+        <span>@Model.SuccessMessage</span>
     </div>
 }
 
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
-    <div class="alert alert-danger">
-        <span>⚠️ @Model.ErrorMessage</span>
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--err); margin-right: 8px;">✗</span>
+        <span>@Model.ErrorMessage</span>
     </div>
 }
 
-<div class="settings-layout">
-    <!-- Cấu hình chung -->
-    <div class="settings-card">
-        <div class="settings-card-header">
-            <h2>Cấu hình chung (team.json &amp; team.local.json)</h2>
-            <p class="settings-card-subtitle">Các thiết lập về mô hình mặc định, số vòng review, thư mục làm việc và đường dẫn Antigravity CLI.</p>
-        </div>
-        <div class="settings-card-body">
-            <form method="post" asp-page-handler="SaveSettings">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label" for="defaultModel">Model mặc định (DefaultModel)</label>
-                        <input type="text" id="defaultModel" name="defaultModel" class="form-control" value="@Model.Settings.DefaultModel" placeholder="Ví dụ: gemini-2.5-pro (để trống nếu dùng mặc định)" />
-                        <span class="form-hint">Mô hình Antigravity dùng cho agent khi không chỉ định.</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="maxReviewRounds">Số vòng review tối đa (MaxReviewRounds)</label>
-                        <input type="number" id="maxReviewRounds" name="maxReviewRounds" class="form-control" value="@Model.Settings.MaxReviewRounds" min="1" max="10" required />
-                        <span class="form-hint">Giới hạn số vòng review trước khi Claude hỏi chủ dự án (1–10).</span>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label" for="projectsRoot">Thư mục chứa dự án (ProjectsRoot)</label>
-                        <input type="text" id="projectsRoot" name="projectsRoot" class="form-control" value="@Model.Settings.ProjectsRoot" required />
-                        <span class="form-hint">Ghi vào team.local.json (theo máy).</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="workRoot">Thư mục workspace của agent (WorkRoot)</label>
-                        <input type="text" id="workRoot" name="workRoot" class="form-control" value="@Model.Settings.WorkRoot" required />
-                        <span class="form-hint">Thư mục chứa worktree và logs khi agent thực hiện task.</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="agyExe">Đường dẫn Antigravity CLI (AgyExe)</label>
-                    <input type="text" id="agyExe" name="agyExe" class="form-control" value="@Model.Settings.AgyExe" required />
-                    <span class="form-hint">Đường dẫn đầy đủ tới agy.exe trên máy này (ghi vào team.local.json).</span>
-                </div>
-
-                <div class="form-section-title">Chuyên môn của từng developer</div>
-                @for (int i = 0; i < Model.Settings.Developers.Count; i++)
-                {
-                    var dev = Model.Settings.Developers[i];
-                    <div class="developer-row">
-                        <input type="hidden" name="developers[@i].Id" value="@dev.Id" />
-                        <input type="hidden" name="developers[@i].Name" value="@dev.Name" />
-                        <div class="developer-tag">
-                            <strong>Agent @dev.Id</strong> (@dev.Name)
-                        </div>
-                        <div class="developer-focus-input">
-                            <input type="text" name="developers[@i].Focus" class="form-control" value="@dev.Focus" placeholder="Lĩnh vực phụ trách" />
-                        </div>
-                    </div>
-                }
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Lưu cấu hình team</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Cấu hình từng dự án -->
-    <div class="settings-card">
-        <div class="settings-card-header">
-            <h2>Cấu hình từng dự án (projects.json)</h2>
-            <p class="settings-card-subtitle">Chỉnh sửa lệnh build, test, stack công nghệ và phân chia vùng code cho Agent A và B.</p>
-        </div>
-        <div class="settings-card-body">
-            @if (Model.Projects.Count == 0)
+<section class="screen on" id="s-settings">
+    <div class="set">
+        <!-- Menu con bên trái: Team · từng dự án -->
+        <div class="subnav">
+            <a class="nav @(isTeam ? "on" : "")" href="/Settings?tab=team">Team</a>
+            <div class="grp" style="padding-top: 8px;">Dự án</div>
+            @foreach (var proj in Model.Projects)
             {
-                <p class="text-muted">Chưa có dự án nào được đăng ký trong projects.json.</p>
-            }
-            else
-            {
-                @foreach (var proj in Model.Projects)
-                {
-                    <div class="project-settings-box">
-                        <div class="project-settings-title">
-                            <h3>📦 @proj.Name</h3>
-                            <span class="badge">@proj.Repo</span>
-                        </div>
-                        <form method="post" asp-page-handler="SaveProject">
-                            <input type="hidden" name="projectName" value="@proj.Name" />
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Công nghệ (Stack)</label>
-                                    <input type="text" name="stack" class="form-control" value="@proj.Stack" />
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Lệnh Build</label>
-                                    <input type="text" name="build" class="form-control font-mono" value="@proj.Build" placeholder="dotnet build ..." />
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Lệnh Test</label>
-                                    <input type="text" name="test" class="form-control font-mono" value="@proj.Test" placeholder="dotnet test ..." />
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Vùng phụ trách của Agent A</label>
-                                    <input type="text" name="areaA" class="form-control" value="@(proj.Areas.TryGetValue("A", out var a) ? a : "")" placeholder="src/, tools/..." />
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Vùng phụ trách của Agent B</label>
-                                    <input type="text" name="areaB" class="form-control" value="@(proj.Areas.TryGetValue("B", out var b) ? b : "")" placeholder="ui/, pages/..." />
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn-secondary">Lưu dự án @proj.Name</button>
-                            </div>
-                        </form>
-                    </div>
-                }
+                var isSelected = !isTeam && string.Equals(Model.Tab, proj.Name, StringComparison.OrdinalIgnoreCase);
+                <a class="nav @(isSelected ? "on" : "")" href="/Settings?tab=@proj.Name">@proj.Name</a>
             }
         </div>
+
+        <!-- Cột phải: Mỗi lần chỉ hiện 1 form -->
+        @if (isTeam)
+        {
+            <!-- Form cấu hình Team -->
+            <div class="panel">
+                <div class="hd">
+                    <span>Team</span>
+                    <span class="sp"></span>
+                    <span class="muted">team.json · team.local.json</span>
+                </div>
+                <div class="bd">
+                    <form method="post" asp-page-handler="SaveSettings">
+                        @Html.AntiForgeryToken()
+                        <div class="form2">
+                            <div class="field">
+                                <label>Model mặc định <span class="info" title="Dùng khi task không chỉ định model (để trống nếu dùng mặc định của agy)">i</span></label>
+                                <input class="inp" type="text" name="defaultModel" value="@Model.Settings.DefaultModel" placeholder="(mặc định của agy)" />
+                            </div>
+                            <div class="field">
+                                <label>Số vòng review tối đa <span class="info" title="Giới hạn số vòng review trước khi Claude hỏi chủ dự án (1–10)">i</span></label>
+                                <input class="inp" type="number" name="maxReviewRounds" value="@Model.Settings.MaxReviewRounds" min="1" max="10" required />
+                            </div>
+                            <div class="field">
+                                <label>Thư mục dự án <span class="tag">máy này</span> <span class="info" title="Ghi vào team.local.json (theo máy)">i</span></label>
+                                <input class="inp mono" type="text" name="projectsRoot" value="@Model.Settings.ProjectsRoot" required />
+                            </div>
+                            <div class="field">
+                                <label>Thư mục agent <span class="tag">máy này</span> <span class="info" title="Thư mục chứa worktree và logs khi agent thực hiện task">i</span></label>
+                                <input class="inp mono" type="text" name="workRoot" value="@Model.Settings.WorkRoot" required />
+                            </div>
+                            <div class="field wide">
+                                <label>agy.exe <span class="tag">máy này</span> <span class="info" title="Đường dẫn đầy đủ tới agy.exe trên máy này (ghi vào team.local.json)">i</span></label>
+                                <input class="inp mono" type="text" name="agyExe" value="@Model.Settings.AgyExe" required />
+                            </div>
+                            @for (int i = 0; i < Model.Settings.Developers.Count; i++)
+                            {
+                                var dev = Model.Settings.Developers[i];
+                                <input type="hidden" name="developers[@i].Id" value="@dev.Id" />
+                                <input type="hidden" name="developers[@i].Name" value="@dev.Name" />
+                                <div class="field">
+                                    <label>Agent @dev.Id — chuyên <span class="info" title="Chuyên môn phụ trách của Agent @dev.Id (@dev.Name)">i</span></label>
+                                    <input class="inp" type="text" name="developers[@i].Focus" value="@dev.Focus" placeholder="Chuyên môn phụ trách" />
+                                </div>
+                            }
+                        </div>
+                        <div class="actions">
+                            <a class="btn" href="/Settings?tab=team">Hoàn tác</a>
+                            <button type="submit" class="btn pri">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            var proj = Model.CurrentProject!;
+            <!-- Form cấu hình Dự án -->
+            <div class="panel">
+                <div class="hd">
+                    <span>@proj.Name</span>
+                    <span class="sp"></span>
+                    <span class="muted">projects.json · @proj.Repo</span>
+                </div>
+                <div class="bd">
+                    <form method="post" asp-page-handler="SaveProject">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="projectName" value="@proj.Name" />
+                        <div class="form2">
+                            <div class="field wide">
+                                <label>Công nghệ (Stack) <span class="info" title="Ngôn ngữ và framework chính của dự án">i</span></label>
+                                <input class="inp" type="text" name="stack" value="@proj.Stack" />
+                            </div>
+                            <div class="field">
+                                <label>Lệnh Build <span class="info" title="Lệnh build dự án, ví dụ dotnet build ...">i</span></label>
+                                <input class="inp mono" type="text" name="build" value="@proj.Build" placeholder="dotnet build ..." />
+                            </div>
+                            <div class="field">
+                                <label>Lệnh Test <span class="info" title="Lệnh chạy kiểm thử dự án, ví dụ dotnet test ...">i</span></label>
+                                <input class="inp mono" type="text" name="test" value="@proj.Test" placeholder="dotnet test ..." />
+                            </div>
+                            <div class="field">
+                                <label>Agent A — vùng phụ trách <span class="info" title="Các thư mục code phân công cho Agent A, ví dụ src/, tools/">i</span></label>
+                                <input class="inp" type="text" name="areaA" value="@(proj.Areas.TryGetValue("A", out var a) ? a : "")" placeholder="src/, tools/..." />
+                            </div>
+                            <div class="field">
+                                <label>Agent B — vùng phụ trách <span class="info" title="Các thư mục code phân công cho Agent B, ví dụ ui/, pages/">i</span></label>
+                                <input class="inp" type="text" name="areaB" value="@(proj.Areas.TryGetValue("B", out var b) ? b : "")" placeholder="ui/, pages/..." />
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <a class="btn" href="/Settings?tab=@proj.Name">Hoàn tác</a>
+                            <button type="submit" class="btn pri">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
     </div>
-</div>
+</section>

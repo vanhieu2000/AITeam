@@ -14,16 +14,26 @@ public sealed class SettingsModel : PageModel
         _configService = configService;
     }
 
+    [BindProperty(SupportsGet = true)]
+    public string Tab { get; set; } = "team";
+
     public TeamSettings Settings { get; private set; } = default!;
     public IReadOnlyList<ProjectInfo> Projects { get; private set; } = Array.Empty<ProjectInfo>();
+
+    public ProjectInfo? CurrentProject =>
+        Projects.FirstOrDefault(p => string.Equals(p.Name, Tab, StringComparison.OrdinalIgnoreCase));
 
     [TempData]
     public string? SuccessMessage { get; set; }
 
     public string? ErrorMessage { get; set; }
 
-    public void OnGet()
+    public void OnGet(string? tab = null)
     {
+        if (!string.IsNullOrWhiteSpace(tab))
+        {
+            Tab = tab.Trim();
+        }
         LoadData();
     }
 
@@ -35,6 +45,7 @@ public sealed class SettingsModel : PageModel
         string? agyExe,
         List<DeveloperFormItem>? developers)
     {
+        Tab = "team";
         defaultModel ??= "";
         projectsRoot ??= "";
         workRoot ??= "";
@@ -117,6 +128,7 @@ public sealed class SettingsModel : PageModel
         string? areaA,
         string? areaB)
     {
+        Tab = projectName;
         if (string.IsNullOrWhiteSpace(projectName))
         {
             ErrorMessage = "Tên dự án không được để trống.";
