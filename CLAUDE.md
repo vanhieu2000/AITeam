@@ -52,7 +52,9 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 4. **Chia task + viết TEST NGHIỆM THU trước**
    - Tạo task bằng `team.ps1 new-task …` (mẫu `templates/task.md`) và điền ĐỦ: Phạm vi (đường dẫn trong `…` để cổng kiểm tra đối chiếu), Không làm, **Ràng buộc** (bảo mật / dữ liệu / tương thích), **Dữ liệu mẫu thật**, **Giao diện** (kích thước tối thiểu, ảnh phải nộp), **Test nghiệm thu**, Tiêu chí hoàn thành.
    - Mỗi task trỏ tới phần thiết kế tương ứng: "làm theo docs/design/X.md mục Y". Review đối chiếu với thiết kế.
-   - Mỗi task nhỏ, làm xong trong 1 lần chạy (khoảng ≤ 1 giờ agent). Giao **A và B ở vùng code khác nhau** theo `areas`. Task phụ thuộc nhau thì giao tuần tự.
+   - Mỗi task nhỏ: mục tiêu ≤ 10–15 phút agent, khoảng ≤ 500 dòng thay đổi. Thời gian chạy tỉ lệ với lượng code agent phải viết (đo 21/10/2026: task ~1.500 dòng ≈ 23 phút, ~100k token đầu ra). Tính năng lớn thì tách lõi / giao diện / dữ liệu thành task riêng, giao song song cho A và B.
+   - Tốn thời gian nhất là vòng sửa lại (mỗi vòng thêm 20–30 phút): ghi tiêu chí thật cụ thể, viết sẵn test nghiệm thu khi được.
+   - Việc đơn giản (dữ liệu JSON, tài liệu, sửa nhỏ) ghi thêm `- **Model:** `gemini-3.8-flash-medium`` trong file task để chạy nhanh hơn; việc khó để mặc định. Giao **A và B ở vùng code khác nhau** theo `areas`. Task phụ thuộc nhau thì giao tuần tự.
    - **Test nghiệm thu (bắt buộc với task có logic):** Claude viết `tests/.../Acceptance<Task>Tests.cs` TRƯỚC khi giao. Đây chính là những ca trước đây Claude viết trong `Review<Task>Tests` SAU khi agent làm xong: biên, lỗi, null / dữ liệu cũ, định dạng output thật, bảo mật (`..`, đường dẫn tuyệt đối, tên file bẩn, chuỗi lệnh `Contains`), bỏ code mới thì test phải đỏ.
      - Test còn tham chiếu lớp chưa có ⇒ KHÔNG đưa lên `main` (làm hỏng build của agent kia). Tạo nhánh task từ `origin/main`, commit test nghiệm thu làm commit đầu tiên ("Test nghiệm thu T-xxx (Claude)"), push nhánh; `assign` sẽ dùng nhánh có sẵn. Test chỉ dùng lớp đã có thì đưa lên `main` cùng task.
      - Cổng kiểm tra chặn mọi chỉnh sửa vào các file này.

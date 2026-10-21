@@ -3,6 +3,7 @@
 - **Agent:** {{AGENT}}
 - **Nhánh:** `{{BRANCH}}`
 - **Ưu tiên:** trung bình
+<!-- Tùy chọn: - **Model:** `gemini-3.8-flash-medium` cho việc nhỏ / dữ liệu; bỏ trống = mặc định. Xem: .\team.ps1 models -->
 
 ## Bối cảnh
 <!-- Vì sao cần làm, hiện trạng. Trỏ tới thiết kế: "Làm theo docs/design/<file>.md mục X". Liệt kê code có sẵn để tái dùng. -->

@@ -272,7 +272,8 @@ function Find-TaskFile($r, [string] $Task) {
     return $found[0]
 }
 
-function Invoke-Assign {    $cfg = Get-Config
+function Invoke-Assign {
+    $cfg = Get-Config
     $r = Resolve-Project $Project
     if (-not $Task) { throw "Thiếu -Task" }
     $taskFile = Find-TaskFile $r $Task
@@ -314,6 +315,11 @@ File trong mục "Test nghiệm thu" của task do Claude viết trước: KHÔN
 Báo cáo của agent: điền bảng từng tiêu chí hoàn thành → bằng chứng (lệnh đã chạy + kết quả thật). Chưa chạy thì ghi chưa chạy.
 Làm theo mục "Lỗi hay gặp" trong AGENTS.md (giữ BOM UTF-8 của file, không test return sớm, giao diện không đặt tọa độ cố định...).
 Sau khi bạn push, cổng kiểm tra tự động chạy: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên.
+LÀM NHANH (thời gian chạy được đo):
+- Đọc PROJECT_MAP.md / AGENTS.md rồi chỉ mở đúng file cần sửa; không đọc lại cả file đã đọc, không in nguyên file dài ra màn hình.
+- Trong lúc làm: build tăng dần (không clean), thêm --no-restore sau lần restore đầu; chạy RIÊNG test liên quan bằng dotnet test --no-build --filter "FullyQualifiedName~TênLớpTest".
+- Chạy đủ lệnh Build + Test của dự án đúng 1 lần ở cuối, trước khi commit.
+- Sửa file bằng chỉnh sửa nhỏ đúng chỗ, không viết lại cả file khi chỉ đổi vài dòng.
 "@
     if ($Feedback) { $prompt += "`nYÊU CẦU CỦA QUẢN LÝ: $Feedback`nĐọc kỹ mục 'Review (Claude)' trong file task nếu có." }
 
@@ -324,7 +330,10 @@ Sau khi bạn push, cổng kiểm tra tự động chạy: đã commit + push h�
     [IO.File]::WriteAllText($promptFile, $prompt, $Utf8)
     $short = "Doc file $promptFile (UTF-8, tieng Viet) va lam dung theo huong dan trong do."
     $argLine = "-p `"$short`" --output-format json --print-timeout 0 --dangerously-skip-permissions --add-dir `"$work`" --add-dir `"$($r.Logs)`""
-    if ($cfg.agy.model) { $argLine += " --model `"$($cfg.agy.model)`"" }
+    # Model theo task (dòng **Model:** `tên` trong file task) > model mặc định trong team.json.
+    $taskModel = [regex]::Match($text, '\*\*Model:\*\*\s*`([^`]+)`').Groups[1].Value
+    $model = if ($taskModel) { $taskModel } else { $cfg.agy.model }
+    if ($model) { $argLine += " --model `"$model`""; Say "Model: $model" }
     if ($Resume) {
         $last = Get-ChildItem $r.Logs -Filter "$Task-*.json" | Where-Object { $_.Length -gt 0 -and $_.Name -notmatch 'prompt' } |
             Sort-Object LastWriteTime | Select-Object -Last 1
