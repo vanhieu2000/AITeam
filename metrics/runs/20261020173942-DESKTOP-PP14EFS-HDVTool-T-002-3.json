@@ -1,0 +1,21 @@
+{
+    "at":  "2026-10-20T17:39:42",
+    "machine":  "DESKTOP-PP14EFS",
+    "project":  "HDVTool",
+    "task":  "T-002",
+    "run":  "3",
+    "agent":  "",
+    "model":  "mặc định",
+    "status":  "SUCCESS",
+    "durationSec":  1147,
+    "outputTokens":  68401,
+    "thinkingTokens":  43896,
+    "totalTokens":  813391,
+    "linesAdded":  0,
+    "linesRemoved":  0,
+    "filesChanged":  0,
+    "verifyOk":  null,
+    "verifyFails":  null,
+    "autoRetry":  false,
+    "log":  "T-002-3.json"
+}
