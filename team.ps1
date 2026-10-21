@@ -331,7 +331,9 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
 - Không thêm tính năng, tùy chọn, lớp, màn hình, file nào ngoài mục "Mục tiêu" và "Phạm vi" của task. Thấy nên làm thêm thì GHI vào báo cáo, không tự làm.
 - Có khung code sẵn (chữ ký hàm / interface / TODO do Claude viết) thì giữ nguyên chữ ký, chỉ điền phần thân.
 - Test: viết đúng các trường hợp trong "Tiêu chí hoàn thành", không nhân bản thành hàng chục test na ná nhau.
-- Task có dòng "Ngân sách" (số dòng code): giữ trong ngân sách; cổng kiểm tra từ chối nếu vượt quá 1,5 lần.LÀM NHANH (thời gian chạy được đo):
+- Task có dòng "Ngân sách" (số dòng code): giữ trong ngân sách; cổng kiểm tra từ chối nếu vượt quá 1,5 lần.KHÔNG ĐỂ TREO (đã mất 30 phút / lượt vì lỗi này):
+- Mọi lệnh dotnet test thêm: --blame-hang-timeout 2m. Không chạy lệnh ở chế độ nền rồi ngồi chờ; lệnh nào quá 3 phút không kết thúc thì dừng nó và xem vì sao.
+- Test giao diện: TUYỆT ĐỐI không gọi Show(), ShowDialog(), MessageBox, Application.Run, không mở app thật. Dựng form / control ẩn (CreateControl, PerformLayout) trên luồng STA riêng; đặt Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException) để lỗi ném ra thay vì bật hộp thoại. Code dựng màn hình có hộp thoại chào mừng / thông báo thì phải tắt được qua tham số hoặc cờ trong test.LÀM NHANH (thời gian chạy được đo):
 - Đọc PROJECT_MAP.md / AGENTS.md rồi chỉ mở đúng file cần sửa; không đọc lại cả file đã đọc, không in nguyên file dài ra màn hình.
 - Trong lúc làm: build tăng dần (không clean), thêm --no-restore sau lần restore đầu; chạy RIÊNG test liên quan bằng dotnet test --no-build --filter "FullyQualifiedName~TênLớpTest".
 - Chạy đủ lệnh Build + Test của dự án đúng 1 lần ở cuối, trước khi commit.
@@ -365,6 +367,9 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     $logText = Get-Content $log -Raw -ErrorAction SilentlyContinue
     $errText = Get-Content $err -Raw -ErrorAction SilentlyContinue
     Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
+    if ($errText -match 'waiting up to \d+m\d+s for \d+ background task') {
+        Say "CẢNH BÁO: agent đã ngồi chờ một lệnh nền bị treo (agy chờ tối đa 30 phút rồi cắt). Lượt này có thể chưa commit / chưa báo cáo." Yellow
+    }
     if (Test-QuotaExhausted $logText $errText) {
         Say "HẾT HẠN MỨC tài khoản Antigravity hiện tại → chạy .\team.ps1 switch-account rồi giao lại với -Resume" Yellow
     }
@@ -870,7 +875,11 @@ function Invoke-Verify {
         } else { [void]$notes.Add("Build: OK, 0 warning") }
     }
     if ($r.Info.test -and -not ($fails | Where-Object { $_ -like 'Build LỖI*' })) {
-        $t = Invoke-ShellCapture $r.Info.test $work
+        # Chốt chặn treo: test giao diện bật hộp thoại modal từng làm treo cả agent lẫn cổng kiểm tra (21/10/2026, 47 phút / task).
+        $testCmd = $r.Info.test
+        if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += " --blame-hang-timeout 3m --blame-hang-dump-type none" }
+        $t = Invoke-ShellCapture $testCmd $work
+        if ($t.Output -match '(?i)blame-hang|hang timeout|The active test run was aborted') { [void]$fails.Add("Test bị TREO (quá 3 phút, thường do test giao diện mở hộp thoại / form / MessageBox thật). Xem luật 'Test giao diện' trong lời giao việc.") }
         $summary = @($t.Output -split "`r?`n" | Where-Object { $_ -match '(?i)(Passed!|Failed!|Total tests|Tổng số|Đạt!|Không đạt!)' } | ForEach-Object { $_.Trim() })
         if ($t.Code -ne 0) {
             $failed = @($t.Output -split "`r?`n" | Where-Object { $_ -match '^\s*(Failed|Không đạt)\s+\S' } | Select-Object -First 10 | ForEach-Object { $_.Trim() })
@@ -1012,6 +1021,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         verifyOk = $(if ($verify) { [bool]$verify.Ok } else { $null })
         verifyFails = $(if ($verify) { @($verify.Fails).Count } else { $null })
         autoRetry = $autoRetry
+        hungBackgroundTask = $(try { [bool]((Get-Content ($logFile -replace '\.json$', '.stderr.txt') -Raw -ErrorAction Stop) -match 'waiting up to \d+m\d+s for \d+ background task') } catch { $false })
         log = [IO.Path]::GetFileName($logFile)
         request = $(try { [regex]::Match((Get-Content (Find-TaskFile $r $TaskName).FullName -Raw -Encoding UTF8), '\*\*Yêu cầu:\*\*\s*(R-\d+)').Groups[1].Value } catch { "" })
     }
