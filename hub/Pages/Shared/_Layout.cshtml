@@ -11,6 +11,8 @@
     var isSecretsActive = currentPage.Equals("/Vault", StringComparison.OrdinalIgnoreCase) || currentPage.Equals("/Secrets", StringComparison.OrdinalIgnoreCase);
     var isSettingsActive = currentPage.Equals("/Settings", StringComparison.OrdinalIgnoreCase);
 
+    var reqTheme = Context.Request.Query["theme"].ToString();
+
     var sidebarProjects = ConfigService.GetProjects();
     var runningAgents = AgentRunService.GetRunning();
     var runningCount = runningAgents.Count;
@@ -19,14 +21,16 @@
     var agyStatus = AITeam.Hub.Services.AntigravityStatuses.From(recentRuns);
 }
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" @(reqTheme == "dark" ? "data-theme=\"dark\"" : "")>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} - AITeam Hub" : "AITeam Hub")</title>
     <script>
         (function() {
-            var theme = localStorage.getItem('hub-theme') || 'light';
+            var urlParams = new URLSearchParams(window.location.search);
+            var urlTheme = urlParams.get('theme');
+            var theme = urlTheme || localStorage.getItem('hub-theme') || 'light';
             if (theme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
             } else {
