@@ -292,6 +292,13 @@ function Invoke-Assign {
     New-Item -ItemType Directory -Force $r.Logs | Out-Null
     $work = Join-Path $r.Work ("$agentId-$Task".ToLower())
     git -C $r.Path fetch origin --quiet
+    # Nhánh đã có worktree (vd. lần trước gõ -Task ngắn hơn) ⇒ dùng lại đúng thư mục đó thay vì báo lỗi "already used by worktree".
+    $existing = (git -C $r.Path worktree list --porcelain) -join "`n"
+    $m = [regex]::Match($existing, "worktree ([^\n]+)\nHEAD [0-9a-f]+\nbranch refs/heads/$([regex]::Escape($branch))(\n|$)")
+    if ($m.Success -and ((Resolve-Path $m.Groups[1].Value -ErrorAction SilentlyContinue).Path -ne (Resolve-Path $work -ErrorAction SilentlyContinue).Path)) {
+        $work = $m.Groups[1].Value.Replace('/', '\')
+        Say "Nhánh $branch đã có thư mục làm việc → dùng lại $work" Yellow
+    }
     if (-not (Test-Path $work)) {
         $remoteHas = git -C $r.Path ls-remote --heads origin $branch
         if ($remoteHas) { git -C $r.Path worktree add $work -B $branch "origin/$branch" --quiet }
