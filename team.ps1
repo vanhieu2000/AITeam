@@ -261,12 +261,21 @@ function Invoke-NewTask {
 
 # ───────────────────────── Giao việc ─────────────────────────
 
-function Invoke-Assign {
-    $cfg = Get-Config
+function Find-TaskFile($r, [string] $Task) {
+    # Ưu tiên khớp đúng tên file (vd. -Task C-011-ui-layout-tests); sau đó mới khớp tiền tố "<mã>-*.md".
+    $dir = Join-Path $r.Path "tasks"
+    $exact = Join-Path $dir "$Task.md"
+    if (Test-Path $exact) { return Get-Item $exact }
+    $found = @(Get-ChildItem $dir -Filter "$Task-*.md")
+    if ($found.Count -eq 0) { throw "Không thấy tasks\$Task-*.md trong $($r.Path)" }
+    if ($found.Count -gt 1) { throw "Mã '$Task' khớp nhiều task: $(($found | ForEach-Object { $_.BaseName }) -join ', '). Ghi rõ hơn, vd. -Task $($found[0].BaseName)" }
+    return $found[0]
+}
+
+function Invoke-Assign {    $cfg = Get-Config
     $r = Resolve-Project $Project
     if (-not $Task) { throw "Thiếu -Task" }
-    $taskFile = Get-ChildItem (Join-Path $r.Path "tasks") -Filter "$Task-*.md" | Select-Object -First 1
-    if (-not $taskFile) { throw "Không thấy tasks\$Task-*.md trong $($r.Path)" }
+    $taskFile = Find-TaskFile $r $Task
     $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
     $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
@@ -648,8 +657,7 @@ function Invoke-Hub {
 function Get-TaskContext {
     $r = Resolve-Project $Project
     if (-not $Task) { throw "Thiếu -Task" }
-    $taskFile = Get-ChildItem (Join-Path $r.Path "tasks") -Filter "$Task-*.md" | Select-Object -First 1
-    if (-not $taskFile) { throw "Không thấy tasks\$Task-*.md trong $($r.Path)" }
+    $taskFile = Find-TaskFile $r $Task
     $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
     $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value

@@ -1,4 +1,4 @@
-﻿# Sổ tay quản lý team AI (dành cho Claude)
+# Sổ tay quản lý team AI (dành cho Claude)
 
 Bạn là **quản lý / tech lead** của một team AI nhỏ làm việc cho HieuDV.
 Mọi trạng thái của team nằm trong file và trên git, không nằm trong trí nhớ của tài khoản nào.
@@ -149,4 +149,5 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Agent hay làm mất BOM UTF-8 của file .cs / .json → kiểm tra BOM khi review.
 - Worktree của agent dùng chung `.git/config` với repo chính: agent tự đặt tên commit làm lẫn với HieuDV. `assign` bật `extensions.worktreeConfig`, đặt tên agent riêng cho worktree, giữ HieuDV ở repo chính và tự trả lại nếu agent ghi đè.
 - Cảnh báo hết hạn mức chỉ khi lần chạy KHÔNG báo `"status":"SUCCESS"`; "429" / "quota" phải đứng riêng (trước đây khớp nhầm số token "42953").
+- Mã task trùng (vd. hai file C-011-…): giao bằng tên đầy đủ `-Task C-011-ui-layout-tests`. `team.ps1` báo lỗi nếu mã khớp nhiều file. Khi tạo task mới luôn dùng mã chưa có.
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).
