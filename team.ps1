@@ -283,7 +283,10 @@ function Invoke-Assign {
         if ($remoteHas) { git -C $r.Path worktree add $work -B $branch "origin/$branch" --quiet }
         else { git -C $r.Path worktree add $work -B $branch origin/main --quiet }
     } else {
+        # git in cảnh báo (vd. LF→CRLF) ra stderr; PowerShell 5.1 + Stop coi là lỗi và dừng assign.
+        $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
         git -C $work merge origin/main --no-edit --quiet 2>$null
+        $ErrorActionPreference = $eap
     }
 
     $dev = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
