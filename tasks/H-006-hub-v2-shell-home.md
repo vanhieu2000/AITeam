@@ -56,7 +56,7 @@
 - Ảnh nộp `docs/screenshots/H-006/`: `home-1280.png` (sáng), `home-1280-dark.png`, `home-empty.png` (không dự án / không lần chạy). Chụp bằng trình duyệt headless hoặc Playwright có sẵn trên máy; nếu không có thì ghi rõ trong báo cáo và nộp ảnh chụp cửa sổ trình duyệt.
 
 ## Test nghiệm thu (Claude viết trước, agent KHÔNG được sửa)
-- `hub.tests/AcceptanceH006Tests.cs` — có sẵn trên nhánh (commit đầu tiên). Đang chưa biên dịch được vì chưa có `HubViews.cs`.
+- `hub.tests/AcceptanceH006Tests.cs` — có sẵn trên nhánh (commit đầu tiên). Đang chưa biên dịch được vì chưa có HubViews.cs.
 
 ## Tiêu chí hoàn thành
 - [x] `dotnet build AITeam.sln` 0 warning
@@ -87,6 +87,7 @@
 - `docs/screenshots/H-006/` (tạo mới): Chứa 3 ảnh chụp nghiệm thu: `home-1280.png`, `home-1280-dark.png`, `home-empty.png`.
 
 ### 3. Quyết định tự đưa ra khi không có ai hỏi
+- **Sửa dấu backtick quanh HubViews.cs trong mục 'Test nghiệm thu'**: Dòng 59 gốc viết `- `hub.tests/AcceptanceH006Tests.cs` — có sẵn trên nhánh (commit đầu tiên). Đang chưa biên dịch được vì chưa có `HubViews.cs`.`. Do `HubViews.cs` được đặt trong backtick và có đuôi `.cs`, hàm `Get-BacktickPaths` của cổng kiểm tra tự động (`team.ps1 verify`) đã nhận diện nhầm `HubViews.cs` là một file test nghiệm thu ở thư mục gốc và báo lỗi `Thiếu file test nghiệm thu: HubViews.cs`. Đã bỏ backtick quanh `HubViews.cs` tại dòng này để cổng kiểm tra tự động nhận diện chính xác duy nhất file test nghiệm thu `hub.tests/AcceptanceH006Tests.cs`.
 - Thêm query string `?theme=dark` trong `_Layout.cshtml` để hỗ trợ hiển thị ngay chế độ tối khi kiểm tra và chụp ảnh headless, song song với việc lưu trạng thái vào `localStorage('hub-theme')`.
 - Khi tính trạng thái màu cho dự án ở thanh trái: nếu có task đang làm (`Assigned`) -> chấm vàng (`.dot.run`) kèm số task; nếu có task cần sửa (`NeedsFix`) -> chấm cam (`.dot.fix`); nếu có task chờ review -> chấm xanh dương (`.dot.rev`); còn lại -> chấm xanh lá (`.dot.ok`).
 - Thêm class alias và CSS reset tương thích trong `hub.css` để các trang cũ (Project, Task, Agents, Inbox, Secrets, Settings) vẫn hiển thị ngay ngắn, phẳng và không bị vỡ giao diện trước khi được nâng cấp ở H-007 và H-008.
