@@ -33,8 +33,10 @@ Vì vậy kho cấu hình này đưa lên git an toàn.
 
 Ví dụ `team.local.json` cho máy công ty (dự án để ở ổ E):
 ```json
-{ "projectsRoot": "E:\\Projects", "workRoot": "E:\\AITeam-work", "paths": { "HDVTool": "E:\\Projects\\HDVTool" } }
+{ "projectsRoot": "E:\\Projects", "workRoot": "E:\\AITeam-work", "paths": { "HDVTool": "E:\\Projects\\HDVTool" }, "workDirs": { "HDVTool": "E:\\AITeam-work\\HDVTool" } }
 ```
+`paths` ghi đè thư mục dự án, `workDirs` ghi đè thư mục agent (`workDir` trong `projects.json`) cho riêng máy đó.
+Chuyển thư mục AITeam sang chỗ khác thì chạy lại `.\team.ps1 setup` để Claude trỏ đúng sổ tay.
 
 ## 2. Giao việc cho team
 

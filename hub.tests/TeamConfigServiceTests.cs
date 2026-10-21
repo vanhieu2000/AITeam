@@ -142,6 +142,28 @@ public sealed class TeamConfigServiceTests : IDisposable
     }
 
     [Fact]
+    public void ResolveProject_local_workDirs_overrides_projects_json_workDir()
+    {
+        string teamJsonFixture = Path.Combine(AppContext.BaseDirectory, "Fixtures", "team.json");
+        File.Copy(teamJsonFixture, _env.Paths.TeamJson);
+        string projectsJsonFixture = Path.Combine(AppContext.BaseDirectory, "Fixtures", "projects.json");
+        File.Copy(projectsJsonFixture, _env.Paths.ProjectsJson);
+
+        // Máy khác: ProjectAlpha có workDir riêng trong team.local.json
+        File.WriteAllText(_env.Paths.TeamLocalJson,
+            "{ \"workRoot\": \"E:\\\\MyWork\", \"workDirs\": { \"ProjectAlpha\": \"E:\\\\Agents\\\\Alpha\" } }");
+
+        var projects = new TeamConfigService(_env.Paths).GetProjects();
+
+        var alpha = projects.Single(p => p.Name == "ProjectAlpha");
+        Assert.Equal(@"E:\Agents\Alpha", alpha.WorkDir);
+
+        // Dự án không có trong workDirs và không khai báo workDir: workRoot\<tên>
+        var custom = projects.Single(p => p.Name == "CustomPathProject");
+        Assert.Equal(Path.Combine(@"E:\MyWork", "CustomPathProject"), custom.WorkDir);
+    }
+
+    [Fact]
     public void SaveProject_updates_projects_json_and_creates_bak()
     {
         string projectsJsonFixture = Path.Combine(AppContext.BaseDirectory, "Fixtures", "projects.json");

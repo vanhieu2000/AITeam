@@ -129,6 +129,7 @@ public sealed class TeamConfigService : ITeamConfigService
 
         // Đọc paths trong team.local.json nếu có
         var localPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var localWorkDirs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (File.Exists(_paths.TeamLocalJson))
         {
             try
@@ -141,6 +142,16 @@ public sealed class TeamConfigService : ITeamConfigService
                         if (kv.Value != null)
                         {
                             localPaths[kv.Key] = kv.Value.ToString();
+                        }
+                    }
+                }
+                if (localNode?["workDirs"] is JsonObject workDirsObj)
+                {
+                    foreach (var kv in workDirsObj)
+                    {
+                        if (kv.Value != null)
+                        {
+                            localWorkDirs[kv.Key] = kv.Value.ToString();
                         }
                     }
                 }
@@ -201,9 +212,12 @@ public sealed class TeamConfigService : ITeamConfigService
                 resolvedPath = Path.Combine(settings.ProjectsRoot, name);
             }
 
-            string resolvedWorkDir = !string.IsNullOrWhiteSpace(declaredWorkDir)
-                ? declaredWorkDir
-                : Path.Combine(settings.WorkRoot, name);
+            // workDirs.<tên> trong team.local.json (riêng từng máy) được ưu tiên hơn workDir trong projects.json
+            string resolvedWorkDir = localWorkDirs.TryGetValue(name, out var localWork) && !string.IsNullOrWhiteSpace(localWork)
+                ? localWork
+                : !string.IsNullOrWhiteSpace(declaredWorkDir)
+                    ? declaredWorkDir
+                    : Path.Combine(settings.WorkRoot, name);
 
             bool existsLocally = Directory.Exists(resolvedPath);
 

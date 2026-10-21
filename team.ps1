@@ -76,13 +76,14 @@ function Resolve-Project([string]$name) {
     $p = Get-Projects | Where-Object { $_.name -eq $name } | Select-Object -First 1
     if (-not $p) { throw "Chưa có dự án '$name' trong projects.json. Dùng: .\team.ps1 add-project -Project $name ..." }
     $localPath = $p.path
+    $work = if ($p.workDir) { $p.workDir } else { Join-Path $cfg.workRoot $name }
     $localFile = Join-Path $Root "team.local.json"
     if (Test-Path $localFile) {
         $local = Read-Json $localFile
         if ($local.paths -and $local.paths.$name) { $localPath = $local.paths.$name }
+        if ($local.workDirs -and $local.workDirs.$name) { $work = $local.workDirs.$name }   # thư mục agent riêng của máy này
     }
     if (-not $localPath -or -not (Test-Path $localPath)) { $localPath = Join-Path $cfg.projectsRoot $name }
-    $work = if ($p.workDir) { $p.workDir } else { Join-Path $cfg.workRoot $name }
     [pscustomobject]@{ Info = $p; Path = $localPath; Work = $work; Logs = (Join-Path $work "logs") }
 }
 
@@ -151,10 +152,12 @@ Khi người dùng giao việc cho "team" / "đội" / nhắc tới Antigravity,
 $Root\projects.json: ĐỌC VÀ LÀM THEO $playbook (bạn là quản lý team, điều phối bằng $Root\team.ps1).
 "@
     $current = if (Test-Path $claudeMd) { [IO.File]::ReadAllText($claudeMd) } else { "" }
-    if ($current -notmatch [regex]::Escape("AITeam: quy trình team")) {
-        [IO.File]::AppendAllText($claudeMd, $block, $Utf8)
-        Say "Đã gắn quy trình team vào $claudeMd" Green
-    }
+    # Bỏ khối cũ (có thể trỏ tới thư mục AITeam cũ nếu đã chuyển chỗ) rồi gắn lại khối đúng đường dẫn hiện tại.
+    $pattern = '(?s)\r?\n<!-- AITeam: quy trình team AI của HieuDV -->\r?\n.*?team\.ps1\)\.'
+    $cleaned = [regex]::Replace($current, $pattern, "")
+    if ($cleaned -ne $current) { [IO.File]::WriteAllText($claudeMd, $cleaned, $Utf8) }
+    [IO.File]::AppendAllText($claudeMd, $block, $Utf8)
+    Say "Đã gắn quy trình team vào $claudeMd ($Root)" Green
     $cfg = Get-Config
     New-Item -ItemType Directory -Force $cfg.workRoot | Out-Null
     Invoke-Doctor
@@ -181,12 +184,18 @@ function Invoke-AddProject {
 
     # Lệnh git/gh in thông báo ra stderr (ví dụ "repo không tồn tại"); PowerShell 5.1 + Stop coi là lỗi → tạm Continue.
     $ErrorActionPreference = "Continue"
+    $existing = Get-Projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
     if (-not (Test-Path (Join-Path $target ".git"))) {
         $exists = $false
         if ($gh) { & $gh repo view $repoName --json name *> $null; $exists = ($LASTEXITCODE -eq 0) }
-        if ($exists -and -not (Test-Path $target)) {
+        if ($exists) {
+            # Kho đã có trên GitHub: CHỈ clone. Không bao giờ git init (sẽ ra lịch sử riêng, không nối với GitHub).
+            if ((Test-Path $target) -and (Get-ChildItem -Force $target | Select-Object -First 1)) {
+                throw "Thư mục $target đã có file nhưng không phải bản clone của $repoName. Đổi tên/xóa thư mục đó rồi chạy lại."
+            }
             Say "Clone $repoName → $target"
             & $gh repo clone $repoName $target
+            if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $target ".git"))) { throw "Clone $repoName thất bại." }
         } else {
             New-Item -ItemType Directory -Force $target | Out-Null
             git -C $target init -b main | Out-Null
@@ -213,7 +222,13 @@ function Invoke-AddProject {
         Say "  + Kho private https://github.com/$repoName" Green
     }
 
-    $list = [Collections.ArrayList]@(Get-Projects | Where-Object { $_.name -ne $Project })
+    if ($existing) {
+        # Đã có trong projects.json (thường gặp khi lấy dự án về máy mới): giữ nguyên workDir/build/test/areas.
+        Install-Hook $target
+        Say "Dự án $Project đã có trong projects.json, giữ nguyên cấu hình." Green
+        return
+    }
+    $list = [Collections.ArrayList]@(Get-Projects)
     [void]$list.Add([pscustomobject]@{
         name = $Project; repo = $repoName; path = $target; stack = $Stack
         build = $Build; test = $Test

@@ -132,5 +132,6 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Mẫu `.gitignore` không có dấu `/` ở đầu (ví dụ `logs/`, `Data/`, `team.local.json`) chặn ở MỌI thư mục, kể cả file mẫu của test. Đã gây lỗi 2 lần → luôn neo mẫu cho file / thư mục ở gốc: `/logs/`. Kiểm tra bằng clone sạch là bước bắt được lỗi này.
 - Agent hay sửa lấn sang vùng của agent khác để hết warning → chấp nhận nếu nhỏ, nhưng phải kiểm tra xung đột khi merge.
 - App chỉ chạy 1 bản (mutex, ví dụ HDV Tool): review giao diện phải kiểm tra không có bản thật đang mở. Nếu có thì hỏi người dùng đóng giúp; KHÔNG tự tắt cưỡng bức. Cửa sổ chụp được có thể là bản thật của người dùng. Khi đóng app thử, chỉ dừng tiến trình có đường dẫn trong thư mục worktree.
+- Máy mới lấy dự án đã có về: `add-project -Repo` chỉ clone, không bao giờ `git init`, và giữ nguyên mục trong `projects.json`. (Bản cũ từng git init lại ChinaAndroidToolbox và xóa workDir/build/test/areas.) Đường dẫn riêng từng máy để trong `team.local.json` (`paths`, `workDirs`), không sửa `projects.json`.
 - Agent hay làm mất BOM UTF-8 của file .cs / .json → kiểm tra BOM khi review.
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).
