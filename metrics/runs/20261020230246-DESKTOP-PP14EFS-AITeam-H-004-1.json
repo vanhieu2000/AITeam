@@ -1,0 +1,21 @@
+{
+    "at":  "2026-10-20T23:02:46",
+    "machine":  "DESKTOP-PP14EFS",
+    "project":  "AITeam",
+    "task":  "H-004",
+    "run":  "1",
+    "agent":  "",
+    "model":  "mặc định",
+    "status":  "SUCCESS",
+    "durationSec":  1202,
+    "outputTokens":  82698,
+    "thinkingTokens":  43433,
+    "totalTokens":  715866,
+    "linesAdded":  0,
+    "linesRemoved":  0,
+    "filesChanged":  0,
+    "verifyOk":  null,
+    "verifyFails":  null,
+    "autoRetry":  false,
+    "log":  "H-004-1.json"
+}
