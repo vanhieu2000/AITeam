@@ -13,7 +13,8 @@
                                                     Giao task (chờ tới khi agent xong). Ghi "đang chạy · máy X" lên bảng việc;
                                                     xong thì tự chạy cổng kiểm tra, không đạt thì tự giao lại 1 lần.
   .\team.ps1 verify -Project Ten -Task T-003        Cổng kiểm tra: commit/push, BOM (tự sửa), phạm vi, test nghiệm thu, build 0 warning, test
-  .\team.ps1 metrics [-Project Ten]                 Số liệu review: số vòng, đạt vòng 1, Claude tự sửa, lỗi bảo mật / giao diện / BOM
+  .\team.ps1 metrics [-Project Ten]                 Số liệu review (vòng, tự sửa, lỗi) + hiệu suất lượt chạy (phút, token, dòng code, cổng kiểm tra)
+  .\team.ps1 metrics-import                         Nhập log agent cũ của máy này vào metrics/runs (1 lần mỗi máy)
   .\team.ps1 status [-Project Ten]                  Agent đang chạy, nhánh, kết quả lần chạy gần nhất
   .\team.ps1 cleanup -Project Ten -Task T-003       Xóa worktree sau khi đã merge
   .\team.ps1 switch-account                         Mở agy để /logout và đăng nhập tài khoản Antigravity khác
@@ -362,19 +363,19 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     $pushed = git -C $r.Path ls-remote --heads origin $branch
     Say ("Nhánh trên GitHub: " + $(if ($pushed) { "đã push" } else { "CHƯA push" }))
 
-    if (Test-QuotaExhausted $logText $errText) { Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
-    if ($NoVerify) { Set-BoardStatus $r $Task "🔵 Chờ review"; return }
+    if (Test-QuotaExhausted $logText $errText) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
+    if ($NoVerify) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🔵 Chờ review"; return }
     $v = Invoke-Verify
     if (-not $v.Ok -and -not $script:VerifyRetried) {
         # Lỗi cơ học (chưa commit / build / test / BOM...) → trả agent sửa luôn 1 lần, không tốn lượt review của Claude.
-        $script:VerifyRetried = $true
+        Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $true)
         Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $($dev.name) 1 lần kèm danh sách lỗi." Yellow
         $script:Resume = $true
         $script:Feedback = "Cổng kiểm tra tự động KHÔNG ĐẠT. Sửa hết các mục sau, chạy lại build + test, cập nhật báo cáo, commit và push:`n- " + ($v.Fails -join "`n- ")
         Invoke-Assign
         return
     }
-    Set-BoardStatus $r $Task ("🔵 Chờ review · cổng kiểm tra " + $(if ($v.Ok) { "ĐẠT" } else { "KHÔNG ĐẠT" }))
+    Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $false)
 }
 
 # Agent hết hạn mức? Lần chạy báo SUCCESS thì không. Còn lại dò từ khóa, "429"/"quota" phải đứng riêng
@@ -964,6 +965,107 @@ function Assert-NotClaimedElsewhere($r, [string]$taskId) {
 
 # ───────────────────────── Số liệu hiệu quả ─────────────────────────
 
+# ===== Số đo vận hành: mỗi lượt chạy agent ghi 1 file JSON vào metrics/runs (lên git ⇒ cộng dồn mọi máy) =====
+function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId, [string]$model, [string]$work, $verify, [bool]$autoRetry) {
+    $j = $null
+    try { $j = Get-Content $logFile -Raw -Encoding UTF8 | ConvertFrom-Json } catch { }
+    $added = 0; $removed = 0; $files = 0
+    if ($work -and (Test-Path $work)) {
+        $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        $base = git -C $work merge-base origin/main HEAD 2>$null | Select-Object -First 1
+        if ($base) {
+            foreach ($line in (git -C $work diff --numstat $base HEAD 2>$null)) {
+                $p = $line -split "`t"
+                if ($p.Count -ge 3 -and $p[2] -notmatch '^tasks/' -and $p[0] -match '^\d+$') { $added += [int]$p[0]; $removed += [int]$p[1]; $files++ }
+            }
+        }
+        $ErrorActionPreference = $eap
+    }
+    $u = if ($j) { $j.usage } else { $null }
+    [ordered]@{
+        at = (Get-Item $logFile).LastWriteTime.ToString("s")
+        machine = $env:COMPUTERNAME
+        project = $r.Info.name
+        task = $TaskName
+        run = [regex]::Match([IO.Path]::GetFileNameWithoutExtension($logFile), '-(\d+)$').Groups[1].Value
+        agent = $agentId
+        model = $(if ($model) { $model } else { "mặc định" })
+        status = $(if ($j) { $j.status } else { "KHÔNG CÓ KẾT QUẢ" })
+        durationSec = $(if ($j) { [int]$j.duration_seconds } else { $null })
+        outputTokens = $(if ($u) { [int]$u.output_tokens } else { $null })
+        thinkingTokens = $(if ($u) { [int]$u.thinking_tokens } else { $null })
+        totalTokens = $(if ($u) { [int]$u.total_tokens } else { $null })
+        linesAdded = $added; linesRemoved = $removed; filesChanged = $files
+        verifyOk = $(if ($verify) { [bool]$verify.Ok } else { $null })
+        verifyFails = $(if ($verify) { @($verify.Fails).Count } else { $null })
+        autoRetry = $autoRetry
+        log = [IO.Path]::GetFileName($logFile)
+    }
+}
+
+function Save-RunMetrics($record) {
+    $dir = Join-Path $Root "metrics\runs"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $name = "{0}-{1}-{2}-{3}.json" -f ($record.at -replace '[^0-9]', ''), $record.machine, $record.project, ($record.log -replace '\.json$', '')
+    $file = Join-Path $dir $name
+    [IO.File]::WriteAllText($file, ($record | ConvertTo-Json), $Utf8)
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    for ($i = 0; $i -lt 3; $i++) {
+        git -C $Root add -- "metrics/runs/$name" 2>$null
+        git -C $Root commit -q -m "Số đo: $($record.project) $($record.task) lượt $($record.run) ($($record.machine))" -- "metrics/runs/$name" 2>$null
+        git -C $Root pull -q --rebase --autostash 2>$null
+        git -C $Root push -q origin HEAD 2>$null
+        if ($LASTEXITCODE -eq 0) { break }
+        Start-Sleep -Seconds (2 + $i * 3)
+    }
+    $ErrorActionPreference = $eap
+}
+
+# Nhập các log agent cũ trên máy này (chưa có số đo) — chạy 1 lần mỗi máy.
+function Invoke-MetricsImport {
+    $have = @(Get-ChildItem (Join-Path $Root "metrics\runs") -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
+        try { $x = Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json; "$($x.machine)|$($x.project)|$($x.log)" } catch { } })
+    $n = 0
+    foreach ($p in Get-Projects) {
+        $r = Resolve-Project $p.name
+        foreach ($lf in Get-ChildItem $r.Logs -Filter *.json -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'prompt' -and $_.Length -gt 0 }) {
+            if ($have -contains "$env:COMPUTERNAME|$($p.name)|$($lf.Name)") { continue }
+            $taskName = $lf.BaseName -replace '-\d+$', ''
+            $rec = Get-RunRecord $r $taskName $lf.FullName "" "" "" $null $false
+            Save-RunMetrics $rec; $n++
+        }
+    }
+    Say "Đã nhập $n lượt chạy cũ của máy $env:COMPUTERNAME vào metrics/runs." Green
+}
+
+function Show-RunMetrics {
+    $runs = @(Get-ChildItem (Join-Path $Root "metrics\runs") -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
+        try { Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { } } |
+        Where-Object { (-not $Project -or $_.project -eq $Project) -and $_.durationSec })
+    if (-not $runs) { Say "Chưa có số đo lượt chạy (metrics/runs). Chạy .\team.ps1 metrics-import trên mỗi máy." Yellow; return }
+    $med = { param($xs) $s = @($xs | Sort-Object); if (-not $s) { return 0 }; $s[[int][math]::Floor(($s.Count - 1) / 2)] }
+    $groups = $runs | Group-Object { ([datetime]$_.at).ToString("yyyy-MM-dd") } | Sort-Object Name
+    Say "== Hiệu suất lượt chạy agent ($($runs.Count) lượt, mọi máy) ==" Cyan
+    Say ("  {0,-10} {1,5} {2,10} {3,12} {4,10} {5,12} {6,10}" -f "Ngày", "Lượt", "TB phút", "Trung vị ph", "TB token", "Dòng/lượt", "Dòng/phút")
+    foreach ($g in $groups) {
+        $d = @($g.Group | ForEach-Object { $_.durationSec / 60 })
+        $lines = @($g.Group | Where-Object { $_.linesAdded -gt 0 } | ForEach-Object { $_.linesAdded })
+        $lpm = if ($lines) { ($lines | Measure-Object -Sum).Sum / (@($g.Group | Where-Object { $_.linesAdded -gt 0 } | ForEach-Object { $_.durationSec / 60 }) | Measure-Object -Sum).Sum } else { 0 }
+        Say ("  {0,-10} {1,5} {2,10:N1} {3,12:N1} {4,10:N0} {5,12} {6,10}" -f $g.Name, $g.Count, ($d | Measure-Object -Average).Average, (& $med $d),
+            ($g.Group | Measure-Object totalTokens -Average).Average, $(if ($lines) { "{0:N0}" -f ($lines | Measure-Object -Average).Average } else { "-" }), $(if ($lpm) { "{0:N0}" -f $lpm } else { "-" }))
+    }
+    $byModel = $runs | Group-Object model
+    if ($byModel.Count -gt 1) {
+        Say "  Theo model:" Cyan
+        foreach ($m in $byModel) { Say ("    {0,-28} {1,4} lượt · TB {2:N1} phút" -f $m.Name, $m.Count, ($m.Group | ForEach-Object { $_.durationSec / 60 } | Measure-Object -Average).Average) }
+    }
+    $withVerify = @($runs | Where-Object { $null -ne $_.verifyOk })
+    if ($withVerify) {
+        Say ("  Cổng kiểm tra đạt ngay: {0:P0} ({1} lượt có kiểm tra) · tự giao lại: {2}" -f (@($withVerify | Where-Object { $_.verifyOk }).Count / $withVerify.Count), $withVerify.Count, @($runs | Where-Object { $_.autoRetry }).Count)
+    }
+    $perTask = $runs | Group-Object { "$($_.project)/$($_.task)" }
+    Say ("  Thời gian agent cho 1 task (cộng mọi lượt): TB {0:N0} phút · lượt / task TB {1:N2}" -f (($perTask | ForEach-Object { ($_.Group | Measure-Object durationSec -Sum).Sum / 60 }) | Measure-Object -Average).Average, (($perTask | ForEach-Object { $_.Count }) | Measure-Object -Average).Average)
+}
 function Invoke-Metrics {
     $rows = @()
     foreach ($p in Get-Projects | Where-Object { -not $Project -or $_.name -eq $Project }) {
@@ -1014,7 +1116,8 @@ switch ($Command) {
     "assign" { Invoke-Assign }
     "status" { Invoke-Status }
     "verify" { $null = Invoke-Verify }
-    "metrics" { Invoke-Metrics }
+    "metrics" { Invoke-Metrics; Show-RunMetrics }
+    "metrics-import" { Invoke-MetricsImport }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }
