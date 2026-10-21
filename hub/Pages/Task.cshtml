@@ -10,6 +10,10 @@
         ViewData["Crumb"] = $"<span class=\"crumb\"><a href=\"/\" style=\"color:var(--muted)\">Tổng quan</a> / <a href=\"/p/{Html.Encode(Model.Name)}\" style=\"color:var(--muted)\">{Html.Encode(Model.Name)}</a> / </span><h1>{Html.Encode(Model.Id)}</h1>";
     }
 
+    var reqTab = Request.Query.ContainsKey("tab") ? Request.Query["tab"].ToString().ToLowerInvariant() : "";
+    var activeTab = string.IsNullOrEmpty(reqTab) ? "criteria" : reqTab;
+    var reqDrawer = Request.Query.ContainsKey("drawer") ? Request.Query["drawer"].ToString() : "";
+
     var doneCriteria = Model.Detail?.Criteria.Count(c => c.Done) ?? 0;
     var totalCriteria = Model.Detail?.Criteria.Count ?? 0;
 
@@ -97,25 +101,25 @@ else
 
         <!-- Tabs: Tiêu chí · Mô tả · Báo cáo agent · Review · Lần chạy -->
         <div class="tabs" style="flex:none; margin-bottom:12px;">
-            <span class="tab on" id="tabCriteriaBtn" onclick="switchTaskTab('criteria')">
+            <span class="tab @(activeTab == "criteria" ? "on" : "")" id="tabCriteriaBtn" onclick="switchTaskTab('criteria')">
                 Tiêu chí@(totalCriteria > 0 ? $" <span class=\"c\">{doneCriteria}/{totalCriteria}</span>" : "")
             </span>
-            <span class="tab" id="tabDescBtn" onclick="switchTaskTab('desc')">Mô tả</span>
-            <span class="tab" id="tabReportBtn" onclick="switchTaskTab('report')">Báo cáo agent</span>
-            <span class="tab" id="tabReviewBtn" onclick="switchTaskTab('review')">
+            <span class="tab @(activeTab == "desc" ? "on" : "")" id="tabDescBtn" onclick="switchTaskTab('desc')">Mô tả</span>
+            <span class="tab @(activeTab == "report" ? "on" : "")" id="tabReportBtn" onclick="switchTaskTab('report')">Báo cáo agent</span>
+            <span class="tab @(activeTab == "review" ? "on" : "")" id="tabReviewBtn" onclick="switchTaskTab('review')">
                 Review@(reviewRounds.Count > 0 ? $" <span class=\"c\">{reviewRounds.Count}</span>" : "")
             </span>
-            <span class="tab" id="tabRunsBtn" onclick="switchTaskTab('runs')">
+            <span class="tab @(activeTab == "runs" ? "on" : "")" id="tabRunsBtn" onclick="switchTaskTab('runs')">
                 Lần chạy@(Model.Detail.Runs.Count > 0 ? $" <span class=\"c\">{Model.Detail.Runs.Count}</span>" : "")
             </span>
         </div>
 
-        <!-- Layout Split 2 cột: Trái = Tab content (tự cuộn), Phải = Panel Lần chạy (300px) -->
+        <!-- Layout Split 2 cột: Trái = Tab panel tự cuộn, Phải = Panel Lần chạy (300px) -->
         <div class="split" style="flex:1; min-height:0; display:grid; grid-template-columns:1fr 300px; gap:14px; align-items:stretch;">
             <!-- Cột trái: Tab panel tự cuộn -->
             <div class="panel" style="height:100%; min-height:0; display:flex; flex-direction:column; overflow:hidden;">
                 <!-- Tab 1: Tiêu chí -->
-                <div id="tabCriteriaContent" style="flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                <div id="tabCriteriaContent" style="display:@(activeTab == "criteria" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
                     @if (Model.Detail.Criteria.Count == 0)
                     {
                         <div class="empty">Không có tiêu chí hoàn thành</div>
@@ -133,7 +137,7 @@ else
                 </div>
 
                 <!-- Tab 2: Mô tả -->
-                <div id="tabDescContent" style="display:none; flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                <div id="tabDescContent" style="display:@(activeTab == "desc" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
                     @if (descSections.Count == 0)
                     {
                         <div class="empty">Không có mô tả chi tiết</div>
@@ -153,7 +157,7 @@ else
                 </div>
 
                 <!-- Tab 3: Báo cáo agent -->
-                <div id="tabReportContent" style="display:none; flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                <div id="tabReportContent" style="display:@(activeTab == "report" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
                     @if (reportSection == null || string.IsNullOrWhiteSpace(reportSection.Markdown) || reportSection.Markdown.Trim() == "<!-- Agent điền -->")
                     {
                         <div class="empty">Chưa có báo cáo từ agent</div>
@@ -167,7 +171,7 @@ else
                 </div>
 
                 <!-- Tab 4: Review -->
-                <div id="tabReviewContent" style="display:none; flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                <div id="tabReviewContent" style="display:@(activeTab == "review" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
                     @if (reviewRounds.Count == 0)
                     {
                         <div class="empty">Chưa có đánh giá review nào</div>
@@ -243,7 +247,7 @@ else
                 </div>
 
                 <!-- Tab 5: Lần chạy chi tiết -->
-                <div id="tabRunsContent" style="display:none; flex:1; min-height:0; overflow-y:auto;">
+                <div id="tabRunsContent" style="display:@(activeTab == "runs" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto;">
                     @if (Model.Detail.Runs.Count == 0)
                     {
                         <div class="empty">Chưa có lần chạy nào</div>
@@ -469,5 +473,18 @@ else
                 closeDrawer();
             }
         });
+
+        // Tự động mở drawer nếu có query drawer
+        (function() {
+            var reqDrawer = '@Html.Raw(reqDrawer)';
+            if (reqDrawer && reqDrawer.length > 0) {
+                var dAttempt = parseInt(reqDrawer);
+                if (!isNaN(dAttempt)) {
+                    openDrawer(dAttempt);
+                } else if (runsData.length > 0) {
+                    openDrawer(runsData[0].attempt);
+                }
+            }
+        })();
     </script>
 }
