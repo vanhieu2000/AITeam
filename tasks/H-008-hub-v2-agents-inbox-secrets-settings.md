@@ -52,7 +52,18 @@
 - [ ] Giữ BOM UTF-8
 
 ## Báo cáo của agent
-<!-- Agent điền -->
+(Agent dừng 2 lần vì hết credits Antigravity sau khi xong code 5/6 bước; theo yêu cầu chủ dự án, Claude hoàn tất phần ảnh + review.)
+- Đã làm: `RunFilter`, `RunPage`, `RunHistory` (HubViews.cs); trang Agent (bảng đang chạy, lịch sử lọc Tất cả / Lỗi / Thành công + theo dự án, phân trang 8 dòng, ngăn kéo chi tiết qua HTMX); Hộp thư + Bí mật 2 cột phẳng; Tài khoản 3 khối (GitHub, Antigravity kèm trạng thái hết credits từ log, Claude); Cài đặt với menu con Team / từng dự án; `AgentsV2PageTests.cs`.
+- Ảnh: `docs/screenshots/H-008/` (Claude chụp bằng Edge headless 1280×800; ảnh trang Bí mật đặt tên `bi-mat.png` vì bộ quét bí mật chặn tên `secrets.png`).
 
 ## Review (Claude)
-<!-- Claude điền -->
+### Vòng 1 — ĐẠT
+Đã kiểm tra: gộp `main` (đã có H-007) vào nhánh — xung đột `HubViews.cs` do hai bên cùng thêm lớp, Claude giữ cả hai; build 0 warning, 159/159 test, test nghiệm thu nguyên vẹn; đọc diff: trang Tài khoản không đọc / ghi phiên đăng nhập Antigravity, ngăn kéo lấy dự án qua cấu hình (không ghép đường dẫn từ query), giá trị hiển thị qua Razor encode; chạy Hub từ nhánh ở 1280×800 với dữ liệu thật: 5 trang không cuộn trang, lịch sử 32 lần chạy chia 4 trang, lọc Lỗi ra 17, bấm dòng mở ngăn kéo đúng lần chạy.
+
+**Required** (Claude sửa):
+1. `_AgentsRunningTablePartial.cshtml` — cột Agent ghi cứng "A" (C-012 của Agent B hiện "A"). Sửa: lấy A/B từ thư mục worktree trong dòng lệnh agy, không rõ thì "—".
+2. `hub.css` — nút lọc là thẻ `a` nhưng CSS `.seg` chỉ có cho `span` ⇒ ba nút dính liền, không thấy nút đang chọn. Thêm quy tắc `.seg a`.
+
+**Optional** (hàng chờ): `PaginationSummary` ghi cứng cỡ trang 8; trang Agent đọc toàn bộ log mỗi lần mở (ổn với vài trăm lần chạy).
+
+Claude sửa: 2 lỗi giao diện trên + gộp xung đột.

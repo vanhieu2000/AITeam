@@ -1050,3 +1050,22 @@ textarea.inp, textarea.form-control {
 .page-header {
   display: none !important;
 }
+
+/* Nút lọc dạng liên kết (trang Agent) */
+.seg a {
+  padding: 4px 10px;
+  font-size: 12.5px;
+  color: var(--text);
+  text-decoration: none;
+  border-right: 1px solid var(--line-2);
+}
+
+.seg a:last-child {
+  border-right: 0;
+}
+
+.seg a.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}

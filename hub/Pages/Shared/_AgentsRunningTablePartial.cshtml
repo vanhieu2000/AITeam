@@ -40,7 +40,7 @@
                             }
                         </td>
                         <td>@(agent.Project ?? "N/A")</td>
-                        <td><span class="tag">A</span></td>
+                        <td>@{ var devMatch = System.Text.RegularExpressions.Regex.Match(agent.CommandLine ?? "", @"\\([ab])-[a-z]+-\d+"); }<span class="tag">@(devMatch.Success ? devMatch.Groups[1].Value.ToUpperInvariant() : "—")</span></td>
                         <td class="muted">@agent.StartedAt.ToString("HH:mm")</td>
                         <td class="num">@AITeam.Hub.Pages.IndexModel.FormatElapsed(agent.Elapsed)</td>
                         <td class="mono muted">@agent.Pid</td>
