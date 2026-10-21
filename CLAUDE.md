@@ -21,7 +21,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Đầu mỗi phiên làm việc với team: đọc `inbox.md`. Đây là các yêu cầu người dùng gửi từ AITeam Hub, dòng `- [ ]` là chưa xử lý. Nhận việc nào thì đánh `[x]` kèm mã task.
 - Cũng đầu mỗi phiên: chạy `team.ps1 doctor`. Lỗi đăng nhập thì nhờ người dùng xử lý (xem mục "Cần người dùng").
 - Cũng đầu mỗi phiên: `git pull` AITeam + các dự án và chạy `team.ps1 status`. Hai máy (nhà / công ty) dùng chung git: dòng **[KẸT?]** là task 🟡 quá 2 giờ chưa có nhánh hoặc không rõ máy nào chạy → kiểm tra trước khi giao lại.
-- Mỗi tuần (hoặc khi chủ dự án hỏi hiệu quả team): `team.ps1 metrics` — số vòng, tỷ lệ đạt vòng 1, tỷ lệ Claude phải tự sửa, lỗi bảo mật / giao diện / BOM. Mục tiêu: giảm "Claude tự sửa" và số vòng.
+- **Hiệu suất (bắt buộc):** làm theo `docs/VAN-HANH-HIEU-SUAT.md`. Đầu phiên chạy `team.ps1 metrics` (review + phút / token / dòng code của mọi máy). Mỗi 5 task merge hoặc mỗi tuần: ghi 1 kỳ vào `docs/HIEU-SUAT-LOG.md`, báo chủ dự án 3–5 dòng. Mỗi lỗi khi review ghi nguyên nhân gốc TK / AG / CK và sửa đúng chỗ (mẫu task, AGENTS.md, cổng kiểm tra).
 
 ## Quy trình cho mỗi yêu cầu
 1. **Tiếp nhận**
@@ -62,7 +62,6 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - Commit và push file task lên `main` TRƯỚC khi giao.
    - **Khung code trước (tính năng mới):** cùng commit đầu tiên với test nghiệm thu, Claude đẩy lên nhánh task: interface / lớp / chữ ký hàm public (thân `throw new NotImplementedException()` hoặc `// TODO(agent)`), và bố cục giao diện (TableLayoutPanel / FlowLayoutPanel, tên control). Agent chỉ điền phần thân, không tự thiết kế.
    - **Ngân sách:** mỗi task ghi dòng `- **Ngân sách:** ~N dòng` (code thêm, không tính test nghiệm thu). Cổng kiểm tra từ chối khi vượt 1,5 lần; sửa ngoài Phạm vi cũng bị từ chối (trước đây chỉ cảnh báo).
-   - **Kích thước:** mục tiêu ≤ 10–15 phút agent (~≤ 500 dòng). Đo 21/10/2026: ~1.500 dòng ≈ 23 phút, ~100k token đầu ra — thời gian tỉ lệ lượng code. Tính năng lớn tách lõi / giao diện / dữ liệu giao song song A + B. Việc đơn giản thêm `- **Model:** ``gemini-3.8-flash-medium```.
    - **Không giao khi không đáng:** việc ≤ ~100 dòng Claude làm thẳng. Sửa sau review ≤ ~50 dòng Claude tự sửa (một vòng agent tốn 20–30 phút); chỉ trả agent khi phải làm lại nhiều.
 5. **Giao việc**
    - Chạy `team.ps1 assign -Project X -Task T-xxx` (nền). Lệnh tự:
