@@ -12,7 +12,9 @@
 
     var reqTab = Request.Query.ContainsKey("tab") ? Request.Query["tab"].ToString().ToLowerInvariant() : "";
     var activeTab = string.IsNullOrEmpty(reqTab) ? "criteria" : reqTab;
-    var reqDrawer = Request.Query.ContainsKey("drawer") ? Request.Query["drawer"].ToString() : "";
+    var drawerRaw = Request.Query["drawer"].ToString();
+    // Chỉ cho phép số lần chạy hoặc "first" — không chèn chuỗi người dùng vào script.
+    var reqDrawer = string.IsNullOrEmpty(drawerRaw) ? "" : (int.TryParse(drawerRaw, out var drawerNum) ? drawerNum.ToString() : "first");
 
     var doneCriteria = Model.Detail?.Criteria.Count(c => c.Done) ?? 0;
     var totalCriteria = Model.Detail?.Criteria.Count ?? 0;
@@ -95,7 +97,7 @@ else
             <span>Ưu tiên @Model.Priority</span>
             @if (Model.LastVerificationPassed == true)
             {
-                <span>Cổng kiểm tra: <b style="color:var(--ok)">ĐẠT</b></span>
+                <span>Lần chạy cuối: <b style="color:var(--ok)">thành công</b></span>
             }
         </div>
 
