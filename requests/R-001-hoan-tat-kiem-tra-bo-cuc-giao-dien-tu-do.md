@@ -38,11 +38,11 @@
 | 19:41 | Cổng kiểm tra lượt 2 treo | testhost mở hộp thoại, CPU đứng yên |
 | 19:45 | Chủ dự án hỏi | |
 | 19:47 | Claude chẩn đoán xong | Log, CPU, chụp 2 cửa sổ hộp thoại |
-| 19:52 | Dừng testhost treo; lưu WIP lên 2 nhánh | Toolbox +422 dòng, HDV Tool +593 dòng |
-| 19:58 | Claude thêm chốt chặn treo vào `team.ps1` (commit 1880b73) | [CK] (test) cổng kiểm tra không giới hạn thời gian test · [TK] (test) task không quy định cách dựng form trong test |
-| 20:01 | Ghi review vòng 2 + R-001 + ngân sách vào 2 file task | [TK] (test) ngân sách lúc đầu chưa tính phần WIP — sửa ngay |
-| 20:02 | Giao lại thất bại cả 2 | [CK] (công cụ) `-Task` gõ tên đầy đủ khác lần trước ⇒ `team.ps1` tìm thư mục làm việc khác ⇒ lỗi. Đã sửa `team.ps1`: tự dùng lại thư mục của nhánh |
-| 20:03 | Giao lại C-011 (Lan) vòng 3, T-005 (Minh) vòng 3 | Tiếp tục hội thoại cũ, có chốt chặn treo |
+| 19:48 | Dừng testhost treo; lưu WIP lên 2 nhánh | Toolbox +422 dòng, HDV Tool +593 dòng |
+| 19:49 | Claude thêm chốt chặn treo vào `team.ps1` (commit 1880b73) | [CK] (test) cổng kiểm tra không giới hạn thời gian test · [TK] (test) task không quy định cách dựng form trong test |
+| 19:50 | Ghi review vòng 2 + R-001 + ngân sách vào 2 file task | [TK] (test) ngân sách lúc đầu chưa tính phần WIP — sửa ngay |
+| 19:51 | Giao lại thất bại cả 2 | [CK] (công cụ) `-Task` gõ tên đầy đủ khác lần trước ⇒ `team.ps1` tìm thư mục làm việc khác ⇒ lỗi. Đã sửa `team.ps1`: tự dùng lại thư mục của nhánh |
+| 19:52 | Giao lại C-011 (Lan) vòng 3, T-005 (Minh) vòng 3 | Tiếp tục hội thoại cũ, có chốt chặn treo |
 
 ## 4. Đánh giá sau khi xong (Claude)
 (điền khi xong)
