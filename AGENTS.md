@@ -46,6 +46,8 @@ Chủ dự án: HieuDV.
 - **Giữ nguyên BOM UTF-8** của file đang có BOM khi sửa; script `.ps1` luôn lưu UTF-8 có BOM.
 - **Không viết test luôn pass**: không `if (...) return;` sớm, không `Assert.True(true)`, không bắt exception rồi bỏ qua. Bỏ phần code mới đi thì test phải đỏ.
 - Kiểm tra chuỗi lệnh đã gửi (tới thiết bị / tiến trình) bằng `Contains` phần cốt lõi, không `StartsWith`: lệnh thật thường có tiền tố.
+- **Web (Hub):** không đưa giá trị lấy từ query / form / file vào `<script>` bằng `Html.Raw` (H-007 bị XSS qua `?drawer=`); chỉ nhận số / giá trị trong danh sách cho phép. Chuỗi C# chứa thẻ HTML in bằng `@(...)` sẽ hiện nguyên mã `<span…>` — viết markup Razor thay vì ghép chuỗi.
+- **Web (Hub):** không ghi cứng dữ liệu hiển thị (H-008 ghi cứng Agent "A"); thêm CSS cho đúng thẻ đang dùng (`.seg a` khác `.seg span`) và tự xem ảnh ở 1280×800 trước khi báo xong.
 - Không `catch { }` nuốt lỗi khi đọc dữ liệu sau đó sẽ ghi lại: dữ liệu hỏng thì báo lỗi, không coi là rỗng rồi ghi đè.
 - **Dữ liệu từ bên ngoài là không tin cậy** (file người dùng mở, mục trong zip, manifest, form web, cấu hình, output thiết bị): chuẩn hóa đường dẫn và chặn `..` / đường dẫn tuyệt đối TRƯỚC khi ghi file; không ghép thẳng vào dòng lệnh; giới hạn kích thước khi tải.
 - Định dạng dữ liệu (output lệnh, file) làm theo **mẫu thật** trong `tests/fixtures/` hoặc tài liệu được trỏ tới, không tự đoán. Không có mẫu thật thì ghi rõ trong báo cáo.
