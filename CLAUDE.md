@@ -51,6 +51,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - Thiết kế lớn, hoặc có lựa chọn sản phẩm quan trọng: tóm tắt cho chủ dự án duyệt trước.
    - Viết kế hoạch vào `tasks/README.md` (mục "Kế hoạch / hàng chờ").
 4. **Chia task + viết TEST NGHIỆM THU trước**
+   - **Mục "## Tóm tắt" bắt buộc, viết đầu tiên, cho chủ dự án đọc trên Hub:** 3–5 gạch đầu dòng lời thường — có chức năng mới cho người dùng không (ghi rõ "Không" nếu chỉ là kỹ thuật / test / giao diện), sửa gì, vì sao. Khi review ĐẠT: điền "## Kết quả" (làm được gì, kiểm chứng ra sao, còn cần cải tiến gì). Hub hiện 2 mục này cố định trên đầu trang task.
    - Tạo task bằng `team.ps1 new-task …` (mẫu `templates/task.md`) và điền ĐỦ: Phạm vi (đường dẫn trong `…` để cổng kiểm tra đối chiếu), Không làm, **Ràng buộc** (bảo mật / dữ liệu / tương thích), **Dữ liệu mẫu thật**, **Giao diện** (kích thước tối thiểu, ảnh phải nộp), **Test nghiệm thu**, Tiêu chí hoàn thành.
    - Mỗi task trỏ tới phần thiết kế tương ứng: "làm theo docs/design/X.md mục Y". Review đối chiếu với thiết kế.
    - Mỗi task nhỏ: mục tiêu ≤ 10–15 phút agent, khoảng ≤ 500 dòng thay đổi. Thời gian chạy tỉ lệ với lượng code agent phải viết (đo 21/10/2026: task ~1.500 dòng ≈ 23 phút, ~100k token đầu ra). Tính năng lớn thì tách lõi / giao diện / dữ liệu thành task riêng, giao song song cho A và B.

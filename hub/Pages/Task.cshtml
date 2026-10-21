@@ -24,8 +24,14 @@
 
     var reportSection = Model.Detail?.Sections.FirstOrDefault(s => s.Title.Contains("Báo cáo", StringComparison.OrdinalIgnoreCase));
 
+    // Khung tóm tắt cho chủ dự án: "## Tóm tắt" (việc này sửa gì) + "## Kết quả" (khi xong: làm được gì, còn cần cải tiến gì).
+    var summarySection = Model.Detail?.Sections.FirstOrDefault(s => s.Title.StartsWith("Tóm tắt", StringComparison.OrdinalIgnoreCase));
+    var resultSection = Model.Detail?.Sections.FirstOrDefault(s => s.Title.StartsWith("Kết quả", StringComparison.OrdinalIgnoreCase));
+
     var descSections = Model.Detail?.Sections
-        .Where(s => !s.Title.StartsWith("Tiêu chí", StringComparison.OrdinalIgnoreCase) &&
+        .Where(s => !s.Title.StartsWith("Tóm tắt", StringComparison.OrdinalIgnoreCase) &&
+                    !s.Title.StartsWith("Kết quả", StringComparison.OrdinalIgnoreCase) &&
+                    !s.Title.StartsWith("Tiêu chí", StringComparison.OrdinalIgnoreCase) &&
                     !s.Title.Contains("Review", StringComparison.OrdinalIgnoreCase) &&
                     !s.Title.Contains("Báo cáo", StringComparison.OrdinalIgnoreCase))
         .ToList() ?? new List<TaskSection>();
@@ -101,6 +107,31 @@ else
             }
         </div>
 
+        <!-- Tóm tắt cho chủ dự án: luôn hiện trên đầu, ngắn gọn -->
+        <div class="panel" style="flex:none; margin-bottom:12px; padding:12px 14px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+            <div>
+                <h3 style="font-size:14px; font-weight:600; margin:0 0 6px; color:var(--accent);">Việc này sửa gì</h3>
+                @if (summarySection != null && !string.IsNullOrWhiteSpace(summarySection.Markdown))
+                {
+                    <div class="markdown-body">@MarkdownRenderer.Render(summarySection.Markdown)</div>
+                }
+                else
+                {
+                    <div class="empty" style="padding:0;">Chưa có tóm tắt (mục "## Tóm tắt" trong file task).</div>
+                }
+            </div>
+            <div>
+                <h3 style="font-size:14px; font-weight:600; margin:0 0 6px; color:var(--accent);">Kết quả</h3>
+                @if (resultSection != null && !string.IsNullOrWhiteSpace(resultSection.Markdown))
+                {
+                    <div class="markdown-body">@MarkdownRenderer.Render(resultSection.Markdown)</div>
+                }
+                else
+                {
+                    <div class="empty" style="padding:0;">Chưa xong — Claude điền khi review đạt.</div>
+                }
+            </div>
+        </div>
         <!-- Tabs: Tiêu chí · Mô tả · Báo cáo agent · Review · Lần chạy -->
         <div class="tabs" style="flex:none; margin-bottom:12px;">
             <span class="tab @(activeTab == "criteria" ? "on" : "")" id="tabCriteriaBtn" onclick="switchTaskTab('criteria')">

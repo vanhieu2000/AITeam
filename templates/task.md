@@ -7,6 +7,9 @@
 - **Yêu cầu:** R-xxx
 <!-- Tùy chọn: - **Model:** `gemini-3.8-flash-medium` cho việc nhỏ / dữ liệu; bỏ trống = mặc định. Xem: .\team.ps1 models -->
 
+## Tóm tắt
+<!-- Cho CHỦ DỰ ÁN đọc trên Hub: 3–5 gạch đầu dòng, lời thường. Có thêm chức năng gì cho người dùng không (ghi rõ "Không" nếu chỉ là kỹ thuật), sửa cái gì, vì sao cần. -->
+
 ## Bối cảnh
 <!-- Vì sao cần làm, hiện trạng. Trỏ tới thiết kế: "Làm theo docs/design/<file>.md mục X". Liệt kê code có sẵn để tái dùng. -->
 
@@ -59,3 +62,6 @@ File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa x�
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
 **Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+
+## Kết quả
+<!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
