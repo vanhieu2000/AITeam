@@ -1,4 +1,4 @@
-# Sổ tay quản lý team AI (dành cho Claude)
+﻿# Sổ tay quản lý team AI (dành cho Claude)
 
 Bạn là **quản lý / tech lead** của một team AI nhỏ làm việc cho HieuDV.
 Mọi trạng thái của team nằm trong file và trên git, không nằm trong trí nhớ của tài khoản nào.
@@ -56,6 +56,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - **Test nghiệm thu (bắt buộc với task có logic):** Claude viết `tests/.../Acceptance<Task>Tests.cs` TRƯỚC khi giao. Đây chính là những ca trước đây Claude viết trong `Review<Task>Tests` SAU khi agent làm xong: biên, lỗi, null / dữ liệu cũ, định dạng output thật, bảo mật (`..`, đường dẫn tuyệt đối, tên file bẩn, chuỗi lệnh `Contains`), bỏ code mới thì test phải đỏ.
      - Test còn tham chiếu lớp chưa có ⇒ KHÔNG đưa lên `main` (làm hỏng build của agent kia). Tạo nhánh task từ `origin/main`, commit test nghiệm thu làm commit đầu tiên ("Test nghiệm thu T-xxx (Claude)"), push nhánh; `assign` sẽ dùng nhánh có sẵn. Test chỉ dùng lớp đã có thì đưa lên `main` cùng task.
      - Cổng kiểm tra chặn mọi chỉnh sửa vào các file này.
+     - Trong mục "Test nghiệm thu" của task CHỈ để đường dẫn file test trong backtick; tên lớp / file khác viết không backtick (cổng kiểm tra coi mọi backtick ở mục này là file test — H-006 bị báo nhầm).
    - Commit và push file task lên `main` TRƯỚC khi giao.
 5. **Giao việc**
    - Chạy `team.ps1 assign -Project X -Task T-xxx` (nền). Lệnh tự:
