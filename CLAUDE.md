@@ -60,6 +60,10 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
      - Cổng kiểm tra chặn mọi chỉnh sửa vào các file này.
      - Trong mục "Test nghiệm thu" của task CHỈ để đường dẫn file test trong backtick; tên lớp / file khác viết không backtick (cổng kiểm tra coi mọi backtick ở mục này là file test — H-006 bị báo nhầm).
    - Commit và push file task lên `main` TRƯỚC khi giao.
+   - **Khung code trước (tính năng mới):** cùng commit đầu tiên với test nghiệm thu, Claude đẩy lên nhánh task: interface / lớp / chữ ký hàm public (thân `throw new NotImplementedException()` hoặc `// TODO(agent)`), và bố cục giao diện (TableLayoutPanel / FlowLayoutPanel, tên control). Agent chỉ điền phần thân, không tự thiết kế.
+   - **Ngân sách:** mỗi task ghi dòng `- **Ngân sách:** ~N dòng` (code thêm, không tính test nghiệm thu). Cổng kiểm tra từ chối khi vượt 1,5 lần; sửa ngoài Phạm vi cũng bị từ chối (trước đây chỉ cảnh báo).
+   - **Kích thước:** mục tiêu ≤ 10–15 phút agent (~≤ 500 dòng). Đo 21/10/2026: ~1.500 dòng ≈ 23 phút, ~100k token đầu ra — thời gian tỉ lệ lượng code. Tính năng lớn tách lõi / giao diện / dữ liệu giao song song A + B. Việc đơn giản thêm `- **Model:** ``gemini-3.8-flash-medium```.
+   - **Không giao khi không đáng:** việc ≤ ~100 dòng Claude làm thẳng. Sửa sau review ≤ ~50 dòng Claude tự sửa (một vòng agent tốn 20–30 phút); chỉ trả agent khi phải làm lại nhiều.
 5. **Giao việc**
    - Chạy `team.ps1 assign -Project X -Task T-xxx` (nền). Lệnh tự:
      - chặn nếu task đang chạy trên **máy khác** (< 3 giờ; chắc máy kia đã dừng thì thêm `-Force`);
