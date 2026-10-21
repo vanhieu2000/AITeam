@@ -97,4 +97,7 @@
 - Trang Tổng quan ở kích thước 1280×800 không xuất hiện thanh cuộn dọc/ngang (`document.scrollingElement.scrollHeight == innerHeight == 800`).
 
 ## Review (Claude)
-<!-- Claude điền -->
+### Vòng 1 — ĐẠT
+Cổng kiểm tra báo "Thiếu file test nghiệm thu: HubViews.cs" là báo nhầm do Claude viết tên lớp trong backtick ở mục Test nghiệm thu (agent đã gỡ backtick — chấp nhận). Đã kiểm tra: `AcceptanceH006Tests.cs` không đổi so với commit của Claude, 14/14 pass; build 0 warning; 131/131 test. Chạy Hub từ worktree (cổng 5058) với dữ liệu thật: Tổng quan 1280×800 không cuộn dọc / ngang; menu có số task đang làm; bảng dự án, Hoạt động gần đây, ô "Antigravity · ổn" đúng; mọi trang cũ trả 200 trong layout mới. Ảnh sáng / tối / rỗng đúng mockup.
+**Optional** (hàng chờ): tên "ChinaAndroidToolbox" trong menu bị "…" (có tooltip tên đầy đủ) — có thể giảm cỡ chữ menu dự án.
+
