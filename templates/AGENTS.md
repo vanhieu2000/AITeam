@@ -52,6 +52,8 @@ Chủ dự án: HieuDV.
 - Làm đủ **mọi luồng** thiết kế liệt kê (ví dụ bản cài / portable, lần đầu / dữ liệu cũ, null / rỗng / trùng).
 - **Commit và push trước khi dừng.** Dừng giữa chừng mà chưa commit là mất việc.
 - Không để code tạm (cờ chụp ảnh, debug, đường dẫn máy mình) trong sản phẩm.
+- **Không tắt cuộn để "đạt" tiêu chí không cuộn** (`AutoScroll = false`, `BodyScrolls = false`): nội dung phải thật sự vừa (đổi bố cục, chia tab, thu gọn), không được bị cắt. Kiểm tra ảnh chụp: chữ hoặc thẻ bị cắt ở mép là KHÔNG ĐẠT.
+- Trong `FlowLayoutPanel`, control con KHÔNG dùng `Dock` (bị bỏ qua ⇒ co về rộng 0, không hiện). Cần xếp dọc giãn ngang thì dùng `TableLayoutPanel` 1 cột hoặc đặt `Width` theo panel cha khi resize.
 
 ## Tuyệt đối không
 - Không chạy `git config` (tên / email commit đã được đặt sẵn cho thư mục làm việc của bạn; sửa sẽ lan sang repo của chủ dự án).
