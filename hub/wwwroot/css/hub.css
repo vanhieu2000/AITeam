@@ -1069,3 +1069,6 @@ textarea.inp, textarea.form-control {
   color: var(--accent);
   font-weight: 600;
 }
+
+/* Tiêu đề mục trong tab task (Tổng quan / Báo cáo & review) */
+.sec-h { font-size: 14px; font-weight: 600; margin: 0 0 8px; color: var(--accent); }

@@ -58,7 +58,11 @@ public sealed record TaskDetail(
     TaskCard Card,
     IReadOnlyList<TaskSection> Sections,
     IReadOnlyList<ChecklistItem> Criteria,   // các "- [ ]" / "- [x]" trong mục "Tiêu chí hoàn thành"
-    IReadOnlyList<AgentRun> Runs);           // mới nhất trước
+    IReadOnlyList<AgentRun> Runs)            // mới nhất trước
+{
+    /// <summary>true khi nội dung đọc từ bản task agent đang sửa (worktree) — tiêu chí được tích ngay trong lúc làm, trước khi merge.</summary>
+    public bool FromWorktree { get; init; }
+}
 
 /// <summary>Bảng việc của một dự án.</summary>
 public sealed record ProjectBoard(ProjectInfo Project, IReadOnlyList<TaskCard> Tasks, string PlanMarkdown);

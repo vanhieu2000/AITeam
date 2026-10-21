@@ -215,7 +215,39 @@ public sealed class TaskBoardService : ITaskBoardService
             return new TaskDetail(card, Array.Empty<TaskSection>(), Array.Empty<ChecklistItem>(), runs);
         }
 
+        // Agent sửa file task (tích tiêu chí, viết báo cáo) trên nhánh riêng trong worktree; bản trên main chỉ cập nhật khi merge.
+        // Có bản worktree mới hơn ⇒ đọc bản đó để Hub thấy tiến độ ngay trong lúc agent làm.
+        bool fromWorktree = false;
+        string? workDir = board.Project.WorkDir;
+        if (!string.IsNullOrWhiteSpace(workDir) && Directory.Exists(workDir))
+        {
+            var fileName = Path.GetFileName(taskFilePath);
+            var mainTime = File.GetLastWriteTimeUtc(taskFilePath);
+            var newest = Directory.GetDirectories(workDir)
+                .Select(d => Path.Combine(d, "tasks", fileName))
+                .Where(File.Exists)
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .FirstOrDefault();
+            if (newest != null && File.GetLastWriteTimeUtc(newest) > mainTime)
+            {
+                taskFilePath = newest;
+                fromWorktree = true;
+            }
+        }
+
         string content = File.ReadAllText(taskFilePath);
+
+        // Bảng việc thiếu dòng của task (giao bằng mã khác tên file) ⇒ lấy agent / nhánh từ chính file task, không đoán.
+        if (string.IsNullOrWhiteSpace(card.Agent) || string.IsNullOrWhiteSpace(card.Branch))
+        {
+            var agentM = System.Text.RegularExpressions.Regex.Match(content, @"\*\*Agent:\*\*\s*(\S+)");
+            var branchM = System.Text.RegularExpressions.Regex.Match(content, @"\*\*Nhánh:\*\*\s*`([^`]+)`");
+            card = card with
+            {
+                Agent = string.IsNullOrWhiteSpace(card.Agent) && agentM.Success ? agentM.Groups[1].Value : card.Agent,
+                Branch = string.IsNullOrWhiteSpace(card.Branch) && branchM.Success ? branchM.Groups[1].Value : card.Branch,
+            };
+        }
         var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
         var sections = new List<TaskSection>();
@@ -265,6 +297,6 @@ public sealed class TaskBoardService : ITaskBoardService
             }
         }
 
-        return new TaskDetail(card, sections, criteria, runs);
+        return new TaskDetail(card, sections, criteria, runs) { FromWorktree = fromWorktree };
     }
 }

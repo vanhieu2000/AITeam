@@ -68,6 +68,8 @@ public class TaskModel : PageModel
         return Page();
     }
 
+    public bool CriteriaFromWorktree => Detail?.FromWorktree == true;
+
     private void ExtractMeta()
     {
         if (Detail == null) return;

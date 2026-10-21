@@ -11,7 +11,7 @@
     }
 
     var reqTab = Request.Query.ContainsKey("tab") ? Request.Query["tab"].ToString().ToLowerInvariant() : "";
-    var activeTab = string.IsNullOrEmpty(reqTab) ? "criteria" : reqTab;
+    var activeTab = reqTab switch { "desc" => "desc", "report" or "review" => "report", _ => "criteria" };
     var drawerRaw = Request.Query["drawer"].ToString();
     // Chỉ cho phép số lần chạy hoặc "first" — không chèn chuỗi người dùng vào script.
     var reqDrawer = string.IsNullOrEmpty(drawerRaw) ? "" : (int.TryParse(drawerRaw, out var drawerNum) ? drawerNum.ToString() : "first");
@@ -90,7 +90,7 @@ else
                 <span class="pill ok">● Đã merge</span>
             }
 
-            <span class="tag">Agent @(string.IsNullOrEmpty(Model.Detail.Card.Agent) ? "A" : Model.Detail.Card.Agent)</span>
+            @if (!string.IsNullOrEmpty(Model.Detail.Card.Agent)) { <span class="tag">Agent @Model.Detail.Card.Agent</span> }
         </div>
 
         <!-- Dòng meta: nhánh, thiết kế, ưu tiên, cổng kiểm tra -->
@@ -107,52 +107,33 @@ else
             }
         </div>
 
-        <!-- Tóm tắt cho chủ dự án: luôn hiện trên đầu, ngắn gọn -->
-        <div class="panel" style="flex:none; margin-bottom:12px; padding:12px 14px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-            <div>
-                <h3 style="font-size:14px; font-weight:600; margin:0 0 6px; color:var(--accent);">Việc này sửa gì</h3>
-                @if (summarySection != null && !string.IsNullOrWhiteSpace(summarySection.Markdown))
-                {
-                    <div class="markdown-body">@MarkdownRenderer.Render(summarySection.Markdown)</div>
-                }
-                else
-                {
-                    <div class="empty" style="padding:0;">Chưa có tóm tắt (mục "## Tóm tắt" trong file task).</div>
-                }
-            </div>
-            <div>
-                <h3 style="font-size:14px; font-weight:600; margin:0 0 6px; color:var(--accent);">Kết quả</h3>
-                @if (resultSection != null && !string.IsNullOrWhiteSpace(resultSection.Markdown))
-                {
-                    <div class="markdown-body">@MarkdownRenderer.Render(resultSection.Markdown)</div>
-                }
-                else
-                {
-                    <div class="empty" style="padding:0;">Chưa xong — Claude điền khi review đạt.</div>
-                }
-            </div>
-        </div>
-        <!-- Tabs: Tiêu chí · Mô tả · Báo cáo agent · Review · Lần chạy -->
+        <!-- Tabs: Tổng quan · Chi tiết kỹ thuật · Báo cáo & review (lần chạy ở cột phải) -->
         <div class="tabs" style="flex:none; margin-bottom:12px;">
             <span class="tab @(activeTab == "criteria" ? "on" : "")" id="tabCriteriaBtn" onclick="switchTaskTab('criteria')">
-                Tiêu chí @if (totalCriteria > 0) {<span class="c">@doneCriteria/@totalCriteria</span>}
+                Tổng quan @if (totalCriteria > 0) {<span class="c">@doneCriteria/@totalCriteria</span>}
             </span>
-            <span class="tab @(activeTab == "desc" ? "on" : "")" id="tabDescBtn" onclick="switchTaskTab('desc')">Mô tả</span>
-            <span class="tab @(activeTab == "report" ? "on" : "")" id="tabReportBtn" onclick="switchTaskTab('report')">Báo cáo agent</span>
-            <span class="tab @(activeTab == "review" ? "on" : "")" id="tabReviewBtn" onclick="switchTaskTab('review')">
-                Review @if (reviewRounds.Count > 0) {<span class="c">@reviewRounds.Count</span>}
-            </span>
-            <span class="tab @(activeTab == "runs" ? "on" : "")" id="tabRunsBtn" onclick="switchTaskTab('runs')">
-                Lần chạy @if (Model.Detail.Runs.Count > 0) {<span class="c">@Model.Detail.Runs.Count</span>}
+            <span class="tab @(activeTab == "desc" ? "on" : "")" id="tabDescBtn" onclick="switchTaskTab('desc')">Chi tiết kỹ thuật</span>
+            <span class="tab @(activeTab == "report" ? "on" : "")" id="tabReportBtn" onclick="switchTaskTab('report')">
+                Báo cáo &amp; review @if (reviewRounds.Count > 0) {<span class="c">@reviewRounds.Count vòng</span>}
             </span>
         </div>
-
         <!-- Layout Split 2 cột: Trái = Tab panel tự cuộn, Phải = Panel Lần chạy (300px) -->
         <div class="split" style="flex:1; min-height:0; display:grid; grid-template-columns:1fr 300px; gap:14px; align-items:stretch;">
             <!-- Cột trái: Tab panel tự cuộn -->
-            <div class="panel" style="height:100%; min-height:0; display:flex; flex-direction:column; overflow:hidden;">
+            <div class="panel" style="height:100%; min-height:0; display:flex; flex-direction:column; overflow-y:auto;">
                 <!-- Tab 1: Tiêu chí -->
                 <div id="tabCriteriaContent" style="display:@(activeTab == "criteria" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                    <h3 class="sec-h">Việc này sửa gì</h3>
+                    @if (summarySection != null && !string.IsNullOrWhiteSpace(summarySection.Markdown))
+                    {
+                        <div class="markdown-body" style="margin-bottom:14px;">@MarkdownRenderer.Render(summarySection.Markdown)</div>
+                    }
+                    else
+                    {
+                        <div class="muted" style="margin-bottom:14px;">Task cũ chưa có tóm tắt — xem tab Chi tiết kỹ thuật.</div>
+                    }
+
+                    <h3 class="sec-h">Tiến độ @if (totalCriteria > 0) {<span class="muted" style="font-weight:400;">· @doneCriteria/@totalCriteria tiêu chí@(Model.CriteriaFromWorktree ? " (đọc trực tiếp từ bản agent đang làm)" : "")</span>}</h3>
                     @if (Model.Detail.Criteria.Count == 0)
                     {
                         <div class="empty">Không có tiêu chí hoàn thành</div>
@@ -166,6 +147,15 @@ else
                                 <div>@MarkdownRenderer.RenderInlineSafe(c.Text)</div>
                             </div>
                         }
+                    }
+                    <h3 class="sec-h" style="margin-top:16px;">Kết quả</h3>
+                    @if (resultSection != null && !string.IsNullOrWhiteSpace(resultSection.Markdown) && !resultSection.Markdown.TrimStart().StartsWith("<!--"))
+                    {
+                        <div class="markdown-body">@MarkdownRenderer.Render(resultSection.Markdown)</div>
+                    }
+                    else
+                    {
+                        <div class="muted">Chưa xong — Claude điền khi review đạt: làm được gì, kiểm chứng ra sao, còn cần cải tiến gì.</div>
                     }
                 </div>
 
@@ -190,7 +180,7 @@ else
                 </div>
 
                 <!-- Tab 3: Báo cáo agent -->
-                <div id="tabReportContent" style="display:@(activeTab == "report" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                <div id="tabReportContent" style="display:@(activeTab == "report" ? "block" : "none"); flex:none; padding:12px 14px;"><h3 class="sec-h">Báo cáo của agent</h3>
                     @if (reportSection == null || string.IsNullOrWhiteSpace(reportSection.Markdown) || reportSection.Markdown.Trim() == "<!-- Agent điền -->")
                     {
                         <div class="empty">Chưa có báo cáo từ agent</div>
@@ -204,7 +194,7 @@ else
                 </div>
 
                 <!-- Tab 4: Review -->
-                <div id="tabReviewContent" style="display:@(activeTab == "review" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                <div id="tabReviewContent" style="display:@(activeTab == "report" ? "block" : "none"); border-top:1px solid var(--line); flex:none; padding:12px 14px;"><h3 class="sec-h">Review của Claude</h3>
                     @if (reviewRounds.Count == 0)
                     {
                         <div class="empty">Chưa có đánh giá review nào</div>
@@ -279,51 +269,6 @@ else
                     }
                 </div>
 
-                <!-- Tab 5: Lần chạy chi tiết -->
-                <div id="tabRunsContent" style="display:@(activeTab == "runs" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto;">
-                    @if (Model.Detail.Runs.Count == 0)
-                    {
-                        <div class="empty">Chưa có lần chạy nào</div>
-                    }
-                    else
-                    {
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Lần</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thời điểm</th>
-                                    <th class="num">Thời lượng</th>
-                                    <th class="num">Token</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var run in Model.Detail.Runs)
-                                {
-                                    var verdict = RunVerdicts.Classify(run);
-                                    var pillClass = verdict switch
-                                    {
-                                        RunVerdict.Running => "pill run",
-                                        RunVerdict.Success => "pill ok",
-                                        RunVerdict.CreditsExhausted => "pill err",
-                                        _ => "pill fix"
-                                    };
-                                    var verdictLabel = RunVerdicts.Label(verdict);
-                                    var duration = run.DurationSeconds.HasValue ? $"{run.DurationSeconds.Value:F1}s" : "-";
-                                    var tokens = run.TotalTokens.HasValue ? run.TotalTokens.Value.ToString("N0") : "-";
-
-                                    <tr style="cursor:pointer" onclick="openDrawer(@run.Attempt)">
-                                        <td><b>#@run.Attempt</b></td>
-                                        <td><span class="@pillClass">@verdictLabel</span></td>
-                                        <td>@run.Time.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                        <td class="num">@duration</td>
-                                        <td class="num">@tokens</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                </div>
             </div>
 
             <!-- Cột phải: Bảng lần chạy (pill theo RunVerdicts; bấm dòng => ngăn kéo phải) -->
@@ -431,27 +376,21 @@ else
             var cDesc = document.getElementById('tabDescContent');
             var cRep = document.getElementById('tabReportContent');
             var cRev = document.getElementById('tabReviewContent');
-            var cRuns = document.getElementById('tabRunsContent');
 
             cCrit.style.display = 'none';
             cDesc.style.display = 'none';
             cRep.style.display = 'none';
             cRev.style.display = 'none';
-            cRuns.style.display = 'none';
 
             if (tab === 'desc') {
                 cDesc.style.display = 'block';
                 document.getElementById('tabDescBtn').classList.add('on');
-            } else if (tab === 'report') {
+            } else if (tab === 'report' || tab === 'review') {
                 cRep.style.display = 'block';
-                document.getElementById('tabReportBtn').classList.add('on');
-            } else if (tab === 'review') {
                 cRev.style.display = 'block';
-                document.getElementById('tabReviewBtn').classList.add('on');
-            } else if (tab === 'runs') {
-                cRuns.style.display = 'block';
-                document.getElementById('tabRunsBtn').classList.add('on');
+                document.getElementById('tabReportBtn').classList.add('on');
             } else {
+
                 cCrit.style.display = 'block';
                 document.getElementById('tabCriteriaBtn').classList.add('on');
             }
