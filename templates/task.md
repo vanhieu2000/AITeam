@@ -3,6 +3,7 @@
 - **Agent:** {{AGENT}}
 - **Nhánh:** `{{BRANCH}}`
 - **Ưu tiên:** trung bình
+- **Ngân sách:** ~400 dòng
 <!-- Tùy chọn: - **Model:** `gemini-3.8-flash-medium` cho việc nhỏ / dữ liệu; bỏ trống = mặc định. Xem: .\team.ps1 models -->
 
 ## Bối cảnh

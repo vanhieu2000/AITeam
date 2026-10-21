@@ -315,7 +315,11 @@ File trong mục "Test nghiệm thu" của task do Claude viết trước: KHÔN
 Báo cáo của agent: điền bảng từng tiêu chí hoàn thành → bằng chứng (lệnh đã chạy + kết quả thật). Chưa chạy thì ghi chưa chạy.
 Làm theo mục "Lỗi hay gặp" trong AGENTS.md (giữ BOM UTF-8 của file, không test return sớm, giao diện không đặt tọa độ cố định...).
 Sau khi bạn push, cổng kiểm tra tự động chạy: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên.
-LÀM NHANH (thời gian chạy được đo):
+CHỈ LÀM ĐÚNG THIẾT KẾ:
+- Không thêm tính năng, tùy chọn, lớp, màn hình, file nào ngoài mục "Mục tiêu" và "Phạm vi" của task. Thấy nên làm thêm thì GHI vào báo cáo, không tự làm.
+- Có khung code sẵn (chữ ký hàm / interface / TODO do Claude viết) thì giữ nguyên chữ ký, chỉ điền phần thân.
+- Test: viết đúng các trường hợp trong "Tiêu chí hoàn thành", không nhân bản thành hàng chục test na ná nhau.
+- Task có dòng "Ngân sách" (số dòng code): giữ trong ngân sách; cổng kiểm tra từ chối nếu vượt quá 1,5 lần.LÀM NHANH (thời gian chạy được đo):
 - Đọc PROJECT_MAP.md / AGENTS.md rồi chỉ mở đúng file cần sửa; không đọc lại cả file đã đọc, không in nguyên file dài ra màn hình.
 - Trong lúc làm: build tăng dần (không clean), thêm --no-restore sau lần restore đầu; chạy RIÊNG test liên quan bằng dotnet test --no-build --filter "FullyQualifiedName~TênLớpTest".
 - Chạy đủ lệnh Build + Test của dự án đúng 1 lần ở cuối, trước khi commit.
@@ -796,8 +800,23 @@ function Invoke-Verify {
     if ($scope.Count -gt 0) {
         $always = @("tasks/$($ctx.TaskFile.Name)", "docs/screenshots/$Task", "CHANGELOG.md") + $accept
         $out = @($changed | Where-Object { -not (Test-PathInScope $_ ($scope + $always)) })
-        if ($out.Count -gt 0) { [void]$warns.Add("Sửa ngoài phạm vi task ($($out.Count) file): " + (($out | Select-Object -First 10) -join ', ')) }
+        if ($out.Count -gt 0) { [void]$fails.Add("Sửa NGOÀI PHẠM VI task ($($out.Count) file) — hoàn tác các file này hoặc ghi lý do bắt buộc vào báo cáo để quản lý quyết: " + (($out | Select-Object -First 10) -join ', ')) }
     } else { [void]$notes.Add("Task không ghi đường dẫn trong mục Phạm vi → bỏ qua kiểm tra phạm vi.") }
+    # 4b. Ngân sách code: dòng "- **Ngân sách:** ~400 dòng" trong file task (không tính file task và test nghiệm thu).
+    $budgetText = [regex]::Match($ctx.Text, '\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
+    if ($budgetText) {
+        $limit = [int]$budgetText
+        $countFiles = @($changed | Where-Object { $_ -ne "tasks/$($ctx.TaskFile.Name)" -and $accept -notcontains $_ })
+        $added = 0
+        if ($countFiles.Count -gt 0) {
+            foreach ($line in (git -C $work diff --numstat $base HEAD -- $countFiles 2>$null)) {
+                $p = $line -split "`t"; if ($p[0] -match '^\d+$') { $added += [int]$p[0] }
+            }
+        }
+        [void]$notes.Add("Code thêm mới: $added dòng / ngân sách $limit")
+        if ($added -gt [math]::Ceiling($limit * 1.5)) { [void]$fails.Add("Vượt NGÂN SÁCH code: thêm $added dòng, ngân sách $limit (tối đa x1.5). Bỏ phần làm thêm ngoài yêu cầu, gộp test trùng lặp, không viết lại code có sẵn.") }
+        elseif ($added -gt $limit) { [void]$warns.Add("Code thêm $added dòng, vượt ngân sách $limit (chưa quá x1.5).") }
+    }
 
     # 5. Test có nhánh return sớm / assert luôn đúng (chỉ xét dòng mới thêm trong file test)
     $testFiles = @($changed | Where-Object { $_ -match '(?i)(^|/)tests?/|tests?\.cs$' })
