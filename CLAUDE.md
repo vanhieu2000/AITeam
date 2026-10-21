@@ -33,6 +33,10 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - Đã có trong `projects.json`: `git pull` trước khi làm.
    - Chưa có: chạy `team.ps1 add-project` (dự án mới `-New`, có trên GitHub `-Repo`, có trên máy `-Path`). Lệnh này tự tạo kho GitHub **private**, `AGENTS.md`, `tasks/`, `.gitignore`.
    - Sau đó điền `build` / `test` / `stack` / `areas` trong `projects.json`.
+   - **Chủ dự án phải test được bằng 1 cú bấm:**
+     - App C# desktop: chép `templates/ban-chay-thu.ps1` vào `tools/` và `templates/CHAY-THU.cmd` vào gốc dự án; `.gitignore` thêm `/ban-chay-thu/`, `/ban-chay-thu.tmp/`. Bấm `CHAY-THU.cmd` = lấy bản mới, publish ra `ban-chay-thu\`, mở app.
+     - Web / dịch vụ: file `CHAY-<TÊN>.cmd` ở gốc (ví dụ `AITeam\CHAY-HUB.cmd`): bấm là build nếu cần, chạy dịch vụ ở nền, mở trình duyệt.
+     - Agent làm ở thư mục riêng (worktree) nên chủ dự án test bản đã merge bất cứ lúc nào, không ảnh hưởng việc đang làm.
 3. **Ý tưởng + THIẾT KẾ (chỉ Claude làm, bắt buộc trước khi giao)**
    Chủ dự án chỉ tin Claude lên ý tưởng và thiết kế. Agent CHỈ hiện thực hóa thiết kế đã có, không tự nghĩ sản phẩm.
    Phần lớn lần trả về sửa bắt nguồn từ thiết kế thiếu (C-009 đoán sai định dạng output, T-004 sót luồng portable), nên thiết kế phải đủ những mục dưới đây.
@@ -99,6 +103,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
      1. `git merge --no-ff` vào `main`.
      2. Kiểm tra lại bằng bản **clone sạch** từ GitHub: build + test.
      3. Push `main`, rồi `team.ps1 cleanup`.
+     3b. **Làm mới bản chạy thử cho chủ dự án:** `team.ps1 try -Project X -NoLaunch` ⇒ `<dự án>\ban-chay-thu\<App>.exe` là bản vừa merge. Báo cáo ghi rõ "mở `D:\<dự án>\ban-chay-thu\<App>.exe` để thử".
      4. Bảng ✅, ghi CHANGELOG nếu dự án có.
    - **CẦN SỬA**: commit phần review vào nhánh, push, rồi `team.ps1 assign … -Resume -Feedback "<tóm tắt Blocker/Required>"`. Bảng 🔴.
    - **Cùng một lỗi còn sau 2 lần sửa ⇒ dừng vá.** Đối chiếu lại thiết kế, giả định, dữ liệu mẫu; sửa thiết kế / test nghiệm thu rồi mới giao tiếp. Tổng quá `review.maxRounds` vòng (mặc định 3): tự sửa phần còn lại hoặc báo người dùng.

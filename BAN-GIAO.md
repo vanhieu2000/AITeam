@@ -23,6 +23,13 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
 - **Lỗi nhỏ sau review (≤ ~50 dòng) Claude tự sửa.** Phần sót của task đã gần đạt ⇒ tách task nhỏ mới, không trả cả task về làm lại.
 - **Báo chủ dự án ngắn gọn, gạch đầu dòng:** việc gì, sửa gì; xong thì làm được gì, cần cải tiến gì.
 
+## 1b. Chủ dự án test app thế nào
+- **HDV Tool:** bấm đúp `D:\HDVTool\CHAY-THU.cmd` (tự lấy bản mới, build ra `D:\HDVTool\ban-chay-thu\`, mở app) — hoặc mở thẳng `D:\HDVTool\ban-chay-thu\HDVTool.exe`.
+- **China Android Toolbox:** `D:\ChinaAndroidToolbox\CHAY-THU.cmd` hoặc `ban-chay-thu\ChinaAndroidToolbox.exe`.
+- **AITeam Hub (web):** bấm đúp `D:\AITeam\CHAY-HUB.cmd`.
+- Đây luôn là bản ĐÃ MERGE; agent đang làm ở thư mục riêng nên test lúc nào cũng được. Claude làm mới `ban-chay-thu\` sau mỗi lần merge.
+- Máy khác (công ty) lần đầu: bấm `CHAY-THU.cmd` để tạo thư mục `ban-chay-thu\` (thư mục này không lên git).
+
 ## 2. Việc đang dở
 | Việc | Trạng thái | Làm tiếp thế nào |
 |---|---|---|

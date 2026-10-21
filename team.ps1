@@ -27,6 +27,7 @@
   .\team.ps1 secret-list | secret-remove -Name X    Xem tên (không xem giá trị) / xóa bí mật
   .\team.ps1 secret-env -Project Ten -Names A,B     Ghi .env.local (đã bị .gitignore) cho dự án chạy thử trên máy
   .\team.ps1 hub                                    Mở bảng điều khiển AITeam Hub (chạy ngầm)
+  .\team.ps1 try -Project Ten [-NoLaunch]           Build bản ĐÃ MERGE ra thư mục riêng (AITeam-try) rồi mở app để chủ dự án chạy thử
 #>
 param(
     [Parameter(Position = 0)] [string] $Command = "help",
@@ -43,6 +44,7 @@ param(
     [string] $Title = "",
     [string] $Agent = "A",
     [string] $Request = "",
+    [switch] $NoLaunch,
     [string] $Name = "",
     [string[]] $Names = @(),
     [string] $Prompt = "",
@@ -1098,6 +1100,38 @@ function Show-RunMetrics {
     $perTask = $runs | Group-Object { "$($_.project)/$($_.task)" }
     Say ("  Thời gian agent cho 1 task (cộng mọi lượt): TB {0:N0} phút · lượt / task TB {1:N2}" -f (($perTask | ForEach-Object { ($_.Group | Measure-Object durationSec -Sum).Sum / 60 }) | Measure-Object -Average).Average, (($perTask | ForEach-Object { $_.Count }) | Measure-Object -Average).Average)
 }
+# ===== Chạy thử app cho chủ dự án: bản ĐÃ MERGE (main), build ra thư mục riêng, không đụng việc agent đang làm =====
+function Invoke-Try {
+    $cfg = Get-Config
+    $r = Resolve-Project $Project
+    # Dự án có script riêng (tools\ban-chay-thu.ps1, bấm CHAY-THU.cmd) ⇒ dùng nó: bản chạy thử nằm trong <dự án>\ban-chay-thu\
+    $own = Join-Path $r.Path "tools\ban-chay-thu.ps1"
+    if (Test-Path $own) { & powershell -NoProfile -ExecutionPolicy Bypass -File $own $(if ($NoLaunch) { "-NoLaunch" }); return }
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    $dirty = @(git -C $r.Path status --porcelain 2>$null | Where-Object { $_ })
+    if ($dirty.Count -eq 0) { git -C $r.Path pull -q 2>$null } else { Say "Thư mục $($r.Path) có thay đổi chưa commit → không pull, build bản hiện có." Yellow }
+    $commit = (git -C $r.Path log -1 --format="%h %ad %s" --date=format:"%d/%m %H:%M" 2>$null)
+    $ErrorActionPreference = $eap
+
+    $app = if ($r.Info.app) { Join-Path $r.Path $r.Info.app } else {
+        Get-ChildItem (Join-Path $r.Path "src") -Recurse -Filter "*.App.csproj" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName }
+    if (-not $app -or -not (Test-Path $app)) { throw "Không tìm thấy project app (*.App.csproj) của $($r.Info.name). Thêm trường ""app"" vào projects.json." }
+
+    $out = Join-Path (Split-Path $cfg.workRoot -Parent) ("AITeam-try\" + $r.Info.name)
+    $running = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path.StartsWith($out, [StringComparison]::OrdinalIgnoreCase) })
+    if ($running) { throw "Bản chạy thử đang mở ($($running[0].ProcessName)). Đóng app rồi chạy lại lệnh." }
+
+    Say "Build bản đã merge: $commit" Cyan
+    New-Item -ItemType Directory -Force $out | Out-Null
+    $log = Join-Path $out "build.log"
+    $p = Start-Process dotnet -ArgumentList "build `"$app`" -c Release -o `"$out`" -nologo -v q" -NoNewWindow -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError "$log.err"
+    if ($p.ExitCode -ne 0) { Get-Content $log -Tail 15 | ForEach-Object { Say $_ Red }; throw "Build lỗi — xem $log" }
+    [IO.File]::WriteAllText((Join-Path $out "PHIEN-BAN.txt"), "Bản chạy thử $($r.Info.name)`r`nCommit: $commit`r`nBuild lúc: $(Get-Date -Format 'HH:mm dd/MM/yyyy')`r`n", $Utf8)
+    $exe = Get-ChildItem $out -Filter "*.exe" | Where-Object { $_.BaseName -eq [IO.Path]::GetFileNameWithoutExtension($app).Replace(".App", "") -or $_.BaseName -eq [IO.Path]::GetFileNameWithoutExtension($app) } | Select-Object -First 1
+    if (-not $exe) { $exe = Get-ChildItem $out -Filter "*.exe" | Where-Object { $_.BaseName -notmatch 'Updater|createdump' } | Select-Object -First 1 }
+    Say "Xong: $($exe.FullName)" Green
+    if (-not $NoLaunch) { Start-Process $exe.FullName -WorkingDirectory $out }
+}
 # ===== Nhân viên: tên chỉ dùng trong log / đánh giá (staff/<mã>-<tên>.md) =====
 function Get-StaffName([string]$id) {
     $sf = Get-ChildItem (Join-Path $Root "staff") -Filter "$id-*.md" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -1277,6 +1311,7 @@ switch ($Command) {
     "new-request" { $null = Invoke-NewRequest }
     "request-report" { Invoke-RequestReport }
     "staff-report" { Invoke-StaffReport }
+    "try" { Invoke-Try }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }
