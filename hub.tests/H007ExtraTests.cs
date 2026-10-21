@@ -1,6 +1,10 @@
+using AITeam.Hub.DevData;
 using AITeam.Hub.Models;
+using AITeam.Hub.Pages;
 using AITeam.Hub.Pages.Shared;
 using AITeam.Hub.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AITeam.Hub.Tests;
 
@@ -61,5 +65,43 @@ public sealed class H007ExtraTests
         Assert.Equal(2, res.Items.Count);
         Assert.Equal("C-002", res.Items[0].Id);
         Assert.Equal(0, res.Remaining);
+    }
+
+    [Fact]
+    public void Project_model_handles_merged_preview_and_empty_board()
+    {
+        var config = new FakeTeamConfigService();
+        var board = new FakeTaskBoardService();
+        var run = new FakeAgentRunService();
+
+        var page = new ProjectModel(board, config, run)
+        {
+            Name = "AITeam"
+        };
+
+        var result = page.OnGet();
+        Assert.IsType<PageResult>(result);
+        Assert.NotEmpty(page.MergedPreviewItems);
+        Assert.NotEmpty(page.AllMergedOrdered);
+        Assert.True(page.MergedRemaining >= 0);
+    }
+
+    [Fact]
+    public void Task_model_handles_missing_sections_and_empty_runs()
+    {
+        var config = new FakeTeamConfigService();
+        var board = new FakeTaskBoardService();
+        var run = new FakeAgentRunService();
+
+        var page = new TaskModel(board, config, run)
+        {
+            Name = "AITeam",
+            Id = "H-001"
+        };
+
+        var result = page.OnGet();
+        Assert.IsType<PageResult>(result);
+        Assert.NotNull(page.Detail);
+        Assert.NotNull(page.Priority);
     }
 }
