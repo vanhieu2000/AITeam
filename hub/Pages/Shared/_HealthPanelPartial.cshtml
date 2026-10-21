@@ -1,0 +1,31 @@
+@model IReadOnlyList<AITeam.Hub.Models.HealthItem>
+@{
+    var okCount = Model.Count(h => h.Level == AITeam.Hub.Models.HealthLevel.Ok);
+    var totalCount = Model.Count;
+    var hasError = Model.Any(h => h.Level == AITeam.Hub.Models.HealthLevel.Error);
+}
+
+<div class="panel" id="health-panel">
+    <div class="hd">
+        <span>Tình trạng máy</span>
+        <span class="sp"></span>
+        <span class="pill @(hasError ? "err" : "ok")">@okCount/@totalCount ổn</span>
+        <button class="btn sm ghost" type="button" hx-get="/?handler=HealthPanel" hx-target="#health-panel" hx-swap="outerHTML">Kiểm tra lại</button>
+    </div>
+    <div class="bd health">
+        @foreach (var item in Model)
+        {
+            var isBad = item.Level != AITeam.Hub.Models.HealthLevel.Ok;
+            var dotType = item.Level switch
+            {
+                AITeam.Hub.Models.HealthLevel.Ok => "ok",
+                AITeam.Hub.Models.HealthLevel.Warning => "run",
+                _ => "err"
+            };
+            var titleText = $"{item.Name}: {item.Detail}" + (!string.IsNullOrEmpty(item.Fix) ? $" (Fix: {item.Fix})" : "");
+            <span class="chk @(isBad ? "bad" : "")" title="@titleText">
+                <span class="dot @dotType"></span>@item.Name
+            </span>
+        }
+    </div>
+</div>
