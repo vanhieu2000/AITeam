@@ -104,15 +104,15 @@ else
         <!-- Tabs: Tiêu chí · Mô tả · Báo cáo agent · Review · Lần chạy -->
         <div class="tabs" style="flex:none; margin-bottom:12px;">
             <span class="tab @(activeTab == "criteria" ? "on" : "")" id="tabCriteriaBtn" onclick="switchTaskTab('criteria')">
-                Tiêu chí@(totalCriteria > 0 ? $" <span class=\"c\">{doneCriteria}/{totalCriteria}</span>" : "")
+                Tiêu chí @if (totalCriteria > 0) {<span class="c">@doneCriteria/@totalCriteria</span>}
             </span>
             <span class="tab @(activeTab == "desc" ? "on" : "")" id="tabDescBtn" onclick="switchTaskTab('desc')">Mô tả</span>
             <span class="tab @(activeTab == "report" ? "on" : "")" id="tabReportBtn" onclick="switchTaskTab('report')">Báo cáo agent</span>
             <span class="tab @(activeTab == "review" ? "on" : "")" id="tabReviewBtn" onclick="switchTaskTab('review')">
-                Review@(reviewRounds.Count > 0 ? $" <span class=\"c\">{reviewRounds.Count}</span>" : "")
+                Review @if (reviewRounds.Count > 0) {<span class="c">@reviewRounds.Count</span>}
             </span>
             <span class="tab @(activeTab == "runs" ? "on" : "")" id="tabRunsBtn" onclick="switchTaskTab('runs')">
-                Lần chạy@(Model.Detail.Runs.Count > 0 ? $" <span class=\"c\">{Model.Detail.Runs.Count}</span>" : "")
+                Lần chạy @if (Model.Detail.Runs.Count > 0) {<span class="c">@Model.Detail.Runs.Count</span>}
             </span>
         </div>
 
