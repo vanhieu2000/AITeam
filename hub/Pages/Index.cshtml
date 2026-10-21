@@ -4,105 +4,146 @@
     ViewData["Title"] = "Tổng quan";
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Tổng quan hệ thống</h1>
-        <div class="page-subtitle">Theo dõi tiến độ toàn bộ dự án, trạng thái agent và tình trạng môi trường máy</div>
+@section Actions {
+    <span class="faint" style="font-size: 12px;">Cập nhật @DateTime.Now.ToString("HH:mm") · tự làm mới 15 giây</span>
+}
+
+<div class="kpis">
+    <div class="kpi">
+        <b>@Model.TotalProjects</b>
+        <span>Dự án</span>
+    </div>
+    <div class="kpi run">
+        <b>@Model.TotalAssigned</b>
+        <span>Đang làm</span>
+    </div>
+    <div class="kpi rev">
+        <b>@Model.TotalReview</b>
+        <span>Chờ review</span>
+    </div>
+    <div class="kpi fix">
+        <b>@Model.TotalNeedsFix</b>
+        <span>Cần sửa</span>
     </div>
 </div>
 
-<!-- 4 thẻ số liệu thống kê -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-label">Dự án</div>
-        <div class="stat-value">@Model.TotalProjects</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Task đang làm</div>
-        <div class="stat-value" style="color: var(--state-assigned);">@Model.TotalAssigned</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Chờ review</div>
-        <div class="stat-value" style="color: var(--state-review);">@Model.TotalReview</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Agent đang chạy</div>
-        <div class="stat-value" style="color: var(--primary);">@Model.TotalRunningAgents</div>
-    </div>
-</div>
-
-<!-- Lưới thẻ dự án -->
-<div class="card">
-    <div class="card-header">
-        <div class="card-title">📦 Danh sách dự án (@Model.Projects.Count)</div>
-    </div>
-    <div class="card-body">
-        <div class="projects-grid">
-            @foreach (var p in Model.Projects)
+<div class="grid" style="grid-template-columns: minmax(0, 1fr) 340px;">
+    <!-- Cột trái: Bảng dự án + Hoạt động gần đây -->
+    <div class="grid" style="align-content: start;">
+        <div class="panel">
+            <div class="hd">Dự án</div>
+            @if (Model.Projects.Count == 0)
             {
-                <div class="project-card">
-                    <div class="project-card-header">
-                        <a href="/p/@p.Info.Name" class="project-name">@p.Info.Name</a>
-                        <a href="@p.Info.GitHubUrl" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--text-muted);" title="Xem trên GitHub">
-                            GitHub ↗
-                        </a>
-                    </div>
-                    <div class="project-stack">@p.Info.Stack</div>
-                    <div class="project-task-counts">
-                        <span title="Đã giao / Đang làm">🟡 @p.AssignedCount</span>
-                        <span title="Chờ review">🔵 @p.ReviewCount</span>
-                        <span title="Cần sửa">🔴 @p.NeedsFixCount</span>
-                        <span title="Đã hoàn thành">✅ @p.MergedCount</span>
-                    </div>
-                </div>
+                <div class="empty">Chưa có dự án nào</div>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tên</th>
+                            <th class="num">Đang làm</th>
+                            <th class="num">Review</th>
+                            <th class="num">Cần sửa</th>
+                            <th class="num">Đã merge</th>
+                            <th>Hoạt động gần nhất</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Projects)
+                        {
+                            <tr>
+                                <td>
+                                    <a href="/p/@p.Info.Name" style="font-weight: 500;">@p.Info.Name</a>
+                                </td>
+                                <td class="num">
+                                    @if (p.AssignedCount > 0)
+                                    {
+                                        <span class="pill run">@p.AssignedCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="num faint">0</span>
+                                    }
+                                </td>
+                                <td class="num">
+                                    @if (p.ReviewCount > 0)
+                                    {
+                                        <span class="pill rev">@p.ReviewCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="num faint">0</span>
+                                    }
+                                </td>
+                                <td class="num">
+                                    @if (p.NeedsFixCount > 0)
+                                    {
+                                        <span class="pill fix">@p.NeedsFixCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="num faint">0</span>
+                                    }
+                                </td>
+                                <td class="num">@p.MergedCount</td>
+                                <td class="muted" style="overflow: hidden; text-overflow: ellipsis; max-width: 220px;" title="@p.LatestActivity">
+                                    @p.LatestActivity
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="panel">
+            <div class="hd">Hoạt động gần đây</div>
+            @if (Model.RecentActivities.Count == 0)
+            {
+                <div class="empty">Chưa có hoạt động nào</div>
+            }
+            else
+            {
+                <table>
+                    <tbody>
+                        @foreach (var act in Model.RecentActivities)
+                        {
+                            <tr>
+                                <td class="muted" style="width: 56px;">@act.Time.ToString("HH:mm")</td>
+                                <td style="width: 105px;">
+                                    @switch (act.Verdict)
+                                    {
+                                        case AITeam.Hub.Services.RunVerdict.Success:
+                                            <span class="pill ok">Thành công</span>
+                                            break;
+                                        case AITeam.Hub.Services.RunVerdict.CreditsExhausted:
+                                            <span class="pill err">Hết credits</span>
+                                            break;
+                                        case AITeam.Hub.Services.RunVerdict.Error:
+                                            <span class="pill fix">Lỗi</span>
+                                            break;
+                                        default:
+                                            <span class="pill n">@AITeam.Hub.Services.RunVerdicts.Label(act.Verdict)</span>
+                                            break;
+                                    }
+                                </td>
+                                <td style="overflow: hidden; text-overflow: ellipsis; max-width: 280px;">
+                                    <a href="/p/@act.Project/t/@act.Task"><b>@act.Task</b></a>
+                                    <span class="muted">· @act.Project</span>
+                                </td>
+                                <td class="muted num">lượt @act.Attempt</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             }
         </div>
     </div>
-</div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-    <!-- Khối Agent đang chạy (HTMX cập nhật 15s) -->
-    <partial name="_RunningAgentsPartial" model="Model.RunningAgents" />
-
-    <!-- Khối Tình trạng máy -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">🖥️ Tình trạng máy</div>
-            <span style="font-size: 11.5px; color: var(--text-muted);">team.ps1 doctor</span>
-        </div>
-        <div class="card-body">
-            <div class="health-list">
-                @foreach (var item in Model.HealthItems)
-                {
-                    <div class="health-item">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            @if (item.Level == AITeam.Hub.Models.HealthLevel.Ok)
-                            {
-                                <span class="health-status-ok" title="Bình thường">✓</span>
-                            }
-                            else if (item.Level == AITeam.Hub.Models.HealthLevel.Warning)
-                            {
-                                <span class="health-status-warning" title="Cảnh báo">!</span>
-                            }
-                            else
-                            {
-                                <span class="health-status-error" title="Lỗi">✗</span>
-                            }
-                            <div>
-                                <div style="font-weight: 600; font-size: 13.5px;">@item.Name</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">@item.Detail</div>
-                            </div>
-                        </div>
-
-                        @if (!string.IsNullOrEmpty(item.Fix))
-                        {
-                            <div>
-                                <code class="fix-instruction">Fix: @item.Fix</code>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
+    <!-- Cột phải: Agent đang chạy + Tình trạng máy -->
+    <div class="grid" style="align-content: start;">
+        <partial name="_RunningAgentsPartial" model="Model.RunningAgents" />
+        <partial name="_HealthPanelPartial" model="Model.HealthItems" />
     </div>
 </div>

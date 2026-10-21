@@ -1,48 +1,39 @@
 @model IReadOnlyList<AITeam.Hub.Models.RunningAgent>
 
-<div id="running-agents-container" class="card" hx-get="/?handler=RunningAgents" hx-trigger="every 15s" hx-swap="outerHTML">
-    <div class="card-header">
-        <div class="card-title">
-            <span class="pulse-indicator"></span>
-            <span>Agent đang chạy (@Model.Count)</span>
-        </div>
-        <span style="font-size: 11.5px; color: var(--text-muted);">Tự cập nhật 15s</span>
+<div class="panel" id="running-agents-panel" hx-get="/?handler=RunningAgents" hx-trigger="every 15s" hx-swap="outerHTML">
+    <div class="hd">
+        <span>Agent đang chạy</span>
+        <span class="sp"></span>
+        <a class="muted" href="/Agents" style="font-size: 12.5px;">Tất cả</a>
     </div>
-    <div class="card-body">
-        @if (Model.Count == 0)
-        {
-            <div style="color: var(--text-muted); font-size: 13.5px; text-align: center; padding: 12px;">
-                Hiện không có tiến trình agent nào đang chạy.
-            </div>
-        }
-        else
-        {
-            @foreach (var agent in Model)
-            {
-                <div class="running-agent-item">
-                    <div>
-                        <div style="font-weight: 600; font-size: 14px;">
-                            <span>@(agent.Project ?? "N/A")</span> ·
+    @if (Model.Count == 0)
+    {
+        <div class="empty">Không có agent nào đang chạy</div>
+    }
+    else
+    {
+        <table>
+            <tbody>
+                @foreach (var agent in Model)
+                {
+                    <tr>
+                        <td style="width: 20px;"><span class="dot run"></span></td>
+                        <td>
                             @if (!string.IsNullOrEmpty(agent.Task) && !string.IsNullOrEmpty(agent.Project))
                             {
-                                <a href="/p/@agent.Project/t/@agent.Task">@agent.Task</a>
+                                <a href="/p/@agent.Project/t/@agent.Task"><b>@agent.Task</b></a>
                             }
                             else
                             {
-                                <span>@(agent.Task ?? "N/A")</span>
+                                <b>@(agent.Task ?? "N/A")</b>
                             }
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 3px;">
-                            PID: @agent.Pid · Bắt đầu lúc @agent.StartedAt.ToString("HH:mm:ss")
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="badge badge-assigned" style="font-size: 12px;">
-                            ⏳ @AITeam.Hub.Pages.IndexModel.FormatElapsed(agent.Elapsed)
-                        </span>
-                    </div>
-                </div>
-            }
-        }
-    </div>
+                            <span class="muted">· @(agent.Project ?? "N/A")</span>
+                        </td>
+                        <td style="width: 70px;"><span class="tag">PID @agent.Pid</span></td>
+                        <td class="num muted">@AITeam.Hub.Pages.IndexModel.FormatElapsed(agent.Elapsed)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
