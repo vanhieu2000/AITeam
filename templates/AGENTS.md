@@ -39,7 +39,7 @@ Chủ dự án: HieuDV.
 ## Test nghiệm thu, báo cáo, cổng kiểm tra
 - Mục **"Test nghiệm thu"** trong task là các file test Claude viết TRƯỚC khi giao. KHÔNG sửa, KHÔNG xóa, KHÔNG `Skip`; chỉ sửa code cho chúng pass. Thấy test sai thì ghi vào báo cáo kèm lý do, vẫn không sửa.
 - Đọc cả thiết kế được trỏ tới trong task và dữ liệu mẫu thật trong `tests/fixtures/` (nếu task nêu).
-- **Báo cáo của agent** phải có bảng **từng tiêu chí hoàn thành → bằng chứng** (lệnh đã chạy + kết quả thật: số test pass, số warning, đường dẫn ảnh chụp), file đã đổi và lý do, quyết định tự đưa ra khi không có ai hỏi, điều chưa xác minh.
+- **Báo cáo của agent** phải có bảng **từng tiêu chí hoàn thành → bằng chứng** (lệnh đã chạy + kết quả thật: số test pass, số warning) — **TỐI ĐA 15 dòng**, không viết dài, file đã đổi và lý do, quyết định tự đưa ra khi không có ai hỏi, điều chưa xác minh.
 - Sau khi push, **cổng kiểm tra tự động** (`team.ps1 verify`) chạy ngay: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên, có báo cáo. Không đạt sẽ bị giao lại kèm danh sách lỗi.
 
 ## Lỗi hay gặp (đã xảy ra nhiều lần — bắt buộc tránh)
@@ -53,6 +53,7 @@ Chủ dự án: HieuDV.
 - **Commit và push trước khi dừng.** Dừng giữa chừng mà chưa commit là mất việc.
 - Không để code tạm (cờ chụp ảnh, debug, đường dẫn máy mình) trong sản phẩm.
 - **Không tắt cuộn để "đạt" tiêu chí không cuộn** (`AutoScroll = false`, `BodyScrolls = false`): nội dung phải thật sự vừa (đổi bố cục, chia tab, thu gọn), không được bị cắt. Kiểm tra ảnh chụp: chữ hoặc thẻ bị cắt ở mép là KHÔNG ĐẠT.
+- **KHÔNG chụp ảnh, KHÔNG chạy app**: Claude chụp bằng `tools/UiSnapshot` khi review. Giao diện làm đúng mục "Bố cục giao diện" của task và kiểm bằng test bố cục tự động có sẵn.
 - Trong `FlowLayoutPanel`, control con KHÔNG dùng `Dock` (bị bỏ qua ⇒ co về rộng 0, không hiện). Cần xếp dọc giãn ngang thì dùng `TableLayoutPanel` 1 cột hoặc đặt `Width` theo panel cha khi resize.
 
 ## Tuyệt đối không

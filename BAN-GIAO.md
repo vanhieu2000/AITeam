@@ -3,7 +3,7 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-Cập nhật lần cuối: **21/10/2026 ~22:20 · máy nhà DESKTOP-PP14EFS** · quy trình phiên bản 2 (xem `docs/HIEU-SUAT-LOG.md`)
+Cập nhật lần cuối: **21/10/2026 ~22:20 · máy nhà DESKTOP-PP14EFS** · **quy trình v3: đọc `QUY-TRINH.md`**
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
 Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUAT-LOG.md`.

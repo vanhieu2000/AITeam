@@ -27,6 +27,8 @@
   .\team.ps1 secret-list | secret-remove -Name X    Xem tên (không xem giá trị) / xóa bí mật
   .\team.ps1 secret-env -Project Ten -Names A,B     Ghi .env.local (đã bị .gitignore) cho dự án chạy thử trên máy
   .\team.ps1 hub                                    Mở bảng điều khiển AITeam Hub (chạy ngầm)
+  .\team.ps1 review -Project Ten -Task T-003        Gói review gọn: cổng kiểm tra, file đổi, báo cáo agent, ảnh
+  .\team.ps1 merge -Project Ten -Task T-003         Merge (cần "Vòng N — ĐẠT"), bảng việc ✅, clone sạch, dọn worktree, làm mới bản chạy thử
   .\team.ps1 stop -Task T-003                       Dừng hẳn task: cả lệnh assign bao ngoài lẫn agent (không bị tự giao lại)
   .\team.ps1 try -Project Ten [-NoLaunch]           Build bản ĐÃ MERGE ra thư mục riêng (AITeam-try) rồi mở app để chủ dự án chạy thử
 #>
@@ -337,6 +339,11 @@ File trong mục "Test nghiệm thu" của task do Claude viết trước: KHÔN
 Báo cáo của agent: điền bảng từng tiêu chí hoàn thành → bằng chứng (lệnh đã chạy + kết quả thật). Chưa chạy thì ghi chưa chạy.
 Làm theo mục "Lỗi hay gặp" trong AGENTS.md (giữ BOM UTF-8 của file, không test return sớm, giao diện không đặt tọa độ cố định...).
 Sau khi bạn push, cổng kiểm tra tự động chạy: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên.
+VAI TRÒ CỦA BẠN: CHỈ VIẾT CODE. Claude đã phân tích, thiết kế, viết khung + test nghiệm thu; Claude sẽ review, chụp ảnh giao diện, chạy app.
+- CHỈ đọc các file ở mục "Đọc" trong task (và AGENTS.md mục Lỗi hay gặp). Không lục tìm, không đọc tài liệu khác.
+- KHÔNG chụp ảnh, KHÔNG chạy app, KHÔNG tự viết công cụ phụ. Giao diện: làm đúng bố cục ghi trong task, kiểm bằng test bố cục có sẵn.
+- Commit sớm và thường xuyên (sau mỗi phần chạy được): bị dừng giữa chừng vẫn không mất việc. Có giới hạn thời gian cho task.
+- Báo cáo của agent: TỐI ĐA 15 dòng — bảng tiêu chí → lệnh + kết quả thật, file đã đổi, điều chưa chắc. Không viết dài.
 CHỈ LÀM ĐÚNG THIẾT KẾ:
 - Không thêm tính năng, tùy chọn, lớp, màn hình, file nào ngoài mục "Mục tiêu" và "Phạm vi" của task. Thấy nên làm thêm thì GHI vào báo cáo, không tự làm.
 - Có khung code sẵn (chữ ký hàm / interface / TODO do Claude viết) thì giữ nguyên chữ ký, chỉ điền phần thân.
@@ -357,7 +364,10 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     $promptFile = Join-Path $r.Logs "$Task-$n.prompt.md"
     [IO.File]::WriteAllText($promptFile, $prompt, $Utf8)
     $short = "Doc file $promptFile (UTF-8, tieng Viet) va lam dung theo huong dan trong do."
-    $argLine = "-p `"$short`" --output-format json --print-timeout 0 --dangerously-skip-permissions --add-dir `"$work`" --add-dir `"$($r.Logs)`""
+    # Giới hạn thời gian theo task ("- **Thời gian tối đa:** 25 phút"), mặc định 30 phút — chặn chạy lan man (T-007: 73 phút cho 51 dòng).
+    $maxMin = [regex]::Match($text, '\*\*Thời gian tối đa:\*\*\s*(\d+)').Groups[1].Value
+    if (-not $maxMin) { $maxMin = "30" }
+    $argLine = "-p `"$short`" --output-format json --print-timeout ${maxMin}m --dangerously-skip-permissions --add-dir `"$work`" --add-dir `"$($r.Logs)`""
     # Model theo task (dòng **Model:** `tên` trong file task) > model mặc định trong team.json.
     $taskModel = [regex]::Match($text, '\*\*Model:\*\*\s*`([^`]+)`').Groups[1].Value
     $model = if ($taskModel) { $taskModel } else { $cfg.agy.model }
@@ -1117,6 +1127,63 @@ function Invoke-Stop {
         Say ("Đã dừng {0} (PID {1})" -f $p.Name, $p.ProcessId) Yellow
     }
 }
+# ===== Review / merge gọn cho Claude (tiết kiệm lượt gọi công cụ và token) =====
+function Invoke-ReviewPack {
+    $r = Resolve-Project $Project
+    $tf = Find-TaskFile $r $Task
+    $text = Get-Content $tf.FullName -Raw -Encoding UTF8
+    $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git -C $r.Path fetch -q origin 2>$null
+    Say "== $($tf.BaseName) · $branch ==" Cyan
+    $v = Get-ChildItem $r.Logs -Filter "$Task*-verify-*.md" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
+    if ($v) { Say "-- Cổng kiểm tra ($($v.Name)):" Cyan; Get-Content $v.FullName -Encoding UTF8 | Where-Object { $_ -match '^\s*-|^#' } | Select-Object -First 14 | ForEach-Object { Say $_ } }
+    Say "-- Thay đổi:" Cyan
+    git -C $r.Path diff --stat "origin/main...origin/$branch" 2>$null | ForEach-Object { Say $_ }
+    Say "-- Báo cáo agent (rút gọn):" Cyan
+    (Get-Section ((git -C $r.Path show "origin/${branch}:tasks/$($tf.Name)" 2>$null) -join "`n") "Báo cáo của agent") -split "`n" | Where-Object { $_.Trim() } | Select-Object -First 15 | ForEach-Object { Say $_ }
+    $shots = @(git -C $r.Path diff --name-only "origin/main...origin/$branch" 2>$null | Where-Object { $_ -match '\.png$' })
+    if ($shots) { Say ("-- Ảnh: " + ($shots -join ', ')) Cyan }
+    $ErrorActionPreference = $eap
+}
+
+function Invoke-Merge {
+    $cfg = Get-Config
+    $r = Resolve-Project $Project
+    $tf = Find-TaskFile $r $Task
+    $text = Get-Content $tf.FullName -Raw -Encoding UTF8
+    $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
+    $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git -C $r.Path fetch -q origin 2>$null
+    $review = (git -C $r.Path show "origin/${branch}:tasks/$($tf.Name)" 2>$null) -join "`n"
+    if ($review -notmatch 'Vòng\s+\d+\s*[—–-]+\s*ĐẠT') { $ErrorActionPreference = $eap; throw "Nhánh chưa có dòng '### Vòng N — ĐẠT' trong Review (Claude) ⇒ chưa merge." }
+    $round = ([regex]::Matches($review, 'Vòng\s+(\d+)') | ForEach-Object { [int]$_.Groups[1].Value } | Measure-Object -Maximum).Maximum
+    git -C $r.Path pull -q 2>$null
+    git -C $r.Path merge --no-ff -q "origin/$branch" -m "Merge $($tf.BaseName) ($(Get-StaffName $agentId), review đạt vòng $round)`n`nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" 2>&1 | Select-Object -Last 2 | ForEach-Object { Say $_ Yellow }
+    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Merge xung đột — xử lý tay." }
+    Set-BoardStatus $r $tf.BaseName "✅ Đã merge (vòng $round)"
+    git -C $r.Path push -q origin HEAD 2>$null
+    Say "Đã merge + push main." Green
+    # Kiểm tra bằng clone sạch
+    $clone = Join-Path $env:TEMP ("merge-check-" + $r.Info.name)
+    if (Test-Path $clone) { Remove-Item $clone -Recurse -Force }
+    gh repo clone $r.Info.repo $clone -- -q 2>$null
+    $testCmd = $r.Info.test; if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += " --blame-hang-timeout 3m --blame-hang-dump-type none" }
+    $res = Invoke-ShellCapture $testCmd $clone
+    $line = ($res.Output -split "`n" | Where-Object { $_ -match 'Passed!|Failed!' } | Select-Object -First 1)
+    Say ("Clone sạch: " + $(if ($line) { $line.Trim() } else { "không đọc được kết quả test" })) $(if ($line -match 'Failed!') { "Red" } else { "Green" })
+    Remove-Item $clone -Recurse -Force -ErrorAction SilentlyContinue
+    # Dọn worktree của task
+    foreach ($wt in ((git -C $r.Path worktree list --porcelain) -join "`n" | Select-String -Pattern "worktree ([^\n]+)\nHEAD [0-9a-f]+\nbranch refs/heads/$([regex]::Escape($branch))" -AllMatches).Matches) {
+        git -C $r.Path worktree remove --force $wt.Groups[1].Value 2>$null; Say "Đã dọn $($wt.Groups[1].Value)"
+    }
+    git -C $r.Path worktree prune 2>$null
+    $ErrorActionPreference = $eap
+    # Bản chạy thử cho chủ dự án
+    $own = Join-Path $r.Path "tools\ban-chay-thu.ps1"
+    if (Test-Path $own) { & powershell -NoProfile -ExecutionPolicy Bypass -File $own -NoLaunch -NoPull | Select-Object -Last 1 | ForEach-Object { Say $_ } }
+}
 # ===== Chạy thử app cho chủ dự án: bản ĐÃ MERGE (main), build ra thư mục riêng, không đụng việc agent đang làm =====
 function Invoke-Try {
     $cfg = Get-Config
@@ -1346,6 +1413,8 @@ switch ($Command) {
     "staff-report" { Invoke-StaffReport }
     "try" { Invoke-Try }
     "stop" { Invoke-Stop }
+    "review" { Invoke-ReviewPack }
+    "merge" { Invoke-Merge }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }

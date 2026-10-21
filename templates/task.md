@@ -5,10 +5,14 @@
 - **Ưu tiên:** trung bình
 - **Ngân sách:** ~400 dòng
 - **Yêu cầu:** R-xxx
+- **Thời gian tối đa:** 25 phút
 <!-- Tùy chọn: - **Model:** `gemini-3.8-flash-medium` cho việc nhỏ / dữ liệu; bỏ trống = mặc định. Xem: .\team.ps1 models -->
 
 ## Tóm tắt
 <!-- Cho CHỦ DỰ ÁN đọc trên Hub: 3–5 gạch đầu dòng, lời thường. Có thêm chức năng gì cho người dùng không (ghi rõ "Không" nếu chỉ là kỹ thuật), sửa cái gì, vì sao cần. -->
+
+## Đọc (CHỈ những file này)
+<!-- Liệt kê đúng các file agent cần mở (khung code, test nghiệm thu, file cần sửa, 1 file mẫu tương tự). Agent không lục tìm thêm. -->
 
 ## Bối cảnh
 <!-- Vì sao cần làm, hiện trạng. Trỏ tới thiết kế: "Làm theo docs/design/<file>.md mục X". Liệt kê code có sẵn để tái dùng. -->
@@ -46,6 +50,9 @@ Chưa có mẫu thật → ghi "Chưa xác minh trên máy thật, theo <nguồn
 <!-- Claude viết và commit lên main TRƯỚC khi giao: các ca biên, lỗi, bảo mật, dữ liệu cũ, định dạng thật.
 Ghi đường dẫn trong `…`, ví dụ `tests/Foo.Tests/AcceptanceT003Tests.cs`. Lúc giao các test này đang đỏ (hoặc chưa biên dịch được vì chưa có lớp). -->
 -
+
+## Bố cục giao diện (nếu có)
+<!-- Claude ghi sẵn: cây control (TableLayoutPanel/FlowLayoutPanel), cột %, MinimumSize, chỗ xuống dòng, + lỗi hiện có từ tools/UiSnapshot. Agent làm đúng, không thử mò. Agent KHÔNG chụp ảnh — Claude chụp khi review. -->
 
 ## Tiêu chí hoàn thành
 - [ ] Build `{{BUILD}}` 0 warning

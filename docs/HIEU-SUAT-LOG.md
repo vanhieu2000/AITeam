@@ -9,6 +9,8 @@ Sau mỗi yêu cầu, Claude thêm 1 mục theo mẫu dưới đây. Cột "Cả
 | R-001 Hoàn tất kiểm tra bố cục (C-011, T-005, T-007) | 21/10 | 2 giờ 30 phút (từ lúc hỏi) | ~75 / ~372 (120 treo) | 10 / 2,33 | 1 lần, 4 dòng | 4 / 3 / 5 | Test mở hộp thoại thật ⇒ treo 30 phút / lượt | Bố cục cụ thể trong task giao diện; `team.ps1 stop`; số đo theo lượt | — (yêu cầu đầu tiên) |
 
 ## Quy trình hiện hành (cập nhật dần sau mỗi yêu cầu)
+Phiên bản 3 — 21/10/2026 (chủ dự án chốt): **`QUY-TRINH.md`** — Claude chốt task đầy đủ một lần, agent CHỈ code (chỉ đọc file liệt kê, không ảnh / không chạy app, báo cáo ≤ 15 dòng, giới hạn thời gian theo task); Claude dùng `team.ps1 review` / `merge`. Mục tiêu R-002: ≤ 30 phút và ≤ 800 nghìn token / task, đạt vòng 1 ≥ 2/3.
+
 Phiên bản 2 — 21/10/2026 sau R-001: thêm (a) task giao diện phải có bố cục cụ thể + danh sách lỗi hiện có từ UiSnapshot / LayoutChecker; (b) dừng task bằng `team.ps1 stop`; (c) số đo tính theo từng lượt khi -Resume.
 
 Phiên bản 1 — 21/10/2026, trước yêu cầu đầu tiên được theo dõi:

@@ -20,7 +20,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Việc giao task chạy lâu (5–60 phút): luôn dùng `run_in_background: true`, đợi thông báo hoàn thành. Không vòng lặp sleep.
 - Đầu mỗi phiên làm việc với team: đọc `inbox.md`. Đây là các yêu cầu người dùng gửi từ AITeam Hub, dòng `- [ ]` là chưa xử lý. Nhận việc nào thì đánh `[x]` kèm mã task.
 - Cũng đầu mỗi phiên: chạy `team.ps1 doctor`. Lỗi đăng nhập thì nhờ người dùng xử lý (xem mục "Cần người dùng").
-- **Đầu mỗi phiên, việc ĐẦU TIÊN: `git pull` rồi đọc `BAN-GIAO.md`** (việc đang dở, cách quản lý đang áp dụng). Cuối phiên: cập nhật `BAN-GIAO.md`, commit + push — máy kia sẽ làm tiếp từ đó.
+- **Đầu mỗi phiên, việc ĐẦU TIÊN: `git pull` rồi đọc `QUY-TRINH.md` (1 trang, quy trình v3 đang áp dụng) và `BAN-GIAO.md`** (việc đang dở, cách quản lý đang áp dụng). Cuối phiên: cập nhật `BAN-GIAO.md`, commit + push — máy kia sẽ làm tiếp từ đó.
 - Cũng đầu mỗi phiên: `git pull` AITeam + các dự án và chạy `team.ps1 status`. Hai máy (nhà / công ty) dùng chung git: dòng **[KẸT?]** là task 🟡 quá 2 giờ chưa có nhánh hoặc không rõ máy nào chạy → kiểm tra trước khi giao lại.
 - **Hiệu suất (bắt buộc):** làm theo `docs/VAN-HANH-HIEU-SUAT.md`. Đầu phiên chạy `team.ps1 metrics` (review + phút / token / dòng code của mọi máy). Mỗi 5 task merge hoặc mỗi tuần: ghi 1 kỳ vào `docs/HIEU-SUAT-LOG.md`, báo chủ dự án 3–5 dòng. Mỗi lỗi khi review ghi nguyên nhân gốc TK / AG / CK và sửa đúng chỗ (mẫu task, AGENTS.md, cổng kiểm tra).
 
