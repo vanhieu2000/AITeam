@@ -57,7 +57,23 @@
 - [ ] Giữ BOM UTF-8
 
 ## Báo cáo của agent
-<!-- Agent điền -->
+(Agent dừng 2 lần vì hết credits Antigravity sau khi xong code 3/4 bước; theo yêu cầu chủ dự án, Claude hoàn tất phần ảnh + review.)
+- Đã làm: `ReviewParser`, `BoardViews` (HubViews.cs); trang Dự án (tab Bảng việc / Kế hoạch / Lịch sử chạy, cột Đã merge 7 mục + "Xem tất cả"); trang Task (5 tab, mở tab qua `?tab=`, cột lần chạy, ngăn kéo chi tiết qua `?drawer=`); `H007ExtraTests.cs`.
+- Ảnh: `docs/screenshots/H-007/` (Claude chụp bằng Edge headless 1280×800).
 
 ## Review (Claude)
-<!-- Claude điền -->
+### Vòng 1 — ĐẠT
+Đã kiểm tra: cổng kiểm tra build 0 warning, 148/148 test, test nghiệm thu nguyên vẹn, quét bí mật sạch (cảnh báo "ngoài phạm vi" là báo nhầm do mẫu `Project.cshtml(.cs)`); đọc diff; chạy Hub từ nhánh ở 1280×800 với dữ liệu thật: trang Dự án ChinaAndroidToolbox và Task T-006 không cuộn trang, nội dung tab tự cuộn; thử chèn mã qua `?drawer=` không chạy.
+
+**Blocker** (Claude sửa):
+1. `Task.cshtml` — giá trị `?drawer=` chèn thẳng vào script bằng `Html.Raw` ⇒ XSS phản xạ (`?drawer=1';…;//`). Sửa: chỉ nhận số lần chạy hoặc "first".
+
+**Required** (Claude sửa):
+2. `Task.cshtml` — nhãn tab hiện nguyên mã `<span class="c">4/4</span>` (chuỗi bị encode). Sửa bằng markup Razor.
+3. `Task.cshtml` — "Cổng kiểm tra: ĐẠT" thực ra suy từ lần chạy cuối thành công ⇒ báo sai. Đổi thành "Lần chạy cuối: thành công".
+4. `hub.css` — ngăn kéo có thanh cuộn ngang (lưới `.kv` / `.bd` không co). Sửa `minmax(0, 1fr)` + ngắt dòng dài.
+5. Agent để lại thay đổi chưa commit (mở tab qua `?tab=`) và script chụp ngoài phạm vi: Claude commit phần đầu, bỏ script.
+
+**Optional** (hàng chờ): vòng review có danh sách nhận xét hiển thị cả danh sách gắn nhãn lẫn Markdown gốc (trùng nội dung); review cũ dạng "**Vòng 1 — ĐẠT**" (không có ###) gộp thành một khối "Đánh giá".
+
+Claude sửa: 4 lỗi trên (1 bảo mật, 3 giao diện).

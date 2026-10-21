@@ -1,175 +1,492 @@
 @page "/p/{name}/t/{id}"
 @model AITeam.Hub.Pages.TaskModel
+@using AITeam.Hub.Models
+@using AITeam.Hub.Services
+@using AITeam.Hub.Pages.Shared
 @{
     ViewData["Title"] = $"{Model.Id} · {Model.Detail?.Card.Title}";
+    if (Model.Detail != null)
+    {
+        ViewData["Crumb"] = $"<span class=\"crumb\"><a href=\"/\" style=\"color:var(--muted)\">Tổng quan</a> / <a href=\"/p/{Html.Encode(Model.Name)}\" style=\"color:var(--muted)\">{Html.Encode(Model.Name)}</a> / </span><h1>{Html.Encode(Model.Id)}</h1>";
+    }
+
+    var reqTab = Request.Query.ContainsKey("tab") ? Request.Query["tab"].ToString().ToLowerInvariant() : "";
+    var activeTab = string.IsNullOrEmpty(reqTab) ? "criteria" : reqTab;
+    var drawerRaw = Request.Query["drawer"].ToString();
+    // Chỉ cho phép số lần chạy hoặc "first" — không chèn chuỗi người dùng vào script.
+    var reqDrawer = string.IsNullOrEmpty(drawerRaw) ? "" : (int.TryParse(drawerRaw, out var drawerNum) ? drawerNum.ToString() : "first");
+
+    var doneCriteria = Model.Detail?.Criteria.Count(c => c.Done) ?? 0;
+    var totalCriteria = Model.Detail?.Criteria.Count ?? 0;
+
+    var reviewSection = Model.Detail?.Sections.FirstOrDefault(s => s.Title.Contains("Review", StringComparison.OrdinalIgnoreCase));
+    var reviewRounds = ReviewParser.Parse(reviewSection?.Markdown);
+
+    var reportSection = Model.Detail?.Sections.FirstOrDefault(s => s.Title.Contains("Báo cáo", StringComparison.OrdinalIgnoreCase));
+
+    var descSections = Model.Detail?.Sections
+        .Where(s => !s.Title.StartsWith("Tiêu chí", StringComparison.OrdinalIgnoreCase) &&
+                    !s.Title.Contains("Review", StringComparison.OrdinalIgnoreCase) &&
+                    !s.Title.Contains("Báo cáo", StringComparison.OrdinalIgnoreCase))
+        .ToList() ?? new List<TaskSection>();
 }
 
 @if (Model.Detail == null)
 {
-    <div class="under-construction">
+    <div class="panel" style="max-width: 600px; margin: 40px auto; text-align: center; padding: 30px;">
         <h2>Không tìm thấy task "@Model.Id"</h2>
-        <p><a href="/p/@Model.Name" class="btn btn-secondary">Quay lại Dự án</a></p>
+        <p class="muted" style="margin: 14px 0 20px;">Task này không tồn tại trong dự án "@Model.Name".</p>
+        <a href="/p/@Model.Name" class="btn pri">Quay lại Dự án</a>
     </div>
 }
 else
 {
-    <div class="breadcrumb">
-        <a href="/">Tổng quan</a>
-        <span>›</span>
-        <a href="/p/@Model.Name">@Model.Name</a>
-        <span>›</span>
-        <span>@Model.Id</span>
-    </div>
+    @section Actions {
+        @if (!string.IsNullOrEmpty(Model.BranchGitHubUrl))
+        {
+            <a class="btn sm" href="@Model.BranchGitHubUrl" target="_blank" rel="noopener noreferrer">Nhánh trên GitHub</a>
+        }
+        <button class="btn sm" type="button">Giao lại…</button>
+        @if (Model.IsAgentRunning)
+        {
+            <button class="btn sm danger" type="button">Dừng agent</button>
+        }
+    }
 
-    <div class="page-header">
-        <div>
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <h1 class="page-title">@Model.Id · @Model.Detail.Card.Title</h1>
-                
-                @if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.Assigned)
-                {
-                    <span class="badge badge-assigned">🟡 Đã giao</span>
-                }
-                else if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.Review)
-                {
-                    <span class="badge badge-review">🔵 Chờ review</span>
-                }
-                else if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.NeedsFix)
-                {
-                    <span class="badge badge-needsfix">🔴 Cần sửa</span>
-                }
-                else if (Model.Detail.Card.State == AITeam.Hub.Models.TaskState.Merged)
-                {
-                    <span class="badge badge-merged">✅ Đã merge</span>
-                }
+    <div class="task-page" style="display:flex; flex-direction:column; height:calc(100vh - 52px - 32px); overflow:hidden;">
+        <!-- Tiêu đề task + Pill trạng thái + Agent tag -->
+        <div class="task-hd" style="flex:none;">
+            <h2>@Model.Detail.Card.Title</h2>
 
-                <span class="badge badge-agent">Agent @Model.Detail.Card.Agent</span>
-            </div>
-
-            <div class="page-subtitle" style="margin-top: 6px; display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: 13px;">
-                <span>Nhánh: <strong>@Model.Detail.Card.Branch</strong></span>
-                @if (!string.IsNullOrEmpty(Model.BranchGitHubUrl))
+            @if (Model.Detail.Card.State == TaskState.Assigned)
+            {
+                if (Model.IsAgentRunning)
                 {
-                    <span>· <a href="@Model.BranchGitHubUrl" target="_blank" rel="noopener noreferrer">Xem trên GitHub ↗</a></span>
+                    var latest = Model.Detail.Runs.FirstOrDefault();
+                    var dur = latest?.DurationSeconds.HasValue == true ? $" · {latest.DurationSeconds.Value:F0}s" : "";
+                    <span class="pill run">● Đang chạy@(dur)</span>
                 }
-            </div>
+                else
+                {
+                    <span class="pill run">● Đang làm</span>
+                }
+            }
+            else if (Model.Detail.Card.State == TaskState.Review)
+            {
+                <span class="pill rev">● Chờ review</span>
+            }
+            else if (Model.Detail.Card.State == TaskState.NeedsFix)
+            {
+                <span class="pill fix">● Cần sửa</span>
+            }
+            else if (Model.Detail.Card.State == TaskState.Merged)
+            {
+                <span class="pill ok">● Đã merge</span>
+            }
+
+            <span class="tag">Agent @(string.IsNullOrEmpty(Model.Detail.Card.Agent) ? "A" : Model.Detail.Card.Agent)</span>
         </div>
 
-        <div>
-            <a href="/p/@Model.Name" class="btn btn-secondary">← Bảng việc @Model.Name</a>
+        <!-- Dòng meta: nhánh, thiết kế, ưu tiên, cổng kiểm tra -->
+        <div class="meta" style="flex:none;">
+            <span>Nhánh <span class="mono">@Model.Detail.Card.Branch</span></span>
+            @if (!string.IsNullOrEmpty(Model.Design))
+            {
+                <span>Thiết kế @MarkdownRenderer.RenderInlineSafe(Model.Design)</span>
+            }
+            <span>Ưu tiên @Model.Priority</span>
+            @if (Model.LastVerificationPassed == true)
+            {
+                <span>Lần chạy cuối: <b style="color:var(--ok)">thành công</b></span>
+            }
         </div>
-    </div>
 
-    <!-- Tiêu chí hoàn thành (Checklist chỉ xem) -->
-    @if (Model.Detail.Criteria.Count > 0)
-    {
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">🎯 Tiêu chí hoàn thành (Chỉ xem)</div>
-            </div>
-            <div class="card-body">
-                <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 8px;">
-                    @foreach (var criterion in Model.Detail.Criteria)
+        <!-- Tabs: Tiêu chí · Mô tả · Báo cáo agent · Review · Lần chạy -->
+        <div class="tabs" style="flex:none; margin-bottom:12px;">
+            <span class="tab @(activeTab == "criteria" ? "on" : "")" id="tabCriteriaBtn" onclick="switchTaskTab('criteria')">
+                Tiêu chí @if (totalCriteria > 0) {<span class="c">@doneCriteria/@totalCriteria</span>}
+            </span>
+            <span class="tab @(activeTab == "desc" ? "on" : "")" id="tabDescBtn" onclick="switchTaskTab('desc')">Mô tả</span>
+            <span class="tab @(activeTab == "report" ? "on" : "")" id="tabReportBtn" onclick="switchTaskTab('report')">Báo cáo agent</span>
+            <span class="tab @(activeTab == "review" ? "on" : "")" id="tabReviewBtn" onclick="switchTaskTab('review')">
+                Review @if (reviewRounds.Count > 0) {<span class="c">@reviewRounds.Count</span>}
+            </span>
+            <span class="tab @(activeTab == "runs" ? "on" : "")" id="tabRunsBtn" onclick="switchTaskTab('runs')">
+                Lần chạy @if (Model.Detail.Runs.Count > 0) {<span class="c">@Model.Detail.Runs.Count</span>}
+            </span>
+        </div>
+
+        <!-- Layout Split 2 cột: Trái = Tab panel tự cuộn, Phải = Panel Lần chạy (300px) -->
+        <div class="split" style="flex:1; min-height:0; display:grid; grid-template-columns:1fr 300px; gap:14px; align-items:stretch;">
+            <!-- Cột trái: Tab panel tự cuộn -->
+            <div class="panel" style="height:100%; min-height:0; display:flex; flex-direction:column; overflow:hidden;">
+                <!-- Tab 1: Tiêu chí -->
+                <div id="tabCriteriaContent" style="display:@(activeTab == "criteria" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                    @if (Model.Detail.Criteria.Count == 0)
                     {
-                        <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px;">
-                            <input type="checkbox" @(criterion.Done ? "checked" : "") disabled style="margin-top: 3px;" />
-                            <span style="@(criterion.Done ? "text-decoration: none;" : "")">@MarkdownRenderer.RenderInlineSafe(criterion.Text)</span>
-                        </li>
+                        <div class="empty">Không có tiêu chí hoàn thành</div>
                     }
-                </ul>
-            </div>
-        </div>
-    }
-
-    <!-- Các mục nội dung chi tiết dạng Markdown (Bối cảnh, Mục tiêu, Phạm vi, Báo cáo, Review...) -->
-    @foreach (var sec in Model.Detail.Sections)
-    {
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📌 @sec.Title</div>
-            </div>
-            <div class="card-body">
-                <div class="markdown-body">
-                    @MarkdownRenderer.Render(sec.Markdown)
+                    else
+                    {
+                        @foreach (var c in Model.Detail.Criteria)
+                        {
+                            <div class="check">
+                                <span class="box @(c.Done ? "on" : "")">@(c.Done ? "✓" : "")</span>
+                                <div>@MarkdownRenderer.RenderInlineSafe(c.Text)</div>
+                            </div>
+                        }
+                    }
                 </div>
-            </div>
-        </div>
-    }
 
-    <!-- Lịch sử các lần chạy của Agent -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">⏱️ Lịch sử lần chạy (@Model.Detail.Runs.Count)</div>
-        </div>
-        <div class="card-body" style="padding: 0;">
-            @if (Model.Detail.Runs.Count == 0)
-            {
-                <div style="padding: 16px; color: var(--text-muted); text-align: center;">Chưa có lần chạy nào.</div>
-            }
-            else
-            {
-                <div class="table-container" style="border: none; margin: 0;">
-                    <table class="hub-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 70px;">Lần</th>
-                                <th style="width: 120px;">Trạng thái</th>
-                                <th>Thời điểm</th>
-                                <th>Thời lượng</th>
-                                <th>Token</th>
-                                <th>Chi tiết</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var run in Model.Detail.Runs)
+                <!-- Tab 2: Mô tả -->
+                <div id="tabDescContent" style="display:@(activeTab == "desc" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                    @if (descSections.Count == 0)
+                    {
+                        <div class="empty">Không có mô tả chi tiết</div>
+                    }
+                    else
+                    {
+                        @foreach (var sec in descSections)
+                        {
+                            <div style="margin-bottom: 16px;">
+                                <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 8px; color: var(--accent);">@sec.Title</h3>
+                                <div class="markdown-body">
+                                    @MarkdownRenderer.Render(sec.Markdown)
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <!-- Tab 3: Báo cáo agent -->
+                <div id="tabReportContent" style="display:@(activeTab == "report" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                    @if (reportSection == null || string.IsNullOrWhiteSpace(reportSection.Markdown) || reportSection.Markdown.Trim() == "<!-- Agent điền -->")
+                    {
+                        <div class="empty">Chưa có báo cáo từ agent</div>
+                    }
+                    else
+                    {
+                        <div class="markdown-body">
+                            @MarkdownRenderer.Render(reportSection.Markdown)
+                        </div>
+                    }
+                </div>
+
+                <!-- Tab 4: Review -->
+                <div id="tabReviewContent" style="display:@(activeTab == "review" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                    @if (reviewRounds.Count == 0)
+                    {
+                        <div class="empty">Chưa có đánh giá review nào</div>
+                    }
+                    else
+                    {
+                        @for (int i = 0; i < reviewRounds.Count; i++)
+                        {
+                            var r = reviewRounds[i];
+                            var isOpen = (i == reviewRounds.Count - 1); // Mặc định mở vòng mới nhất
+                            var pillClass = r.Verdict switch
                             {
-                                <tr>
-                                    <td><strong>#@run.Attempt</strong></td>
-                                    <td>
-                                        @if (run.State == AITeam.Hub.Models.RunState.Running)
-                                        {
-                                            <span class="badge badge-assigned">⏳ Đang chạy</span>
-                                        }
-                                        else if (run.State == AITeam.Hub.Models.RunState.Success)
-                                        {
-                                            <span class="badge badge-merged">✓ Thành công</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge badge-needsfix">✗ Lỗi</span>
-                                        }
-                                    </td>
-                                    <td>@run.Time.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                    <td>@(run.DurationSeconds.HasValue ? $"{run.DurationSeconds.Value:F1}s" : "-")</td>
-                                    <td>@(run.TotalTokens.HasValue ? $"{run.TotalTokens.Value:N0}" : "-")</td>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(run.Error))
-                                        {
-                                            <div style="color: var(--state-needsfix); font-size: 13px; margin-bottom: 4px;">
-                                                <strong>Lỗi:</strong> @run.Error
-                                            </div>
-                                        }
+                                ReviewVerdict.Pass => "pill ok",
+                                ReviewVerdict.NeedsFix => "pill fix",
+                                _ => "pill n"
+                            };
+                            var pillText = r.Verdict switch
+                            {
+                                ReviewVerdict.Pass => "Đạt",
+                                ReviewVerdict.NeedsFix => (r.Title.Contains("CẦN LÀM NỐT", StringComparison.OrdinalIgnoreCase) ? "Cần làm nốt" : "Cần sửa"),
+                                _ => "Đánh giá"
+                            };
 
-                                        @if (!string.IsNullOrEmpty(run.Response))
-                                        {
-                                            <details class="details-box">
-                                                <summary>Xem kết quả</summary>
-                                                <div class="markdown-body" style="margin-top: 10px; padding: 10px; background-color: var(--surface); border-radius: var(--radius);">
-                                                    @MarkdownRenderer.Render(run.Response)
+                            <div class="round @(isOpen ? "open" : "")">
+                                <div class="h" onclick="this.parentElement.classList.toggle('open')">
+                                    <span class="@pillClass">@pillText</span>
+                                    <b>@r.Title</b>
+                                    <span class="sp"></span>
+                                    <span class="faint" style="font-size:12px;">@(isOpen ? "Thu gọn ▲" : "Mở rộng ▼")</span>
+                                </div>
+                                <div class="b">
+                                    @if (r.Items.Count > 0)
+                                    {
+                                        <div style="margin-bottom: 10px;">
+                                            @foreach (var item in r.Items)
+                                            {
+                                                var sevClass = item.Severity switch
+                                                {
+                                                    ReviewSeverity.Blocker => "sev blk",
+                                                    ReviewSeverity.Required => "sev req",
+                                                    ReviewSeverity.Optional => "sev opt",
+                                                    _ => ""
+                                                };
+                                                var sevText = item.Severity switch
+                                                {
+                                                    ReviewSeverity.Blocker => "BLOCKER",
+                                                    ReviewSeverity.Required => "REQUIRED",
+                                                    ReviewSeverity.Optional => "OPTIONAL",
+                                                    _ => ""
+                                                };
+
+                                                <div class="item">
+                                                    @if (!string.IsNullOrEmpty(sevText))
+                                                    {
+                                                        <span class="@sevClass">@sevText</span>
+                                                    }
+                                                    <span>@MarkdownRenderer.RenderInlineSafe(item.Text)</span>
                                                 </div>
-                                            </details>
-                                        }
-                                        else if (string.IsNullOrEmpty(run.Error))
-                                        {
-                                            <span style="color: var(--text-muted); font-size: 12px;">Không có kết quả văn bản</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                                            }
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(r.Markdown))
+                                    {
+                                        <div class="markdown-body" style="font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:8px; margin-top:8px;">
+                                            @MarkdownRenderer.Render(r.Markdown)
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
                 </div>
-            }
+
+                <!-- Tab 5: Lần chạy chi tiết -->
+                <div id="tabRunsContent" style="display:@(activeTab == "runs" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto;">
+                    @if (Model.Detail.Runs.Count == 0)
+                    {
+                        <div class="empty">Chưa có lần chạy nào</div>
+                    }
+                    else
+                    {
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Lần</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thời điểm</th>
+                                    <th class="num">Thời lượng</th>
+                                    <th class="num">Token</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var run in Model.Detail.Runs)
+                                {
+                                    var verdict = RunVerdicts.Classify(run);
+                                    var pillClass = verdict switch
+                                    {
+                                        RunVerdict.Running => "pill run",
+                                        RunVerdict.Success => "pill ok",
+                                        RunVerdict.CreditsExhausted => "pill err",
+                                        _ => "pill fix"
+                                    };
+                                    var verdictLabel = RunVerdicts.Label(verdict);
+                                    var duration = run.DurationSeconds.HasValue ? $"{run.DurationSeconds.Value:F1}s" : "-";
+                                    var tokens = run.TotalTokens.HasValue ? run.TotalTokens.Value.ToString("N0") : "-";
+
+                                    <tr style="cursor:pointer" onclick="openDrawer(@run.Attempt)">
+                                        <td><b>#@run.Attempt</b></td>
+                                        <td><span class="@pillClass">@verdictLabel</span></td>
+                                        <td>@run.Time.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                        <td class="num">@duration</td>
+                                        <td class="num">@tokens</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+
+            <!-- Cột phải: Bảng lần chạy (pill theo RunVerdicts; bấm dòng => ngăn kéo phải) -->
+            <div class="panel" style="height:100%; min-height:0; display:flex; flex-direction:column;">
+                <div class="hd">Lần chạy<span class="sp"></span><span class="muted">@Model.Detail.Runs.Count</span></div>
+                <div style="flex:1; min-height:0; overflow-y:auto;">
+                    @if (Model.Detail.Runs.Count == 0)
+                    {
+                        <div class="empty">Chưa có lần chạy nào</div>
+                    }
+                    else
+                    {
+                        <table>
+                            <tbody>
+                                @foreach (var run in Model.Detail.Runs)
+                                {
+                                    var verdict = RunVerdicts.Classify(run);
+                                    var pillClass = verdict switch
+                                    {
+                                        RunVerdict.Running => "pill run",
+                                        RunVerdict.Success => "pill ok",
+                                        RunVerdict.CreditsExhausted => "pill err",
+                                        _ => "pill fix"
+                                    };
+                                    var verdictLabel = RunVerdicts.Label(verdict);
+                                    var duration = run.DurationSeconds.HasValue
+                                        ? (run.DurationSeconds.Value >= 60 ? $"{(int)(run.DurationSeconds.Value / 60)}′" : $"{run.DurationSeconds.Value:F0}s")
+                                        : "-";
+
+                                    <tr style="cursor:pointer" onclick="openDrawer(@run.Attempt)" title="Bấm để xem chi tiết lần chạy #@run.Attempt">
+                                        <td><b>#@run.Attempt</b></td>
+                                        <td><span class="@pillClass">@verdictLabel</span></td>
+                                        <td class="num muted">@duration</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Ngăn kéo phải (Drawer chi tiết lần chạy) -->
+    <aside class="drawer" id="drawer">
+        <div class="hd">
+            <span id="drawerTitle">@Model.Id · lượt 1</span>
+            <span id="drawerPill" class="pill n">Chi tiết</span>
+            <span style="flex:1"></span>
+            <button class="btn sm ghost" type="button" onclick="closeDrawer()">Đóng</button>
+        </div>
+        <div class="bd grid" style="gap:12px;">
+            <dl class="kv">
+                <dt>Bắt đầu</dt><dd id="drawerTime">—</dd>
+                <dt>Thời lượng</dt><dd id="drawerDuration">—</dd>
+                <dt>Token</dt><dd id="drawerTokens">—</dd>
+                <dt>Nhánh</dt><dd class="mono" id="drawerBranch">@Model.Detail.Card.Branch</dd>
+                <dt>Trạng thái</dt><dd id="drawerStatus">—</dd>
+            </dl>
+            <div id="drawerErrorBox" style="display:none;">
+                <b style="color:var(--err)">Lỗi</b>
+                <pre id="drawerError" style="color:var(--err);"></pre>
+            </div>
+            <div id="drawerResponseBox">
+                <b>Phản hồi cuối của agent</b>
+                <div id="drawerResponse" class="markdown-body" style="background:var(--surface-2); padding:10px; border-radius:var(--r); font-size:13px; max-height:300px; overflow-y:auto;">
+                    <span class="muted">Không có phản hồi</span>
+                </div>
+            </div>
+            <div class="row">
+                <button class="btn sm" type="button">Giao lại (-Resume)</button>
+                <span id="drawerLogLink"></span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Dữ liệu các lần chạy chuyển thành JSON script an toàn -->
+    <script id="taskRunsJson" type="application/json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Detail.Runs.Select(r => new {
+            attempt = r.Attempt,
+            verdict = RunVerdicts.Label(RunVerdicts.Classify(r)),
+            verdictClass = RunVerdicts.Classify(r) switch {
+                RunVerdict.Running => "pill run",
+                RunVerdict.Success => "pill ok",
+                RunVerdict.CreditsExhausted => "pill err",
+                _ => "pill fix"
+            },
+            time = r.Time.ToString("yyyy-MM-dd HH:mm:ss"),
+            duration = r.DurationSeconds.HasValue ? $"{r.DurationSeconds.Value:F1}s" : "-",
+            tokens = r.TotalTokens.HasValue ? r.TotalTokens.Value.ToString("N0") : "-",
+            status = r.Status ?? "-",
+            error = r.Error ?? "",
+            responseHtml = MarkdownRenderer.Render(r.Response).Value ?? "",
+            logPath = r.LogPath
+        })))
+    </script>
+
+    <script>
+        function switchTaskTab(tab) {
+            document.querySelectorAll('.task-page .tabs .tab').forEach(function(t) {
+                t.classList.remove('on');
+            });
+
+            var cCrit = document.getElementById('tabCriteriaContent');
+            var cDesc = document.getElementById('tabDescContent');
+            var cRep = document.getElementById('tabReportContent');
+            var cRev = document.getElementById('tabReviewContent');
+            var cRuns = document.getElementById('tabRunsContent');
+
+            cCrit.style.display = 'none';
+            cDesc.style.display = 'none';
+            cRep.style.display = 'none';
+            cRev.style.display = 'none';
+            cRuns.style.display = 'none';
+
+            if (tab === 'desc') {
+                cDesc.style.display = 'block';
+                document.getElementById('tabDescBtn').classList.add('on');
+            } else if (tab === 'report') {
+                cRep.style.display = 'block';
+                document.getElementById('tabReportBtn').classList.add('on');
+            } else if (tab === 'review') {
+                cRev.style.display = 'block';
+                document.getElementById('tabReviewBtn').classList.add('on');
+            } else if (tab === 'runs') {
+                cRuns.style.display = 'block';
+                document.getElementById('tabRunsBtn').classList.add('on');
+            } else {
+                cCrit.style.display = 'block';
+                document.getElementById('tabCriteriaBtn').classList.add('on');
+            }
+        }
+
+        var runsData = [];
+        try {
+            runsData = JSON.parse(document.getElementById('taskRunsJson').textContent || '[]');
+        } catch (e) {
+            console.error('Lỗi phân tích JSON lần chạy:', e);
+        }
+
+        function openDrawer(attempt) {
+            var run = runsData.find(function(r) { return r.attempt === attempt; });
+            if (!run) return;
+
+            document.getElementById('drawerTitle').textContent = '@Model.Id · lượt ' + run.attempt;
+            var pill = document.getElementById('drawerPill');
+            pill.className = run.verdictClass;
+            pill.textContent = run.verdict;
+
+            document.getElementById('drawerTime').textContent = run.time;
+            document.getElementById('drawerDuration').textContent = run.duration;
+            document.getElementById('drawerTokens').textContent = run.tokens;
+            document.getElementById('drawerStatus').textContent = run.status;
+
+            var errorBox = document.getElementById('drawerErrorBox');
+            var errorElem = document.getElementById('drawerError');
+            if (run.error && run.error.trim().length > 0) {
+                errorElem.textContent = run.error;
+                errorBox.style.display = 'block';
+            } else {
+                errorBox.style.display = 'none';
+            }
+
+            var respElem = document.getElementById('drawerResponse');
+            if (run.responseHtml && run.responseHtml.trim().length > 0) {
+                respElem.innerHTML = run.responseHtml;
+            } else {
+                respElem.innerHTML = '<span class="muted">Không có phản hồi</span>';
+            }
+
+            document.getElementById('drawer').classList.add('on');
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer').classList.remove('on');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDrawer();
+            }
+        });
+
+        // Tự động mở drawer nếu có query drawer
+        (function() {
+            var reqDrawer = '@Html.Raw(reqDrawer)';
+            if (reqDrawer && reqDrawer.length > 0) {
+                var dAttempt = parseInt(reqDrawer);
+                if (!isNaN(dAttempt)) {
+                    openDrawer(dAttempt);
+                } else if (runsData.length > 0) {
+                    openDrawer(runsData[0].attempt);
+                }
+            }
+        })();
+    </script>
 }

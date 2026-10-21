@@ -1,39 +1,45 @@
 @model AITeam.Hub.Models.TaskCard
+@using AITeam.Hub.Services
 
-<div class="task-card">
-    <div class="task-card-header">
-        <a href="/p/@Model.Project/t/@Model.Id" class="task-id">@Model.Id</a>
-        <span class="badge badge-agent">Agent @Model.Agent</span>
+<div class="card" onclick="location.href='/p/@Model.Project/t/@Model.Id'">
+    <div class="t1">
+        <a href="/p/@Model.Project/t/@Model.Id">@Model.Id</a>
+        <span class="sp"></span>
+        <span class="tag">@(string.IsNullOrEmpty(Model.Agent) ? "A" : Model.Agent)</span>
     </div>
 
-    <a href="/p/@Model.Project/t/@Model.Id" class="task-title">@Model.Title</a>
+    <div class="tt">@Model.Title</div>
 
-    <div style="font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono);">
-        🌿 @Model.Branch
-    </div>
-
-    <div class="task-meta">
-        <span>🔄 @Model.Runs lần</span>
+    <div class="t3">
         @if (Model.LastRun != null)
         {
-            <span>
-                @if (Model.LastRun.State == AITeam.Hub.Models.RunState.Running)
-                {
-                    <span style="color: var(--primary);">⏳ Đang chạy</span>
-                }
-                else if (Model.LastRun.State == AITeam.Hub.Models.RunState.Success)
-                {
-                    <span style="color: var(--state-merged);">
-                        ✓ @(Model.LastRun.DurationSeconds.HasValue ? $"{Model.LastRun.DurationSeconds.Value:F1}s" : "")
-                    </span>
-                }
-                else
-                {
-                    <span style="color: var(--state-needsfix);">
-                        ✗ Lỗi
-                    </span>
-                }
-            </span>
+            var verdict = RunVerdicts.Classify(Model.LastRun);
+            if (verdict == RunVerdict.Running)
+            {
+                var dur = Model.LastRun.DurationSeconds.HasValue ? $" {Model.LastRun.DurationSeconds.Value:F0}s" : "";
+                <span class="pill run">● Đang chạy@(dur)</span>
+            }
+            else if (verdict == RunVerdict.Success)
+            {
+                <span class="pill ok">✓ Thành công</span>
+            }
+            else if (verdict == RunVerdict.CreditsExhausted)
+            {
+                <span class="pill err">Hết credits</span>
+            }
+            else
+            {
+                <span class="pill fix">Lỗi</span>
+            }
+
+            if (Model.Runs > 0)
+            {
+                <span>lượt @Model.Runs</span>
+            }
+        }
+        else
+        {
+            <span class="pill n">Chờ giao</span>
         }
     </div>
 </div>

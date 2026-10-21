@@ -577,7 +577,7 @@ textarea.inp, textarea.form-control {
 
 .kv {
   display: grid;
-  grid-template-columns: max-content 1fr;
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 6px 14px;
   font-size: 13px;
 }
@@ -588,6 +588,7 @@ textarea.inp, textarea.form-control {
 
 .kv dd {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 /* ===== Tổng quan ===== */
@@ -877,7 +878,10 @@ textarea.inp, textarea.form-control {
 
 .drawer .bd {
   padding: 14px 16px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  grid-template-columns: minmax(0, 1fr);
   flex: 1;
 }
 
@@ -888,6 +892,10 @@ textarea.inp, textarea.form-control {
   background: var(--surface-2);
   padding: 10px;
   border-radius: var(--r);
+}
+
+.drawer code {
+  white-space: pre-wrap;
 }
 
 /* ===== Cài đặt & Form ===== */
