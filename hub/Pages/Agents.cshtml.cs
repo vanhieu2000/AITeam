@@ -20,6 +20,7 @@ public class AgentsModel : PageModel
     {
     }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public AgentsModel(IAgentRunService runService, ITeamConfigService? configService, IAntiforgery? antiforgery = null)
     {
         _runService = runService;

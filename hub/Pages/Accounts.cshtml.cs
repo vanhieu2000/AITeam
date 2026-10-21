@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AITeam.Hub.Pages;
 
@@ -11,11 +12,14 @@ public sealed class AccountsModel : PageModel
 {
     private readonly IHealthService _healthService;
     private readonly ITeamConfigService _configService;
+    private readonly IAgentRunService? _runService;
 
-    public AccountsModel(IHealthService healthService, ITeamConfigService configService)
+    [ActivatorUtilitiesConstructor]
+    public AccountsModel(IHealthService healthService, ITeamConfigService configService, IAgentRunService? runService = null)
     {
         _healthService = healthService;
         _configService = configService;
+        _runService = runService;
     }
 
     public HealthItem? GitHubHealth { get; private set; }
@@ -24,6 +28,7 @@ public sealed class AccountsModel : PageModel
 
     public string GitHubOwner { get; private set; } = "";
     public IReadOnlyList<string> AgyAccounts { get; private set; } = Array.Empty<string>();
+    public AntigravityStatus AgyStatus { get; private set; } = new(false, null, null, null);
 
     [TempData]
     public string? Message { get; set; }
@@ -117,5 +122,15 @@ public sealed class AccountsModel : PageModel
         var settings = _configService.GetSettings();
         GitHubOwner = settings.GitHubOwner;
         AgyAccounts = settings.AgyAccounts;
+
+        if (_runService != null)
+        {
+            var runs = _runService.GetRecentRuns(50);
+            AgyStatus = AntigravityStatuses.From(runs);
+        }
+        else
+        {
+            AgyStatus = new AntigravityStatus(false, null, null, null);
+        }
     }
 }
