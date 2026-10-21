@@ -36,6 +36,23 @@ Chủ dự án: HieuDV.
 - Không tự đổi phạm vi task. Thấy việc nên làm thêm thì ghi vào báo cáo.
 - Đang chạy tự động thì không có ai trả lời câu hỏi. Tự quyết hợp lý theo tài liệu và ghi lại lý do trong báo cáo.
 
+## Test nghiệm thu, báo cáo, cổng kiểm tra
+- Mục **"Test nghiệm thu"** trong task là các file test Claude viết TRƯỚC khi giao. KHÔNG sửa, KHÔNG xóa, KHÔNG `Skip`; chỉ sửa code cho chúng pass. Thấy test sai thì ghi vào báo cáo kèm lý do, vẫn không sửa.
+- Đọc cả thiết kế được trỏ tới trong task và dữ liệu mẫu thật trong `tests/fixtures/` (nếu task nêu).
+- **Báo cáo của agent** phải có bảng **từng tiêu chí hoàn thành → bằng chứng** (lệnh đã chạy + kết quả thật: số test pass, số warning, đường dẫn ảnh chụp), file đã đổi và lý do, quyết định tự đưa ra khi không có ai hỏi, điều chưa xác minh.
+- Sau khi push, **cổng kiểm tra tự động** (`team.ps1 verify`) chạy ngay: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên, có báo cáo. Không đạt sẽ bị giao lại kèm danh sách lỗi.
+
+## Lỗi hay gặp (đã xảy ra nhiều lần — bắt buộc tránh)
+- **Giữ nguyên BOM UTF-8** của file đang có BOM khi sửa; script `.ps1` luôn lưu UTF-8 có BOM.
+- **Không viết test luôn pass**: không `if (...) return;` sớm, không `Assert.True(true)`, không bắt exception rồi bỏ qua. Bỏ phần code mới đi thì test phải đỏ.
+- Kiểm tra chuỗi lệnh đã gửi (tới thiết bị / tiến trình) bằng `Contains` phần cốt lõi, không `StartsWith`: lệnh thật thường có tiền tố.
+- Không `catch { }` nuốt lỗi khi đọc dữ liệu sau đó sẽ ghi lại: dữ liệu hỏng thì báo lỗi, không coi là rỗng rồi ghi đè.
+- **Dữ liệu từ bên ngoài là không tin cậy** (file người dùng mở, mục trong zip, manifest, form web, cấu hình, output thiết bị): chuẩn hóa đường dẫn và chặn `..` / đường dẫn tuyệt đối TRƯỚC khi ghi file; không ghép thẳng vào dòng lệnh; giới hạn kích thước khi tải.
+- Định dạng dữ liệu (output lệnh, file) làm theo **mẫu thật** trong `tests/fixtures/` hoặc tài liệu được trỏ tới, không tự đoán. Không có mẫu thật thì ghi rõ trong báo cáo.
+- Làm đủ **mọi luồng** thiết kế liệt kê (ví dụ bản cài / portable, lần đầu / dữ liệu cũ, null / rỗng / trùng).
+- **Commit và push trước khi dừng.** Dừng giữa chừng mà chưa commit là mất việc.
+- Không để code tạm (cờ chụp ảnh, debug, đường dẫn máy mình) trong sản phẩm.
+
 ## Tuyệt đối không
 - Không đưa lên git: mật khẩu, khóa API, token, khóa ký, file `.pem` / `.pfx` / `.lic`, file `.env` thật, dữ liệu cá nhân.
 - Không làm thay đổi máy thật khi test:

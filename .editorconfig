@@ -1,0 +1,5 @@
+root = true
+
+# AITeam: script PowerShell 5.1 phải lưu UTF-8 có BOM (tiếng Việt); các file khác giữ nguyên mã hóa đang có.
+[*.ps1]
+charset = utf-8-bom

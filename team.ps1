@@ -213,6 +213,7 @@ function Invoke-AddProject {
     if (Copy-Template "AGENTS.md" (Join-Path $target "AGENTS.md") $vars) { Say "  + AGENTS.md" }
     if (Copy-Template "board.md" (Join-Path $target "tasks\README.md") $vars) { Say "  + tasks\README.md" }
     if (Copy-Template "gitignore.txt" (Join-Path $target ".gitignore") $vars) { Say "  + .gitignore" }
+    if (Copy-Template "editorconfig.txt" (Join-Path $target ".editorconfig") $vars) { Say "  + .editorconfig" }
 
     # Kho GitHub private
     $remote = git -C $target remote get-url origin 2>$null
@@ -254,6 +255,8 @@ function Invoke-NewTask {
     $branch = "agent-$($Agent.ToLower())/$Task-$slug"
     $vars = @{ TASK = $Task; TITLE = $Title; AGENT = $Agent; BRANCH = $branch; BUILD = $r.Info.build; TEST = $r.Info.test }
     if (Copy-Template "task.md" $file $vars) { Say "Đã tạo $file (nhánh $branch)" Green } else { Say "Đã có $file" Yellow }
+    Say "Điền đủ các mục Ràng buộc / Dữ liệu mẫu thật / Giao diện / Test nghiệm thu trước khi giao."
+    Say "Test nghiệm thu tham chiếu lớp chưa có → commit chúng làm commit đầu tiên trên nhánh $branch (không lên main) rồi mới assign."
 }
 
 # ───────────────────────── Giao việc ─────────────────────────
@@ -758,7 +761,12 @@ function Invoke-Verify {
     $accept = Get-BacktickPaths (Get-Section $ctx.Text "Test nghiệm thu")
     foreach ($a in $accept) {
         if (-not (Test-Path (Join-Path $work $a))) { [void]$fails.Add("Thiếu file test nghiệm thu: $a"); continue }
-        git -C $work diff --quiet $base HEAD -- $a 2>$null
+        # Test nghiệm thu nằm sẵn trên main, hoặc là commit đầu tiên Claude đẩy lên nhánh task (vì tham chiếu lớp chưa có).
+        $ref = $base
+        git -C $work cat-file -e "${base}:$a" 2>$null
+        if ($LASTEXITCODE -ne 0) { $ref = git -C $work log --reverse --diff-filter=A --format=%H "$base..HEAD" -- $a 2>$null | Select-Object -First 1 }
+        if (-not $ref) { [void]$fails.Add("Không tìm thấy commit thêm test nghiệm thu: $a"); continue }
+        git -C $work diff --quiet $ref HEAD -- $a 2>$null
         if ($LASTEXITCODE -ne 0) { [void]$fails.Add("Agent đã SỬA test nghiệm thu (không được phép): $a") }
     }
     if ($accept.Count -gt 0 -and -not ($fails | Where-Object { $_ -match 'test nghiệm thu' })) { [void]$notes.Add("Test nghiệm thu còn nguyên: $($accept.Count) file") }

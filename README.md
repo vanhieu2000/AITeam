@@ -61,7 +61,9 @@ Claude chỉ hỏi bạn khi:
 |---|---|
 | Mở bảng điều khiển Hub | `.\team.ps1 hub` |
 | Kiểm tra mọi thứ sẵn sàng | `.\team.ps1 doctor` |
-| Xem tiến độ, agent đang chạy | `.\team.ps1 status` |
+| Xem tiến độ, agent đang chạy, task bị kẹt (cả máy kia) | `.\team.ps1 status` |
+| Cổng kiểm tra một task (tự chạy sau mỗi lần giao) | `.\team.ps1 verify -Project X -Task T-xxx` |
+| Số liệu hiệu quả: số vòng, đạt vòng 1, Claude tự sửa | `.\team.ps1 metrics` |
 | Đổi tài khoản Antigravity (hết hạn mức) | `.\team.ps1 switch-account` |
 | Thêm dự án | `.\team.ps1 add-project -Project Ten -New` (mới) / `-Repo owner/ten` (trên GitHub) / `-Path D:\Ten` (trên máy) |
 
