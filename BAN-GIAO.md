@@ -3,7 +3,7 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-Cập nhật lần cuối: **21/10/2026 ~22:20 · máy nhà DESKTOP-PP14EFS** · **quy trình v3: đọc `QUY-TRINH.md`**
+Cập nhật lần cuối: **22/10/2026 · máy công ty HieuDV** (trước đó 21/10 ~22:20 máy nhà DESKTOP-PP14EFS) · **quy trình v3: đọc `QUY-TRINH.md`**
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
 Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUAT-LOG.md`.
@@ -29,11 +29,16 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
 - **AITeam Hub (web):** bấm đúp `D:\AITeam\CHAY-HUB.cmd`.
 - Đây luôn là bản ĐÃ MERGE; agent đang làm ở thư mục riêng nên test lúc nào cũng được. Claude làm mới `ban-chay-thu\` sau mỗi lần merge.
 - Máy khác (công ty) lần đầu: bấm `CHAY-THU.cmd` để tạo thư mục `ban-chay-thu\` (thư mục này không lên git).
+- Máy công ty: các dự án nằm ở `D:\HIEUDV\<dự án>` (ví dụ `D:\HIEUDV\HDVTool\CHAY-THU.cmd`, `D:\HIEUDV\AITeam\CHAY-HUB.cmd`), thư mục agent `D:\HIEUDV\AITeam-work`.
 
 ## 2. Việc đang dở
 | Việc | Trạng thái | Làm tiếp thế nào |
 |---|---|---|
 | **R-001** | ✅ XONG 22:15 — C-011, T-005, T-007 đã merge; đã đánh giá (quy trình lên phiên bản 2) | — |
+| **Máy công ty 21/10 (chưa có phiếu R)** | ✅ XONG — làm theo quy trình cũ trước khi có v3, nên không có phiếu `requests/` | Không cần làm gì; chi tiết review trong từng file task |
+| AITeam H-006 / H-007 / H-008 — Hub v2 (khung phẳng, Tổng quan, Dự án, Task, Agent, Hộp thư, Tài khoản, Bí mật, Cài đặt) | ✅ Đã merge vòng 1. H-007/H-008 agent hết credits giữa chừng ⇒ Claude chụp ảnh, sửa, điền báo cáo. Claude sửa: XSS qua `?drawer=`, nhãn tab hiện mã HTML, nhãn "Cổng kiểm tra ĐẠT" sai nghĩa, ngăn kéo cuộn ngang, cột Agent ghi cứng "A", nút lọc `.seg a`. 159/159 test, clone sạch | Optional: vòng review hiện trùng (danh sách + Markdown gốc); review cũ không có `###` gộp 1 khối; `PaginationSummary` ghi cứng 8; cột phải Tổng quan bị cắt chữ khi cửa sổ hẹp |
+| ChinaAndroidToolbox C-012 — trang dài (Sửa lỗi nhanh, Tùy biến chia tab, bỏ banner adb) | ✅ Đã merge vòng 2. Agent hết credits lúc đang thử dò lỗi ⇒ Claude hoàn tác phần thử nghiệm (debug, tạm gỡ 2 tab Chẩn đoán), chụp ảnh, điền báo cáo. 571/571 test, clone sạch | Optional: tab "Bàn phím & Ngôn ngữ" bị cắt chữ; ô tìm kiếm Sửa lỗi nhanh không thấy chữ gợi ý trong ảnh |
+| Antigravity trên máy công ty | ⚠️ `agy` báo hết credits (21/10 17:08) dù chủ dự án đã đổi tài khoản trong AntigravityManager — đổi ở app đó không áp dụng cho `agy` | Chạy `team.ps1 switch-account` rồi `team.ps1 doctor` trước khi giao việc |
 | Hàng chờ HDVTool (giao diện) | Lồng tiếng video, Tóm tắt cuộc họp, Công cụ IT còn bị cắt ở cửa sổ nhỏ nhất; dòng cuối Nhật ký thay đổi | Theo quy trình v2: chạy UiSnapshot, viết bố cục cụ thể rồi mới giao |
 | Hàng chờ Toolbox | C-006 tối ưu theo ROM — chờ chủ dự án cắm vivo X200 Pro chạy "Khảo sát ROM" + "Học cài đặt" | |
 | Hàng chờ HDVTool | Trang Giới thiệu hiện người đăng nhập + vai trò; nhật ký thao tác quản trị | Chưa thiết kế |
