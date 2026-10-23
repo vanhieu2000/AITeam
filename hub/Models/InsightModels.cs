@@ -19,7 +19,8 @@ public sealed record StageScore(
 /// <summary>Một lỗi review dạng "- [AG|TK|CK|NV|HT] (loại) mô tả" trong mục "## Review (Claude)".</summary>
 public sealed record ReviewIssue(string Project, string Task, string Cause, string Kind, string Text);
 
-/// <summary>Một bản ghi metrics/runs/*.json (team.ps1 ghi sau mỗi lượt agent). At = lúc lượt KẾT THÚC.</summary>
+/// <summary>Một bản ghi metrics/runs/*.json (team.ps1 ghi sau mỗi lượt agent). At = lúc lượt KẾT THÚC.
+/// Các lượt cùng ConversationId (agy -Resume / tự giao lại) ghi DurationSec, TotalTokens CỘNG DỒN ⇒ dùng InsightParsers.ToDeltas trước khi cộng.</summary>
 public sealed record RunRecord(
     DateTime At,
     string Machine,
@@ -33,7 +34,8 @@ public sealed record RunRecord(
     int LinesAdded,
     bool VerifyOk,
     bool AutoRetry,
-    string? Request);
+    string? Request,
+    string? ConversationId = null);
 
 public enum SegmentKind { Coding, Fix, Review, Merge }
 

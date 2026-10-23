@@ -93,8 +93,8 @@ public sealed class TeamInsightsService : ITeamInsightsService
 
     public TeamInsights Get()
     {
-        var runs = SafeFiles(Path.Combine(_paths.AITeamRoot, "metrics", "runs"), "*.json")
-            .Select(f => InsightParsers.ParseRun(SafeRead(f))).Where(r => r != null).Select(r => r!).ToList();
+        var runs = InsightParsers.ToDeltas(SafeFiles(Path.Combine(_paths.AITeamRoot, "metrics", "runs"), "*.json")
+            .Select(f => InsightParsers.ParseRun(SafeRead(f))).Where(r => r != null).Select(r => r!));
         var staffMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var f in SafeFiles(Path.Combine(_paths.AITeamRoot, "staff"), "*.md"))
             if (InsightParsers.ParseStaff(Path.GetFileName(f), SafeRead(f)) is { } s) staffMap[s.Agent] = s.Name;

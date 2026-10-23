@@ -128,7 +128,8 @@ public static class InsightParsers
                 GetNum(root, "totalTokens"), (int)GetNum(root, "linesAdded"),
                 root.TryGetProperty("verifyOk", out var vo) && vo.ValueKind == JsonValueKind.True,
                 root.TryGetProperty("autoRetry", out var ar) && ar.ValueKind == JsonValueKind.True,
-                string.IsNullOrWhiteSpace(req) ? null : req);
+                string.IsNullOrWhiteSpace(req) ? null : req,
+                GetStr(root, "conversationId") is { Length: > 0 } conv ? conv : null);
         }
         catch { return null; }
     }
@@ -188,6 +189,25 @@ public static class InsightParsers
             }
         }
         return list;
+    }
+
+    /// <summary>
+    /// Đổi số đo cộng dồn thành số của từng lượt (giống Get-RunDeltas trong team.ps1): trong cùng ConversationId, sắp theo At,
+    /// DurationSec / TotalTokens = max(0, giá trị − giá trị lượt trước). ConversationId null ⇒ giữ nguyên. Giữ thứ tự At tăng dần.
+    /// </summary>
+    public static IReadOnlyList<RunRecord> ToDeltas(IEnumerable<RunRecord> runs)
+    {
+        var result = new List<RunRecord>();
+        foreach (var g in runs.GroupBy(r => r.ConversationId ?? Guid.NewGuid().ToString()))
+        {
+            int prevD = 0; long prevT = 0;
+            foreach (var r in g.OrderBy(r => r.At))
+            {
+                result.Add(r with { DurationSec = Math.Max(0, r.DurationSec - prevD), TotalTokens = Math.Max(0, r.TotalTokens - prevT) });
+                if (r.ConversationId != null) { prevD = r.DurationSec; prevT = r.TotalTokens; }
+            }
+        }
+        return result.OrderBy(r => r.At).ToList();
     }
 
     private static IEnumerable<string> GetSectionLines(string markdown, string sectionTitle)

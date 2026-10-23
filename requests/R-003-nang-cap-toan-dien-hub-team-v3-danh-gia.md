@@ -41,6 +41,12 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-003` để `team.ps1 reque
 | 00:50 | Merge H3-01, H3-03 (clone sạch 59 + 206 test) | |
 | 00:55 | Claude: DI + menu "Cần anh duyệt"; tạo A-001 (quyết định user Windows thứ 2) | |
 | 00:37 | [TK] Claude commit DI + menu trước khi chạy hết test ⇒ 3 test dựng trang hỏng; sửa bằng HubV3Registration, 265 test pass | bài học: chạy test TRƯỚC commit kể cả sửa nhỏ |
+| 00:53 | H3-04 Minh xong: 8', cổng KT ĐẠT lần 1 | không báo nhầm sau IMP-001 |
+| 00:55 | H3-02 Lan xong: 13', cổng KT ĐẠT lần 1 | |
+| 00:56 | IMP-001 chu kỳ 1 (V4-03, V4-06, H3-01): 3 cải tiến đã áp dụng; `tools/test-verify.ps1` bắt đúng 3 lỗi CK cũ | |
+| 00:57 | Review + merge H3-04 ĐẠT vòng 1; giao H3-05 cho Minh (Lan đang bận H3-02) | |
+| 01:00 | Review H3-02 ĐẠT vòng 1 sau khi chạy Hub thật: [TK] khung giờ 'Gần nhất' + [TK] số đo cộng dồn; Claude sửa ~35 dòng + 4 test; merge | 251 test |
+| 01:01 | Menu Đội ngũ, Quy trình & cải tiến; 2 trang chạy với dữ liệu thật | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
