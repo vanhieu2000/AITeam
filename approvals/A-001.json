@@ -1,17 +1,15 @@
 {
-    "id":  "A-001",
-    "kind":  "decision",
-    "title":  "Tạo user Windows aiteam-agy2 cho tài khoản Antigravity số 2",
-    "detail":  "- **Lợi ích:** 2 agent chạy song song bằng 2 tài khoản ⇒ gấp đôi hạn mức Antigravity.\n- **Anh cần làm:** bấm UAC tạo user + đăng nhập user đó 1 lần để đăng nhập Antigravity.\n- **Rủi ro:** thấp; user thường, không quyền Admin. Chi tiết: `docs/design/V4-MULTI-AI.md` mục B3b.",
-    "project":  "AITeam",
-    "task":  null,
-    "commit":  null,
-    "links":  [
-
-              ],
-    "requestedBy":  "Claude",
-    "requestedAt":  "2026-10-24T00:36:10",
-    "status":  "pending",
-    "decidedAt":  null,
-    "note":  null
+  "id": "A-001",
+  "kind": "decision",
+  "title": "Tạo user Windows aiteam-agy2 cho tài khoản Antigravity số 2",
+  "detail": "- **Lợi ích:** 2 agent chạy song song bằng 2 tài khoản ⇒ gấp đôi hạn mức Antigravity.\n- **Anh cần làm:** bấm UAC tạo user + đăng nhập user đó 1 lần để đăng nhập Antigravity.\n- **Rủi ro:** thấp; user thường, không quyền Admin. Chi tiết: `docs/design/V4-MULTI-AI.md` mục B3b.",
+  "project": "AITeam",
+  "task": null,
+  "commit": null,
+  "links": [],
+  "requestedBy": "Claude",
+  "requestedAt": "2026-10-24T00:36:10",
+  "status": "approved",
+  "decidedAt": "2026-10-24T00:36:38",
+  "note": null
 }
