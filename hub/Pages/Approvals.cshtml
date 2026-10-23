@@ -1,0 +1,132 @@
+﻿@page
+@model AITeam.Hub.Pages.ApprovalsModel
+@using AITeam.Hub.Models
+@using AITeam.Hub.Services
+@{
+    ViewData["Title"] = "Cần anh duyệt";
+}
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(46, 160, 67, 0.15); border: 1px solid var(--ok); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--ok); margin-right: 8px;">✓</span>
+        <span>@Model.Message</span>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--err); margin-right: 8px;">✗</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+<section class="screen on" id="s-approvals" style="min-width: 0;">
+    <div class="muted" style="margin-bottom: 10px;">Hub chỉ ghi quyết định; merge / lệnh hệ thống do Claude chạy bằng team.ps1. Code đổi sau khi duyệt ⇒ phải duyệt lại.</div>
+
+    <div class="tabs">
+        <span class="tab on" id="tab-btn-pending" onclick="switchApprovalTab('pending')">Chờ duyệt<span class="c">@Model.Pending.Count</span></span>
+        <span class="tab" id="tab-btn-decided" onclick="switchApprovalTab('decided')">Đã quyết<span class="c">@Model.Decided.Count</span></span>
+    </div>
+
+    <div id="tab-content-pending">
+        @if (Model.Pending.Count == 0)
+        {
+            <div class="empty">Không có việc nào chờ anh duyệt.</div>
+        }
+        else
+        {
+            @foreach (var a in Model.Pending)
+            {
+                var (pillCls, pillText) = a.Kind switch { ApprovalKind.Merge => ("pill rev", "MERGE"), ApprovalKind.Decision => ("pill run", "QUYẾT ĐỊNH"), _ => ("pill fix", "CẢI TIẾN QUY TRÌNH") };
+                var commitShort = string.IsNullOrEmpty(a.Commit) ? null : (a.Commit.Length > 7 ? a.Commit[..7] : a.Commit);
+                <div class="panel" style="margin-bottom: 12px;">
+                    <div class="bd" style="display: grid; grid-template-columns: 1fr 260px; gap: 14px; align-items: start;">
+                        <div style="min-width: 0; overflow-wrap: anywhere;">
+                            <div class="row" style="gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <span class="@pillCls">@pillText</span>
+                                <b style="overflow-wrap: anywhere;">@a.Title</b>
+                            </div>
+                            <div class="muted" style="font-size: 12px; margin-bottom: 8px;">
+                                @a.Id · @a.Project@if (!string.IsNullOrEmpty(a.Task)){<text> · @a.Task</text>}@if (!string.IsNullOrEmpty(commitShort)){<text> · @commitShort</text>} · @a.RequestedBy · @a.RequestedAt.ToString("HH:mm dd/MM")
+                            </div>
+                            <div>@MarkdownRenderer.Render(a.Detail)</div>
+                            @foreach (var link in a.Links)
+                            {
+                                <div><code>@link</code></div>
+                            }
+                        </div>
+                        <div>
+                            <form method="post" asp-page-handler="Decide">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@a.Id">
+                                <textarea class="inp" name="note" rows="3" maxlength="500" placeholder="Ghi chú (tùy chọn)" style="margin-bottom: 8px;"></textarea>
+                                <div class="row" style="gap: 8px;">
+                                    <button class="btn pri" name="decision" value="approve">Duyệt</button>
+                                    <button class="btn danger" name="decision" value="reject">Từ chối</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <div id="tab-content-decided" style="display: none;">
+        @if (Model.Decided.Count == 0)
+        {
+            <div class="empty">Chưa có quyết định nào.</div>
+        }
+        else
+        {
+            @foreach (var a in Model.Decided)
+            {
+                var (pillCls, pillText) = a.Kind switch { ApprovalKind.Merge => ("pill rev", "MERGE"), ApprovalKind.Decision => ("pill run", "QUYẾT ĐỊNH"), _ => ("pill fix", "CẢI TIẾN QUY TRÌNH") };
+                var commitShort = string.IsNullOrEmpty(a.Commit) ? null : (a.Commit.Length > 7 ? a.Commit[..7] : a.Commit);
+                <div class="panel" style="margin-bottom: 12px;">
+                    <div class="bd" style="display: grid; grid-template-columns: 1fr 260px; gap: 14px; align-items: start;">
+                        <div style="min-width: 0; overflow-wrap: anywhere;">
+                            <div class="row" style="gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <span class="@pillCls">@pillText</span>
+                                <b style="overflow-wrap: anywhere;">@a.Title</b>
+                            </div>
+                            <div class="muted" style="font-size: 12px; margin-bottom: 8px;">
+                                @a.Id · @a.Project@if (!string.IsNullOrEmpty(a.Task)){<text> · @a.Task</text>}@if (!string.IsNullOrEmpty(commitShort)){<text> · @commitShort</text>} · @a.RequestedBy · @a.RequestedAt.ToString("HH:mm dd/MM")
+                            </div>
+                            <div>@MarkdownRenderer.Render(a.Detail)</div>
+                            @foreach (var link in a.Links)
+                            {
+                                <div><code>@link</code></div>
+                            }
+                        </div>
+                        <div style="overflow-wrap: anywhere;">
+                            <div style="margin-bottom: 6px;">
+                                @if (a.Status == ApprovalStatus.Approved) { <span class="pill ok">ĐÃ DUYỆT</span> } else { <span class="pill err">ĐÃ TỪ CHỐI</span> }
+                            </div>
+                            @if (a.DecidedAt.HasValue)
+                            {
+                                <div class="muted" style="font-size: 12px; margin-bottom: 6px;">@a.DecidedAt.Value.ToString("HH:mm dd/MM")</div>
+                            }
+                            @if (!string.IsNullOrEmpty(a.Note))
+                            {
+                                <div style="white-space: pre-wrap; overflow-wrap: anywhere;">@a.Note</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+<script>
+    function switchApprovalTab(tab) {
+        var isPending = tab === 'pending';
+        document.getElementById('tab-btn-pending').classList.toggle('on', isPending);
+        document.getElementById('tab-btn-decided').classList.toggle('on', !isPending);
+        document.getElementById('tab-content-pending').style.display = isPending ? 'block' : 'none';
+        document.getElementById('tab-content-decided').style.display = !isPending ? 'block' : 'none';
+    }
+</script>
