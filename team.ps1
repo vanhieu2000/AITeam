@@ -797,6 +797,8 @@ function Invoke-Verify {
 
     # 2. BOM: file vốn có BOM phải giữ; .ps1 có chữ ngoài ASCII phải có BOM (PowerShell 5.1). Tự sửa + commit.
     $bomFixed = @()
+    # File khung Claude tạo trên nhánh (chưa có trên main) cũng phải giữ BOM như bản khung (H3-01 lọt lỗi này).
+    $seedCommit = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
     foreach ($f in $changed) {
         $full = Join-Path $work $f
         if (-not (Test-Path $full -PathType Leaf)) { continue }
@@ -804,6 +806,7 @@ function Invoke-Verify {
         if (Test-HasBom $bytes) { continue }
         $need = $false
         $old = Get-GitBlobHead $work $base $f
+        if (-not $old -and $seedCommit) { $old = Get-GitBlobHead $work $seedCommit $f }
         if ($old -and (Test-HasBom ([byte[]]$old))) { $need = $true }
         elseif ($f -match '\.ps1$' -and ($bytes | Where-Object { $_ -gt 127 } | Select-Object -First 1)) { $need = $true }
         if ($need) {
@@ -860,7 +863,9 @@ function Invoke-Verify {
         $countFiles = @($changed | Where-Object { $_ -ne "tasks/$($ctx.TaskFile.Name)" -and $accept -notcontains $_ })
         $added = 0
         if ($countFiles.Count -gt 0) {
-            foreach ($line in (git -C $work diff --numstat $base HEAD -- $countFiles 2>$null)) {
+            # Khung code của Claude (commit "Test nghiệm thu…") không tính vào ngân sách của agent (H3-01 báo vượt nhầm 508/320).
+            $from = if ($seedCommit) { $seedCommit } else { $base }
+            foreach ($line in (git -C $work diff --numstat $from HEAD -- $countFiles 2>$null)) {
                 $p = $line -split "`t"; if ($p[0] -match '^\d+$') { $added += [int]$p[0] }
             }
         }
