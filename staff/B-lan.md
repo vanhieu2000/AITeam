@@ -15,6 +15,7 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 | Ngày | Yêu cầu / Task | Kết quả (lượt · phút · vòng · dòng/ngân sách) | Làm tốt | Lỗi (AG) | Hướng cải thiện |
 |---|---|---|---|---|---|
 | 21/10 | R-001 / C-011-ui-layout-tests (ChinaAndroidToolbox) | 4 lượt · ~95 phút (2 lượt treo ~30 phút) · 3 vòng · 1037/600 dòng | Bộ kiểm tra soi mọi view + hộp thoại; sửa bố cục thật 10 file; test chạy ~20 giây | [AG] (test) test mở form thật trên luồng MTA (lỗi DragDrop) + chạy test nền ⇒ treo | Dùng helper UiThread; khi vượt ngân sách thì ghi lý do trong báo cáo |
+| 23/10 | R-002 / V4-06 JobStore (AITeam) | 3 lượt (2 do lỗi công cụ) · ~13 phút · 1 vòng · 268/250 dòng | Ghi nguyên tử, khóa CreateNew, chặn tên nguy hiểm; giữ nguyên bảng trạng thái và ghi rõ lý do khi buộc phải gộp file | — | Tốt |
 
 ## Đề xuất cải tiến cho nhân viên này
 <!-- Claude cập nhật sau mỗi kỳ: đổi model, chia task kiểu khác, thêm lưu ý riêng, đổi vùng code phụ trách... -->

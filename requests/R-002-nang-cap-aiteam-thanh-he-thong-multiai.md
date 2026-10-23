@@ -41,6 +41,8 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-002` để `team.ps1 reque
 | 23:50 | Dogfood: dùng ReviewService của Minh + Codex thật review chính V4-03 ⇒ [TK] (test) lộ lỗi file lược đồ có BOM bị Codex từ chối; fail-safe đúng (BLOCKED). Claude sửa 2 dòng + test | Test giả không bắt được ⇒ cần 1 test tích hợp chạy thật (tùy chọn) |
 | 23:55 | Codex hết hạn mức ('usage limit… try again Oct 24 4:19 AM') ⇒ phân loại QuotaExhausted ⇒ BLOCKED | Codex hạn mức nhỏ (dùng chung app desktop) ⇒ P0-4/5 phải chọn lọc task cần Codex review + reviewer dự phòng |
 | 00:05 | Lần đầu chạy `team.ps1 merge` thật: [CK] (công cụ) xung đột add/add file task, bảng việc không khớp dòng link, kết quả clone chỉ in 1 dòng ⇒ Claude sửa cả 3; merge V4-03 xong, clone sạch 41 + 159 | |
+| 23:56 | V4-06 (Lan) xong ~13 phút, 3 lượt: [TK] (phạm vi) Claude quên `JobModels.cs` trong Phạm vi · [CK] (phạm vi) cổng kiểm tra coi file khung của Claude là agent sửa ngoài phạm vi ⇒ tự giao lại 2 lần, Lan gộp file để qua (giữ nguyên 100% bảng trạng thái) | |
+| 00:15 | Claude tách lại `JobModels.cs`, sửa cổng kiểm tra (file khung không bị đổi thì không tính), `verify` lại ĐẠT, `merge` V4-06: clone sạch 59 + 159 | `merge` lần 2 chạy trơn tru |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;

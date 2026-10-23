@@ -15,6 +15,7 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 | Ngày | Yêu cầu / Task | Kết quả (lượt · phút · vòng · dòng/ngân sách) | Làm tốt | Lỗi (AG) | Hướng cải thiện |
 |---|---|---|---|---|---|
 | 21/10 | R-001 / T-005-ui-layout-tests (HDVTool) | 4 lượt · ~95 phút (2 lượt treo ~30 phút) · 3 vòng · 803/800 dòng | Bộ kiểm tra bố cục đủ 3 tỉ lệ DPI; sửa bố cục thật (ô tìm kiếm, thẻ Trang chủ, Người dùng); tắt hộp chào mừng bằng cờ internal, không đổi app thật | [AG] (test) test mở form/hộp thoại thật trên luồng MTA + chạy test nền ⇒ treo · [AG] (giao diện) sót thẻ "Hệ thống" bị cắt ở Giới thiệu | Dùng helper UiThread cho mọi test giao diện; xem kỹ ảnh chụp trước khi nộp |
+| 23/10 | R-002 / V4-03 Codex review (AITeam) | 1 lượt · 9 phút · 1 vòng · 321/250 dòng | Qua cổng kiểm tra lượt đầu; đủ luật fail-safe | — (lỗi BOM là do test nghiệm thu của Claude thiếu) | Giữ phong độ; tên file tạm nên duy nhất |
 
 ## Đề xuất cải tiến cho nhân viên này
 <!-- Claude cập nhật sau mỗi kỳ: đổi model, chia task kiểu khác, thêm lưu ý riêng, đổi vùng code phụ trách... -->
