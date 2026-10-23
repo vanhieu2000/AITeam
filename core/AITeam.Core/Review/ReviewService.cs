@@ -38,6 +38,8 @@ public sealed class ReviewService
     /// KHÔNG đưa mục "Review (Claude)" cũ (tránh reviewer chép kết luận cũ).
     /// DiffHash = SHA-256 hex chữ thường của DiffText ĐẦY ĐỦ (trước khi cắt).
     /// </summary>
+    private static readonly UTF8Encoding NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
     public ReviewPack BuildPack(ReviewPackInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -219,8 +221,9 @@ public sealed class ReviewService
 
         var promptFile = Path.Combine(logDir, "prompt-review.md");
         var schemaFile = Path.Combine(logDir, "schema-review.json");
-        await File.WriteAllTextAsync(promptFile, pack.Prompt, Encoding.UTF8, ct);
-        await File.WriteAllTextAsync(schemaFile, OutputSchemaJson, Encoding.UTF8, ct);
+        // UTF-8 KHÔNG BOM: Codex từ chối lược đồ có BOM ("not valid JSON: expected value at line 1 column 1") — phát hiện khi chạy thật 23/10.
+        await File.WriteAllTextAsync(promptFile, pack.Prompt, NoBom, ct);
+        await File.WriteAllTextAsync(schemaFile, OutputSchemaJson, NoBom, ct);
 
         var request = new AgentRunRequest(
             WorkDir: workDir,
