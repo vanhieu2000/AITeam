@@ -115,14 +115,28 @@ public sealed class AcceptanceH302GanttTests
     }
 
     [Fact]
-    public void Fit_window_long_span_and_empty()
+    public void Fit_window_ignores_tasks_older_than_24h_before_latest_activity()
     {
+        // Review H3-02: task 21/10 kéo khung "Gần nhất" thành 3 ngày ⇒ thanh hôm nay chỉ còn vài px.
         var (from, to) = GanttLayout.FitWindow(new[] { T007, V406 }, T("01:00:00", 24));
-        var span = T("23:59:33") - T("17:28:44", 21);
-        Assert.True(Math.Abs((from - (T("17:28:44", 21) - span * 0.03)).TotalSeconds) < 1);
-        Assert.True(Math.Abs((to - (T("23:59:33") + span * 0.03)).TotalSeconds) < 1);
+        Assert.Equal(T("23:35:22.5"), from);         // như chỉ có V4-06
+        Assert.Equal(T("00:07:10.5", 24), to);
+
+        // Trong vòng 24 giờ thì vẫn lấy hết và đệm 3%.
+        var early = Task("X-02", "Lan", new TimelineSegment(SegmentKind.Coding, T("01:00:00"), T("01:10:00")));
+        var (f2, t2) = GanttLayout.FitWindow(new[] { early, V406 }, T("01:00:00", 24));
+        var span = T("23:59:33") - T("01:00:00");
+        Assert.True(Math.Abs((f2 - (T("01:00:00") - span * 0.03)).TotalSeconds) < 1);
+        Assert.True(Math.Abs((t2 - (T("23:59:33") + span * 0.03)).TotalSeconds) < 1);
 
         var now = T("08:00:00", 24);
         Assert.Equal((now.AddHours(-24), now), GanttLayout.FitWindow(new[] { NoTimeline }, now));
+    }
+
+    [Fact]
+    public void Midnight_tick_shows_date_when_window_longer_than_a_day()
+    {
+        var c = GanttLayout.Build(All, T("12:00:00", 22), T("12:00:00", 24));   // 2 ngày ⇒ bước 12h
+        Assert.Equal(new[] { "12:00", "23/10", "12:00", "24/10", "12:00" }, c.Ticks.Select(t => t.Label));
     }
 }

@@ -77,16 +77,27 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2; mockup `docs/design/hub-v3-mockup
 - **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 19/19 ca nghiệm thu; 59 + 225 test; build 0 warning; ~13 phút, 1 lượt; 370/330 dòng (vượt nhẹ, chấp nhận: SVG + bảng lọc).
+- Code đúng đặc tả; xem Hub thật (cổng 5058, dữ liệu thật): 5 chỉ số, biểu đồ, bảng 20 task, lọc dự án / trạng thái đúng bố cục.
+- [TK] (giao diện) đặc tả "Gần nhất" của Claude lấy 12 task bất kể ngày ⇒ dữ liệu thật kéo khung từ 21/10 tới 24/10, thanh hôm nay chỉ vài px; mốc 00:00 lặp không ghi ngày.
+- Claude sửa (~12 dòng + 2 ca nghiệm thu, 10 phút): "Gần nhất" chỉ lấy task có hoạt động trong 24 giờ tính từ hoạt động mới nhất; khung > 1 ngày thì mốc 00:00 ghi "dd/MM". 59 + 226 test pass.
+- [CK] (dữ liệu) số đo lượt tự giao lại của agy ghi thời lượng CỘNG DỒN (V4-06 lượt 3: 1380 giây trong khi chỉ cách lượt 2 có 5 phút) ⇒ Hub hiện V4-06 51′ thay vì ~13′ — sửa ở phần dữ liệu (việc tiếp theo của Claude).
+
+Nhân viên: Lan (B) — 1 lượt, ~13 phút, 370/330 dòng.
 
 ## Kết quả
+- **Chức năng mới:** trang Tổng quan v3 — 5 chỉ số (đang chạy, chờ anh duyệt, đạt vòng 1, phút agent TB, cần sửa), biểu đồ thời gian từng task (code / sửa lại / review / merge, chọn Gần nhất · 24 giờ · 7 ngày · 30 ngày), danh sách 20 task gần nhất có độ khó, phút, vòng, điểm quy trình, lọc theo dự án / trạng thái.
+- **Kiểm chứng:** 21 ca nghiệm thu; chạy Hub với dữ liệu thật và chụp màn hình.
+- **Cần cải tiến:** số phút của lượt tự giao lại đang cộng dồn (đang sửa); task cũ (trước 21/10) chỉ có điểm merge.
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Lan (B) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-003) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-003) | — | — | — |
+| 3. Plan / thiết kế | Claude | 3 | ~25' | Đặc tả khung giờ "Gần nhất" chỉ thử với dữ liệu mẫu 2 ngày, không thử với lịch sử thật nhiều ngày | TK | Test nghiệm thu giao diện dữ liệu phải có 1 ca dựng từ dữ liệu THẬT của repo (đủ dài, nhiều ngày) |
+| 4. Giao việc | Claude | 5 | ~10' | Bố cục 6 mục + 19 ca nghiệm thu | — | — |
+| 5. Thực hiện code | Lan (B) | 5 | ~13' (1 lượt) | Đúng đặc tả, giữ BOM | — | — |
+| 6. Review / QC | Cổng KT + Claude | 4 | ~15' | Xem Hub thật bắt được lỗi đặc tả + lỗi số đo cộng dồn mà test không bắt | CK | Sửa ghi số đo lượt tự giao lại |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |

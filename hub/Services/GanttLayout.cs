@@ -25,14 +25,19 @@ public static class GanttLayout
     public const double MinBarWidth = 3;    // đoạn rất ngắn / điểm merge vẫn nhìn thấy
 
     /// <summary>
-    /// Khung giờ "Gần nhất": lấy tối đa maxRows task có Timeline (theo End lớn nhất của task, mới nhất trước);
+    /// Khung giờ "Gần nhất": chỉ xét task có Timeline và End lớn nhất ≥ (End mới nhất của mọi task − 24 giờ); lấy tối đa maxRows task (theo End lớn nhất, mới nhất trước);
     /// from = Start nhỏ nhất, to = End lớn nhất của các task đó. Khoảng &lt; 30 phút ⇒ nới thành 30 phút quanh tâm.
     /// Sau đó đệm 3% mỗi bên. Không task nào có Timeline ⇒ (now − 24 giờ, now).
     /// </summary>
     public static (DateTime From, DateTime To) FitWindow(IReadOnlyList<TaskInsight> tasks, DateTime now, int maxRows = 12)
     {
-        var selected = tasks
-            .Where(t => t.Timeline.Count > 0)
+        var withTimeline = tasks.Where(t => t.Timeline.Count > 0).ToList();
+        if (withTimeline.Count == 0)
+            return (now.AddHours(-24), now);
+        // Chỉ các task có hoạt động trong 24 giờ tính từ hoạt động mới nhất (task cũ hàng ngày trước làm khung quá rộng — review H3-02).
+        var latest = withTimeline.Max(t => t.Timeline.Max(s => s.End));
+        var selected = withTimeline
+            .Where(t => t.Timeline.Max(s => s.End) >= latest.AddHours(-24))
             .OrderByDescending(t => t.Timeline.Max(s => s.End))
             .Take(maxRows)
             .ToList();
@@ -70,7 +75,7 @@ public static class GanttLayout
     /// Height = Top + số hàng·RowHeight + AxisHeight.
     /// Mốc: bước nhỏ nhất trong {10′, 20′, 30′, 1h, 2h, 3h, 6h, 12h, 1 ngày, 2 ngày, 7 ngày} sao cho số mốc trong [from, to] ≤ 8;
     ///   mốc đầu = bội số đầu tiên của bước ≥ from (tính từ 00:00 của ngày from; bước 7 ngày tính từ 00:00 ngày from);
-    ///   nhãn "HH:mm" nếu bước &lt; 1 ngày, ngược lại "dd/MM". X tính như trên, làm tròn 1 số lẻ.
+    ///   nhãn "HH:mm" nếu bước &lt; 1 ngày (mốc 00:00 của khung dài hơn 1 ngày ⇒ "dd/MM"), ngược lại "dd/MM". X tính như trên, làm tròn 1 số lẻ.
     /// </summary>
     private static readonly TimeSpan[] Steps =
     {
@@ -169,7 +174,9 @@ public static class GanttLayout
         var list = new List<GanttTick>();
         while (cur <= to)
         {
-            list.Add(new GanttTick(Math.Round(mapX(cur), 1), cur.ToString(fmt, CultureInfo.InvariantCulture)));
+            // Khung dài hơn 1 ngày: mốc 00:00 ghi ngày để biết sang ngày nào.
+            var label = fmt == "HH:mm" && cur.TimeOfDay == TimeSpan.Zero && to - from > TimeSpan.FromDays(1) ? cur.ToString("dd/MM", CultureInfo.InvariantCulture) : cur.ToString(fmt, CultureInfo.InvariantCulture);
+            list.Add(new GanttTick(Math.Round(mapX(cur), 1), label));
             cur = cur.Add(step);
         }
         return list;
