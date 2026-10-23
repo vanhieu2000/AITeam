@@ -1,4 +1,4 @@
-# H3-01 · Hub v3: dịch vụ dữ liệu đánh giá team (insights)
+﻿# H3-01 · Hub v3: dịch vụ dữ liệu đánh giá team (insights)
 
 - **Agent:** A
 - **Nhánh:** `agent-a/H3-01-hub-insights-data`
@@ -39,28 +39,43 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2–3. Chú thích trong khung code 
 - `hub.tests/AcceptanceH301Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 30 ca nghiệm thu H3-01).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 30 ca nghiệm thu H3-01).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 30 ca nghiệm thu H3-01). | `dotnet build AITeam.sln` → `Build succeeded. 0 Warning(s) 0 Error(s)`. `dotnet test AITeam.sln --blame-hang-timeout 3m` → `AITeam.Core.Tests: Passed 59/59`, `AITeam.Hub.Tests: Passed 189/189` (trong đó `AcceptanceH301Tests`: `Passed 30/30`). |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hiện thực đầy đủ các hàm phân tích chuỗi thuần trong `InsightParsers`, truy vấn giờ merge an toàn qua `ProcessStartInfo.ArgumentList` + cache 60s trong `GitHistory.MergedAt`, và dịch vụ tổng hợp 9 bước trong `TeamInsightsService`.
+- **File đã đổi:** `hub/Services/InsightParsers.cs`, `hub/Services/TeamInsightsService.cs`, `tasks/H3-01-hub-insights-data.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 30/30 ca nghiệm thu; 59 + 189 test; build 0 warning; ~8 phút, 1 lượt.
+- Code: regex gọn, chịu được dữ liệu hỏng (JSON hỏng, ô thiếu, file không có), gọi git bằng ArgumentList + chặn id lạ, đúng 9 bước ghép dữ liệu.
+- [AG] (BOM) mất BOM UTF-8 ở 2 file khung `InsightParsers.cs`, `TeamInsightsService.cs`
+- [CK] (BOM) cổng kiểm tra chỉ so BOM với `main` ⇒ không bắt được file khung mới chỉ có trên nhánh
+- [CK] (phạm vi) cổng kiểm tra tính cả khung của Claude vào ngân sách ⇒ báo vượt nhầm 508/320 (thật: 285/320)
+- [TK] (hiệu năng) khung không nói rõ cache giờ merge ⇒ mỗi phút gọi git lại cho mọi task đã merge
+- Claude sửa (~10 dòng, 5 phút): trả BOM; đọc output git bất đồng bộ để giới hạn 10 giây có tác dụng; giờ merge đã biết thì nhớ luôn.
+- Claude sửa cổng kiểm tra: so BOM với commit khung; ngân sách tính từ commit khung (chạy lại verify: 285/320, ĐẠT).
+- Cảnh báo "ngồi chờ lệnh nền bị treo" là báo nhầm (lượt chạy 8 phút).
+
+Nhân viên: Minh (A) — 1 lượt, ~8 phút, 285/320 dòng.
 
 ## Kết quả
+- **Không có chức năng mới nhìn thấy ngay** — phần dữ liệu cho Hub v3: độ khó, số vòng, điểm 7 giai đoạn, lỗi theo nguyên nhân, thẻ điểm nhân viên, biểu đồ thời gian, chu kỳ cải tiến, chỉ số tổng quan.
+- **Kiểm chứng:** 30 ca nghiệm thu dùng dữ liệu thật V4-03 / V4-06 và git thật; 248 test pass.
+- **Cần cải tiến:** chưa có trang hiển thị (H3-02, H3-04, H3-05).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Minh (A) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | ~5' | Mở phiếu R-003, chép nguyên văn yêu cầu | — | — |
+| 2. Ý tưởng | Claude | 5 | ~15' | Mockup có dữ liệu thật, chủ dự án duyệt ngay lần đầu | — | Giữ cách làm mockup bằng dữ liệu thật |
+| 3. Plan / thiết kế | Claude | 4 | ~20' | Model chốt sẵn, 9 bước ghép dữ liệu rõ; quên nói cache giờ merge | TK | Thiết kế ghi rõ chi phí gọi tiến trình ngoài / cache |
+| 4. Giao việc | Claude | 5 | ~10' | Task file + khung + 30 ca nghiệm thu, giao 1 lần | — | — |
+| 5. Thực hiện code | Minh (A) | 4 | ~8' (1 lượt) | Code tốt, đúng đặc tả; mất BOM 2 file | AG | Lưu ý riêng đã có trong AGENTS.md; theo dõi lần tới |
+| 6. Review / QC | Cổng KT + Claude | 3 | ~15' | Cổng KT lọt BOM file khung và báo vượt ngân sách nhầm | CK | Đã sửa cổng KT (so với commit khung) |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
