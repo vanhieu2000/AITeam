@@ -1,0 +1,122 @@
+using System.Text.Json;
+using AITeam.Core.Process;
+
+namespace AITeam.Core.Providers;
+
+/// <summary>
+/// OpenAI Codex CLI (<c>codex exec</c>), đăng nhập ChatGPT chính thức.
+/// - ReadOnly: <c>--sandbox read-only</c> — CLI tự chặn ghi, không chỉ dựa vào lời nhắn.
+/// - Lời nhắn qua stdin (<c>-</c>), không qua tham số (PowerShell 5.1 / tiếng Việt / dấu ngoặc).
+/// - KHÔNG sửa <c>~/.codex/config.toml</c> (cấu hình app Codex desktop của chủ dự án): chỉ ghi đè theo lần gọi
+///   (<c>-m</c>, tắt notify / MCP cho nhẹ). Đã thử 23/10: model mặc định cũ không dùng được với tài khoản ChatGPT.
+/// </summary>
+public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) : IAgentProvider
+{
+    public string Id => config.Id;
+    public ProviderKind Kind => ProviderKind.Codex;
+    public bool HasReadOnlySandbox => true;
+
+    /// <summary>(exe, tiền tố tham số): <c>codex.js</c> chạy bằng node; còn lại chạy thẳng.</summary>
+    internal (string Exe, List<string> Prefix) ResolveLaunch()
+    {
+        var exe = config.Exe;
+        if (string.IsNullOrWhiteSpace(exe) || exe.Equals("codex", StringComparison.OrdinalIgnoreCase))
+            exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm", "node_modules", "@openai", "codex", "bin", "codex.js");
+        if (exe.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+            return (string.IsNullOrWhiteSpace(config.NodeExe) ? "node" : config.NodeExe!, [exe]);
+        return (exe, []);
+    }
+
+    internal IReadOnlyList<string> BuildArguments(AgentRunRequest r, string lastMessageFile)
+    {
+        var (_, args) = ResolveLaunch();
+        args.AddRange(["exec", "--json", "--ephemeral", "--skip-git-repo-check",
+            "-C", r.WorkDir,
+            "--sandbox", r.Mode == RunMode.ReadOnly ? "read-only" : "workspace-write",
+            "-c", "notify=[]", "-c", "mcp_servers={}"]);
+        var model = r.Model ?? config.Model;
+        if (!string.IsNullOrWhiteSpace(model)) args.AddRange(["-m", model]);
+        if (r.OutputSchemaFile != null) args.AddRange(["--output-schema", r.OutputSchemaFile]);
+        args.AddRange(["-o", lastMessageFile, "-"]);
+        return args;
+    }
+
+    public async Task<AgentRunResult> RunAsync(AgentRunRequest r, CancellationToken ct)
+    {
+        var (exe, _) = ResolveLaunch();
+        var last = Path.Combine(r.LogDir ?? Path.GetTempPath(), $"codex-last-{Guid.NewGuid():N}.txt");
+        ProcessResult res;
+        try
+        {
+            res = await runner.RunAsync(new ProcessSpec(exe, BuildArguments(r, last), r.WorkDir, r.PromptFile, r.Timeout), ct).ConfigureAwait(false);
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            return new AgentRunResult(Id, RunStatus.Unavailable, "", TokenUsage.Unknown, TimeSpan.Zero, null, null, ex.Message);
+        }
+        var text = File.Exists(last) ? await File.ReadAllTextAsync(last, ct).ConfigureAwait(false) : "";
+        if (File.Exists(last)) File.Delete(last);
+        return Parse(Id, res, text, r.Model ?? config.Model);
+    }
+
+    /// <summary>Đọc luồng sự kiện <c>--json</c> (mẫu thật 23/10: thread.started, turn.completed{usage}, turn.failed{error}).</summary>
+    internal static AgentRunResult Parse(string id, ProcessResult res, string lastMessage, string? model)
+    {
+        if (res.TimedOut)
+            return new AgentRunResult(id, RunStatus.TimedOut, "", TokenUsage.Unknown, res.Duration, model, null, "Quá thời gian");
+        string? thread = null, error = null;
+        bool completed = false;
+        var tokens = TokenUsage.Unknown;
+        foreach (var line in res.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!line.StartsWith('{')) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                var e = doc.RootElement;
+                var type = e.TryGetProperty("type", out var t) ? t.GetString() : null;
+                switch (type)
+                {
+                    case "thread.started":
+                        thread = e.TryGetProperty("thread_id", out var th) ? th.GetString() : null; break;
+                    case "turn.completed":
+                        completed = true;
+                        if (e.TryGetProperty("usage", out var u))
+                            tokens = new TokenUsage(
+                                u.TryGetProperty("input_tokens", out var i) ? i.GetInt64() : 0,
+                                u.TryGetProperty("cached_input_tokens", out var c) ? c.GetInt64() : 0,
+                                u.TryGetProperty("output_tokens", out var o) ? o.GetInt64() : 0);
+                        break;
+                    case "turn.failed":
+                        error = e.TryGetProperty("error", out var er) && er.TryGetProperty("message", out var m) ? m.GetString() : line; break;
+                    case "error":
+                        error ??= e.TryGetProperty("message", out var msg) ? msg.GetString() : line; break;
+                }
+            }
+            catch (JsonException) { /* dòng hỏng: bỏ qua, kết luận dựa trên turn.completed */ }
+        }
+        bool ok = completed && error == null && res.ExitCode == 0;
+        var kind = ErrorClassifier.Classify((error ?? "") + "\n" + res.StdErr, ok);
+        return new AgentRunResult(id, kind, ok ? lastMessage : "", tokens, res.Duration, model, thread,
+            ok ? "" : AgyProvider.Clip(error ?? res.StdErr));
+    }
+
+    public async Task<ProviderHealth> CheckAsync(CancellationToken ct)
+    {
+        var (exe, prefix) = ResolveLaunch();
+        if (prefix.Count > 0 && !File.Exists(prefix[0])) return new ProviderHealth(Id, false, null, $"Chưa cài: {prefix[0]}");
+        var empty = Path.GetTempFileName();
+        try
+        {
+            var res = await runner.RunAsync(new ProcessSpec(exe, [.. prefix, "login", "status"], Path.GetTempPath(), empty, TimeSpan.FromSeconds(60)), ct).ConfigureAwait(false);
+            var all = res.StdOut + res.StdErr;
+            bool logged = res.ExitCode == 0 && all.Contains("Logged in", StringComparison.OrdinalIgnoreCase);
+            return new ProviderHealth(Id, true, logged, AgyProvider.Clip(all));
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            return new ProviderHealth(Id, false, null, ex.Message);
+        }
+        finally { File.Delete(empty); }
+    }
+}

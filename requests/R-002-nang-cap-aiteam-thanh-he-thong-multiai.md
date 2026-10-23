@@ -29,6 +29,8 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-002` để `team.ps1 reque
 | 09:55 | Cài Codex CLI 0.164.0 (npm `@openai/codex`). Máy đã đăng nhập ChatGPT sẵn (app Codex desktop) | `~/.codex/config.toml` là của app desktop ⇒ AITeam KHÔNG sửa, chỉ ghi đè theo lần gọi (`-m`, `-c mcp_servers={}`) |
 | 10:05 | Thử review chỉ đọc: lỗi model `gpt-5.3-codex` không hỗ trợ tài khoản ChatGPT; lời nhắn phải qua stdin (PowerShell 5.1) ⇒ chạy được với `-m gpt-6.1-sol`: 39 giây, ~80k token vào (58k cache), 934 ra, JSON đúng lược đồ, repo không đổi | Đủ điều kiện làm P0-3 |
 | 10:10 | Codex tìm 2 lỗ hổng thật trong `tools/secret-scan.ps1` (miễn `templates/` cả file `.pem`; bỏ qua cả dòng có chữ "example"). Claude kiểm chứng đúng, tự sửa (~6 dòng), thử trên repo tạm + quét lại 60 commit × 3 repo không chặn nhầm | Bằng chứng giá trị của reviewer thứ hai |
+| 10:20 | Ghi nghiên cứu user Windows thứ 2 (B3b): khả thi bằng cách chính thống (Codex desktop cũng tạo user sandbox riêng); cần chủ dự án tạo user (UAC) + thử nghiệm dừng tiến trình khác user | Chờ chủ dự án |
+| 10:50 | Claude làm P0-1 + P0-2: `core/AITeam.Core` (ProcessRunner không qua shell + giết cả cây khi quá giờ; IAgentProvider; AgyProvider; CodexProvider chỉ đọc bằng sandbox CLI; ErrorClassifier; ProviderSettings đọc team.json / team.local.json, cấu hình hỏng thì báo lỗi), `aiteam.exe providers / task-info`, 19 test với mẫu output thật | Build 0 warning; 19 + 159 test; chạy thật: agy OK, codex OK |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- aiteam.exe: lệnh mới của AITeam (team.ps1 gọi sang dần). Thiết kế: ../../docs/design/V4-MULTI-AI.md -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>aiteam</AssemblyName>
+    <RootNamespace>AITeam.Cli</RootNamespace>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AITeam.Core\AITeam.Core.csproj" />
+  </ItemGroup>
+
+</Project>
