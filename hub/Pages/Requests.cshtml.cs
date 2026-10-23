@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
