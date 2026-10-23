@@ -14,7 +14,8 @@ $ErrorActionPreference = "Stop"
 
 # Tên file không bao giờ được commit
 $badNames = '(^|/)(\.env(\.[^/]*)?|secrets?\.[^/]+|[^/]*\.(pem|pfx|p12|key|lic|kdbx)|id_(rsa|ed25519)[^/]*|signing-key\.dat|vault\.dat)$'
-$allowNames = '(^|/)\.env\.example$|(^|/)templates/'
+# Chỉ miễn mẫu cấu hình (.env.example, templates/*.env*). KHÔNG BAO GIỜ miễn file khóa / chứng chỉ, kể cả trong templates/ (Codex review 23/10).
+$allowNames = '(^|/)\.env\.example$|(^|/)templates/[^/]*\.env[^/]*$'
 
 # Nội dung giống bí mật (khóa API, token, private key, mật khẩu ghi thẳng)
 $patterns = [ordered]@{
@@ -46,9 +47,11 @@ try {
     foreach ($line in $diff) {
         if ($line -match '^\+\+\+ b/(.+)$') { $current = $Matches[1]; continue }
         if (-not $line.StartsWith('+') -or $line.StartsWith('+++')) { continue }
-        if ($current -match '(^|/)(tests?|templates)/' -and $line -match '(?i)(test|fake|example|matkhau\d|xxxx)') { continue }
+        $fakeOk = $current -match '(^|/)(tests?|templates)/'
         foreach ($name in $patterns.Keys) {
             if ($line -match $patterns[$name]) {
+                # Trong tests/ hoặc templates/ chỉ bỏ qua khi CHÍNH chuỗi khớp là giá trị giả, không bỏ qua cả dòng (Codex review 23/10).
+                if ($fakeOk -and $Matches[0] -match '(?i)(test|fake|example|matkhau\d|xxxx)') { continue }
                 $shown = $line.Substring(1).Trim()
                 if ($shown.Length -gt 80) { $shown = $shown.Substring(0, 80) + "…" }
                 $problems += "${name}: $current → $shown"
