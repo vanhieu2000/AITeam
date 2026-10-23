@@ -1,4 +1,4 @@
-# H3-02 · Hub v3: trang Tổng quan (chỉ số, biểu đồ thời gian, danh sách nhiệm vụ)
+﻿# H3-02 · Hub v3: trang Tổng quan (chỉ số, biểu đồ thời gian, danh sách nhiệm vụ)
 
 - **Agent:** B
 - **Nhánh:** `agent-b/H3-02-hub-overview-v3`
@@ -63,17 +63,18 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2; mockup `docs/design/hub-v3-mockup
 - `hub.tests/AcceptanceH302IndexTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 19 ca nghiệm thu H3-02 và các test cũ của trang Tổng quan).
-- [ ] `Index.cshtml`, `_GanttPartial.cshtml` đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 19 ca nghiệm thu H3-02 và các test cũ của trang Tổng quan).
+- [x] `Index.cshtml`, `_GanttPartial.cshtml` đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| Build 0 warning & Test pass hết | `dotnet build AITeam.sln` (0 Warning, 0 Error); `dotnet test AITeam.sln --blame-hang-timeout 3m` (Passed: 59 Core.Tests + 225 Hub.Tests = 284/284, gồm 19 ca nghiệm thu H3-02) |
+| Bố cục `Index.cshtml` & `_GanttPartial.cshtml` | Đúng mục Bố cục (hộp lỗi `V3Error`, 5 KPI, panel Biểu đồ thời gian + SVG partial, panel Danh sách nhiệm vụ + bộ lọc JS, giữ nguyên phần cũ; pass `Razor_markup_follows_layout`) |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hiện thực `GanttLayout.FitWindow`/`Build`, `IndexModel.LoadV3` và các hàm pill/percent trong `Index.v3.cs`, tạo `_GanttPartial.cshtml` vẽ SVG biểu đồ thời gian (dùng `CultureInfo.InvariantCulture`) và cập nhật `Index.cshtml` thêm 5 KPI, biểu đồ thời gian, bảng nhiệm vụ kèm lọc dự án/trạng thái.
+- **File đã đổi:** `hub/Services/GanttLayout.cs`, `hub/Pages/Index.v3.cs`, `hub/Pages/Index.cshtml`, `hub/Pages/Shared/_GanttPartial.cshtml`, `tasks/H3-02-hub-overview-v3.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
 

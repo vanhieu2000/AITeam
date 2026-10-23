@@ -33,18 +33,79 @@ public partial class IndexModel
     ///   "fit" ⇒ GanttLayout.FitWindow(Insights.Tasks, now). Chart = GanttLayout.Build(Insights.Tasks, from, to) (width, maxRows mặc định).
     /// </summary>
     private void LoadV3()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (!Ranges.Contains(Range))
+            Range = "fit";
+
+        try
+        {
+            PendingApprovals = _approvals?.GetAll().Count(a => a.Status == ApprovalStatus.Pending) ?? 0;
+        }
+        catch
+        {
+            PendingApprovals = 0;
+        }
+
+        if (_insights is null)
+        {
+            Insights = null;
+            Chart = null;
+            TaskRows = Array.Empty<TaskInsight>();
+            V3Error = null;
+            return;
+        }
+
+        try
+        {
+            Insights = _insights.Get();
+        }
+        catch (Exception ex)
+        {
+            V3Error = "Không đọc được dữ liệu đánh giá: " + ex.Message;
+            Insights = null;
+            Chart = null;
+            TaskRows = Array.Empty<TaskInsight>();
+            return;
+        }
+
+        V3Error = null;
+        TaskRows = Insights.Tasks.Take(20).ToList();
+        var now = Now();
+        var (from, to) = Range switch
+        {
+            "24h" => (now.AddHours(-24), now),
+            "7d" => (now.AddDays(-7), now),
+            "30d" => (now.AddDays(-30), now),
+            _ => GanttLayout.FitWindow(Insights.Tasks, now),
+        };
+        Chart = GanttLayout.Build(Insights.Tasks, from, to);
+    }
+
 
     /// <summary>S ⇒ ("pill ok","S"); M ⇒ ("pill run","M"); L ⇒ ("pill err","L"); Unknown ⇒ ("pill n","—").</summary>
-    public static (string Css, string Text) DifficultyPill(Difficulty d)
-        => throw new NotImplementedException(); // TODO(agent)
+    public static (string Css, string Text) DifficultyPill(Difficulty d) => d switch
+    {
+        Difficulty.S => ("pill ok", "S"),
+        Difficulty.M => ("pill run", "M"),
+        Difficulty.L => ("pill err", "L"),
+        _ => ("pill n", "—"),
+    };
+
 
     /// <summary>Assigned ⇒ ("pill run","Đang làm"); Review ⇒ ("pill rev","Chờ review"); NeedsFix ⇒ ("pill fix","Cần sửa");
     /// Merged ⇒ ("pill ok","Đã merge"); Unknown ⇒ ("pill n","?").</summary>
-    public static (string Css, string Text) StatePill(TaskState s)
-        => throw new NotImplementedException(); // TODO(agent)
+    public static (string Css, string Text) StatePill(TaskState s) => s switch
+    {
+        TaskState.Assigned => ("pill run", "Đang làm"),
+        TaskState.Review => ("pill rev", "Chờ review"),
+        TaskState.NeedsFix => ("pill fix", "Cần sửa"),
+        TaskState.Merged => ("pill ok", "Đã merge"),
+        _ => ("pill n", "?"),
+    };
+
 
     /// <summary>0.5 ⇒ "50%"; 0.666 ⇒ "67%" (làm tròn); null ⇒ "—".</summary>
     public static string Percent(double? rate)
-        => throw new NotImplementedException(); // TODO(agent)
+        => rate is null ? "—" : $"{Math.Round(rate.Value * 100):0}%";
+
 }
