@@ -1,4 +1,5 @@
-@page
+﻿@page
+@using AITeam.Hub.Pages
 @model AITeam.Hub.Pages.IndexModel
 @{
     ViewData["Title"] = "Tổng quan";
@@ -8,24 +9,145 @@
     <span class="faint" style="font-size: 12px;">Cập nhật @DateTime.Now.ToString("HH:mm") · tự làm mới 15 giây</span>
 }
 
-<div class="kpis">
-    <div class="kpi">
-        <b>@Model.TotalProjects</b>
-        <span>Dự án</span>
+@if (!string.IsNullOrEmpty(Model.V3Error))
+{
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--err); margin-right: 8px;">✗</span>
+        <span>@Model.V3Error</span>
     </div>
+}
+
+<div class="kpis" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
     <div class="kpi run">
-        <b>@Model.TotalAssigned</b>
-        <span>Đang làm</span>
+        <b>@Model.RunningAgents.Count</b>
+        <span>Đang chạy</span>
     </div>
-    <div class="kpi rev">
-        <b>@Model.TotalReview</b>
-        <span>Chờ review</span>
+    <a href="/Approvals" style="text-decoration: none; color: inherit;">
+        <div class="kpi fix">
+            <b>@Model.PendingApprovals</b>
+            <span>Chờ anh duyệt</span>
+        </div>
+    </a>
+    <div class="kpi">
+        <b>@IndexModel.Percent(Model.Insights?.Kpis.Round1Rate)</b>
+        <span>Đạt vòng 1 (@(Model.Insights?.Kpis.TasksCounted ?? 0) task gần nhất)</span>
+    </div>
+    <div class="kpi">
+        <b>@(Model.Insights?.Kpis.AvgAgentMinutes is double avg ? avg.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "′" : "—")</b>
+        <span>Phút agent TB / task</span>
     </div>
     <div class="kpi fix">
         <b>@Model.TotalNeedsFix</b>
         <span>Cần sửa</span>
     </div>
 </div>
+
+<div class="panel" style="margin-bottom: 14px;">
+    <div class="hd">
+        <span>Biểu đồ thời gian</span>
+        <span class="sp"></span>
+        <a class="btn sm @(Model.Range == "fit" ? "pri" : "")" href="?range=fit">Gần nhất</a>
+        <a class="btn sm @(Model.Range == "24h" ? "pri" : "")" href="?range=24h">24 giờ</a>
+        <a class="btn sm @(Model.Range == "7d" ? "pri" : "")" href="?range=7d">7 ngày</a>
+        <a class="btn sm @(Model.Range == "30d" ? "pri" : "")" href="?range=30d">30 ngày</a>
+    </div>
+    <div class="bd" style="overflow-x: auto;">
+        <div class="row muted" style="gap: 14px; font-size: 12px; margin-bottom: 8px;">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f59e0b;margin-right:4px;"></span>Code</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ef4444;margin-right:4px;"></span>Sửa lại</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#a78bfa;margin-right:4px;"></span>Review</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#22c55e;margin-right:4px;"></span>Merge</span>
+        </div>
+        @if (Model.Chart != null)
+        {
+            <partial name="_GanttPartial" model="Model.Chart" />
+        }
+    </div>
+</div>
+
+<div class="panel" style="margin-bottom: 14px;">
+    <div class="hd">
+        <span>Danh sách nhiệm vụ</span>
+        <span class="sp"></span>
+        <select id="f-project" class="inp" style="width: auto;">
+            <option value="">Tất cả dự án</option>
+            @foreach (var proj in Model.TaskRows.Select(t => t.Project).Distinct())
+            {
+                <option value="@proj">@proj</option>
+            }
+        </select>
+        <select id="f-state" class="inp" style="width: auto;">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Assigned">Đang làm</option>
+            <option value="Review">Chờ review</option>
+            <option value="NeedsFix">Cần sửa</option>
+            <option value="Merged">Đã merge</option>
+        </select>
+    </div>
+    @if (Model.TaskRows.Count == 0)
+    {
+        <div class="empty">Chưa có nhiệm vụ.</div>
+    }
+    else
+    {
+        <div class="bd" style="overflow-x: auto; padding: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Nhiệm vụ</th>
+                        <th>Dự án</th>
+                        <th>Người</th>
+                        <th>Độ khó</th>
+                        <th>Trạng thái</th>
+                        <th class="num">Phút agent</th>
+                        <th class="num">Vòng</th>
+                        <th class="num">Điểm quy trình</th>
+                        <th>Yêu cầu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.TaskRows)
+                    {
+                        var diffPill = IndexModel.DifficultyPill(t.Difficulty);
+                        var statePill = IndexModel.StatePill(t.State);
+                        <tr class="task-row" data-project="@t.Project" data-state="@t.State">
+                            <td><a href="/p/@t.Project/t/@t.Id"><b>@t.Id</b></a></td>
+                            <td>@t.Title</td>
+                            <td class="muted">@t.Project</td>
+                            <td>@t.StaffName</td>
+                            <td><span class="@diffPill.Css">@diffPill.Text</span></td>
+                            <td><span class="@statePill.Css">@statePill.Text</span></td>
+                            <td class="num">@(t.Runs == 0 ? "—" : $"{t.AgentMinutes}′")</td>
+                            <td class="num">@(t.ReviewRounds == 0 ? "—" : t.ReviewRounds.ToString())</td>
+                            <td class="num">@(t.ProcessScore is double ps ? $"{ps.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} / 5" : "—")</td>
+                            <td class="muted">@(string.IsNullOrEmpty(t.Request) ? "—" : t.Request)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="muted" style="padding: 8px 12px; font-size: 12px;">Hiện tối đa 20 task gần nhất.</div>
+        </div>
+    }
+</div>
+
+<script>
+(function () {
+    var fp = document.getElementById('f-project');
+    var fs = document.getElementById('f-state');
+    function applyFilter() {
+        var p = fp ? fp.value : '';
+        var s = fs ? fs.value : '';
+        document.querySelectorAll('tr.task-row').forEach(function (tr) {
+            var mp = !p || tr.getAttribute('data-project') === p;
+            var ms = !s || tr.getAttribute('data-state') === s;
+            tr.style.display = (mp && ms) ? '' : 'none';
+        });
+    }
+    if (fp) fp.addEventListener('change', applyFilter);
+    if (fs) fs.addEventListener('change', applyFilter);
+})();
+</script>
 
 <div class="grid" style="grid-template-columns: minmax(0, 1fr) 340px;">
     <!-- Cột trái: Bảng dự án + Hoạt động gần đây -->
