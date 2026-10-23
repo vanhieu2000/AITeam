@@ -1,0 +1,118 @@
+﻿@page "/Requests"
+@model AITeam.Hub.Pages.RequestsModel
+@using AITeam.Hub.Pages
+@{ ViewData["Title"] = "Giao việc"; }
+<style>
+    .chat { display: flex; flex-direction: column; gap: 10px; max-height: 520px; overflow-y: auto; }
+    .msg { max-width: 78%; padding: 9px 12px; border-radius: 10px; overflow-wrap: anywhere; font-size: 13px; }
+    .msg.me { align-self: flex-end; background: var(--accent); color: #fff; }
+        .msg.me .verbatim { white-space: pre-wrap; }
+    .msg.bot { align-self: flex-start; background: var(--s2, #f1f3f6); color: var(--ink, #111); }
+    .req-item { display: block; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; text-decoration: none; color: inherit; }
+    .req-item.on { border-color: var(--accent); }
+    .req-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="panel" style="border-color: var(--ok); background: rgba(34, 197, 94, 0.08); padding: 10px 14px; margin-bottom: 12px; color: var(--ok);">@Model.Message</div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="panel" style="border-color: var(--err); background: rgba(239, 68, 68, 0.08); padding: 10px 14px; margin-bottom: 12px; color: var(--err);">@Model.ErrorMessage</div>
+}
+
+<p class="muted" style="margin: 0 0 12px;">Yêu cầu mới vào hàng chờ; Claude nhận ở đầu phiên làm việc, mở phiếu R-xxx và trả lời trong luồng này. Không có AI trả lời tức thì.</p>
+
+<div style="display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 14px; align-items: start;">
+    <div class="panel">
+        <div class="hd">Phiếu yêu cầu</div>
+        <div class="bd" style="max-height: 640px; overflow-y: auto;">
+            @if (Model.Waiting.Count > 0)
+            {
+                <div class="muted" style="font-size: 12px; font-weight: 600; margin-bottom: 6px;">Chờ Claude nhận</div>
+                @foreach (var w in Model.Waiting)
+                {
+                    <div class="req-item">
+                        <div style="font-size: 12px; margin-bottom: 4px;"><span class="pill run">Chờ nhận</span> · @w.Project · @(w.Time?.ToString("HH:mm dd/MM") ?? "—")</div>
+                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px;">@w.Text</div>
+                    </div>
+                }
+            }
+            @if (Model.Threads.Count == 0)
+            {
+                <div class="empty">Chưa có phiếu yêu cầu nào.</div>
+            }
+            else
+            {
+                @foreach (var t in Model.Threads)
+                {
+                    <a href="?id=@t.Id" class="req-item @(Model.Selected?.Id == t.Id ? "on" : "")">
+                        <div class="req-title"><b>@t.Id</b> @t.Title</div>
+                        <div class="muted" style="font-size: 12px; margin-top: 4px;">@t.Status · @t.Tasks.Count task</div>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+
+    <div style="min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+        @if (Model.Selected != null)
+        {
+            <div class="panel">
+                <div class="hd"><span>@Model.Selected.Id · @Model.Selected.Title</span><span class="sp"></span><span>@Model.Selected.Status</span></div>
+                <div class="bd">
+                    <div class="chat">
+                        <div class="msg me">
+                            <div class="verbatim">@(string.IsNullOrEmpty(Model.Selected.Verbatim) ? "(phiếu không chép lời nguyên văn)" : Model.Selected.Verbatim)</div>
+                            <div style="font-size: 11px; opacity: 0.85; margin-top: 4px;">Anh · @Model.Selected.ReceivedAt</div>
+                        </div>
+                        @foreach (var e in Model.Selected.Events)
+                        {
+                            <div class="msg bot">
+                                <div style="font-size: 11px; margin-bottom: 2px;"><b>Claude</b> · @e.Time</div>
+                                <div>@e.Text</div>
+                                @if (!string.IsNullOrEmpty(e.Note)) { <div class="muted" style="font-size: 12px; margin-top: 2px;">@e.Note</div> }
+                            </div>
+                        }
+                        @if (Model.Selected.Tasks.Count > 0)
+                        {
+                            <div class="msg bot">
+                                <div style="margin-bottom: 6px;">Chia việc:</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    @foreach (var tk in Model.Selected.Tasks)
+                                    {
+                                        var label = string.IsNullOrEmpty(tk.Code) ? tk.Title : $"{tk.Code} · {tk.Who}";
+                                        if (!string.IsNullOrEmpty(tk.Code) && !string.IsNullOrEmpty(tk.Project) && !tk.Code.Contains('/'))
+                                        { <a class="tag" href="/p/@tk.Project/t/@tk.Code">@label</a> }
+                                        else { <span class="tag">@label</span> }
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @if (Model.Selected.Evaluated)
+                        {
+                            <div class="msg bot">Đã đánh giá xong yêu cầu (mục 4 trong @Model.Selected.FileName).</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="panel">
+            <div class="bd">
+                <form method="post" asp-page-handler="Send" style="display: flex; flex-direction: column; gap: 8px;">
+                    @Html.AntiForgeryToken()
+                    <div>
+                        <select class="inp" name="project">
+                            @foreach (var p in Model.Projects) { <option value="@p.Name">@p.Name</option> }
+                            <option value="@RequestsModel.NewProject">@RequestsModel.NewProject</option>
+                        </select>
+                    </div>
+                    <textarea class="inp" name="text" rows="3" maxlength="4000" placeholder="Viết yêu cầu mới…" style="width: 100%; box-sizing: border-box;"></textarea>
+                    <div style="display: flex; justify-content: flex-end;"><button type="submit" class="btn pri">Gửi</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

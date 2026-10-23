@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using AITeam.Hub.DevData;
 using AITeam.Hub.Pages;
 using AITeam.Hub.Services;
@@ -71,6 +71,12 @@ public sealed class AntiforgerySecurityTests : IDisposable
     [InlineData("/Settings")]
     [InlineData("/Accounts")]
     [InlineData("/Secrets")]
+    // Hub v3 (R-003): dựng trang thật để bắt lỗi thiếu đăng ký dịch vụ (H3-05: /Requests trắng trang).
+    [InlineData("/")]
+    [InlineData("/Approvals")]
+    [InlineData("/Team")]
+    [InlineData("/Process")]
+    [InlineData("/Requests")]
     public async Task Pages_render_successfully_with_fake_services(string path)
     {
         var options = new WebApplicationOptions

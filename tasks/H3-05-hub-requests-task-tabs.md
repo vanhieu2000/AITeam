@@ -70,29 +70,43 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2, 4 (giới hạn: không có AI tr
 - `hub.tests/AcceptanceH305Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 14 ca nghiệm thu H3-05).
-- [ ] 2 trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 14 ca nghiệm thu H3-05).
+- [x] 2 trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết | `dotnet build AITeam.sln` → `Build succeeded. 0 Warning(s), 0 Error(s)`. `dotnet test AITeam.sln --blame-hang-timeout 3m` → `Passed! Core.Tests: 59/59, Hub.Tests: 243/243` (14/14 ca `AcceptanceH305Tests` pass). |
+| 2 trang đúng mục Bố cục | Kiểm qua `AcceptanceH305Tests.Razor_markup_follows_layout` pass; chưa chạy Hub trực tiếp theo quy định agent. |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `RequestParser.Parse`, `RequestService.GetAll/Get`, `RequestsModel.OnGet/OnPostSend`; viết bố cục `Requests.cshtml`; thêm 2 tab `Dòng thời gian` và `Đánh giá quy trình` vào `Task.cshtml`.
+- **File đã đổi:** `hub/Services/RequestService.cs`, `hub/Pages/Requests.cshtml.cs`, `hub/Pages/Requests.cshtml`, `hub/Pages/Task.cshtml`, `tasks/H3-05-hub-requests-task-tabs.md`.
+- **Điều chưa chắc:** Không có; giao diện thực tế chờ Claude chạy Hub kiểm tra khi review.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 14/14 ca nghiệm thu; build 0 warning; ~11 phút, 1 lượt; 348/380 dòng.
+- Code: đọc phiếu chịu được dữ liệu thiếu, chặn mã phiếu lạ, kiểm dự án / độ dài khi gửi, không `Html.Raw` mới.
+- Xem Hub thật (cổng 5058, dữ liệu thật): trang Giao việc hiện 3 phiếu R-001…R-003 với nhật ký; tab Dòng thời gian, Đánh giá quy trình của V4-06 đúng.
+- [AG] (BOM) mất BOM UTF-8 ở 3 file khung — lần 2 (H3-01) ⇒ thêm vào Lưu ý riêng của Minh. Cổng KT mới (IMP-001) tự trả lại, không tốn lượt.
+- [TK] (chất lượng) khung của Claude quên đăng ký `IRequestService` ⇒ trang /Requests trắng (lỗi 500); test nghiệm thu chỉ thử model, không dựng trang thật.
+- Claude sửa (~10 dòng, 10 phút): đăng ký `IRequestService`; thêm 5 trang v3 (/, /Approvals, /Team, /Process, /Requests) vào test dựng trang thật `Pages_render_successfully_with_fake_services`; chữ lời chủ dự án bị khoảng trống thừa (`pre-wrap` cả khối) ⇒ chỉ áp cho phần chữ. 59 + 248 test pass.
+
+Nhân viên: Minh (A) — 1 lượt, ~11 phút, 348/380 dòng.
 
 ## Kết quả
+- **Chức năng mới — trang Giao việc:** mỗi phiếu R-xxx là 1 luồng hội thoại (lời anh bên phải, các bước Claude làm có giờ bên trái, danh sách task đã chia); ô gửi yêu cầu mới (vào hàng chờ, Claude nhận đầu phiên).
+- **Trang chi tiết task thêm 2 tab:** Dòng thời gian (code / sửa lại / review / merge + số phút) và Đánh giá quy trình (7 giai đoạn, tô màu điểm).
+- **Kiểm chứng:** 14 ca nghiệm thu + 5 trang dựng thật trong test; chạy Hub với dữ liệu thật.
+- **Cần cải tiến:** chưa có AI trả lời tức thì trong luồng (giới hạn đã nói trong thiết kế).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Minh (A) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-003) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-003) | Dùng phiếu R-xxx sẵn có làm luồng chat, không cần lưu trữ mới | — | — |
+| 3. Plan / thiết kế | Claude | 4 | ~20' | Khung quên đăng ký dịch vụ mới | TK | Trang mới ⇒ luôn thêm vào test dựng trang thật (đã làm) |
+| 4. Giao việc | Claude | 5 | ~10' | Đổi sang Minh để chạy song song với Lan | — | — |
+| 5. Thực hiện code | Minh (A) | 4 | ~11' (1 lượt) | Đúng đặc tả; mất BOM lần 2 | AG | Lưu ý riêng (đã thêm) |
+| 6. Review / QC | Cổng KT + Claude | 4 | ~15' | Cổng KT tự trả BOM (IMP-001 có tác dụng); lỗi trắng trang chỉ lộ khi chạy thật | TK | Như mục 3 |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |

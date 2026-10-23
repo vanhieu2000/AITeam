@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AITeam.Hub.Services;
 
@@ -11,6 +11,7 @@ public static class HubV3Registration
         services.TryAddSingleton<IApprovalService, ApprovalService>();
         services.TryAddSingleton<IGitHistory, GitHistory>();
         services.TryAddSingleton<ITeamInsightsService, TeamInsightsService>();
+        services.TryAddSingleton<IRequestService, RequestService>();
         return services;
     }
 }
