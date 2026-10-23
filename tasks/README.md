@@ -18,7 +18,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H-007 Hub v2: Dự án + Task](H-007-hub-v2-project-task.md) | A | `agent-a/H-007-hub-v2-project-task` | ✅ Đã merge (vòng 1, Claude hoàn tất) |
 | [H-008 Hub v2: Agent, Hộp thư, Tài khoản, Bí mật, Cài đặt](H-008-hub-v2-agents-inbox-secrets-settings.md) | A | `agent-a/H-008-hub-v2-other-pages` | ✅ Đã merge (vòng 1, Claude hoàn tất) |
 | [V4-03 Codex review chỉ đọc](V4-03-codex-review.md) | A | `agent-a/V4-03-codex-review` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 23:32 23/10/2026 |
-| [V4-06 Trạng thái job + phục hồi](V4-06-job-state.md) | B | `agent-b/V4-06-job-state` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 23:33 23/10/2026 |
+| [V4-06 Trạng thái job + phục hồi](V4-06-job-state.md) | B | `agent-b/V4-06-job-state` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 23:43 23/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
