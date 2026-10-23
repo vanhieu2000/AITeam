@@ -15,7 +15,11 @@
 ## 2. Chia việc
 | Task | Dự án | Ai | Ngân sách | Model | Vì sao giao / tự làm |
 |---|---|---|---|---|---|
-| | | A / B / Claude | ~N dòng | mặc định | |
+| P0-1 khung AITeam.Core + aiteam.exe | AITeam | Claude | ~300 | — | Chốt kiến trúc |
+| P0-2 Provider adapter (agy, Codex) | AITeam | Claude | ~350 | — | Chốt hợp đồng provider |
+| V4-03 Codex review chỉ đọc | AITeam | Minh (A) | ~250 | mặc định | Khung + test nghiệm thu có sẵn |
+| V4-06 Trạng thái job + phục hồi | AITeam | Lan (B) | ~250 | mặc định | Khung + test nghiệm thu có sẵn |
+| P0-4/5 routing + cấm tự duyệt, P0-7 gắn vào assign, P0-8 Hub | AITeam | (sau V4-03/06) | | | |
 
 Mỗi file task phải có dòng `- **Yêu cầu:** R-002` để `team.ps1 request-report` gom số liệu.
 
@@ -31,6 +35,8 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-002` để `team.ps1 reque
 | 10:10 | Codex tìm 2 lỗ hổng thật trong `tools/secret-scan.ps1` (miễn `templates/` cả file `.pem`; bỏ qua cả dòng có chữ "example"). Claude kiểm chứng đúng, tự sửa (~6 dòng), thử trên repo tạm + quét lại 60 commit × 3 repo không chặn nhầm | Bằng chứng giá trị của reviewer thứ hai |
 | 10:20 | Ghi nghiên cứu user Windows thứ 2 (B3b): khả thi bằng cách chính thống (Codex desktop cũng tạo user sandbox riêng); cần chủ dự án tạo user (UAC) + thử nghiệm dừng tiến trình khác user | Chờ chủ dự án |
 | 10:50 | Claude làm P0-1 + P0-2: `core/AITeam.Core` (ProcessRunner không qua shell + giết cả cây khi quá giờ; IAgentProvider; AgyProvider; CodexProvider chỉ đọc bằng sandbox CLI; ErrorClassifier; ProviderSettings đọc team.json / team.local.json, cấu hình hỏng thì báo lỗi), `aiteam.exe providers / task-info`, 19 test với mẫu output thật | Build 0 warning; 19 + 159 test; chạy thật: agy OK, codex OK |
+| 11:10 | Claude viết khung + 37 ca test nghiệm thu (đỏ đúng mong đợi) cho V4-03 Codex review và V4-06 trạng thái job, đặt trên nhánh task (không lên main) | Sửa 1 dòng cẩu thả của chính Claude trong test (`|| true`) |
+| 11:15 | Giao V4-03 → Minh (A), V4-06 → Lan (B), song song, mỗi task ~250 dòng / 25 phút | Quy trình v3 lần đầu áp dụng đủ: khung code + Đọc + ngân sách + thời gian tối đa |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
