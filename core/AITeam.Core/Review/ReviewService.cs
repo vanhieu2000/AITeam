@@ -1,4 +1,9 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AITeam.Core.Providers;
+using AITeam.Core.Tasks;
 
 namespace AITeam.Core.Review;
 
@@ -8,6 +13,12 @@ namespace AITeam.Core.Review;
 /// </summary>
 public sealed class ReviewService
 {
+    private static readonly JsonSerializerOptions SaveJsonOptions = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     /// <summary>Lược đồ JSON bắt buộc reviewer trả về (Codex: --output-schema). Đã thử thật 23/10 với gpt-6.1-sol.</summary>
     public const string OutputSchemaJson = """
         {"type":"object","additionalProperties":false,"required":["verdict","findings","unverified"],
@@ -29,7 +40,50 @@ public sealed class ReviewService
     /// </summary>
     public ReviewPack BuildPack(ReviewPackInput input)
     {
-        throw new NotImplementedException("TODO(agent)");
+        ArgumentNullException.ThrowIfNull(input);
+        var task = TaskFile.Parse("task.md", input.TaskFileText ?? "");
+        var fullDiff = input.DiffText ?? "";
+        var diffHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fullDiff))).ToLowerInvariant();
+
+        var maxChars = Math.Max(0, input.MaxDiffChars);
+        var truncated = fullDiff.Length > maxChars;
+        var diffBody = truncated
+            ? $"{fullDiff[..maxChars]}\n[ĐÃ CẮT {fullDiff.Length - maxChars} ký tự]"
+            : fullDiff;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("# Yêu cầu Review Độc Lập (CHỈ ĐỌC)");
+        sb.AppendLine("Bạn đang ở vai trò Reviewer CHỈ ĐỌC (ReadOnly). Tuyệt đối không sửa file. Hãy đối chiếu diff với tiêu chí task và trả lời đúng lược đồ JSON yêu cầu.");
+        sb.AppendLine();
+        sb.AppendLine($"## Task: {task.Id} · {task.Title}");
+
+        AppendSection(sb, "Tóm tắt", task.Section("Tóm tắt"));
+        AppendSection(sb, "Mục tiêu", task.Section("Mục tiêu"));
+        AppendSection(sb, "Phạm vi", task.Section("Phạm vi"));
+        AppendSection(sb, "Tiêu chí hoàn thành", task.Section("Tiêu chí"));
+        AppendSection(sb, "Test nghiệm thu", task.Section("Test nghiệm thu"));
+        AppendSection(sb, "Báo cáo của agent", task.Section("Báo cáo của agent"));
+
+        if (!string.IsNullOrWhiteSpace(input.DesignExcerpt))
+            AppendSection(sb, "Thiết kế liên quan", input.DesignExcerpt);
+
+        if (!string.IsNullOrWhiteSpace(input.VerifyReport))
+            AppendSection(sb, "Báo cáo cổng kiểm tra", input.VerifyReport);
+
+        sb.AppendLine("## Diff");
+        sb.AppendLine("```diff");
+        sb.AppendLine(diffBody);
+        sb.AppendLine("```");
+
+        return new ReviewPack(sb.ToString(), diffHash, truncated);
+    }
+
+    private static void AppendSection(StringBuilder sb, string title, string? content)
+    {
+        if (string.IsNullOrWhiteSpace(content)) return;
+        sb.AppendLine($"### {title}");
+        sb.AppendLine(content.Trim());
+        sb.AppendLine();
     }
 
     /// <summary>
@@ -38,7 +92,100 @@ public sealed class ReviewService
     /// </summary>
     public static (ReviewVerdict Verdict, IReadOnlyList<ReviewFinding> Findings, IReadOnlyList<string> Unverified)? ParseOutput(string text)
     {
-        throw new NotImplementedException("TODO(agent)");
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        if (start < 0 || end <= start) return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(text.Substring(start, end - start + 1));
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return null;
+
+            if (!TryGetPropertyIgnoreCase(root, "verdict", out var verdictEl) || verdictEl.ValueKind != JsonValueKind.String)
+                return null;
+
+            var verdictStr = verdictEl.GetString()?.Trim().ToUpperInvariant();
+            ReviewVerdict verdict = verdictStr switch
+            {
+                "PASS" => ReviewVerdict.Pass,
+                "CHANGES_REQUESTED" or "CHANGESREQUESTED" => ReviewVerdict.ChangesRequested,
+                "BLOCKED" => ReviewVerdict.Blocked,
+                _ => (ReviewVerdict)(-1)
+            };
+            if ((int)verdict < 0) return null;
+
+            var findings = new List<ReviewFinding>();
+            if (TryGetPropertyIgnoreCase(root, "findings", out var findingsEl))
+            {
+                if (findingsEl.ValueKind != JsonValueKind.Array) return null;
+                foreach (var item in findingsEl.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object) return null;
+                    if (!TryGetPropertyIgnoreCase(item, "severity", out var sevEl) || sevEl.ValueKind != JsonValueKind.String)
+                        return null;
+
+                    var sevStr = sevEl.GetString()?.Trim().ToUpperInvariant();
+                    FindingSeverity severity = sevStr switch
+                    {
+                        "BLOCKER" => FindingSeverity.Blocker,
+                        "REQUIRED" => FindingSeverity.Required,
+                        "OPTIONAL" => FindingSeverity.Optional,
+                        _ => (FindingSeverity)(-1)
+                    };
+                    if ((int)severity < 0) return null;
+
+                    var file = TryGetPropertyIgnoreCase(item, "file", out var fileEl) && fileEl.ValueKind == JsonValueKind.String
+                        ? fileEl.GetString() ?? ""
+                        : "";
+                    var line = TryGetPropertyIgnoreCase(item, "line", out var lineEl) && lineEl.ValueKind == JsonValueKind.Number && lineEl.TryGetInt32(out var l)
+                        ? l
+                        : 0;
+                    var evidence = TryGetPropertyIgnoreCase(item, "evidence", out var evEl) && evEl.ValueKind == JsonValueKind.String
+                        ? evEl.GetString() ?? ""
+                        : "";
+                    var fix = TryGetPropertyIgnoreCase(item, "fix", out var fixEl) && fixEl.ValueKind == JsonValueKind.String
+                        ? fixEl.GetString() ?? ""
+                        : "";
+
+                    findings.Add(new ReviewFinding(severity, file, line, evidence, fix));
+                }
+            }
+
+            var unverified = new List<string>();
+            if (TryGetPropertyIgnoreCase(root, "unverified", out var unvEl))
+            {
+                if (unvEl.ValueKind != JsonValueKind.Array) return null;
+                foreach (var item in unvEl.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String && item.GetString() is { } s)
+                        unverified.Add(s);
+                }
+            }
+
+            return (verdict, findings, unverified);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement obj, string name, out JsonElement value)
+    {
+        if (obj.TryGetProperty(name, out value)) return true;
+        foreach (var prop in obj.EnumerateObject())
+        {
+            if (string.Equals(prop.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = prop.Value;
+                return true;
+            }
+        }
+        value = default;
+        return false;
     }
 
     /// <summary>
@@ -54,7 +201,67 @@ public sealed class ReviewService
     public async Task<ReviewResult> ReviewAsync(ReviewPack pack, IAgentProvider reviewer, string developerProviderId,
         string workDir, string logDir, TimeSpan timeout, CancellationToken ct)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException("TODO(agent)");
+        Directory.CreateDirectory(logDir);
+
+        if (string.Equals(reviewer.Id, developerProviderId, StringComparison.OrdinalIgnoreCase))
+        {
+            return SaveResult(logDir, new ReviewResult(
+                ReviewVerdict.Blocked, [], [], reviewer.Id, null, TimeSpan.Zero, TokenUsage.Unknown, pack.DiffHash,
+                $"Chặn tự duyệt: reviewer '{reviewer.Id}' trùng developer '{developerProviderId}'."));
+        }
+
+        if (!reviewer.HasReadOnlySandbox)
+        {
+            return SaveResult(logDir, new ReviewResult(
+                ReviewVerdict.Blocked, [], [], reviewer.Id, null, TimeSpan.Zero, TokenUsage.Unknown, pack.DiffHash,
+                $"Provider '{reviewer.Id}' không hỗ trợ sandbox chỉ đọc (HasReadOnlySandbox = false)."));
+        }
+
+        var promptFile = Path.Combine(logDir, "prompt-review.md");
+        var schemaFile = Path.Combine(logDir, "schema-review.json");
+        await File.WriteAllTextAsync(promptFile, pack.Prompt, Encoding.UTF8, ct);
+        await File.WriteAllTextAsync(schemaFile, OutputSchemaJson, Encoding.UTF8, ct);
+
+        var request = new AgentRunRequest(
+            WorkDir: workDir,
+            PromptFile: promptFile,
+            Mode: RunMode.ReadOnly,
+            Timeout: timeout,
+            Model: null,
+            OutputSchemaFile: schemaFile,
+            LogDir: logDir);
+
+        var runResult = await reviewer.RunAsync(request, ct);
+        if (!runResult.Ok)
+        {
+            return SaveResult(logDir, new ReviewResult(
+                ReviewVerdict.Blocked, [], [], reviewer.Id, runResult.Model, runResult.Duration, runResult.Tokens, pack.DiffHash,
+                $"Provider lỗi ({runResult.Status}): {runResult.Detail}"));
+        }
+
+        var parsed = ParseOutput(runResult.Text);
+        if (parsed is null)
+        {
+            return SaveResult(logDir, new ReviewResult(
+                ReviewVerdict.Blocked, [], [], reviewer.Id, runResult.Model, runResult.Duration, runResult.Tokens, pack.DiffHash,
+                "Không đọc được kết luận review từ phản hồi của provider."));
+        }
+
+        var (verdict, findings, unverified) = parsed.Value;
+        if (verdict == ReviewVerdict.Pass && findings.Any(f => f.Severity is FindingSeverity.Blocker or FindingSeverity.Required))
+        {
+            verdict = ReviewVerdict.ChangesRequested;
+        }
+
+        var blockedReason = verdict == ReviewVerdict.Blocked ? "Reviewer trả kết luận BLOCKED." : "";
+        return SaveResult(logDir, new ReviewResult(
+            verdict, findings, unverified, reviewer.Id, runResult.Model, runResult.Duration, runResult.Tokens, pack.DiffHash, blockedReason));
+    }
+
+    private static ReviewResult SaveResult(string logDir, ReviewResult result)
+    {
+        var path = Path.Combine(logDir, $"review-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+        File.WriteAllText(path, JsonSerializer.Serialize(result, SaveJsonOptions), Encoding.UTF8);
+        return result;
     }
 }
