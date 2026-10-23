@@ -14,6 +14,7 @@ public static class FakeServices
         services.AddSingleton<IHealthService, FakeHealthService>();
         services.AddSingleton<IVaultService, FakeVaultService>();
         services.AddSingleton<IInboxService, FakeInboxService>();
+        services.AddHubV3(); // _Layout cần IApprovalService
     }
 }
 

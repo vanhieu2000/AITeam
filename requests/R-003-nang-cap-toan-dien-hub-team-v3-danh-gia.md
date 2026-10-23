@@ -34,6 +34,13 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-003` để `team.ps1 reque
 | 00:20 | Giao H3-01 (Minh): khung + 30 ca nghiệm thu | |
 | 00:24 | Giao H3-03 (Lan): khung + 17 ca nghiệm thu + bố cục | song song H3-01 |
 | 00:25 | Claude: team.ps1 approval-request + merge kiểm tra duyệt (~76 dòng, đã thử 7 trường hợp) | |
+| 00:29 | H3-01 Minh xong: 8', cổng KT ĐẠT lần 1 | báo vượt ngân sách nhầm (CK) |
+| 00:31 | H3-03 Lan xong: 7', cổng KT ĐẠT lần 1 | |
+| 00:40 | Review H3-01 ĐẠT vòng 1; Claude sửa ~10 dòng (BOM [AG], timeout git, cache) | [CK] cổng KT lọt BOM file khung + tính khung vào ngân sách ⇒ đã sửa verify |
+| 00:45 | Review H3-03 ĐẠT vòng 1 | |
+| 00:50 | Merge H3-01, H3-03 (clone sạch 59 + 206 test) | |
+| 00:55 | Claude: DI + menu "Cần anh duyệt"; tạo A-001 (quyết định user Windows thứ 2) | |
+| 00:37 | [TK] Claude commit DI + menu trước khi chạy hết test ⇒ 3 test dựng trang hỏng; sửa bằng HubV3Registration, 265 test pass | bài học: chạy test TRƯỚC commit kể cả sửa nhỏ |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
