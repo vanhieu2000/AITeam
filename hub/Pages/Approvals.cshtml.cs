@@ -22,8 +22,15 @@ public class ApprovalsModel : PageModel
     [TempData] public string? Message { get; set; }
     [TempData] public string? ErrorMessage { get; set; }
 
-    public void OnGet()
-        => throw new NotImplementedException(); // TODO(agent)
+    public void OnGet() => LoadAll();
+
+    private void LoadAll()
+    {
+        var all = _approvals.GetAll();
+        Pending = all.Where(a => a.Status == ApprovalStatus.Pending).ToList();
+        Decided = all.Where(a => a.Status != ApprovalStatus.Pending).ToList();
+    }
+
 
     /// <summary>
     /// decision "approve" ⇒ Decide(id, true, note); "reject" ⇒ Decide(id, false, note); khác ⇒ ErrorMessage, không gọi Decide.
@@ -32,5 +39,25 @@ public class ApprovalsModel : PageModel
     /// Luôn trả RedirectToPage() (PRG).
     /// </summary>
     public IActionResult OnPostDecide(string id, string decision, string? note)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (decision is not ("approve" or "reject"))
+        {
+            ErrorMessage = "Quyết định không hợp lệ.";
+            return RedirectToPage();
+        }
+        try
+        {
+            var approve = decision == "approve";
+            var a = _approvals.Decide(id, approve, note);
+            Message = $"{(approve ? "Đã duyệt" : "Đã từ chối")} {a.Id}: {a.Title}";
+        }
+        catch (Exception ex) when (ex is ArgumentException or KeyNotFoundException or InvalidOperationException)
+        {
+            ErrorMessage = ex.Message;
+        }
+        return RedirectToPage();
+    }
+
+
+
 }
