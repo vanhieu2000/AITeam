@@ -839,6 +839,17 @@ function Invoke-Verify {
     if ($scope.Count -gt 0) {
         $always = @("tasks/$($ctx.TaskFile.Name)", "docs/screenshots/$Task", "CHANGELOG.md") + $accept
         $out = @($changed | Where-Object { -not (Test-PathInScope $_ ($scope + $always)) })
+        # File khung do Claude đưa lên trong commit "Test nghiệm thu … (Claude)": agent KHÔNG đổi ⇒ không tính ngoài phạm vi.
+        # Agent sửa file khung (bị cấm) ⇒ vẫn bị bắt (V4-06: Lan phải gộp JobModels.cs để qua cổng).
+        $claudeCommit = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+        if ($claudeCommit -and $out.Count -gt 0) {
+            $out = @($out | Where-Object {
+                $inClaude = @(git -C $work show --name-only --format= $claudeCommit -- $_ 2>$null | Where-Object { $_ })
+                if (-not $inClaude) { return $true }
+                git -C $work diff --quiet $claudeCommit HEAD -- $_ 2>$null
+                return ($LASTEXITCODE -ne 0)
+            })
+        }
         if ($out.Count -gt 0) { [void]$fails.Add("Sửa NGOÀI PHẠM VI task ($($out.Count) file) — hoàn tác các file này hoặc ghi lý do bắt buộc vào báo cáo để quản lý quyết: " + (($out | Select-Object -First 10) -join ', ')) }
     } else { [void]$notes.Add("Task không ghi đường dẫn trong mục Phạm vi → bỏ qua kiểm tra phạm vi.") }
     # 4b. Ngân sách code: dòng "- **Ngân sách:** ~400 dòng" trong file task (không tính file task và test nghiệm thu).
