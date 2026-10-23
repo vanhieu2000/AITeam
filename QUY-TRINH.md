@@ -19,7 +19,7 @@
    - việc đơn giản ghi `Model: gemini-3.8-flash-medium`.
    - Việc ≤ ~100 dòng: Claude làm thẳng, không giao.
 3. `team.ps1 assign -Project X -Task T-xxx` (nền). Cổng kiểm tra tự chạy: commit, BOM, build 0 warning, test (chặn treo 3 phút), phạm vi; vượt ngân sách chỉ cảnh báo.
-4. `team.ps1 review -Project X -Task T-xxx` → đọc gói review. Chụp ảnh bằng `tools/UiSnapshot` nếu có UI.
+4. `team.ps1 review -Project X -Task T-xxx` → đọc gói review. **Claude sửa code (dù 1 dòng) ⇒ chạy build + TOÀN BỘ test trước khi commit** (IMP-001; Hub đang chạy khóa `hub\bin` ⇒ tạm dừng Hub, test, bật lại). Chụp ảnh bằng `tools/UiSnapshot` nếu có UI.
    - Lỗi ≤ ~50 dòng: **Claude tự sửa**.
    - Còn sót nhưng phần chính đạt: merge, tách **task nhỏ mới**.
    - Chỉ trả agent khi phải làm lại nhiều (`assign -Resume -Feedback`).
@@ -33,6 +33,7 @@
 
 ## Tiết kiệm token / thời gian — đã cài vào công cụ
 - Agent: giới hạn thời gian theo task; chỉ đọc file liệt kê; không ảnh / không chạy app; báo cáo ≤ 15 dòng; commit sớm; test có `--blame-hang-timeout`.
+- Claude sửa `team.ps1` ⇒ chạy `tools\test-verify.ps1` (test hồi quy cổng kiểm tra, IMP-001) trước khi commit.
 - Claude: đọc trang này thay vì sổ tay 167 dòng; `review` / `merge` thay chuỗi lệnh tay; tự sửa nhỏ thay vòng agent 20–30 phút; số đo tự ghi (`metrics/runs`).
 
 ## Mục tiêu đo ở R-002 (so với R-001)

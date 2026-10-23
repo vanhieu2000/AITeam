@@ -1,4 +1,4 @@
-# {{TASK}} · {{TITLE}}
+﻿# {{TASK}} · {{TITLE}}
 
 - **Agent:** {{AGENT}}
 - **Nhánh:** `{{BRANCH}}`
@@ -32,7 +32,12 @@
 <!-- Claude điền TRƯỚC khi giao, đừng để tới lúc review mới nêu. Ví dụ:
 - Dữ liệu không tin cậy: <file người dùng mở / mục trong zip / form / output thiết bị> → chặn `..`, đường dẫn tuyệt đối, giới hạn kích thước.
 - Luồng phải chạy được: <bản cài + portable / lần đầu + dữ liệu cũ / null + rỗng>.
-- Không đổi định dạng / hợp đồng: <...>. Giữ tương thích với dữ liệu cũ: <...>. -->
+- Không đổi định dạng / hợp đồng: <...>. Giữ tương thích với dữ liệu cũ: <...>.
+KIỂM TRA "HỢP ĐỒNG NGOÀI & KHUNG" (IMP-001 — lỗi TK lặp 3/3 task chu kỳ 1), Claude tự đánh dấu trước khi giao:
+- [ ] File đưa cho tiến trình / CLI ngoài: mã hóa (UTF-8 có / không BOM), xuống dòng, qua stdin hay tham số.
+- [ ] Gọi tiến trình ngoài (git, agy, codex, adb…): giới hạn thời gian, đọc output không chặn, có cần cache / bao lâu.
+- [ ] Mọi file khung trong commit "Test nghiệm thu" đều nằm trong Phạm vi, hoặc ghi rõ "KHÔNG đổi" ở Không làm.
+- [ ] Task dùng hàm / lớp từ task khác: hàm đó đã có trên main (chưa có ⇒ đưa vào khung của task này). -->
 -
 
 ## Dữ liệu mẫu thật
