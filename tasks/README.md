@@ -21,7 +21,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V4-06 Trạng thái job + phục hồi](V4-06-job-state.md) | B | `agent-b/V4-06-job-state` | ✅ Đã merge (vòng 1) |
 | [H3-01 Hub v3: dịch vụ dữ liệu đánh giá team](H3-01-hub-insights-data.md) | A | `agent-a/H3-01-hub-insights-data` | ✅ Đã merge (vòng 1) |
 | [H3-03 Hub v3: trang Cần anh duyệt](H3-03-hub-approvals.md) | B | `agent-b/H3-03-hub-approvals` | ✅ Đã merge (vòng 1) |
-| [H3-02 Hub v3: trang Tổng quan (chỉ số, biểu đồ thời gian, nhiệm vụ)](H3-02-hub-overview-v3.md) | B | `agent-b/H3-02-hub-overview-v3` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 00:41 24/10/2026 |
+| [H3-02 Hub v3: trang Tổng quan (chỉ số, biểu đồ thời gian, nhiệm vụ)](H3-02-hub-overview-v3.md) | B | `agent-b/H3-02-hub-overview-v3` | ✅ Đã merge (vòng 1) |
 | [H3-04 Hub v3: trang Đội ngũ + Quy trình & cải tiến](H3-04-hub-team-process.md) | A | `agent-a/H3-04-hub-team-process` | ✅ Đã merge (vòng 1) |
 | [H3-05 Hub v3: trang Giao việc + tab Dòng thời gian / Đánh giá quy trình](H3-05-hub-requests-task-tabs.md) | A | `agent-a/H3-05-hub-requests-task-tabs` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 00:56 24/10/2026 |
 
