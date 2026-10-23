@@ -97,4 +97,13 @@ public class ProviderTests
         Assert.Contains("--sandbox", joined);
         Assert.Contains("--print-timeout 25m", joined);
     }
+
+    [Fact]
+    public void Codex_real_usage_limit_message_is_quota()
+    {
+        // Câu thật 23/10 khi tài khoản ChatGPT hết hạn mức Codex.
+        var events = "{\"type\":\"thread.started\",\"thread_id\":\"t\"}\n{\"type\":\"turn.failed\",\"error\":{\"message\":\"You’ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 4:19 AM.\"}}\n";
+        var r = CodexProvider.Parse("codex", new ProcessResult(1, events, "", TimeSpan.FromSeconds(4), false), "", null);
+        Assert.Equal(RunStatus.QuotaExhausted, r.Status);
+    }
 }

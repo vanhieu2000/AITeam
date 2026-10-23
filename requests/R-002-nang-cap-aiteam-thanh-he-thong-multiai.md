@@ -37,6 +37,10 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-002` để `team.ps1 reque
 | 10:50 | Claude làm P0-1 + P0-2: `core/AITeam.Core` (ProcessRunner không qua shell + giết cả cây khi quá giờ; IAgentProvider; AgyProvider; CodexProvider chỉ đọc bằng sandbox CLI; ErrorClassifier; ProviderSettings đọc team.json / team.local.json, cấu hình hỏng thì báo lỗi), `aiteam.exe providers / task-info`, 19 test với mẫu output thật | Build 0 warning; 19 + 159 test; chạy thật: agy OK, codex OK |
 | 11:10 | Claude viết khung + 37 ca test nghiệm thu (đỏ đúng mong đợi) cho V4-03 Codex review và V4-06 trạng thái job, đặt trên nhánh task (không lên main) | Sửa 1 dòng cẩu thả của chính Claude trong test (`|| true`) |
 | 11:15 | Giao V4-03 → Minh (A), V4-06 → Lan (B), song song, mỗi task ~250 dòng / 25 phút | Quy trình v3 lần đầu áp dụng đủ: khung code + Đọc + ngân sách + thời gian tối đa |
+| 23:42 | V4-03 (Minh) xong **9 phút**, cổng kiểm tra ĐẠT lượt đầu (40 + 159 test), 321/250 dòng | So T-007: 73 phút ⇒ quy trình v3 (khung + test nghiệm thu + Đọc + thời gian tối đa) hiệu quả |
+| 23:50 | Dogfood: dùng ReviewService của Minh + Codex thật review chính V4-03 ⇒ [TK] (test) lộ lỗi file lược đồ có BOM bị Codex từ chối; fail-safe đúng (BLOCKED). Claude sửa 2 dòng + test | Test giả không bắt được ⇒ cần 1 test tích hợp chạy thật (tùy chọn) |
+| 23:55 | Codex hết hạn mức ('usage limit… try again Oct 24 4:19 AM') ⇒ phân loại QuotaExhausted ⇒ BLOCKED | Codex hạn mức nhỏ (dùng chung app desktop) ⇒ P0-4/5 phải chọn lọc task cần Codex review + reviewer dự phòng |
+| 00:05 | Lần đầu chạy `team.ps1 merge` thật: [CK] (công cụ) xung đột add/add file task, bảng việc không khớp dòng link, kết quả clone chỉ in 1 dòng ⇒ Claude sửa cả 3; merge V4-03 xong, clone sạch 41 + 159 | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
