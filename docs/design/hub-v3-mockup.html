@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AITeam Hub v3 — mockup</title>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--s2:#f1f3f6;--line:#e3e6eb;--text:#14171c;--muted:#6b7280;--faint:#9aa1ab;
+--accent:#2563eb;--accent-soft:#e8effd;--run:#b45309;--run-soft:#fdf3e1;--ok:#15803d;--ok-soft:#e5f4ea;--fix:#c2410c;--fix-soft:#fdece4;
+--err:#b91c1c;--err-soft:#fbe9e9;--vio:#7c3aed;--vio-soft:#f1eafe;--r:6px;--font:"Segoe UI",system-ui,sans-serif;--mono:Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 var(--font);color:var(--text);background:var(--bg)}
+.app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+nav{background:var(--surface);border-right:1px solid var(--line);padding:14px 10px;position:sticky;top:0;height:100vh}
+.brand{font-weight:700;font-size:16px;padding:4px 8px 14px}.brand span{font-size:11px;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:9px;margin-left:4px}
+nav .grp{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;margin:14px 8px 4px}
+nav a{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border-radius:var(--r);color:var(--text);text-decoration:none;cursor:pointer}
+nav a:hover{background:var(--s2)}nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.badge{font-size:11px;background:var(--fix);color:#fff;border-radius:9px;padding:0 7px}
+main{padding:18px 22px;min-width:0}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 16px}
+.mock{background:#fff7d6;border:1px dashed #d4a72c;color:#7a5b00;padding:6px 10px;border-radius:var(--r);font-size:12px;margin-bottom:14px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.kpi b{display:block;font-size:22px}.kpi small{color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px}
+.panel>.hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.panel>.hd .sp{flex:1}.panel>.bd{padding:12px 14px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600}td.wrap{white-space:normal;min-width:220px}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;font-weight:600}
+.ok{background:var(--ok-soft);color:var(--ok)}.run{background:var(--run-soft);color:var(--run)}.rev{background:var(--accent-soft);color:var(--accent)}
+.fix{background:var(--fix-soft);color:var(--fix)}.err{background:var(--err-soft);color:var(--err)}.vio{background:var(--vio-soft);color:var(--vio)}
+.d{display:inline-block;width:22px;text-align:center;border-radius:4px;font-weight:700;font-size:12px}
+.dS{background:var(--ok-soft);color:var(--ok)}.dM{background:var(--run-soft);color:var(--run)}.dL{background:var(--err-soft);color:var(--err)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.card h3{margin:0 0 6px;font-size:15px}.card .meta{color:var(--muted);font-size:12px;margin-bottom:8px}
+.stat{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--line)}.stat:last-child{border:0}
+.heat td{text-align:center}.h5{background:#d7f0de}.h4{background:#ecf7ef}.h3{background:#fff4d6}.h2{background:#fde3d6}.h1{background:#f8cfcf}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.tab{padding:7px 12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted)}.tab.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.appr{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+.btn{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:var(--r);cursor:pointer;font:inherit}
+.btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.dng{color:var(--err);border-color:#f0c4c4}
+textarea,select,input{font:inherit;border:1px solid var(--line);border-radius:var(--r);padding:7px 9px;background:#fff}
+.chat{display:flex;flex-direction:column;gap:10px;max-height:460px;overflow:auto;padding:4px}
+.msg{max-width:78%;padding:9px 12px;border-radius:10px}.me{align-self:flex-end;background:var(--accent);color:#fff}
+.bot{align-self:flex-start;background:var(--s2)}.msg small{display:block;opacity:.7;font-size:11px;margin-top:4px}
+.view{display:none}.view.on{display:block}
+.legend span{display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:12px;color:var(--muted)}
+.legend i{width:12px;height:10px;border-radius:2px;display:inline-block}
+@media (max-width:900px){.app{grid-template-columns:1fr}nav{position:static;height:auto}.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav>
+  <div class="brand">AITeam Hub<span>v3</span></div>
+  <div class="grp">Điều hành</div>
+  <a class="on" data-v="home">Tổng quan</a>
+  <a data-v="task">Chi tiết nhiệm vụ</a>
+  <a data-v="approve">Cần anh duyệt <span class="badge">3</span></a>
+  <a data-v="chat">Giao việc</a>
+  <div class="grp">Đánh giá</div>
+  <a data-v="team">Đội ngũ</a>
+  <a data-v="process">Quy trình & cải tiến</a>
+  <div class="grp">Hệ thống</div>
+  <a>Dự án · Agent · Tài khoản · Bí mật · Cài đặt</a>
+</nav>
+<main>
+<div class="mock">MOCKUP để duyệt bố cục — số liệu lấy từ task thật đến 24/10/2026; nút bấm chưa hoạt động.</div>
+
+<!-- ============ TỔNG QUAN ============ -->
+<section class="view on" id="home">
+  <h1>Tổng quan</h1><p class="sub">3 dự án · 2 agent Antigravity (Minh, Lan) · Codex review · cập nhật 00:30 24/10</p>
+  <div class="kpis">
+    <div class="kpi"><small>Đang chạy</small><b>0</b><small>Minh · Lan rảnh</small></div>
+    <div class="kpi"><small>Chờ anh duyệt</small><b style="color:var(--fix)">3</b><small>1 merge · 1 quyết định · 1 cải tiến</small></div>
+    <div class="kpi"><small>Đạt ngay vòng 1 (6 task gần nhất)</small><b>50%</b><small>R-002: 2/2 ↑</small></div>
+    <div class="kpi"><small>Phút agent TB / task</small><b>11′</b><small>R-001: 124′ ↓</small></div>
+    <div class="kpi"><small>Provider</small><b style="font-size:14px;margin-top:6px"><span class="pill ok">agy OK</span> <span class="pill err">Codex hết hạn mức · 04:19</span></b></div>
+  </div>
+
+  <div class="panel"><div class="hd">Biểu đồ thời gian <span class="sp"></span>
+    <select><option>23/10 23:00 – 24/10 00:30</option><option>7 ngày</option></select></div>
+    <div class="bd">
+      <div class="legend"><span><i style="background:#c7d2fe"></i>Chờ / chuẩn bị</span><span><i style="background:#f59e0b"></i>Agent code</span><span><i style="background:#60a5fa"></i>Cổng kiểm tra</span><span><i style="background:#a78bfa"></i>Review (AI + Claude)</span><span><i style="background:#ef4444"></i>Sửa lại / treo</span><span><i style="background:#22c55e"></i>Merge</span></div>
+      <svg viewBox="0 0 900 190" width="100%" style="min-width:640px;margin-top:8px" font-family="Segoe UI" font-size="12">
+        <g stroke="#e3e6eb">
+          <line x1="150" y1="10" x2="150" y2="180"/><line x1="300" y1="10" x2="300" y2="180"/><line x1="450" y1="10" x2="450" y2="180"/><line x1="600" y1="10" x2="600" y2="180"/><line x1="750" y1="10" x2="750" y2="180"/><line x1="890" y1="10" x2="890" y2="180"/>
+        </g>
+        <g fill="#9aa1ab"><text x="150" y="186" text-anchor="middle">23:00</text><text x="300" y="186" text-anchor="middle">23:20</text><text x="450" y="186" text-anchor="middle">23:40</text><text x="600" y="186" text-anchor="middle">00:00</text><text x="750" y="186" text-anchor="middle">00:20</text></g>
+        <!-- V4-03: chuẩn bị 23:05-23:32, code 23:32-23:41, KT 23:41-23:42, review 23:45-00:05, merge 00:05 -->
+        <text x="6" y="40">V4-03 · Minh <tspan fill="#9aa1ab">M</tspan></text>
+        <rect x="187" y="28" width="203" height="16" rx="3" fill="#c7d2fe"/><rect x="390" y="28" width="68" height="16" rx="3" fill="#f59e0b"/><rect x="458" y="28" width="8" height="16" fill="#60a5fa"/><rect x="487" y="28" width="150" height="16" rx="3" fill="#a78bfa"/><rect x="637" y="28" width="8" height="16" fill="#22c55e"/>
+        <text x="650" y="40" fill="#15803d">9′ code · đạt vòng 1</text>
+        <!-- V4-06: code 23:43-23:56 (3 lượt, 2 do cổng KT báo nhầm), sửa 00:05-00:15, merge 00:15 -->
+        <text x="6" y="80">V4-06 · Lan <tspan fill="#9aa1ab">M</tspan></text>
+        <rect x="187" y="68" width="285" height="16" rx="3" fill="#c7d2fe"/><rect x="472" y="68" width="35" height="16" rx="3" fill="#f59e0b"/><rect x="507" y="68" width="62" height="16" rx="3" fill="#ef4444"/><rect x="569" y="68" width="8" height="16" fill="#60a5fa"/><rect x="637" y="68" width="75" height="16" rx="3" fill="#a78bfa"/><rect x="712" y="68" width="8" height="16" fill="#22c55e"/>
+        <text x="725" y="80" fill="#c2410c">2 lượt lặp do công cụ</text>
+        <!-- R-003 Hub v3: thiết kế -->
+        <text x="6" y="120">R-003 · Claude <tspan fill="#9aa1ab">L</tspan></text>
+        <rect x="725" y="108" width="160" height="16" rx="3" fill="#c7d2fe"/><text x="730" y="120" fill="#3730a3">thiết kế + mockup</text>
+        <text x="6" y="160">H3-01 · Minh <tspan fill="#9aa1ab">M</tspan></text>
+        <rect x="860" y="148" width="28" height="16" rx="3" fill="#e5e7eb"/><text x="700" y="160" fill="#9aa1ab">chờ anh duyệt mockup</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="panel"><div class="hd">Danh sách nhiệm vụ <span class="sp"></span>
+    <select><option>Mọi dự án</option><option>AITeam</option><option>HDVTool</option><option>ChinaAndroidToolbox</option></select>
+    <select><option>Mọi trạng thái</option><option>Đang chạy</option><option>Chờ duyệt</option><option>Đã merge</option></select></div>
+    <div class="bd"><table>
+      <tr><th>Mã</th><th>Nhiệm vụ</th><th>Dự án</th><th>Người</th><th>Độ khó</th><th>Trạng thái</th><th>Phút agent</th><th>Vòng</th><th>Điểm quy trình</th><th>Yêu cầu</th></tr>
+      <tr><td><b>V4-06</b></td><td>Trạng thái job + phục hồi</td><td>AITeam</td><td>Lan</td><td><span class="d dM">M</span></td><td><span class="pill ok">Đã merge</span></td><td>13</td><td>1</td><td>4.1 / 5</td><td>R-002</td></tr>
+      <tr><td><b>V4-03</b></td><td>Codex review chỉ đọc</td><td>AITeam</td><td>Minh</td><td><span class="d dM">M</span></td><td><span class="pill ok">Đã merge</span></td><td>9</td><td>1</td><td>4.6 / 5</td><td>R-002</td></tr>
+      <tr><td><b>P0-1/2</b></td><td>Khung AITeam.Core + provider</td><td>AITeam</td><td>Claude</td><td><span class="d dL">L</span></td><td><span class="pill ok">Đã merge</span></td><td>—</td><td>—</td><td>—</td><td>R-002</td></tr>
+      <tr><td><b>T-007</b></td><td>Giới thiệu: thẻ Hệ thống bị cắt</td><td>HDVTool</td><td>Minh</td><td><span class="d dS">S</span></td><td><span class="pill ok">Đã merge</span></td><td>73</td><td>1</td><td>—</td><td>R-001</td></tr>
+      <tr><td><b>C-011</b></td><td>Kiểm tra bố cục tự động</td><td>Toolbox</td><td>Lan</td><td><span class="d dL">L</span></td><td><span class="pill ok">Đã merge</span></td><td>165</td><td>3</td><td>—</td><td>R-001</td></tr>
+      <tr><td><b>T-005</b></td><td>Kiểm tra bố cục tự động</td><td>HDVTool</td><td>Minh</td><td><span class="d dL">L</span></td><td><span class="pill ok">Đã merge</span></td><td>134</td><td>3</td><td>—</td><td>R-001</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CHI TIẾT NHIỆM VỤ ============ -->
+<section class="view" id="task">
+  <h1>V4-06 · Trạng thái job + phục hồi <span class="pill ok">Đã merge</span></h1>
+  <p class="sub">AITeam · Lan (Agent B) · nhánh agent-b/V4-06-job-state · độ khó <span class="d dM">M</span> · yêu cầu R-002</p>
+  <div class="tabs"><span class="tab">Tổng quan</span><span class="tab">Dòng thời gian</span><span class="tab on">Đánh giá quy trình</span><span class="tab">Review</span><span class="tab">Chi tiết kỹ thuật</span></div>
+  <div class="panel"><div class="bd"><table>
+    <tr><th>Giai đoạn</th><th>Ai</th><th>Điểm</th><th>Thời gian</th><th>Vấn đề</th><th>Nguyên nhân</th><th>Đề xuất</th></tr>
+    <tr><td>1. Tiếp nhận & quản lý</td><td>Claude</td><td><span class="pill ok">5</span></td><td>—</td><td class="wrap">—</td><td></td><td></td></tr>
+    <tr><td>2. Ý tưởng</td><td>Claude</td><td><span class="pill ok">5</span></td><td>—</td><td class="wrap">—</td><td></td><td></td></tr>
+    <tr><td>3. Plan / thiết kế</td><td>Claude</td><td><span class="pill ok">5</span></td><td>20′</td><td class="wrap">Bảng trạng thái chốt sẵn trong khung</td><td></td><td class="wrap">Giữ cách này</td></tr>
+    <tr><td>4. Giao việc</td><td>Claude</td><td><span class="pill err">2</span></td><td>20′</td><td class="wrap">Phạm vi quên JobModels.cs</td><td><span class="pill fix">TK</span></td><td class="wrap">Phạm vi tự gồm file khung</td></tr>
+    <tr><td>5. Thực hiện code</td><td>Lan</td><td><span class="pill ok">5</span></td><td>13′</td><td class="wrap">Buộc gộp file để qua cổng — có ghi lý do</td><td></td><td></td></tr>
+    <tr><td>6. Review / QC</td><td>Cổng KT + Claude</td><td><span class="pill err">2</span></td><td>15′</td><td class="wrap">Cổng KT báo nhầm, tự giao lại 2 lần</td><td><span class="pill vio">CK</span></td><td class="wrap">Đã sửa cổng KT</td></tr>
+    <tr><td>7. Đánh giá & bàn giao</td><td>Claude</td><td><span class="pill ok">5</span></td><td>5′</td><td class="wrap">merge chạy trơn tru</td><td></td><td></td></tr>
+  </table></div></div>
+</section>
+
+<!-- ============ CẦN DUYỆT ============ -->
+<section class="view" id="approve">
+  <h1>Cần anh duyệt</h1><p class="sub">Hub chỉ ghi quyết định; việc thật (merge, tạo user Windows) do team.ps1 / anh thực hiện. Diff đổi sau khi duyệt ⇒ phải duyệt lại.</p>
+  <div class="panel"><div class="bd appr">
+    <div><span class="pill rev">MERGE</span> <b>H3-01 · Dịch vụ dữ liệu Hub v3</b> <small style="color:var(--muted)">AITeam · Minh · diff 4f2a9c…</small>
+      <div style="margin-top:6px">Cổng kiểm tra: <span class="pill ok">ĐẠT</span> 71 + 159 test · Codex review: <span class="pill ok">PASS</span> (2 ghi chú optional) · Claude: <span class="pill ok">ĐẠT</span></div>
+      <div style="margin-top:4px;color:var(--muted)">+412 / −8 dòng · 9 file · ngân sách 400</div></div>
+    <div><button class="btn pri">Duyệt merge</button> <button class="btn dng">Từ chối</button><br><input placeholder="Ghi chú (tùy chọn)" style="margin-top:6px;width:220px"></div>
+  </div></div>
+  <div class="panel"><div class="bd appr">
+    <div><span class="pill vio">CẢI TIẾN QUY TRÌNH</span> <b>IMP-001 · Chu kỳ V4-03 · V4-06 · H3-01</b>
+      <div style="margin-top:6px" class="wrap">Giai đoạn yếu nhất: <b>Giao việc 3.0</b>, <b>Review/QC 3.0</b>. Đề xuất: (1) phạm vi tự gồm file khung; (2) 1 test tích hợp chạy thật với CLI ngoài; (3) Codex chỉ review task độ khó L hoặc có bảo mật.</div></div>
+    <div><button class="btn pri">Duyệt áp dụng</button> <button class="btn dng">Không</button></div>
+  </div></div>
+  <div class="panel"><div class="bd appr">
+    <div><span class="pill run">QUYẾT ĐỊNH</span> <b>Tạo user Windows aiteam-agy2 cho tài khoản Antigravity số 2</b>
+      <div style="margin-top:6px">Gấp đôi hạn mức Antigravity chạy song song. Cần anh bấm UAC + đăng nhập 1 lần. Chi tiết: thiết kế V4 mục B3b.</div></div>
+    <div><button class="btn pri">Đồng ý</button> <button class="btn">Để sau</button></div>
+  </div></div>
+</section>
+
+<!-- ============ GIAO VIỆC ============ -->
+<section class="view" id="chat">
+  <h1>Giao việc</h1><p class="sub">Mỗi yêu cầu thành 1 phiếu R-xxx. Claude trả lời khi phiên làm việc chạy (không phải AI trả lời tức thì).</p>
+  <div class="grid2" style="grid-template-columns:260px 1fr">
+    <div class="panel"><div class="hd">Phiếu yêu cầu</div><div class="bd" style="padding:6px">
+      <div class="card" style="border-color:var(--accent)"><b>R-003</b> Nâng cấp Hub toàn diện<br><span class="pill run">Đang thiết kế</span></div>
+      <div class="card" style="margin-top:6px"><b>R-002</b> AITeam đa AI<br><span class="pill rev">4/8 P0 xong</span></div>
+      <div class="card" style="margin-top:6px"><b>R-001</b> Kiểm tra bố cục<br><span class="pill ok">Xong</span></div>
+    </div></div>
+    <div class="panel"><div class="hd">R-003 · Nâng cấp Hub toàn diện</div><div class="bd">
+      <div class="chat">
+        <div class="msg me">Mỗi task xong cần đánh giá từ quản lí giao việc, plan, ý tưởng… sau 3 task đưa kế hoạch cải tiến… web show tổng quan, biểu đồ thời gian, độ khó, bảng đánh giá team, khu vực chat giao nhiệm vụ, báo cáo vấn đề, duyệt job… <small>Anh · 00:30</small></div>
+        <div class="msg bot"><b>Claude:</b> Đã mở phiếu R-003. Áp dụng ngay: đánh giá 7 giai đoạn sau mỗi task, chu kỳ cải tiến 3 task. Hub v3: thiết kế HUB-V3.md + mockup này — chờ anh duyệt rồi chia 5 task (H3-01…05). <small>00:45 · trạng thái: chờ duyệt mockup</small></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px"><select><option>AITeam</option><option>HDVTool</option><option>ChinaAndroidToolbox</option></select><select><option>Ưu tiên thường</option><option>Gấp</option></select></div>
+      <textarea rows="3" style="width:100%;margin-top:6px" placeholder="Viết yêu cầu mới hoặc trả lời trong phiếu này…"></textarea>
+      <div style="text-align:right;margin-top:6px"><button class="btn pri">Gửi</button></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ ĐỘI NGŨ ============ -->
+<section class="view" id="team">
+  <h1>Đội ngũ</h1><p class="sub">Chỉ tính task theo quy trình mới (có phiếu R-xxx).</p>
+  <div class="grid3">
+    <div class="card"><h3>Minh <span class="pill rev">Agent A · agy</span></h3><div class="meta">Nền tảng · 3 task</div>
+      <div class="stat"><span>Phút / lượt TB</span><b>69 → 9 (gần nhất)</b></div><div class="stat"><span>Đạt cổng KT lần đầu</span><b>67%</b></div>
+      <div class="stat"><span>Đạt vòng 1</span><b>67%</b></div><div class="stat"><span>Lỗi (AG)</span><b>giao diện 2 · test 1</b></div></div>
+    <div class="card"><h3>Lan <span class="pill rev">Agent B · agy</span></h3><div class="meta">Tính năng · 2 task</div>
+      <div class="stat"><span>Phút / lượt TB</span><b>33</b></div><div class="stat"><span>Đạt cổng KT lần đầu</span><b>0% (lỗi công cụ)</b></div>
+      <div class="stat"><span>Đạt vòng 1</span><b>50%</b></div><div class="stat"><span>Lỗi (AG)</span><b>test 1</b></div></div>
+    <div class="card"><h3>Claude <span class="pill vio">Quản lý</span></h3><div class="meta">Thiết kế · giao việc · review</div>
+      <div class="stat"><span>Lỗi task / thiết kế (TK)</span><b>7</b></div><div class="stat"><span>Tự sửa sau review</span><b>4 lần · ~20 dòng</b></div>
+      <div class="stat"><span>Điểm giao việc TB</span><b>3.0 / 5</b></div></div>
+    <div class="card"><h3>Codex <span class="pill err">hết hạn mức</span></h3><div class="meta">Reviewer chỉ đọc</div>
+      <div class="stat"><span>Review</span><b>2 (1 BLOCKED do hạn mức)</b></div><div class="stat"><span>Lỗi thật tìm được</span><b>2 (secret-scan)</b></div></div>
+    <div class="card"><h3>Cổng kiểm tra <span class="pill ok">máy</span></h3><div class="meta">verify tự động</div>
+      <div class="stat"><span>Báo nhầm (CK)</span><b>5</b></div><div class="stat"><span>Đã sửa</span><b>5</b></div></div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="hd">Bản đồ nhiệt: điểm 7 giai đoạn theo task</div><div class="bd"><table class="heat">
+    <tr><th>Task</th><th>Tiếp nhận</th><th>Ý tưởng</th><th>Plan</th><th>Giao việc</th><th>Code</th><th>Review/QC</th><th>Đánh giá</th></tr>
+    <tr><td style="text-align:left">V4-03 · Minh</td><td class="h5">5</td><td class="h5">5</td><td class="h4">4</td><td class="h4">4</td><td class="h5">5</td><td class="h4">4</td><td class="h5">5</td></tr>
+    <tr><td style="text-align:left">V4-06 · Lan</td><td class="h5">5</td><td class="h5">5</td><td class="h5">5</td><td class="h2">2</td><td class="h5">5</td><td class="h2">2</td><td class="h5">5</td></tr>
+  </table></div></div>
+</section>
+
+<!-- ============ QUY TRÌNH & CẢI TIẾN ============ -->
+<section class="view" id="process">
+  <h1>Quy trình & cải tiến</h1><p class="sub">Cứ 3 task: 1 chu kỳ cải tiến (IMP-xxx). Chu kỳ sau đo lại xem cải tiến có tác dụng.</p>
+  <div class="grid2">
+    <div class="panel"><div class="hd">Điểm TB từng giai đoạn (chu kỳ 1, 2/3 task)</div><div class="bd">
+      <svg viewBox="0 0 420 200" width="100%" font-family="Segoe UI" font-size="11">
+        <g fill="#6b7280"><text x="0" y="22">Tiếp nhận</text><text x="0" y="47">Ý tưởng</text><text x="0" y="72">Plan</text><text x="0" y="97">Giao việc</text><text x="0" y="122">Code</text><text x="0" y="147">Review/QC</text><text x="0" y="172">Đánh giá</text></g>
+        <rect x="80" y="12" width="300" height="14" rx="2" fill="#22c55e"/><rect x="80" y="37" width="300" height="14" rx="2" fill="#22c55e"/>
+        <rect x="80" y="62" width="270" height="14" rx="2" fill="#22c55e"/><rect x="80" y="87" width="180" height="14" rx="2" fill="#f59e0b"/>
+        <rect x="80" y="112" width="300" height="14" rx="2" fill="#22c55e"/><rect x="80" y="137" width="180" height="14" rx="2" fill="#f59e0b"/>
+        <rect x="80" y="162" width="300" height="14" rx="2" fill="#22c55e"/>
+        <g fill="#14171c"><text x="385" y="23">5.0</text><text x="385" y="48">5.0</text><text x="355" y="73">4.5</text><text x="265" y="98">3.0</text><text x="385" y="123">5.0</text><text x="265" y="148">3.0</text><text x="385" y="173">5.0</text></g>
+      </svg></div></div>
+    <div class="panel"><div class="hd">Chu kỳ cải tiến</div><div class="bd"><table>
+      <tr><th>Chu kỳ</th><th>Task</th><th>Trạng thái</th><th>Kết quả</th></tr>
+      <tr><td><b>IMP-001</b></td><td>V4-03, V4-06, (task 3)</td><td><span class="pill run">Đề xuất · chờ task 3</span></td><td>—</td></tr>
+      <tr><td><b>R-001 → v2/v3</b></td><td>T-005, C-011, T-007</td><td><span class="pill ok">Đã đo</span></td><td>phút agent / task 124′ → 11′ ✓</td></tr>
+    </table></div></div>
+  </div>
+  <div class="panel"><div class="hd">Vấn đề của team <span class="sp"></span><select><option>Mọi nguyên nhân</option><option>TK</option><option>AG</option><option>CK</option><option>HT</option></select></div><div class="bd"><table>
+    <tr><th>Vấn đề</th><th>Giai đoạn</th><th>Nguyên nhân</th><th>Lần</th><th>Giải pháp</th><th>Trạng thái</th><th>Kết quả</th></tr>
+    <tr><td class="wrap">Cổng kiểm tra báo nhầm / thiếu (file khung, ngân sách, -Task, số đo cộng dồn, merge)</td><td>Review/QC</td><td><span class="pill vio">CK</span></td><td>5</td><td class="wrap">Sửa từng chỗ + chạy thật trước khi tin</td><td><span class="pill ok">Đã sửa</span></td><td class="wrap">V4-06 verify lại không báo nhầm</td></tr>
+    <tr><td class="wrap">Task thiếu chi tiết (phạm vi, cách dựng form trong test, BOM khi gọi CLI ngoài, bố cục)</td><td>Giao việc</td><td><span class="pill fix">TK</span></td><td>4</td><td class="wrap">Khung code + test nghiệm thu + mục Đọc; IMP-001 đề xuất test tích hợp thật</td><td><span class="pill run">Đang cải tiến</span></td><td class="wrap">Phút / task 124′ → 11′</td></tr>
+    <tr><td class="wrap">Test giao diện mở hộp thoại thật ⇒ treo 30′ / lượt</td><td>Code</td><td><span class="pill fix">AG</span></td><td>2</td><td class="wrap">Chặn treo 3′ + helper UiThread + lưu ý riêng</td><td><span class="pill ok">Đã sửa</span></td><td class="wrap">0 lần treo từ 21/10</td></tr>
+    <tr><td class="wrap">Codex hết hạn mức giữa review</td><td>Review/QC</td><td><span class="pill err">HT</span></td><td>1</td><td class="wrap">Codex chỉ cho task L / bảo mật; reviewer dự phòng</td><td><span class="pill run">P0-4/5</span></td><td>—</td></tr>
+  </table></div></div>
+</section>
+</main>
+</div>
+<script>
+document.querySelectorAll('nav a[data-v]').forEach(a=>a.addEventListener('click',()=>{
+  document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===a.dataset.v));
+}));
+</script>
+</body>
+</html>
