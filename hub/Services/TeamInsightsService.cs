@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -42,21 +42,23 @@ public sealed class GitHistory : IGitHistory
         DateTime? result = null;
         try
         {
-            var psi = new ProcessStartInfo("git") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
+            var psi = new ProcessStartInfo("git") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };
             foreach (var a in new[] { "-C", repoPath, "log", "main", "--merges", "-E", $"--grep=^Merge {taskId}([-: ]|$)", "-1", "--format=%cI" })
                 psi.ArgumentList.Add(a);
             using var proc = Process.Start(psi);
             if (proc != null)
             {
-                var stdout = proc.StandardOutput.ReadToEnd();
-                if (!proc.WaitForExit(10_000)) { try { proc.Kill(entireProcessTree: true); } catch { } return null; }
-                if (proc.ExitCode == 0 && DateTimeOffset.TryParse(stdout.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.None, out var dto))
+                // Đọc bất đồng bộ để giới hạn 10 giây có tác dụng cả khi git treo.
+                var read = proc.StandardOutput.ReadToEndAsync();
+                if (!proc.WaitForExit(10_000) || !read.Wait(1_000)) { try { proc.Kill(entireProcessTree: true); } catch { } return null; }
+                if (proc.ExitCode == 0 && DateTimeOffset.TryParse(read.Result.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.None, out var dto))
                     result = dto.LocalDateTime;
             }
         }
         catch { return null; }
 
-        _cache[key] = (result, DateTime.UtcNow.AddSeconds(60));
+        // Giờ merge đã có thì không đổi nữa ⇒ nhớ lâu; chưa thấy ⇒ hỏi lại sau 60 giây.
+        _cache[key] = (result, result.HasValue ? DateTime.MaxValue : DateTime.UtcNow.AddSeconds(60));
         return result;
     }
 }
