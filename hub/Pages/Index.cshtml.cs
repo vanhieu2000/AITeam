@@ -1,4 +1,4 @@
-using AITeam.Hub.Models;
+﻿using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -7,23 +7,29 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace AITeam.Hub.Pages;
 
-public class IndexModel : PageModel
+public partial class IndexModel : PageModel
 {
     private readonly ITeamConfigService _configService;
     private readonly ITaskBoardService _boardService;
     private readonly IAgentRunService _runService;
     private readonly IHealthService _healthService;
+    private readonly ITeamInsightsService? _insights;
+    private readonly IApprovalService? _approvals;
 
     public IndexModel(
         ITeamConfigService configService,
         ITaskBoardService boardService,
         IAgentRunService runService,
-        IHealthService healthService)
+        IHealthService healthService,
+        ITeamInsightsService? insights = null,
+        IApprovalService? approvals = null)
     {
         _configService = configService;
         _boardService = boardService;
         _runService = runService;
         _healthService = healthService;
+        _insights = insights;
+        _approvals = approvals;
     }
 
     public record ProjectCardView(
@@ -52,6 +58,7 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         LoadData();
+        LoadV3();
     }
 
     public IActionResult OnGetRunningAgents()
