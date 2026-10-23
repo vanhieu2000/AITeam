@@ -14,7 +14,7 @@
    - **Tóm tắt** cho chủ dự án;
    - **Đọc** (chỉ những file này);
    - **Ngân sách** dòng code; **Thời gian tối đa** (mặc định 25–30 phút, quá thì agy tự dừng);
-   - khung code + **test nghiệm thu** commit trước lên nhánh;
+   - khung code + **test nghiệm thu** commit trước lên nhánh — **thứ tự: file task lên `main` trước, rồi mới tạo nhánh từ `origin/main`** (ngược lại sẽ xung đột file task khi merge; `merge` tự xử lý nhưng tránh được thì hơn);
    - **Bố cục giao diện** cụ thể nếu có UI (chạy `tools/UiSnapshot` trước, liệt kê lỗi hiện có);
    - việc đơn giản ghi `Model: gemini-3.8-flash-medium`.
    - Việc ≤ ~100 dòng: Claude làm thẳng, không giao.

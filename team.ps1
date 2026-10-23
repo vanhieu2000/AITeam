@@ -973,7 +973,7 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status) {
         $text = [IO.File]::ReadAllText($board)
         $lines = $text -split "`r?`n"
         $idx = -1
-        for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|' -and $lines[$i] -match ("(\[|\|\s*)" + [regex]::Escape($taskId) + "\b")) { $idx = $i; break } }
+        for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|' -and $lines[$i] -match ("(\[|\(|\|\s*)" + [regex]::Escape($taskId) + "\b")) { $idx = $i; break } }
         if ($idx -lt 0) { Say "  (Bảng việc chưa có dòng $taskId — không cập nhật.)" Yellow; return }
         $cells = $lines[$idx].TrimEnd().TrimEnd('|') -split '\|'
         $cells[$cells.Count - 1] = " $status "
@@ -1161,7 +1161,21 @@ function Invoke-Merge {
     $round = ([regex]::Matches($review, 'Vòng\s+(\d+)') | ForEach-Object { [int]$_.Groups[1].Value } | Measure-Object -Maximum).Maximum
     git -C $r.Path pull -q 2>$null
     git -C $r.Path merge --no-ff -q "origin/$branch" -m "Merge $($tf.BaseName) ($(Get-StaffName $agentId), review đạt vòng $round)`n`nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" 2>&1 | Select-Object -Last 2 | ForEach-Object { Say $_ Yellow }
-    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Merge xung đột — xử lý tay." }
+    if ($LASTEXITCODE -ne 0) {
+        # File task thường được thêm cả trên main (Claude) lẫn trên nhánh (khung + báo cáo + review) ⇒ add/add.
+        # Bản trên nhánh là bản đầy đủ ⇒ lấy bản nhánh. Xung đột ở file khác ⇒ dừng, xử lý tay.
+        $conflicts = @(git -C $r.Path diff --name-only --diff-filter=U 2>$null)
+        $onlyTask = $conflicts.Count -gt 0 -and -not ($conflicts | Where-Object { $_ -ne "tasks/$($tf.Name)" })
+        if ($onlyTask) {
+            git -C $r.Path checkout --theirs -- "tasks/$($tf.Name)" 2>$null
+            git -C $r.Path add -- "tasks/$($tf.Name)" 2>$null
+            git -C $r.Path commit -q --no-edit 2>$null
+            Say "Xung đột chỉ ở file task ⇒ đã lấy bản trên nhánh (có báo cáo + review)." Yellow
+        } else {
+            $ErrorActionPreference = $eap
+            throw "Merge xung đột ở: $($conflicts -join ', ') — xử lý tay (git merge --abort để hủy)."
+        }
+    }
     Set-BoardStatus $r $tf.BaseName "✅ Đã merge (vòng $round)"
     git -C $r.Path push -q origin HEAD 2>$null
     Say "Đã merge + push main." Green
@@ -1171,8 +1185,9 @@ function Invoke-Merge {
     gh repo clone $r.Info.repo $clone -- -q 2>$null
     $testCmd = $r.Info.test; if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += " --blame-hang-timeout 3m --blame-hang-dump-type none" }
     $res = Invoke-ShellCapture $testCmd $clone
-    $line = ($res.Output -split "`n" | Where-Object { $_ -match 'Passed!|Failed!' } | Select-Object -First 1)
-    Say ("Clone sạch: " + $(if ($line) { $line.Trim() } else { "không đọc được kết quả test" })) $(if ($line -match 'Failed!') { "Red" } else { "Green" })
+    $lines = @($res.Output -split "`n" | Where-Object { $_ -match 'Passed!|Failed!' } | ForEach-Object { $_.Trim() })
+    if (-not $lines) { Say "Clone sạch: KHÔNG đọc được kết quả test — kiểm tra tay!" Red }
+    foreach ($l in $lines) { Say ("Clone sạch: " + $l) $(if ($l -match 'Failed!') { "Red" } else { "Green" }) }
     Remove-Item $clone -Recurse -Force -ErrorAction SilentlyContinue
     # Dọn worktree của task
     foreach ($wt in ((git -C $r.Path worktree list --porcelain) -join "`n" | Select-String -Pattern "worktree ([^\n]+)\nHEAD [0-9a-f]+\nbranch refs/heads/$([regex]::Escape($branch))" -AllMatches).Matches) {
