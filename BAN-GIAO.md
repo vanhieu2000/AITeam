@@ -1,9 +1,9 @@
-# Bàn giao giữa các máy / phiên làm việc
+﻿# Bàn giao giữa các máy / phiên làm việc
 
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-Cập nhật lần cuối: **22/10/2026 · máy công ty HieuDV** (trước đó 21/10 ~22:20 máy nhà DESKTOP-PP14EFS) · **quy trình v3: đọc `QUY-TRINH.md`**
+Cập nhật lần cuối: **24/10/2026 ~01:20 · máy nhà DESKTOP-PP14EFS** · **quy trình 3.1: đọc `QUY-TRINH.md`**
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
 Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUAT-LOG.md`.
@@ -22,6 +22,9 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
   - Hub hiện 2 mục này ở tab Tổng quan.
 - **Lỗi nhỏ sau review (≤ ~50 dòng) Claude tự sửa.** Phần sót của task đã gần đạt ⇒ tách task nhỏ mới, không trả cả task về làm lại.
 - **Báo chủ dự án ngắn gọn, gạch đầu dòng:** việc gì, sửa gì; xong thì làm được gì, cần cải tiến gì.
+- **Sau MỖI task merge:** điền mục "## Đánh giá quy trình" (7 giai đoạn, điểm 1–5, nguyên nhân TK/AG/CK/NV/HT). **Cứ 3 task:** `improvements/IMP-xxx` (đã có IMP-001, IMP-002; chu kỳ 3 bắt đầu từ H3-05). Hub trang Đội ngũ / Quy trình & cải tiến tự đọc các mục này.
+- **Việc cần chủ dự án quyết:** `.\team.ps1 approval-request -Kind merge|decision|improvement …` ⇒ chủ dự án bấm trên Hub trang **Cần anh duyệt** ⇒ `merge` tự chặn nếu chờ / từ chối / nhánh đổi sau duyệt. Quyết định nằm ở `approvals/A-xxx.json` (commit lên git).
+- **Sửa `team.ps1`** ⇒ chạy `tools\test-verify.ps1` trước commit. **Claude sửa code** ⇒ build + toàn bộ test trước commit (Hub đang chạy khóa `hub\bin`: tạm dừng Hub, test, `team.ps1 hub`).
 
 ## 1b. Chủ dự án test app thế nào
 - **HDV Tool:** bấm đúp `D:\HDVTool\CHAY-THU.cmd` (tự lấy bản mới, build ra `D:\HDVTool\ban-chay-thu\`, mở app) — hoặc mở thẳng `D:\HDVTool\ban-chay-thu\HDVTool.exe`.
@@ -34,6 +37,8 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
 ## 2. Việc đang dở
 | Việc | Trạng thái | Làm tiếp thế nào |
 |---|---|---|
+| **R-003 Hub v3 toàn diện** | ✅ XONG 24/10 ~01:20 — H3-01…05 merge, 5/5 đạt vòng 1, 48 phút agent. Hub mới: Tổng quan (chỉ số + biểu đồ thời gian), Giao việc (chat theo phiếu), Cần anh duyệt, Đội ngũ, Quy trình & cải tiến, tab Dòng thời gian / Đánh giá quy trình trong task | Optional: `request-report` cột Dòng/ngân sách vẫn tính khung + test của Claude; biểu đồ so sánh giữa các chu kỳ IMP |
+| **A-001 đã duyệt (chủ dự án bấm trên Hub 00:36)** | Tạo user Windows `aiteam-agy2` cho tài khoản Antigravity số 2 | Cần chủ dự án: bấm UAC tạo user + đăng nhập user đó 1 lần (thiết kế V4 mục B3b). Sau đó Claude làm `runAs` trong assign / stop |
 | **R-002 AITeam v4 đa AI** (`requests/R-002-…`, `docs/design/V4-MULTI-AI.md`) | P0-1, P0-2 (Claude), V4-03 Codex review (Minh), V4-06 trạng thái job (Lan) ĐÃ MERGE 24/10 00:15. Codex hết hạn mức tới 4:19 sáng 24/10 | Tiếp: P0-4/5 (chọn provider theo hạn mức + dự phòng, Codex chỉ cho task lớn/rủi ro), P0-7 (review tự động trong assign), P0-8 (Hub). User Windows thứ 2: chờ chủ dự án |
 | **R-001** | ✅ XONG 22:15 — C-011, T-005, T-007 đã merge; đã đánh giá (quy trình lên phiên bản 2) | — |
 | **Máy công ty 21/10 (chưa có phiếu R)** | ✅ XONG — làm theo quy trình cũ trước khi có v3, nên không có phiếu `requests/` | Không cần làm gì; chi tiết review trong từng file task |
