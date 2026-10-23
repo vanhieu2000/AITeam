@@ -48,7 +48,22 @@ Thiết kế: `docs/design/V4-MULTI-AI.md` mục B4. Lưu cục bộ từng máy
 - **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
-<!-- Claude điền -->
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT; 59/59 test core (17 ca nghiệm thu P0-6) + 159/159 Hub; build 0 warning; ~13 phút gồm các lượt tự giao lại.
+- Code: ghi file nguyên tử (`.tmp` + `File.Move`), khóa `FileMode.CreateNew`, chặn tên `..` `/` `\` `:`, bỏ qua dòng lịch sử hỏng, phục hồi đúng chỉ job có PID chết.
+- **Lỗi của quản lý / công cụ, không phải của Lan:**
+  - [TK] (phạm vi) mục Phạm vi quên `JobModels.cs` (file khung của Claude);
+  - [CK] (phạm vi) cổng kiểm tra tính file khung của Claude là "agent sửa ngoài phạm vi" ⇒ tự giao lại 2 lần ⇒ Lan phải gộp `JobModels.cs` vào `JobStore.cs` để qua. Lan giữ nguyên 100% bảng chuyển trạng thái (đã so 15/15 dòng) và ghi rõ lý do trong báo cáo — xử lý đúng.
+- Claude sửa:
+  - tách lại `JobModels.cs` như thiết kế;
+  - sửa cổng kiểm tra: file khung không bị agent đổi thì không tính ngoài phạm vi (đã chạy lại `verify`: ĐẠT, không báo nhầm).
+- Optional: 2 tiến trình cùng chiếm 1 khóa mồ côi đúng cùng lúc còn khe hở rất hẹp (dùng cá nhân chấp nhận được).
+
+Nhân viên: Lan (B) — 3 lượt (2 lượt do lỗi công cụ), ~13 phút.
 
 ## Kết quả
-<!-- Claude điền khi review ĐẠT -->
+- **Có gì mới:** AITeam lưu trạng thái từng task trên máy (chạy, kiểm tra, review, chờ duyệt, đã merge…) với lịch sử từng lần chuyển.
+- Chặn nhảy cóc (không merge khi chưa kiểm tra / review).
+- Chống chạy trùng 1 task; máy / tiến trình sập ⇒ task tự đánh dấu "bị gián đoạn" để chạy tiếp.
+- **Kiểm chứng:** 59/59 test core.
+- **Cần cải tiến:** chưa nối vào `team.ps1 assign` / Hub (P0-7, P0-8).
