@@ -1,6 +1,6 @@
 ﻿# R-003 · Nâng cấp toàn diện Hub team (v3) + đánh giá quy trình mỗi task
 
-- **Nhận lúc:** 00:11 24/10/2026 · máy DESKTOP-PP14EFS
+- **Nhận lúc:** ~00:00 24/10/2026 (phiếu mở 00:11) · máy DESKTOP-PP14EFS
 - **Trạng thái:** 🟡 Đang làm
 - **Lời chủ dự án:**
   > mỗi 1 task xong cần đánh giá từ quy tình quản lí gia ovieejc đến , quy trình plan, y tưởng , quy trình giao việc , quy tình thực hiện code, quy tình review qc ,.. quy trình đánh giá ,.. sau mỗi lần cần hoàn thiện sau 3 task lại đưa ra kế haochj cải tiến góp ý thay đổi quy trình hoàn thiện quy trình ,.. ở web cần show được cả thông tin cái dó, tổng qua nxem được dan hsachs nhiện vụ beieur dồ thời gian việc độ khó như nào ,.. bảng đnahs giá team ,.. các tab xem chi tiết , khu vục chat giao nhiêm jvuj mới , giao diện báo cáo những vấn đè trong team , nghuyên nhân, giải pháp phươn gán đề xuất cải tiến , kết quả cải tiến ... , có những job gì cần tô iduyeejt cũng có thể duyệt trên đó luôn ,.. tôi muốn nagw cấp toàn diện hub team
@@ -28,9 +28,12 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-003` để `team.ps1 reque
 | Giờ | Sự kiện | Ghi chú |
 |---|---|---|
 | 00:11 | Nhận yêu cầu | |
-| 00:20 | Quy trình 6b/6c + mẫu task/improvement (commit 37d788c) | đánh giá V4-03, V4-06 |
-| 00:45 | Xong thiết kế HUB-V3.md + mockup | chờ chủ dự án duyệt mockup |
-| 00:20 | Chủ dự án duyệt mockup ("oke làm đi"); xong khung + 30 ca nghiệm thu H3-01 | |
+| 00:06 | Quy trình 6b/6c + mẫu task/improvement (commit 37d788c) | đánh giá V4-03, V4-06 |
+| 00:12 | Xong thiết kế HUB-V3.md + mockup | chờ chủ dự án duyệt mockup |
+| 00:14 | Chủ dự án duyệt mockup ("oke làm đi") | |
+| 00:20 | Giao H3-01 (Minh): khung + 30 ca nghiệm thu | |
+| 00:24 | Giao H3-03 (Lan): khung + 17 ca nghiệm thu + bố cục | song song H3-01 |
+| 00:25 | Claude: team.ps1 approval-request + merge kiểm tra duyệt (~76 dòng, đã thử 7 trường hợp) | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;

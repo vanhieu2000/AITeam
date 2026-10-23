@@ -47,6 +47,7 @@ param(
     [string] $Title = "",
     [string] $Agent = "A",
     [string] $Request = "",
+    [string] $Kind = "",
     [switch] $NoLaunch,
     [string] $Name = "",
     [string[]] $Names = @(),
@@ -1158,6 +1159,70 @@ function Invoke-ReviewPack {
     $ErrorActionPreference = $eap
 }
 
+# ===== Duyệt trên Hub (R-003): approvals/A-xxx.json. Hub chỉ ghi status / decidedAt / note; team.ps1 làm việc thật =====
+function Get-TaskId($tf) { if ($tf.BaseName -match '^([A-Za-z0-9]+-\d+)') { $Matches[1] } else { $tf.BaseName } }
+
+function Get-Approvals {
+    $dir = Join-Path $Root "approvals"
+    if (-not (Test-Path $dir)) { return @() }
+    @(Get-ChildItem $dir -Filter 'A-*.json' | Where-Object { $_.BaseName -match '^A-\d{3}$' } | ForEach-Object {
+        try { $a = Read-Json $_.FullName; if ($a.id -eq $_.BaseName) { $a } } catch { Say "Bỏ qua $($_.Name): JSON hỏng" Yellow } })
+}
+
+# team.ps1 approval-request -Kind merge -Project X -Task T [-Title "…"] [-Prompt "chi tiết markdown"]
+# team.ps1 approval-request -Kind decision|improvement -Title "…" -Prompt "…" [-Project X]
+function Invoke-ApprovalRequest {
+    if ($Kind -notin 'merge', 'decision', 'improvement') { throw "-Kind phải là merge / decision / improvement." }
+    $dir = Join-Path $Root "approvals"; New-Item -ItemType Directory -Force $dir | Out-Null
+    $max = (@(Get-ChildItem $dir -Filter 'A-*.json' | ForEach-Object { if ($_.BaseName -match '^A-(\d{3})$') { [int]$Matches[1] } }) + 0 | Measure-Object -Maximum).Maximum
+    $id = 'A-{0:000}' -f ($max + 1)
+    $taskId = $null; $commit = $null; $links = @(); $title = $Title
+    if ($Kind -eq 'merge') {
+        $r = Resolve-Project $Project; $tf = Find-TaskFile $r $Task
+        $text = Get-Content $tf.FullName -Raw -Encoding UTF8
+        $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
+        $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        git -C $r.Path fetch -q origin 2>$null
+        $commit = (git -C $r.Path rev-parse "origin/$branch" 2>$null)
+        $ErrorActionPreference = $eap
+        if (-not $commit) { throw "Không thấy nhánh origin/$branch." }
+        $taskId = Get-TaskId $tf; $links = @("tasks/$($tf.Name)")
+        if (-not $title) { $title = "Merge " + ([regex]::Match($text, '^#\s*(.+)$', 'Multiline').Groups[1].Value.Trim()) }
+    } elseif (-not $title) { throw "Thiếu -Title." }
+    $obj = [ordered]@{
+        id = $id; kind = $Kind; title = $title; detail = $Prompt; project = $Project; task = $taskId; commit = $commit; links = $links
+        requestedBy = "Claude"; requestedAt = (Get-Date -Format s); status = "pending"; decidedAt = $null; note = $null
+    }
+    [IO.File]::WriteAllText((Join-Path $dir "$id.json"), ($obj | ConvertTo-Json -Depth 4), $Utf8)
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git -C $Root add -- "approvals/$id.json" 2>$null
+    git -C $Root commit -q -m "Xin duyệt ${id}: $title" 2>$null
+    git -C $Root push -q 2>$null
+    $ErrorActionPreference = $eap
+    Say "Đã tạo $id ($Kind) — chủ dự án duyệt tại http://127.0.0.1:5057/Approvals" Green
+}
+
+# Trước khi merge: có mục duyệt merge cho task ⇒ phải "approved" và đúng commit nhánh lúc xin duyệt.
+# Không có mục nào ⇒ cho merge, trừ khi team.json "approvals": { "requireMerge": true }.
+function Assert-MergeApproval($cfg, $taskId, $head) {
+    $items = @(Get-Approvals | Where-Object { $_.kind -eq 'merge' -and $_.task -eq $taskId })
+    if (-not $items) {
+        if ($cfg.approvals -and $cfg.approvals.requireMerge) { throw "Chưa có mục duyệt merge cho $taskId ⇒ chạy approval-request -Kind merge trước." }
+        return $null
+    }
+    $a = $items | Sort-Object { [datetime]$_.requestedAt }, id | Select-Object -Last 1
+    switch ($a.status) {
+        'pending' { throw "$($a.id) đang chờ chủ dự án duyệt trên Hub ⇒ chưa merge." }
+        'rejected' { throw "Chủ dự án đã TỪ CHỐI $($a.id)$(if ($a.note) { ': ' + $a.note }) ⇒ không merge." }
+        'approved' {
+            if ($a.commit -and $a.commit -ne $head) { throw "$($a.id) duyệt commit $($a.commit.Substring(0, 7)) nhưng nhánh giờ là $("$head".Substring(0, [Math]::Min(7, "$head".Length))) ⇒ xin duyệt lại." }
+            Say "Chủ dự án đã duyệt $($a.id)$(if ($a.note) { ' — ' + $a.note }) ✓" Green
+            return $a
+        }
+        default { throw "$($a.id) có trạng thái lạ '$($a.status)'." }
+    }
+}
+
 function Invoke-Merge {
     $cfg = Get-Config
     $r = Resolve-Project $Project
@@ -1170,6 +1235,10 @@ function Invoke-Merge {
     $review = (git -C $r.Path show "origin/${branch}:tasks/$($tf.Name)" 2>$null) -join "`n"
     if ($review -notmatch 'Vòng\s+\d+\s*[—–-]+\s*ĐẠT') { $ErrorActionPreference = $eap; throw "Nhánh chưa có dòng '### Vòng N — ĐẠT' trong Review (Claude) ⇒ chưa merge." }
     $round = ([regex]::Matches($review, 'Vòng\s+(\d+)') | ForEach-Object { [int]$_.Groups[1].Value } | Measure-Object -Maximum).Maximum
+    $head = (git -C $r.Path rev-parse "origin/$branch" 2>$null)
+    $ErrorActionPreference = $eap
+    $approval = Assert-MergeApproval $cfg (Get-TaskId $tf) $head
+    $ErrorActionPreference = "Continue"
     git -C $r.Path pull -q 2>$null
     git -C $r.Path merge --no-ff -q "origin/$branch" -m "Merge $($tf.BaseName) ($(Get-StaffName $agentId), review đạt vòng $round)`n`nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" 2>&1 | Select-Object -Last 2 | ForEach-Object { Say $_ Yellow }
     if ($LASTEXITCODE -ne 0) {
@@ -1190,6 +1259,12 @@ function Invoke-Merge {
     Set-BoardStatus $r $tf.BaseName "✅ Đã merge (vòng $round)"
     git -C $r.Path push -q origin HEAD 2>$null
     Say "Đã merge + push main." Green
+    if ($approval) {
+        # Quyết định chủ dự án bấm trên Hub chỉ nằm trên máy này ⇒ đưa lên git để máy kia cũng thấy.
+        git -C $Root add -- "approvals/$($approval.id).json" 2>$null
+        git -C $Root commit -q -m "Duyệt $($approval.id): $($approval.title)" 2>$null
+        git -C $Root push -q 2>$null
+    }
     # Kiểm tra bằng clone sạch
     $clone = Join-Path $env:TEMP ("merge-check-" + $r.Info.name)
     if (Test-Path $clone) { Remove-Item $clone -Recurse -Force }
@@ -1441,6 +1516,7 @@ switch ($Command) {
     "stop" { Invoke-Stop }
     "review" { Invoke-ReviewPack }
     "merge" { Invoke-Merge }
+    "approval-request" { Invoke-ApprovalRequest }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }

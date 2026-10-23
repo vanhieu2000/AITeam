@@ -1,4 +1,4 @@
-# Quy trình v3 — chốt từ đầu, agent chỉ code, Claude review
+﻿# Quy trình v3 — chốt từ đầu, agent chỉ code, Claude review
 
 Áp dụng từ 21/10/2026 (sau đánh giá R-001). Một trang này là đủ cho mỗi phiên. `CLAUDE.md` chỉ để tra cứu chi tiết.
 
@@ -24,7 +24,7 @@
    - Còn sót nhưng phần chính đạt: merge, tách **task nhỏ mới**.
    - Chỉ trả agent khi phải làm lại nhiều (`assign -Resume -Feedback`).
    - Lỗi ghi `- [AG|TK|CK] (loại) …`.
-5. Ghi "### Vòng N — ĐẠT" + "## Kết quả" (cho chủ dự án) → `team.ps1 merge -Project X -Task T-xxx`: merge, bảng ✅, clone sạch, dọn worktree, làm mới `ban-chay-thu\`.
+5. Ghi "### Vòng N — ĐẠT" + "## Kết quả" (cho chủ dự án) → (việc cần chủ dự án quyết: `team.ps1 approval-request -Kind merge|decision|improvement …` ⇒ chủ dự án bấm trên Hub trang Cần duyệt; `merge` tự chặn nếu chờ / từ chối / nhánh đổi sau khi duyệt) → `team.ps1 merge -Project X -Task T-xxx`: merge, bảng ✅, clone sạch, dọn worktree, làm mới `ban-chay-thu\`.
 6. Dừng task: `team.ps1 stop -Task T-xxx` (dừng cả lệnh assign, không bị tự giao lại).
 6b. **Sau MỖI task (ngay khi merge):** điền mục "## Đánh giá quy trình" trong file task — 7 giai đoạn (tiếp nhận & quản lý · ý tưởng · plan · giao việc · code · review/QC · đánh giá & bàn giao), điểm 1–5, thời gian, vấn đề, nguyên nhân (TK/AG/CK/NV/HT), đề xuất.
 6c. **Cứ 3 task merge:** tạo `improvements/IMP-xxx-*.md` (mẫu `templates/improvement.md`): điểm TB từng giai đoạn so chu kỳ trước, vấn đề lặp lại, tối đa 3 giải pháp kèm chỉ số đo. Nhỏ ⇒ áp dụng ngay; lớn (quy trình / kiến trúc) ⇒ chờ chủ dự án duyệt. Chu kỳ sau điền mục "Kết quả" (có tác dụng không ⇒ giữ / bỏ).
