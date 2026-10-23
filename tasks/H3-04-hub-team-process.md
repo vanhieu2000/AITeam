@@ -72,16 +72,25 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2; mockup `docs/design/hub-v3-mockup
 - **Điều chưa chắc:** Không có (chưa chạy Hub chụp ảnh trình duyệt theo hướng dẫn giao việc; Claude kiểm tra khi review).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 22/22 ca nghiệm thu; 59 + 229 test; build 0 warning; ~8 phút, 1 lượt; giữ BOM đủ; 330/320 dòng.
+- Code: lọc nguyên nhân chuẩn hóa chữ hoa, đếm đủ 5 khóa kể cả khi lỗi, kẹp độ dài thanh, không ném lỗi ra trang.
+- Không có lỗi Blocker / Required. Giao diện xem trực quan sau khi Claude thêm menu (ghi ở Kết quả).
+
+Nhân viên: Minh (A) — 1 lượt, ~8 phút, 330/320 dòng.
 
 ## Kết quả
+- **Chức năng mới:** trang **Đội ngũ** (thẻ điểm Minh / Lan, đếm lỗi theo nguyên nhân, bản đồ nhiệt 7 giai đoạn) và trang **Quy trình & cải tiến** (biểu đồ điểm TB, chu kỳ IMP, bảng vấn đề lọc theo nguyên nhân).
+- **Kiểm chứng:** 22 ca nghiệm thu; chạy Hub thật với dữ liệu R-002 / R-003.
+- **Cần cải tiến:** chưa có biểu đồ so sánh giữa các chu kỳ (khi có IMP-002).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Minh (A) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-003) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-003) | — | — | — |
+| 3. Plan / thiết kế | Claude | 4 | ~20' | Khung ban đầu dùng `IndexModel.Percent` của task chưa merge — tự phát hiện trước khi giao | TK | Đã thêm vào mẫu task (IMP-001 mục kiểm tra 4) |
+| 4. Giao việc | Claude | 5 | ~10' | Bố cục đánh số, 22 ca nghiệm thu | — | — |
+| 5. Thực hiện code | Minh (A) | 5 | ~8' (1 lượt) | Đúng đặc tả, giữ BOM | — | — |
+| 6. Review / QC | Cổng KT + Claude | 5 | ~5' | Cổng KT không báo nhầm (sau IMP-001) | — | — |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
