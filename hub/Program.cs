@@ -35,6 +35,11 @@ else
     builder.Services.AddSingleton<IInboxService, InboxService>();
 }
 
+// Hub v3 (R-003): đọc file AITeam thật ở mọi chế độ (dữ liệu nhỏ, chỉ đọc + ghi quyết định duyệt).
+builder.Services.AddSingleton<IApprovalService, ApprovalService>();
+builder.Services.AddSingleton<IGitHistory, GitHistory>();
+builder.Services.AddSingleton<ITeamInsightsService, TeamInsightsService>();
+
 var app = builder.Build();
 app.UseStaticFiles();
 app.UseAntiforgery();

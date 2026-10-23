@@ -1,6 +1,7 @@
-@inject AITeam.Hub.Services.ITeamConfigService ConfigService
+﻿@inject AITeam.Hub.Services.ITeamConfigService ConfigService
 @inject AITeam.Hub.Services.ITaskBoardService TaskBoardService
 @inject AITeam.Hub.Services.IAgentRunService AgentRunService
+@inject AITeam.Hub.Services.IApprovalService ApprovalService
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
     var isHomeActive = currentPage == "/Index" || string.IsNullOrEmpty(currentPage) || currentPage == "/";
@@ -10,6 +11,8 @@
     var isAccountsActive = currentPage.Equals("/Accounts", StringComparison.OrdinalIgnoreCase);
     var isSecretsActive = currentPage.Equals("/Vault", StringComparison.OrdinalIgnoreCase) || currentPage.Equals("/Secrets", StringComparison.OrdinalIgnoreCase);
     var isSettingsActive = currentPage.Equals("/Settings", StringComparison.OrdinalIgnoreCase);
+    var isApprovalsActive = currentPage.Equals("/Approvals", StringComparison.OrdinalIgnoreCase);
+    var pendingApprovals = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending);
 
     var reqTheme = Context.Request.Query["theme"].ToString();
 
@@ -56,7 +59,17 @@
                 </svg>
                 <span>Tổng quan</span>
             </a>
-
+            <a href="/Approvals" class="nav @(isApprovalsActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2.5" y="2" width="11" height="12" rx="1.5"/>
+                    <path d="M5.5 8.2l1.8 1.8 3.4-3.6"/>
+                </svg>
+                <span>Cần anh duyệt</span>
+                @if (pendingApprovals > 0)
+                {
+                    <span class="cnt" style="background: var(--fix); color: #fff;">@pendingApprovals</span>
+                }
+            </a>
             <div class="grp">Dự án</div>
             @foreach (var p in sidebarProjects)
             {
