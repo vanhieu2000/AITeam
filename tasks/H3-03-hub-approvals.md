@@ -1,4 +1,4 @@
-# H3-03 · Hub v3: trang "Cần anh duyệt" (duyệt / từ chối trên web)
+﻿# H3-03 · Hub v3: trang "Cần anh duyệt" (duyệt / từ chối trên web)
 
 - **Agent:** B
 - **Nhánh:** `agent-b/H3-03-hub-approvals`
@@ -71,16 +71,28 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2–3; mockup `docs/design/hub-v3-mo
 - **Điều chưa chắc:** Không có (giao diện web chờ Claude chạy Hub kiểm tra trực quan khi review).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 17/17 ca nghiệm thu; 59 + 176 test; build 0 warning; ~7 phút, 1 lượt; giữ BOM đủ.
+- Code: chặn id lạ (`..`, đường dẫn tuyệt đối, `.json`), không đổi quyết định đã ghi, ghi file tạm rồi đổi tên, giữ nguyên trường lạ, không in thô nội dung.
+- Giao diện: đúng 7 mục Bố cục (đã đọc markup); xem trực quan sau khi Claude đăng ký DI + menu lúc merge.
+- [CK] (phạm vi) cổng kiểm tra tính khung của Claude vào ngân sách ⇒ báo 363/280 (thật 255/280) — đã sửa.
+- Optional: 2 tab trình duyệt bấm duyệt cùng lúc có thể ghi đè nhau (dùng cá nhân, chấp nhận).
+
+Nhân viên: Lan (B) — 1 lượt, ~7 phút, 255/280 dòng.
 
 ## Kết quả
+- **Chức năng mới:** trang "Cần anh duyệt" — anh bấm **Duyệt / Từ chối** kèm ghi chú cho việc merge, quyết định, kế hoạch cải tiến.
+- `team.ps1 merge` tự dừng nếu việc còn chờ duyệt, bị từ chối, hoặc code đổi sau khi duyệt (Claude làm, đã thử 7 trường hợp).
+- **Kiểm chứng:** 17 ca nghiệm thu (bảo mật, ghi file, trang); 235 test pass.
+- **Cần cải tiến:** Hub chưa tự báo khi có mục mới chờ duyệt (sẽ hiện số trên menu).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Lan (B) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-003) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-003) | Tách "Hub ghi quyết định / team.ps1 làm việc thật" ⇒ an toàn, không cần quyền chạy lệnh từ web | — | Giữ |
+| 3. Plan / thiết kế | Claude | 5 | ~15' | Hợp đồng JSON + lỗi từng trường hợp ghi trong khung | — | — |
+| 4. Giao việc | Claude | 5 | ~10' | Bố cục 7 mục cụ thể ⇒ không phải mò | — | Giữ "bố cục giao diện" dạng danh sách đánh số |
+| 5. Thực hiện code | Lan (B) | 5 | ~7' (1 lượt) | Đúng đặc tả, giữ BOM, có báo cáo đối chiếu từng mục bố cục | — | — |
+| 6. Review / QC | Cổng KT + Claude | 4 | ~10' | Cổng KT báo vượt ngân sách nhầm | CK | Đã sửa (tính từ commit khung) |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
