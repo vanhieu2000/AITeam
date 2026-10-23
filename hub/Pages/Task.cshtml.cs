@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +11,14 @@ public class TaskModel : PageModel
     private readonly ITaskBoardService _boardService;
     private readonly ITeamConfigService _configService;
     private readonly IAgentRunService? _runService;
+    private readonly ITeamInsightsService? _insights;
 
-    public TaskModel(ITaskBoardService boardService, ITeamConfigService configService, IAgentRunService? runService = null)
+    public TaskModel(ITaskBoardService boardService, ITeamConfigService configService, IAgentRunService? runService = null, ITeamInsightsService? insights = null)
     {
         _boardService = boardService;
         _configService = configService;
         _runService = runService;
+        _insights = insights;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -26,6 +28,9 @@ public class TaskModel : PageModel
     public string Id { get; set; } = string.Empty;
 
     public TaskDetail? Detail { get; private set; }
+
+    /// <summary>Dữ liệu Hub v3 (dòng thời gian, đánh giá quy trình) của task; null nếu không có dịch vụ / lỗi đọc (R-003 / H3-05).</summary>
+    public TaskInsight? Insight { get; private set; }
     public ProjectInfo? Project { get; private set; }
 
     public string Priority { get; private set; } = "bình thường";
@@ -57,6 +62,7 @@ public class TaskModel : PageModel
 
         Project = _configService.FindProject(Name);
         Detail = _boardService.GetTask(Name, Id);
+        try { Insight = _insights?.GetTask(Name, Id); } catch { Insight = null; }
 
         if (Detail == null)
         {
