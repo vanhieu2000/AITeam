@@ -26,6 +26,8 @@
    - Lỗi ghi `- [AG|TK|CK] (loại) …`.
 5. Ghi "### Vòng N — ĐẠT" + "## Kết quả" (cho chủ dự án) → `team.ps1 merge -Project X -Task T-xxx`: merge, bảng ✅, clone sạch, dọn worktree, làm mới `ban-chay-thu\`.
 6. Dừng task: `team.ps1 stop -Task T-xxx` (dừng cả lệnh assign, không bị tự giao lại).
+6b. **Sau MỖI task (ngay khi merge):** điền mục "## Đánh giá quy trình" trong file task — 7 giai đoạn (tiếp nhận & quản lý · ý tưởng · plan · giao việc · code · review/QC · đánh giá & bàn giao), điểm 1–5, thời gian, vấn đề, nguyên nhân (TK/AG/CK/NV/HT), đề xuất.
+6c. **Cứ 3 task merge:** tạo `improvements/IMP-xxx-*.md` (mẫu `templates/improvement.md`): điểm TB từng giai đoạn so chu kỳ trước, vấn đề lặp lại, tối đa 3 giải pháp kèm chỉ số đo. Nhỏ ⇒ áp dụng ngay; lớn (quy trình / kiến trúc) ⇒ chờ chủ dự án duyệt. Chu kỳ sau điền mục "Kết quả" (có tác dụng không ⇒ giữ / bỏ).
 7. Xong yêu cầu: `team.ps1 request-report -Request R-xxx` + `staff-report` → đánh giá trong phiếu → 1 dòng `docs/HIEU-SUAT-LOG.md` → tối đa 2 cải tiến, sửa ngay vào công cụ / mẫu → tăng phiên bản quy trình.
 8. Báo chủ dự án **ngắn, gạch đầu dòng**: sửa gì · làm được gì · kiểm chứng · cần cải tiến · cách test (`CHAY-THU.cmd`). Cuối phiên cập nhật `BAN-GIAO.md`.
 

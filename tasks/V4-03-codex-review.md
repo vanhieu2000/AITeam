@@ -68,3 +68,14 @@ Nhân viên: Minh (A) — 1 lượt, 9 phút.
 - **Cần cải tiến:**
   - Codex có hạn mức nhỏ (hết sau vài lần chạy thử) ⇒ P0-4/5 phải chọn task nào đáng review bằng Codex + có reviewer dự phòng;
   - chưa nối vào `team.ps1` (P0-7).
+
+## Đánh giá quy trình
+| Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
+|---|---|---|---|---|---|---|
+| 1. Tiếp nhận & quản lý | Claude | 5 | ~15' | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-002) | Học từ mã Agent Office: `codex exec --sandbox read-only` + verdict máy đọc | — | — |
+| 3. Plan / thiết kế | Claude | 4 | ~30' | Thiết kế B5 chưa nói định dạng file (BOM) khi đưa cho CLI ngoài | TK | Mục "hợp đồng với CLI ngoài" trong thiết kế: mã hóa file, stdin, giới hạn |
+| 4. Giao việc | Claude | 4 | ~25' | Test nghiệm thu chỉ dùng provider giả ⇒ không bắt lỗi BOM; file task lên main SAU khi tạo nhánh ⇒ xung đột | TK | 1 test tích hợp chạy thật (tùy chọn, bỏ qua khi hết hạn mức); file task lên main trước (đã đưa vào QUY-TRINH) |
+| 5. Thực hiện code | Minh (A) | 5 | 9' | Vượt ngân sách nhẹ (321/250) | — | — |
+| 6. Review / QC | Cổng KT + Claude + Codex | 4 | ~20' | Codex hết hạn mức giữa chừng; `merge` lần đầu lộ 3 lỗi | HT, CK | Dùng Codex có chọn lọc; đã sửa `merge` |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~10' | — | — | — |

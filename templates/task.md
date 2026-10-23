@@ -6,6 +6,7 @@
 - **Ngân sách:** ~400 dòng
 - **Yêu cầu:** R-xxx
 - **Thời gian tối đa:** 25 phút
+- **Độ khó:** M <!-- S (≤150 dòng, rõ ràng) · M (≤400, vài file) · L (>400 / nhiều module / rủi ro cao) -->
 <!-- Tùy chọn: - **Model:** `gemini-3.8-flash-medium` cho việc nhỏ / dữ liệu; bỏ trống = mặc định. Xem: .\team.ps1 models -->
 
 ## Tóm tắt
@@ -72,3 +73,15 @@ File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa x�
 
 ## Kết quả
 <!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
+
+## Đánh giá quy trình
+<!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
+| Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
+|---|---|---|---|---|---|---|
+| 1. Tiếp nhận & quản lý | Claude | | | | | |
+| 2. Ý tưởng | Claude | | | | | |
+| 3. Plan / thiết kế | Claude | | | | | |
+| 4. Giao việc | Claude | | | | | |
+| 5. Thực hiện code | | | | | | |
+| 6. Review / QC | Cổng KT + reviewer | | | | | |
+| 7. Đánh giá & bàn giao | Claude | | | | | |

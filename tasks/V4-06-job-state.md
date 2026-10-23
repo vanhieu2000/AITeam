@@ -67,3 +67,14 @@ Nhân viên: Lan (B) — 3 lượt (2 lượt do lỗi công cụ), ~13 phút.
 - Chống chạy trùng 1 task; máy / tiến trình sập ⇒ task tự đánh dấu "bị gián đoạn" để chạy tiếp.
 - **Kiểm chứng:** 59/59 test core.
 - **Cần cải tiến:** chưa nối vào `team.ps1 assign` / Hub (P0-7, P0-8).
+
+## Đánh giá quy trình
+| Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
+|---|---|---|---|---|---|---|
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-002) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-002) | — | — | — |
+| 3. Plan / thiết kế | Claude | 5 | ~20' | Bảng chuyển trạng thái chốt trong khung — agent không phải đoán | — | Giữ cách "quyết định thiết kế nằm trong khung code" |
+| 4. Giao việc | Claude | 2 | ~20' | Phạm vi quên `JobModels.cs` (file khung của chính Claude) | TK | Phạm vi tự thêm mọi file trong commit khung (đã sửa cổng KT) |
+| 5. Thực hiện code | Lan (B) | 5 | ~13' (3 lượt) | Buộc gộp file để qua cổng — đã ghi rõ lý do, giữ nguyên logic | — | — |
+| 6. Review / QC | Cổng KT + Claude | 2 | ~15' | Cổng KT coi file khung của Claude là agent sửa ngoài phạm vi ⇒ tự giao lại 2 lần vô ích | CK | Đã sửa: file khung không bị đổi thì không tính |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | `merge` chạy trơn tru lần 2 | — | — |
