@@ -15,7 +15,12 @@
 ## 2. Chia việc
 | Task | Dự án | Ai | Ngân sách | Model | Vì sao giao / tự làm |
 |---|---|---|---|---|---|
-| | | A / B / Claude | ~N dòng | mặc định | |
+| H3-01 dữ liệu insights | AITeam | Minh (A) | ~320 | mặc định | lớp thuần nhiều quy tắc, có test nghiệm thu 30 ca |
+| H3-03 duyệt việc (approvals) | AITeam | Lan (B) | ~300 | mặc định | độc lập H3-01 ⇒ chạy song song |
+| H3-02 Tổng quan v3 | AITeam | Lan (B) | | | sau H3-01 |
+| H3-04 Đội ngũ + Quy trình | AITeam | | | | sau H3-01 |
+| H3-05 Giao việc + tab chi tiết | AITeam | | | | sau H3-01 |
+| DI + team.ps1 merge kiểm tra duyệt | AITeam | Claude | ~60 | | nhỏ, Claude tự làm |
 
 Mỗi file task phải có dòng `- **Yêu cầu:** R-003` để `team.ps1 request-report` gom số liệu.
 
@@ -25,6 +30,7 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-003` để `team.ps1 reque
 | 00:11 | Nhận yêu cầu | |
 | 00:20 | Quy trình 6b/6c + mẫu task/improvement (commit 37d788c) | đánh giá V4-03, V4-06 |
 | 00:45 | Xong thiết kế HUB-V3.md + mockup | chờ chủ dự án duyệt mockup |
+| 00:20 | Chủ dự án duyệt mockup ("oke làm đi"); xong khung + 30 ca nghiệm thu H3-01 | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
