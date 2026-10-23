@@ -70,17 +70,18 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2, 4 (giới hạn: không có AI tr
 - `hub.tests/AcceptanceH305Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 14 ca nghiệm thu H3-05).
-- [ ] 2 trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 14 ca nghiệm thu H3-05).
+- [x] 2 trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết | `dotnet build AITeam.sln` → `Build succeeded. 0 Warning(s), 0 Error(s)`. `dotnet test AITeam.sln --blame-hang-timeout 3m` → `Passed! Core.Tests: 59/59, Hub.Tests: 243/243` (14/14 ca `AcceptanceH305Tests` pass). |
+| 2 trang đúng mục Bố cục | Kiểm qua `AcceptanceH305Tests.Razor_markup_follows_layout` pass; chưa chạy Hub trực tiếp theo quy định agent. |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `RequestParser.Parse`, `RequestService.GetAll/Get`, `RequestsModel.OnGet/OnPostSend`; viết bố cục `Requests.cshtml`; thêm 2 tab `Dòng thời gian` và `Đánh giá quy trình` vào `Task.cshtml`.
+- **File đã đổi:** `hub/Services/RequestService.cs`, `hub/Pages/Requests.cshtml.cs`, `hub/Pages/Requests.cshtml`, `hub/Pages/Task.cshtml`, `tasks/H3-05-hub-requests-task-tabs.md`.
+- **Điều chưa chắc:** Không có; giao diện thực tế chờ Claude chạy Hub kiểm tra khi review.
 
 ## Review (Claude)
 

@@ -2,6 +2,7 @@
 @model AITeam.Hub.Pages.TaskModel
 @using AITeam.Hub.Models
 @using AITeam.Hub.Services
+@using AITeam.Hub.Pages
 @using AITeam.Hub.Pages.Shared
 @{
     ViewData["Title"] = $"{Model.Id} · {Model.Detail?.Card.Title}";
@@ -11,7 +12,7 @@
     }
 
     var reqTab = Request.Query.ContainsKey("tab") ? Request.Query["tab"].ToString().ToLowerInvariant() : "";
-    var activeTab = reqTab switch { "desc" => "desc", "report" or "review" => "report", _ => "criteria" };
+    var activeTab = reqTab switch { "desc" => "desc", "report" or "review" => "report", "timeline" => "timeline", "process" => "process", _ => "criteria" };
     var drawerRaw = Request.Query["drawer"].ToString();
     // Chỉ cho phép số lần chạy hoặc "first" — không chèn chuỗi người dùng vào script.
     var reqDrawer = string.IsNullOrEmpty(drawerRaw) ? "" : (int.TryParse(drawerRaw, out var drawerNum) ? drawerNum.ToString() : "first");
@@ -59,6 +60,14 @@ else
         }
     }
 
+    <style>
+        .h5 { background: rgba(22, 163, 74, 0.18); color: var(--ok, #16a34a); font-weight: 600; text-align: center; }
+        .h4 { background: rgba(34, 197, 94, 0.12); color: var(--ok, #16a34a); text-align: center; }
+        .h3 { background: rgba(234, 179, 8, 0.16); color: #a16207; text-align: center; }
+        .h2 { background: rgba(249, 115, 22, 0.18); color: #c2410c; font-weight: 600; text-align: center; }
+        .h1 { background: rgba(220, 38, 38, 0.18); color: var(--err, #dc2626); font-weight: 600; text-align: center; }
+        .h0 { color: var(--muted); text-align: center; }
+    </style>
     <div class="task-page" style="display:flex; flex-direction:column; height:calc(100vh - 52px - 32px); overflow:hidden;">
         <!-- Tiêu đề task + Pill trạng thái + Agent tag -->
         <div class="task-hd" style="flex:none;">
@@ -116,11 +125,118 @@ else
             <span class="tab @(activeTab == "report" ? "on" : "")" id="tabReportBtn" onclick="switchTaskTab('report')">
                 Báo cáo &amp; review @if (reviewRounds.Count > 0) {<span class="c">@reviewRounds.Count vòng</span>}
             </span>
+            <span class="tab @(activeTab == "timeline" ? "on" : "")" id="tabTimelineBtn" onclick="switchTaskTab('timeline')">Dòng thời gian</span>
+            <span class="tab @(activeTab == "process" ? "on" : "")" id="tabProcessBtn" onclick="switchTaskTab('process')">
+                Đánh giá quy trình @if (Model.Insight?.ProcessScore != null) {<span class="c">@Model.Insight.ProcessScore.Value.ToString("0.0")</span>}
+            </span>
         </div>
         <!-- Layout Split 2 cột: Trái = Tab panel tự cuộn, Phải = Panel Lần chạy (300px) -->
         <div class="split" style="flex:1; min-height:0; display:grid; grid-template-columns:1fr 300px; gap:14px; align-items:stretch;">
             <!-- Cột trái: Tab panel tự cuộn -->
             <div class="panel" style="height:100%; min-height:0; display:flex; flex-direction:column; overflow-y:auto;">
+                <!-- Tab 5: Dòng thời gian -->
+                <div id="tabTimelineContent" style="display:@(activeTab == "timeline" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                    @if (Model.Insight == null || Model.Insight.Timeline.Count == 0)
+                    {
+                        <div class="empty">Chưa có số đo thời gian cho task này (chỉ có từ 21/10/2026).</div>
+                    }
+                    else
+                    {
+                        var diffLabel = Model.Insight.Difficulty == Difficulty.Unknown ? "—" : Model.Insight.Difficulty.ToString();
+                        <div class="muted" style="margin-bottom:10px;">
+                            Phút agent: <b>@Model.Insight.AgentMinutes</b> · Lượt: <b>@Model.Insight.Runs</b> · Vòng review: <b>@Model.Insight.ReviewRounds</b> · Độ khó: <b>@diffLabel</b>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Đoạn</th>
+                                    <th>Bắt đầu</th>
+                                    <th>Kết thúc</th>
+                                    <th class="num">Phút</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var seg in Model.Insight.Timeline)
+                                {
+                                    var segClass = seg.Kind switch
+                                    {
+                                        SegmentKind.Coding => "pill run",
+                                        SegmentKind.Fix => "pill fix",
+                                        SegmentKind.Review => "pill rev",
+                                        _ => "pill ok"
+                                    };
+                                    var segText = seg.Kind switch
+                                    {
+                                        SegmentKind.Coding => "Code",
+                                        SegmentKind.Fix => "Sửa lại",
+                                        SegmentKind.Review => "Review",
+                                        _ => "Merge"
+                                    };
+                                    var mins = seg.Kind == SegmentKind.Merge
+                                        ? "—"
+                                        : Math.Max(0, (int)Math.Round((seg.End - seg.Start).TotalMinutes, MidpointRounding.AwayFromZero)).ToString();
+                                    <tr>
+                                        <td><span class="@segClass">@segText</span></td>
+                                        <td>@seg.Start.ToString("HH:mm dd/MM")</td>
+                                        <td>@seg.End.ToString("HH:mm dd/MM")</td>
+                                        <td class="num">@mins</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+
+                <!-- Tab 6: Đánh giá quy trình -->
+                <div id="tabProcessContent" style="display:@(activeTab == "process" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
+                    @if (Model.Insight == null || Model.Insight.Stages.Count == 0)
+                    {
+                        <div class="empty">Chưa đánh giá quy trình cho task này.</div>
+                    }
+                    else
+                    {
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Giai đoạn</th>
+                                    <th>Ai</th>
+                                    <th class="num">Điểm</th>
+                                    <th>Thời gian</th>
+                                    <th>Vấn đề</th>
+                                    <th>Nguyên nhân</th>
+                                    <th>Đề xuất</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in Model.Insight.Stages)
+                                {
+                                    <tr>
+                                        <td>@s.Stage</td>
+                                        <td>@(string.IsNullOrEmpty(s.Who) ? "—" : s.Who)</td>
+                                        <td class="@TeamModel.HeatCss(s.Score)">@(s.Score?.ToString() ?? "—")</td>
+                                        <td>@(string.IsNullOrEmpty(s.Time) ? "—" : s.Time)</td>
+                                        <td>@(string.IsNullOrEmpty(s.Issue) ? "—" : s.Issue)</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(s.Cause))
+                                            {
+                                                <span class="pill n" title="@TeamModel.CauseLabel(s.Cause)">@s.Cause</span>
+                                            }
+                                            else
+                                            {
+                                                <text>—</text>
+                                            }
+                                        </td>
+                                        <td>@(string.IsNullOrEmpty(s.Proposal) ? "—" : s.Proposal)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <div class="muted" style="margin-top:10px;">
+                            Điểm TB: <b>@(Model.Insight.ProcessScore?.ToString("0.0") ?? "—") / 5</b>
+                        </div>
+                    }
+                </div>
+
                 <!-- Tab 1: Tiêu chí -->
                 <div id="tabCriteriaContent" style="display:@(activeTab == "criteria" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto; padding:12px 14px;">
                     <h3 class="sec-h">Việc này sửa gì</h3>
@@ -376,11 +492,15 @@ else
             var cDesc = document.getElementById('tabDescContent');
             var cRep = document.getElementById('tabReportContent');
             var cRev = document.getElementById('tabReviewContent');
+            var cTime = document.getElementById('tabTimelineContent');
+            var cProc = document.getElementById('tabProcessContent');
 
             cCrit.style.display = 'none';
             cDesc.style.display = 'none';
             cRep.style.display = 'none';
             cRev.style.display = 'none';
+            if (cTime) cTime.style.display = 'none';
+            if (cProc) cProc.style.display = 'none';
 
             if (tab === 'desc') {
                 cDesc.style.display = 'block';
@@ -389,6 +509,12 @@ else
                 cRep.style.display = 'block';
                 cRev.style.display = 'block';
                 document.getElementById('tabReportBtn').classList.add('on');
+            } else if (tab === 'timeline') {
+                if (cTime) cTime.style.display = 'block';
+                document.getElementById('tabTimelineBtn').classList.add('on');
+            } else if (tab === 'process') {
+                if (cProc) cProc.style.display = 'block';
+                document.getElementById('tabProcessBtn').classList.add('on');
             } else {
 
                 cCrit.style.display = 'block';

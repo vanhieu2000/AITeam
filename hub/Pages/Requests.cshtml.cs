@@ -1,4 +1,5 @@
-﻿using AITeam.Hub.Models;
+using System.Text.RegularExpressions;
+using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -41,7 +42,19 @@ public class RequestsModel : PageModel
 
     /// <summary>Nạp Threads, Selected, Waiting, Projects. Lỗi đọc phiếu / inbox ⇒ ErrorMessage (không ném).</summary>
     public void OnGet()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        try
+        {
+            Projects = _config.GetProjects();
+            Threads = _requests.GetAll();
+            Selected = (!string.IsNullOrEmpty(Id) && Regex.IsMatch(Id, @"^R-\d{3}$"))
+                ? Threads.FirstOrDefault(t => string.Equals(t.Id, Id, StringComparison.OrdinalIgnoreCase)) ?? Threads.FirstOrDefault()
+                : Threads.FirstOrDefault();
+            Waiting = _inbox.GetItems().Where(i => !i.Done)
+                .OrderByDescending(i => i.Time).ThenByDescending(i => i.LineNumber).ToList();
+        }
+        catch (Exception ex) { ErrorMessage = ex.Message; }
+    }
 
     /// <summary>
     /// Gửi yêu cầu mới vào inbox (Claude nhận ở đầu phiên làm việc). Kiểm tra:
@@ -53,5 +66,17 @@ public class RequestsModel : PageModel
     /// Luôn RedirectToPage() (PRG), không mang Id.
     /// </summary>
     public IActionResult OnPostSend(string project, string text)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (string.IsNullOrWhiteSpace(text)) { ErrorMessage = "Nội dung yêu cầu không được để trống."; return RedirectToPage(); }
+        if (text.Length > MaxText) { ErrorMessage = "Nội dung quá dài (tối đa 4000 ký tự)."; return RedirectToPage(); }
+        var validProject = project == NewProject || _config.GetProjects().Any(p => string.Equals(p.Name, project, StringComparison.Ordinal));
+        if (!validProject) { ErrorMessage = "Dự án không hợp lệ."; return RedirectToPage(); }
+        try
+        {
+            _inbox.Add(project, text.Trim());
+            Message = "Đã gửi. Claude nhận yêu cầu khi bắt đầu phiên làm việc và trả lời trong phiếu R-xxx.";
+        }
+        catch (Exception ex) { ErrorMessage = ex.Message; }
+        return RedirectToPage();
+    }
 }

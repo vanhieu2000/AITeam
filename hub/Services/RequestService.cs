@@ -1,4 +1,6 @@
-﻿namespace AITeam.Hub.Services;
+using System.Text.RegularExpressions;
+
+namespace AITeam.Hub.Services;
 
 // Trang "Giao việc" (R-003 / H3-05): mỗi phiếu requests/R-xxx-*.md là 1 luồng hội thoại.
 // Lời chủ dự án = tin nhắn bên phải; mỗi dòng Nhật ký của Claude = tin nhắn bên trái. Hub chỉ ĐỌC phiếu.
@@ -31,7 +33,69 @@ public static class RequestParser
     /// Verbatim: chỉ nhận các dòng liền nhau bắt đầu bằng "&gt;" (sau khoảng trắng) ngay sau dòng "Lời chủ dự án"; dừng ở dòng đầu tiên không phải trích dẫn.
     /// </summary>
     public static RequestThread? Parse(string fileName, string markdown)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (string.IsNullOrWhiteSpace(fileName)) return null;
+        var idMatch = Regex.Match(fileName, @"^(R-\d{3})(?!\d)");
+        if (!idMatch.Success) return null;
+
+        var id = idMatch.Groups[1].Value;
+        string title = "", status = "", receivedAt = "";
+        var verbatimLines = new List<string>();
+        var tasks = new List<RequestTaskRef>();
+        var events = new List<RequestEvent>();
+        var evaluated = false;
+        int section = 0;
+        var inVerbatim = false;
+
+        foreach (var raw in (markdown ?? "").Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None))
+        {
+            var trimmed = raw.Trim();
+            if (inVerbatim)
+            {
+                if (trimmed.StartsWith('>')) { verbatimLines.Add(trimmed[1..].Trim()); continue; }
+                inVerbatim = false;
+            }
+            if (trimmed.StartsWith("# ") && string.IsNullOrEmpty(title))
+            {
+                var h = trimmed[2..].Trim();
+                var m = Regex.Match(h, @"^R-\d{3}\s*[·\-:]\s*(.*)$");
+                title = m.Success ? m.Groups[1].Value.Trim() : (Regex.IsMatch(h, @"^R-\d{3}$") ? "" : h);
+                continue;
+            }
+            if (trimmed.StartsWith("## "))
+            {
+                section = (trimmed.Contains("Chia việc", StringComparison.OrdinalIgnoreCase) || trimmed.StartsWith("## 2.", StringComparison.Ordinal)) ? 2
+                    : (trimmed.Contains("Nhật ký", StringComparison.OrdinalIgnoreCase) || trimmed.StartsWith("## 3.", StringComparison.Ordinal)) ? 3
+                    : (trimmed.StartsWith("## 4.", StringComparison.Ordinal) || trimmed.Contains("Đánh giá sau khi xong", StringComparison.OrdinalIgnoreCase)) ? 4 : 1;
+                continue;
+            }
+            if (section == 0)
+            {
+                var stMatch = Regex.Match(trimmed, @"^-\s*\*\*Trạng thái:\*\*\s*(.*)$", RegexOptions.IgnoreCase);
+                if (stMatch.Success) { status = stMatch.Groups[1].Value.Trim(); continue; }
+                var rcvMatch = Regex.Match(trimmed, @"^-\s*\*\*Nhận lúc:\*\*\s*(.*)$", RegexOptions.IgnoreCase);
+                if (rcvMatch.Success) { receivedAt = rcvMatch.Groups[1].Value.Trim(); continue; }
+                if (Regex.IsMatch(trimmed, @"^-\s*\*\*Lời chủ dự án:\*\*", RegexOptions.IgnoreCase)) { inVerbatim = true; continue; }
+            }
+            if (!trimmed.StartsWith('|')) continue;
+            var cells = trimmed.Trim('|').Split('|').Select(c => c.Trim()).ToArray();
+            if (cells.Length == 0 || cells.All(c => c.All(ch => ch is '-' or ':' or ' '))) continue;
+            if (cells[0].Equals("Task", StringComparison.OrdinalIgnoreCase) ||
+                cells[0].Equals("Giờ", StringComparison.OrdinalIgnoreCase) ||
+                cells[0].Equals("Chỉ số", StringComparison.OrdinalIgnoreCase)) continue;
+
+            if (section == 2 && !string.IsNullOrEmpty(cells[0]))
+            {
+                var codeMatch = Regex.Match(cells[0], @"^[A-Za-z0-9]+-\d+[A-Za-z0-9/]*");
+                tasks.Add(new RequestTaskRef(codeMatch.Success ? codeMatch.Value : "", cells[0], cells.Length > 1 ? cells[1] : "", cells.Length > 2 ? cells[2] : ""));
+            }
+            else if (section == 3 && cells.Length >= 2 && !string.IsNullOrEmpty(cells[1]))
+                events.Add(new RequestEvent(cells[0], cells[1], cells.Length > 2 ? cells[2] : ""));
+            else if (section == 4 && cells.Length >= 2 && cells[0].Contains("Tổng thời gian", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(cells[1]))
+                evaluated = true;
+        }
+        return new RequestThread(id, title, status, receivedAt, string.Join("\n", verbatimLines), tasks, events, evaluated, fileName);
+    }
 }
 
 public interface IRequestService
@@ -52,8 +116,19 @@ public sealed class RequestService : IRequestService
     public string Folder => Path.Combine(_paths.AITeamRoot, "requests");
 
     public IReadOnlyList<RequestThread> GetAll()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (!Directory.Exists(Folder)) return Array.Empty<RequestThread>();
+        return Directory.EnumerateFiles(Folder, "R-*.md")
+            .Select(p => RequestParser.Parse(Path.GetFileName(p), File.ReadAllText(p)))
+            .Where(t => t != null).Select(t => t!)
+            .OrderByDescending(t => t.Id, StringComparer.OrdinalIgnoreCase).ToList();
+    }
 
     public RequestThread? Get(string id)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (string.IsNullOrEmpty(id) || !Regex.IsMatch(id, @"^R-\d{3}$") || !Directory.Exists(Folder)) return null;
+        return Directory.EnumerateFiles(Folder, $"{id}*.md")
+            .Select(p => RequestParser.Parse(Path.GetFileName(p), File.ReadAllText(p)))
+            .FirstOrDefault(t => t != null && string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase));
+    }
 }
