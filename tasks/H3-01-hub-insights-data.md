@@ -39,16 +39,16 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2–3. Chú thích trong khung code 
 - `hub.tests/AcceptanceH301Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 30 ca nghiệm thu H3-01).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 30 ca nghiệm thu H3-01).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 30 ca nghiệm thu H3-01). | `dotnet build AITeam.sln` → `Build succeeded. 0 Warning(s) 0 Error(s)`. `dotnet test AITeam.sln --blame-hang-timeout 3m` → `AITeam.Core.Tests: Passed 59/59`, `AITeam.Hub.Tests: Passed 189/189` (trong đó `AcceptanceH301Tests`: `Passed 30/30`). |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hiện thực đầy đủ các hàm phân tích chuỗi thuần trong `InsightParsers`, truy vấn giờ merge an toàn qua `ProcessStartInfo.ArgumentList` + cache 60s trong `GitHistory.MergedAt`, và dịch vụ tổng hợp 9 bước trong `TeamInsightsService`.
+- **File đã đổi:** `hub/Services/InsightParsers.cs`, `hub/Services/TeamInsightsService.cs`, `tasks/H3-01-hub-insights-data.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
 
