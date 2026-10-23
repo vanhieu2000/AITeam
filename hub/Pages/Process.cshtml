@@ -1,4 +1,122 @@
 ﻿@page "/Process"
+@using System.Globalization
+@using AITeam.Hub.Pages
 @model AITeam.Hub.Pages.ProcessModel
 @{ ViewData["Title"] = "Quy trình & cải tiến"; }
-@* TODO(agent): bố cục theo tasks/H3-04-hub-team-process.md *@
+
+<style>
+    .b-ok{fill:#22c55e}.b-mid{fill:#f59e0b}.b-bad{fill:#ef4444}.b-none{fill:#e5e7eb}
+</style>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--err); margin-right: 8px;">✗</span>
+        <span>@Model.Error</span>
+    </div>
+}
+
+<section class="screen on" id="s-process">
+    <div class="muted" style="margin-bottom: 12px; font-size: 13px;">Cứ 3 task là 1 chu kỳ cải tiến (IMP). Chu kỳ sau đo lại xem cải tiến có tác dụng không.</div>
+
+    <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px;">
+        <div class="panel">
+            <div class="hd"><span>Điểm trung bình từng giai đoạn</span></div>
+            <div class="bd">
+                <svg viewBox="0 0 440 200" width="100%" role="img" aria-label="Điểm trung bình từng giai đoạn">
+                    @for (var i = 0; i < Model.StageAverages.Count; i++)
+                    {
+                        var s = Model.StageAverages[i];
+                        var y = 12 + i * 25;
+                        var width = ProcessModel.BarWidth(s.Average, 260);
+                        var widthStr = width.ToString("0.#", CultureInfo.InvariantCulture);
+                        var xText = (125 + width).ToString("0.#", CultureInfo.InvariantCulture);
+                        var avgStr = s.Average.HasValue ? s.Average.Value.ToString("0.0", CultureInfo.InvariantCulture) : "—";
+                        <g>
+                            <text x="0" y="@(y + 11)" font-size="11">@s.Stage</text>
+                            <rect x="120" y="@y" height="14" rx="3" width="@widthStr" class="@ProcessModel.BarCss(s.Average)">
+                                <title>@s.Count lượt chấm</title>
+                            </rect>
+                            <text x="@xText" y="@(y + 11)" font-size="11">@avgStr</text>
+                        </g>
+                    }
+                </svg>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="hd"><span>Chu kỳ cải tiến</span></div>
+            @if (Model.Improvements.Count == 0)
+            {
+                <div class="empty">Chưa có chu kỳ cải tiến nào (tạo sau mỗi 3 task).</div>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Tiêu đề</th>
+                            <th>Task</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var imp in Model.Improvements)
+                        {
+                            <tr>
+                                <td><b>@imp.Id</b></td>
+                                <td>@imp.Title</td>
+                                <td>@string.Join(", ", imp.Tasks)</td>
+                                <td>@imp.Status</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top: 14px; overflow-x: auto;">
+        <div class="hd" style="flex-wrap: wrap; gap: 6px;">
+            <span>Vấn đề của team</span>
+            <span class="sp"></span>
+            <a class="btn sm @(string.IsNullOrEmpty(Model.Cause) ? "pri" : "")" href="?cause=">Tất cả (@Model.IssueTotal)</a>
+            @foreach (var code in TeamModel.Causes)
+            {
+                var count = Model.IssueCounts.TryGetValue(code, out var n) ? n : 0;
+                <a class="btn sm @(Model.Cause == code ? "pri" : "")" href="?cause=@code" title="@TeamModel.CauseLabel(code)">@code (@count)</a>
+            }
+        </div>
+        @if (Model.Issues.Count == 0)
+        {
+            <div class="empty">Không có vấn đề nào.</div>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Giai đoạn</th>
+                        <th>Nguyên nhân</th>
+                        <th style="min-width:220px;">Vấn đề</th>
+                        <th style="min-width:220px;">Đề xuất</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Issues)
+                    {
+                        <tr>
+                            <td><a href="/p/@item.Project/t/@item.Task"><b>@item.Task</b></a></td>
+                            <td>@item.Stage</td>
+                            <td><span class="pill" title="@TeamModel.CauseLabel(item.Cause)">@item.Cause</span></td>
+                            <td style="min-width:220px; white-space:normal; word-break:break-word;">@item.Issue</td>
+                            <td style="min-width:220px; white-space:normal; word-break:break-word;">@item.Proposal</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</section>

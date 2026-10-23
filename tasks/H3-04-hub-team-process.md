@@ -58,17 +58,18 @@ Thiết kế: `docs/design/HUB-V3.md` mục 2; mockup `docs/design/hub-v3-mockup
 - `hub.tests/AcceptanceH304Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 22 ca nghiệm thu H3-04).
-- [ ] 2 trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 22 ca nghiệm thu H3-04).
+- [x] 2 trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| Build 0 warning & Test pass hết | `dotnet build AITeam.sln` → 0 Warning(s), 0 Error(s); `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → Passed: 229/229 (`AITeam.Hub.Tests`, gồm 22 ca `AcceptanceH304Tests` + 1 ca `H304TeamProcessTests`), 59/59 (`AITeam.Core.Tests`). |
+| 2 trang đúng mục Bố cục | Đã viết `Team.cshtml` (`/Team`) và `Process.cshtml` (`/Process`) đúng bố cục, không dùng `Html.Raw`, pass kiểm tra markup trong `AcceptanceH304Tests.Razor_markup_follows_layout`. |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `TeamModel`, `ProcessModel`, giao diện Razor `/Team` và `/Process` theo đặc tả H3-04, thêm unit test `H304TeamProcessTests.cs`.
+- **File đã đổi:** `hub/Pages/Team.cshtml.cs`, `hub/Pages/Team.cshtml`, `hub/Pages/Process.cshtml.cs`, `hub/Pages/Process.cshtml`, `hub.tests/H304TeamProcessTests.cs`, `tasks/H3-04-hub-team-process.md`.
+- **Điều chưa chắc:** Không có (chưa chạy Hub chụp ảnh trình duyệt theo hướng dẫn giao việc; Claude kiểm tra khi review).
 
 ## Review (Claude)
 

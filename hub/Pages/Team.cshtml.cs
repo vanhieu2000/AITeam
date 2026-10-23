@@ -26,25 +26,64 @@ public class TeamModel : PageModel
     public string? Error { get; private set; }
 
     public void OnGet()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var counts = Causes.ToDictionary(c => c, _ => 0);
+        try
+        {
+            var data = _insights.Get();
+            Staff = data.Staff;
+            HeatRows = data.Tasks.Where(t => t.Stages.Count > 0).Take(15).ToList();
+            foreach (var task in data.Tasks.Where(t => t.Request != null))
+            {
+                foreach (var issue in task.Issues)
+                {
+                    if (counts.ContainsKey(issue.Cause))
+                        counts[issue.Cause]++;
+                }
+            }
+            CauseCounts = counts;
+            Error = null;
+        }
+        catch (Exception ex)
+        {
+            Error = "Không đọc được dữ liệu đánh giá: " + ex.Message;
+            Staff = Array.Empty<StaffScore>();
+            HeatRows = Array.Empty<TaskInsight>();
+            CauseCounts = counts;
+        }
+    }
 
     /// <summary>5 ⇒ "h5" … 1 ⇒ "h1"; null hoặc ngoài 1–5 ⇒ "h0".</summary>
     public static string HeatCss(int? score)
-        => throw new NotImplementedException(); // TODO(agent)
+        => score is >= 1 and <= 5 ? $"h{score.Value}" : "h0";
 
     /// <summary>{"giao diện":2,"test":1} ⇒ "giao diện 2 · test 1" (số lớn trước, bằng nhau theo tên tăng dần; Kind rỗng ⇒ "khác"). Rỗng ⇒ "—".</summary>
     public static string AgErrorsText(IReadOnlyDictionary<string, int> byKind)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (byKind == null || byKind.Count == 0) return "—";
+        return string.Join(" · ", byKind
+            .Select(kv => (Kind: string.IsNullOrWhiteSpace(kv.Key) ? "khác" : kv.Key, Count: kv.Value))
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Kind, StringComparer.Ordinal)
+            .Select(x => $"{x.Kind} {x.Count}"));
+    }
 
     /// <summary>TK "Task / thiết kế (Claude)" · AG "Nhân viên (agent)" · CK "Công cụ / cổng kiểm tra" · NV "Nghiệp vụ / chủ dự án" · HT "Hạ tầng / provider"; khác ⇒ chính mã đó.</summary>
-    public static string CauseLabel(string code)
-        => throw new NotImplementedException(); // TODO(agent)
+    public static string CauseLabel(string code) => code switch
+    {
+        "TK" => "Task / thiết kế (Claude)",
+        "AG" => "Nhân viên (agent)",
+        "CK" => "Công cụ / cổng kiểm tra",
+        "NV" => "Nghiệp vụ / chủ dự án",
+        "HT" => "Hạ tầng / provider",
+        _ => code
+    };
 
     /// <summary>0.5 ⇒ "50%"; 0.666 ⇒ "67%" (làm tròn); null ⇒ "—".</summary>
     public static string Pct(double? rate)
-        => throw new NotImplementedException(); // TODO(agent)
+        => rate.HasValue ? $"{Math.Round(rate.Value * 100.0, MidpointRounding.AwayFromZero):0}%" : "—";
 
     /// <summary>Điểm của giai đoạn index (1..7) trong task; không có dòng ⇒ null.</summary>
     public static int? StageScoreOf(TaskInsight task, int index)
-        => throw new NotImplementedException(); // TODO(agent)
+        => task.Stages.FirstOrDefault(s => s.Index == index)?.Score;
 }
