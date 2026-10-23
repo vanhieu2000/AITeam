@@ -1,4 +1,4 @@
-# Lan — nhân viên mã B
+﻿# Lan — nhân viên mã B
 
 - **Tên:** Lan
 - **Mã:** B (nhánh `agent-b/…`, lời giao việc / commit vẫn ghi "Agent B")
@@ -9,7 +9,6 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 
 ## Lưu ý riêng
 <!-- Mỗi dòng "- ..." được tự đưa vào lời giao việc lần sau. Chỉ ghi lỗi AG đã lặp ≥ 2 lần hoặc nghiêm trọng (bảo mật). Bỏ dòng khi 3 nhiệm vụ liền không tái phạm. -->
-- Test giao diện: KHÔNG Show()/ShowDialog()/MessageBox/Application.Run trên luồng test; control có kéo-thả (AllowDrop) bắt buộc luồng STA — luôn chạy qua helper `UiThread`; `dotnet test` luôn kèm `--blame-hang-timeout 2m`. (Lỗi 21/10 làm treo 2 lượt × 30 phút.)
 
 ## Nhận xét theo nhiệm vụ
 | Ngày | Yêu cầu / Task | Kết quả (lượt · phút · vòng · dòng/ngân sách) | Làm tốt | Lỗi (AG) | Hướng cải thiện |
@@ -19,3 +18,5 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 
 ## Đề xuất cải tiến cho nhân viên này
 <!-- Claude cập nhật sau mỗi kỳ: đổi model, chia task kiểu khác, thêm lưu ý riêng, đổi vùng code phụ trách... -->
+| 24/10 | R-003 / H3-03 | 1 · 7′ · 1 · 255/280 | Đúng đặc tả + bố cục, giữ BOM, báo cáo đối chiếu từng mục | — | — |
+| 24/10 | R-003 / H3-02 | 1 · 13′ · 1 · 370/330 | Đúng đặc tả, SVG chuẩn số thập phân bất biến | — | — |

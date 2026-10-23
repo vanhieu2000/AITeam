@@ -37,7 +37,9 @@ KIỂM TRA "HỢP ĐỒNG NGOÀI & KHUNG" (IMP-001 — lỗi TK lặp 3/3 task c
 - [ ] File đưa cho tiến trình / CLI ngoài: mã hóa (UTF-8 có / không BOM), xuống dòng, qua stdin hay tham số.
 - [ ] Gọi tiến trình ngoài (git, agy, codex, adb…): giới hạn thời gian, đọc output không chặn, có cần cache / bao lâu.
 - [ ] Mọi file khung trong commit "Test nghiệm thu" đều nằm trong Phạm vi, hoặc ghi rõ "KHÔNG đổi" ở Không làm.
-- [ ] Task dùng hàm / lớp từ task khác: hàm đó đã có trên main (chưa có ⇒ đưa vào khung của task này). -->
+- [ ] Task dùng hàm / lớp từ task khác: hàm đó đã có trên main (chưa có ⇒ đưa vào khung của task này).
+- [ ] Trang / dịch vụ mới: đã đăng ký DI trong khung + thêm trang vào test dựng trang thật (R-003: /Requests trắng trang).
+- [ ] Đọc dữ liệu thật (metrics, phiếu, git, file người dùng): ≥ 1 ca nghiệm thu dựng từ bản sao dữ liệu THẬT, đủ dài / nhiều ngày (R-003: khung giờ, số đo cộng dồn). -->
 -
 
 ## Dữ liệu mẫu thật

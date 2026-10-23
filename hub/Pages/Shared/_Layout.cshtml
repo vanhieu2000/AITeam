@@ -14,6 +14,7 @@
     var isApprovalsActive = currentPage.Equals("/Approvals", StringComparison.OrdinalIgnoreCase);
     var isTeamActive = currentPage.Equals("/Team", StringComparison.OrdinalIgnoreCase);
     var isProcessActive = currentPage.Equals("/Process", StringComparison.OrdinalIgnoreCase);
+    var isRequestsActive = currentPage.Equals("/Requests", StringComparison.OrdinalIgnoreCase);
     var pendingApprovals = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending);
 
     var reqTheme = Context.Request.Query["theme"].ToString();
@@ -61,7 +62,12 @@
                 </svg>
                 <span>Tổng quan</span>
             </a>
-            <a href="/Approvals" class="nav @(isApprovalsActive ? "on" : "")">
+            <a href="/Requests" class="nav @(isRequestsActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/>
+                </svg>
+                <span>Giao việc</span>
+            </a>            <a href="/Approvals" class="nav @(isApprovalsActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
                     <rect x="2.5" y="2" width="11" height="12" rx="1.5"/>
                     <path d="M5.5 8.2l1.8 1.8 3.4-3.6"/>

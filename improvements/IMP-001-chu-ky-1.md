@@ -1,6 +1,6 @@
 ﻿# IMP-001 · Chu kỳ cải tiến 1 (V4-03 · V4-06 · H3-01)
 
-- **Trạng thái:** ✅ Đã áp dụng <!-- 🟡 Đề xuất · 🔵 Chờ chủ dự án duyệt · ✅ Đã áp dụng · 📏 Đã đo kết quả -->
+- **Trạng thái:** 📏 Đã đo kết quả <!-- 🟡 Đề xuất · 🔵 Chờ chủ dự án duyệt · ✅ Đã áp dụng · 📏 Đã đo kết quả -->
 - **Task trong chu kỳ:** AITeam/V4-03, AITeam/V4-06, AITeam/H3-01
 - **Ngày:** 24/10/2026
 
@@ -41,9 +41,9 @@ Không — cả 3 là sửa công cụ / mẫu / thói quen của Claude, không
 - (2) mục kiểm tra trong `templates/task.md` (Ràng buộc).
 - (3) `QUY-TRINH.md` bước 4.
 
-## 5. Kết quả (điền sau chu kỳ 2: H3-03, H3-02, H3-04)
+## 5. Kết quả (đo trên chu kỳ 2: H3-03, H3-04, H3-02 + H3-05)
 | Giải pháp | Trước | Sau | Có tác dụng? | Giữ / bỏ |
 |---|---|---|---|---|
-| 1. Test hồi quy cổng KT | 3 lỗi CK | | | |
-| 2. Mục "Hợp đồng ngoài & khung" | 1,0 TK / task | | | |
-| 3. Test trước mọi commit | 1 | | | |
+| 1. Test hồi quy cổng KT | 3 lỗi CK / 3 task | 0 báo nhầm; H3-05 tự trả BOM 3 file khung (trước đây lọt) | **Có** | Giữ |
+| 2. Mục "Hợp đồng ngoài & khung" | 1,0 TK / task | 0,75 TK / task (3 lỗi / 4 task: khung giờ, số đo cộng dồn, quên đăng ký DI — loại lỗi MỚI, không lặp loại cũ) | Một phần | Giữ + thêm 2 mục (DI + test dựng trang; dữ liệu thật) |
+| 3. Test trước mọi commit | 1 | 0 | **Có** | Giữ |

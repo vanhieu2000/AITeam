@@ -1,4 +1,4 @@
-# Minh — nhân viên mã A
+﻿# Minh — nhân viên mã A
 
 - **Tên:** Minh
 - **Mã:** A (nhánh `agent-a/…`, lời giao việc / commit vẫn ghi "Agent A")
@@ -9,7 +9,7 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 
 ## Lưu ý riêng
 <!-- Mỗi dòng "- ..." được tự đưa vào lời giao việc lần sau. Chỉ ghi lỗi AG đã lặp ≥ 2 lần hoặc nghiêm trọng (bảo mật). Bỏ dòng khi 3 nhiệm vụ liền không tái phạm. -->
-- Test giao diện: KHÔNG Show()/ShowDialog()/MessageBox/Application.Run trên luồng test; luôn chạy qua helper `UiThread` (STA + timeout); `dotnet test` luôn kèm `--blame-hang-timeout 2m`. (Lỗi 21/10 làm treo 2 lượt × 30 phút.)
+- Giữ BOM UTF-8 của MỌI file .cs / .cshtml đang có BOM, kể cả file khung Claude vừa tạo: sửa bằng công cụ ghi lại đúng mã hóa, không ghi đè cả file bằng UTF-8 không BOM. (Mất BOM ở H3-01 và H3-05.)
 
 ## Nhận xét theo nhiệm vụ
 | Ngày | Yêu cầu / Task | Kết quả (lượt · phút · vòng · dòng/ngân sách) | Làm tốt | Lỗi (AG) | Hướng cải thiện |
@@ -19,3 +19,6 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 
 ## Đề xuất cải tiến cho nhân viên này
 <!-- Claude cập nhật sau mỗi kỳ: đổi model, chia task kiểu khác, thêm lưu ý riêng, đổi vùng code phụ trách... -->
+| 24/10 | R-003 / H3-01 | 1 · 8′ · 1 · 285/320 | Đúng đặc tả, chịu dữ liệu hỏng, gọi git an toàn | BOM | Giữ BOM file khung |
+| 24/10 | R-003 / H3-04 | 1 · 8′ · 1 · 330/320 | Đúng đặc tả, giữ BOM | — | — |
+| 24/10 | R-003 / H3-05 | 1 · 11′ · 1 · 348/380 | Đúng đặc tả, bảo mật đầu vào tốt | BOM (lần 2) | Lưu ý riêng đã thêm |
