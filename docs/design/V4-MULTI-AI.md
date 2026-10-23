@@ -103,6 +103,33 @@ Không đề xuất Claude CLI chạy ngầm làm Developer / Reviewer mặc đ�
 | Claude desktop | 1 (chính phiên quản lý) | — |
 
 ⇒ Cấu hình mặc định: **tối đa 2 Developer agy + 1 Reviewer Codex cùng lúc.**
+### B3b. Nghiên cứu: tài khoản Antigravity thứ 2 chạy song song bằng user Windows thứ 2 (23/10)
+**Căn cứ đã kiểm trên máy:**
+- `agy` lưu đăng nhập trong Windows Credential Manager (`gemini:antigravity`), không có file token. Credential Manager tách theo user Windows ⇒ **mỗi user Windows = 1 tài khoản Antigravity** — cách tách chính thống, không đụng token.
+- Tiền lệ: app Codex desktop đã tự tạo 2 user `CodexSandboxOffline` / `CodexSandboxOnline` để chạy agent cách ly.
+- Máy: Windows 10 Pro; user `ADMIN` thuộc nhóm Administrators (cần UAC khi tạo user); dịch vụ Secondary Logon đang chạy (cần cho `Start-Process -Credential`).
+
+**Cách làm đề xuất (user `aiteam-agy2`, tài khoản thường, không phải admin):**
+1. Chủ dự án tạo user (UAC) + mật khẩu ngẫu nhiên; mật khẩu lưu bằng `team.ps1 secret-set -Name AITEAM_AGY2_PASSWORD` (DPAPI, chỉ user ADMIN đọc được). Không ghi vào git / log.
+2. Cấp quyền tối thiểu:
+   - Modify trên thư mục worktree của agent: `D:\AITeam-work`, `D:\HDVTool-agents`;
+   - Modify trên `.git` của từng repo (worktree ghi object vào repo chính);
+   - KHÔNG cấp quyền vào `%USERPROFILE%\.aiteam` (kho bí mật) và các thư mục khác của ADMIN.
+3. Một lần, dưới user mới (`runas /profile /user:aiteam-agy2`):
+   - `agy` → đăng nhập **tài khoản Antigravity số 2**;
+   - `gh auth login` (cùng GitHub `vanhieu2000`, để push nhánh agent);
+   - `git config --global safe.directory` cho các repo.
+4. `team.json`: developer B thêm `"runAs": "aiteam-agy2"` ⇒ `assign` chạy agy bằng `Start-Process -Credential` (+ `-LoadUserProfile`), log ghi vào thư mục user đó được quyền ghi.
+5. Developer A giữ user ADMIN + tài khoản số 1 ⇒ **2 tài khoản chạy song song thật**, mỗi tài khoản có hạn mức riêng.
+
+**Phải thử nghiệm trước khi tin (chưa kiểm chứng):**
+- Từ user ADMIN không nâng quyền có dừng được tiến trình của user kia không (cho `team.ps1 stop`). Nếu không: dựa vào `--print-timeout` để agy tự dừng, `stop` cần UAC.
+- `git` / `dotnet build` dưới user mới: NuGet cache riêng (build lần đầu chậm), safe.directory.
+- agy dưới `Start-Process -Credential` không có cửa sổ: có đọc được Credential Manager không (cần nạp profile).
+
+**Rủi ro:** cấu hình ACL sai (quá rộng / thiếu); mật khẩu user nằm trong kho DPAPI; thêm 1 user phải bảo trì.
+
+**Đánh giá:** khả thi bằng cách chính thống. Chi phí làm khoảng 1 task M (`runAs` trong `assign` / `stop` + script cấp quyền + thử nghiệm). Lợi ích: gấp đôi hạn mức Antigravity dùng song song.
 
 ### B4. Luồng một task (mới)
 ```
