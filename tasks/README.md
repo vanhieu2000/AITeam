@@ -19,7 +19,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H-008 Hub v2: Agent, Hộp thư, Tài khoản, Bí mật, Cài đặt](H-008-hub-v2-agents-inbox-secrets-settings.md) | A | `agent-a/H-008-hub-v2-other-pages` | ✅ Đã merge (vòng 1, Claude hoàn tất) |
 | [V4-03 Codex review chỉ đọc](V4-03-codex-review.md) | A | `agent-a/V4-03-codex-review` | ✅ Đã merge (vòng 1) |
 | [V4-06 Trạng thái job + phục hồi](V4-06-job-state.md) | B | `agent-b/V4-06-job-state` | ✅ Đã merge (vòng 1) |
-| [H3-01 Hub v3: dịch vụ dữ liệu đánh giá team](H3-01-hub-insights-data.md) | A | `agent-a/H3-01-hub-insights-data` | ⬜ Chưa giao |
+| [H3-01 Hub v3: dịch vụ dữ liệu đánh giá team](H3-01-hub-insights-data.md) | A | `agent-a/H3-01-hub-insights-data` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 00:20 24/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
