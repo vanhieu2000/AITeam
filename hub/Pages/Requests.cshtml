@@ -5,7 +5,8 @@
 <style>
     .chat { display: flex; flex-direction: column; gap: 10px; max-height: 520px; overflow-y: auto; }
     .msg { max-width: 78%; padding: 9px 12px; border-radius: 10px; overflow-wrap: anywhere; font-size: 13px; }
-    .msg.me { align-self: flex-end; background: var(--accent); color: #fff; white-space: pre-wrap; }
+    .msg.me { align-self: flex-end; background: var(--accent); color: #fff; }
+        .msg.me .verbatim { white-space: pre-wrap; }
     .msg.bot { align-self: flex-start; background: var(--s2, #f1f3f6); color: var(--ink, #111); }
     .req-item { display: block; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; text-decoration: none; color: inherit; }
     .req-item.on { border-color: var(--accent); }
@@ -63,7 +64,7 @@
                 <div class="bd">
                     <div class="chat">
                         <div class="msg me">
-                            <div>@(string.IsNullOrEmpty(Model.Selected.Verbatim) ? "(phiếu không chép lời nguyên văn)" : Model.Selected.Verbatim)</div>
+                            <div class="verbatim">@(string.IsNullOrEmpty(Model.Selected.Verbatim) ? "(phiếu không chép lời nguyên văn)" : Model.Selected.Verbatim)</div>
                             <div style="font-size: 11px; opacity: 0.85; margin-top: 4px;">Anh · @Model.Selected.ReceivedAt</div>
                         </div>
                         @foreach (var e in Model.Selected.Events)
