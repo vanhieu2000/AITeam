@@ -117,7 +117,8 @@ public sealed class AcceptanceV504OfficeTests
         var claude = OfficeBuilder.Build(Input(req: req)).Desks[0];
         Assert.Equal(("Claude", DeskState.Manager, "🟡 Đang làm"), (claude.Name, claude.State, claude.StateText));
         Assert.Equal(("", "R-005", "Văn phòng mini"), (claude.Task!.Project, claude.Task.Id, claude.Task.Title));
-        Assert.Equal(new[] { "01:30 Giao V5-01", "01:15 PoC MCP chạy thật" }, claude.Feed.Select(f => f.Text));
+        Assert.Equal(new[] { "Giao V5-01", "PoC MCP chạy thật" }, claude.Feed.Select(f => f.Text));
+        Assert.Equal(new[] { Now.Date.AddHours(1).AddMinutes(30), Now.Date.AddHours(1).AddMinutes(15) }, claude.Feed.Select(f => f.At));   // giờ của sự kiện, không phải Now
         Assert.All(claude.Feed, f => Assert.Equal(("Claude", "note"), (f.From, f.Kind)));
 
         var empty = OfficeBuilder.Build(Input()).Desks[0];

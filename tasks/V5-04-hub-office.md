@@ -68,16 +68,26 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C2; mockup `docs/design/v
 - **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (25/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 11/11 ca nghiệm thu + `/Office` dựng thật; 138 + 302 test; 354/330 dòng; giữ BOM đủ (Lưu ý riêng có tác dụng).
+- Xem Hub thật (cổng 5058, dữ liệu thật): 6 bàn, đếm trạng thái, tự làm mới 10 giây; lưới co giãn (khung hẹp ⇒ 1 cột).
+- [TK] (giao diện) đặc tả bàn Claude lấy giờ hiện tại + ghép giờ sự kiện vào chữ ⇒ hiện 2 giờ. Claude sửa: giờ của chính sự kiện, chữ không ghép giờ; sửa test nghiệm thu theo.
+- [CK] (công cụ) `assign` không còn ghi "🔵 Chờ review" sau cổng KT khi review AI bỏ qua ⇒ Văn phòng hiện Lan "đang làm" dù đã xong. Claude sửa team.ps1 (82ee7f1).
+
+Nhân viên: Lan (B) — 1 lượt, ~13 phút, 354/330 dòng.
 
 ## Kết quả
+- **Chức năng mới — trang Văn phòng:** bàn làm việc của Claude, Minh, Lan, Codex, Cổng kiểm tra, Phòng nghiên cứu: đang làm gì, bao lâu, rảnh / chờ review / nghỉ tới giờ nào, 3 tin tiến độ mới nhất; tự làm mới 10 giây.
+- **Kiểm chứng:** 11 ca nghiệm thu; chạy Hub thật.
+- **Cần cải tiến:** nút điều khiển (V5-05); tin tiến độ của agent cần `assign` nối MCP (V5-02).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Lan (B) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-005) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-005) | Mockup đã duyệt | — | — |
+| 3. Plan / thiết kế | Claude | 4 | ~25' | Giờ tin bàn Claude đặc tả sai | TK | Đặc tả hiển thị: thử với dữ liệu thật (phiếu R-005) trước khi giao |
+| 4. Giao việc | Claude | 5 | ~10' | Hàm thuần + 11 ca nghiệm thu, song song V5-01 | — | — |
+| 5. Thực hiện code | Lan (B) | 5 | ~13' (1 lượt) | Đúng đặc tả, giữ BOM | — | — |
+| 6. Review / QC | Cổng KT + Claude | 4 | ~15' | Chạy Hub thật bắt 2 lỗi (TK + CK) | CK | Đã sửa trạng thái bảng việc |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |

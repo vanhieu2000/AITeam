@@ -46,7 +46,7 @@ public static class OfficeBuilder
     ///
     /// Bàn "claude": Name "Claude", Role "Quản lý · thiết kế · review", State Manager.
     /// - CurrentRequest có ⇒ Task = DeskTask("", Id, Title, null), StateText = Status; Feed = 2 sự kiện CUỐI của Events (mới nhất trước),
-    ///   mỗi cái TaskMessage(Now, Id, "Claude", "note", "{Time} {Text}").
+    ///   mỗi cái TaskMessage(At = ngày của Now + giờ "HH:mm" của sự kiện (không đọc được ⇒ Now), Id, "Claude", "note", Text).
     /// - Không có ⇒ Task null, StateText "Không có phiếu đang làm", Feed rỗng.
     ///
     /// Bàn "gate": Name "Cổng kiểm tra + Review AI", Role "build · test · BOM · phạm vi · review AI".
@@ -70,7 +70,10 @@ public static class OfficeBuilder
             var feed = (req.Events ?? Array.Empty<RequestEvent>())
                 .TakeLast(2)
                 .Reverse()
-                .Select(e => new TaskMessage(input.Now, req.Id, "Claude", "note", $"{e.Time} {e.Text}"))
+                .Select(e => new TaskMessage(
+                    // Giờ của chính sự kiện (HH:mm hôm nay) — trước đây lấy Now rồi ghép giờ vào chữ ⇒ hiện 2 giờ (review V5-04).
+                    TimeSpan.TryParseExact(e.Time, @"hh\:mm", CultureInfo.InvariantCulture, out var hm) ? input.Now.Date + hm : input.Now,
+                    req.Id, "Claude", "note", e.Text))
                 .ToList();
             desks.Add(new Desk("claude", "Claude", "Quản lý · thiết kế · review", DeskState.Manager, req.Status,
                 new DeskTask("", req.Id, req.Title, null), feed));
