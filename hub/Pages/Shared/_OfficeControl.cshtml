@@ -40,7 +40,7 @@
                     {
                         @foreach (var t in Model.Resumable) { <option value="@t.Project/@t.Id">@t.Project · @t.Id · @t.Agent — @t.Title</option> }
                     }
-                    else { <option>Không có task chưa giao / cần sửa</option> }
+                    else { <option>Không có task chờ review / cần sửa</option> }
                 </select>
                 <textarea class="inp" name="feedback" rows="3" maxlength="2000" placeholder="Góp ý cho agent (bắt buộc khi giao lại)" disabled="@(!hasResume)" style="width:100%;max-width:100%"></textarea>
                 <div class="row" style="gap:8px;flex-wrap:wrap">

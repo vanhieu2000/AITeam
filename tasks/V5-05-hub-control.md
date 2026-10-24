@@ -83,5 +83,28 @@ Chung: bề rộng 1000px không tràn ngang; chữ dài (Title) cắt bằng CS
 - **Điều chưa chắc:** Chưa chạy Hub thật để chụp ảnh (theo hướng dẫn Claude sẽ chạy kiểm tra khi review).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (25/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 397/400 dòng; 51 ca nghiệm thu + 354 / 155 test; giữ BOM.
+- Đọc code: kiểm tra lệnh đúng thứ tự, toàn bộ Start trong 1 khóa, ArgumentList (không qua shell), log chỉ mở theo Id job.
+- Chạy Hub thật chế độ giả (cổng 5058, `NoopProcessStarter`): Giao task / Giao lại kèm góp ý (góp ý rỗng bị chặn; `"` và xuống dòng được làm sạch) / Xem log / log với id `..\..` ⇒ 404.
+- [TK] (giao diện) Nút "Dừng" trên bàn chạy NGAY, không hỏi xác nhận: HTMX 2 chỉ đọc `hx-confirm` trên form, bỏ qua trên nút submit — đặc tả của Claude cho phép "hx-confirm trên từng button". Claude sửa: mỗi lệnh 1 form có `hx-confirm` riêng; đã thử: từ chối ⇒ không chạy, đồng ý ⇒ chạy.
+- Claude sửa: chữ ô "Giao lại" khi rỗng ("Không có task chờ review / cần sửa").
+- Optional (hàng chờ): log job đọc output PowerShell 5.1 bằng UTF-8 ⇒ chữ Việt có thể lỗi phông (PS ghi theo code page OEM khi chuyển hướng); danh sách job trong bộ nhớ không giới hạn (chỉ hiện 20).
+
+Nhân viên: Lan (B) — 1 lượt, ~13 phút, 397/400 dòng.
 
 ## Kết quả
+- **Chức năng mới — điều khiển team trên Văn phòng:** Giao task, Giao cho Codex, Dừng, Giao lại kèm góp ý, Kiểm tra lại; mỗi nút hỏi xác nhận; nhật ký `.state/audit.jsonl`; bảng "Lệnh gần đây" + xem log.
+- **Kiểm chứng:** 51 ca nghiệm thu (gồm chống CSRF, chặn `../`, 2 lần bấm cùng lúc, tiến trình thật cmd.exe); bấm thử trên Hub chế độ giả.
+- **Cần cải tiến:** log tiếng Việt từ PowerShell; đếm vòng review ≤ 3 (V5-08).
+
+## Đánh giá quy trình
+| Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
+|---|---|---|---|---|---|---|
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-005) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-005) | Đã duyệt ở C2 | — | — |
+| 3. Plan / thiết kế | Claude | 4 | ~30' | Đặc tả hx-confirm trên nút sai với HTMX 2 | TK | Thuộc tính HTMX mới ⇒ thử trên Hub thật trước khi ghi vào đặc tả |
+| 4. Giao việc | Claude | 5 | ~5' | Song song V5-06 | — | — |
+| 5. Thực hiện code | Lan (B) | 5 | ~13' (1 lượt) | Đúng đặc tả | — | — |
+| 6. Review / QC | Cổng KT + Claude | 5 | ~15' | Bấm thử thật bắt lỗi xác nhận | — | Giữ bước chạy Hub thật |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | Test chạy riêng trước commit (IMP-005) | — | — |
