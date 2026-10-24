@@ -38,16 +38,16 @@ Sửa `Providers()` trong `Program.cs`:
 - `core.tests/AcceptanceV410ProvidersCliTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 3 ca nghiệm thu V4-10).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 3 ca nghiệm thu V4-10).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 3 ca nghiệm thu V4-10) | `dotnet build AITeam.sln` → `Build succeeded. 0 Warning(s) 0 Error(s)`. `dotnet test AITeam.sln --blame-hang-timeout 3m` → `AITeam.Core.Tests.dll`: Passed 127/127 (3/3 `AcceptanceV410ProvidersCliTests`), `AITeam.Hub.Tests.dll`: Passed 276/276. |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Cập nhật `Providers()` trong `core/AITeam.Cli/Program.cs` đọc `ProviderStateStore.RestOf`, hỗ trợ `--no-check` (hiện `NGHỈ tới HH:mm dd/MM` hoặc `SẴN SÀNG`, không gọi `CheckAsync`, exit code 0), in dòng chi tiết nghỉ `{Reason}: {Detail dòng đầu}`, và thêm `[--no-check]` vào `Help()`.
+- **File đã đổi:** `core/AITeam.Cli/Program.cs`, `tasks/V4-10-providers-rest-status.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
 

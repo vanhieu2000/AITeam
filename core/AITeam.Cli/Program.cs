@@ -30,21 +30,35 @@ catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException o
 async Task<int> Providers()
 {
     var settings = ProviderSettings.Load(root);
+    var state = new ProviderStateStore(root);
+    var now = DateTime.Now;
+    bool noCheck = args.Contains("--no-check");
     var runner = new ProcessRunner();
     Console.WriteLine("== Provider ==");
     int bad = 0;
     foreach (var c in settings.Providers)
     {
         if (!c.Enabled) { Console.WriteLine($"  [TẮT] {c.Id}"); continue; }
-        var h = await settings.Create(c, runner).CheckAsync(CancellationToken.None);
-        var tag = !h.Installed ? "CHƯA CÀI" : h.LoggedIn == true ? "OK" : h.LoggedIn == false ? "CHƯA ĐĂNG NHẬP" : "KHÔNG RÕ";
-        if (tag != "OK") bad++;
+        var rest = state.RestOf(c.Id, now);
+        string tag;
+        string? checkDetail = null;
+        if (noCheck)
+        {
+            tag = rest != null ? $"NGHỈ tới {rest.Until.ToString("HH:mm dd/MM", System.Globalization.CultureInfo.InvariantCulture)}" : "SẴN SÀNG";
+        }
+        else
+        {
+            var h = await settings.Create(c, runner).CheckAsync(CancellationToken.None);
+            tag = !h.Installed ? "CHƯA CÀI" : h.LoggedIn == true ? "OK" : h.LoggedIn == false ? "CHƯA ĐĂNG NHẬP" : "KHÔNG RÕ";
+            if (tag != "OK") { bad++; checkDetail = h.Detail; }
+        }
         Console.WriteLine($"  [{tag}] {c.Id} ({c.Kind}) · vai trò: {string.Join(", ", c.Roles)} · tối đa {c.MaxConcurrent} job · model: {c.Model ?? "mặc định"}");
-        if (tag != "OK") Console.WriteLine($"         {h.Detail.Split('\n')[0]}");
+        if (checkDetail != null) Console.WriteLine($"         {checkDetail.Split('\n')[0]}");
+        if (rest != null) Console.WriteLine($"         {rest.Reason}: {(rest.Detail ?? "").Split('\n')[0]}");
     }
     Console.WriteLine("== Routing (thứ tự ưu tiên) ==");
     foreach (var (role, ids) in settings.Routing) Console.WriteLine($"  {role}: {string.Join(" → ", ids)}");
-    return bad == 0 ? 0 : 1;
+    return noCheck || bad == 0 ? 0 : 1;
 }
 
 int TaskInfo()
@@ -59,7 +73,7 @@ int TaskInfo()
 
 int Help()
 {
-    Console.WriteLine("aiteam providers [--root D:\\AITeam]      Kiểm tra từng provider (cài chưa, đăng nhập chưa) + thứ tự routing");
+    Console.WriteLine("aiteam providers [--no-check] [--root D:\\AITeam]  Kiểm tra từng provider (cài chưa, đăng nhập chưa) + thứ tự routing");
     Console.WriteLine("aiteam task-info --file <task.md>        Đọc thông tin chuẩn hóa của 1 file task");
     Console.WriteLine("aiteam review --task-file <f> --diff-file <f> [--verify-file <f>] --workdir <d> --logdir <d> --dev <id> [--timeout-min 15] [--out <f>] [--auto]");
     Console.WriteLine("aiteam run --provider <id> --workdir <d> --prompt-file <f> --logdir <d> [--timeout-min 30] [--model <m>] [--out <f>]");
