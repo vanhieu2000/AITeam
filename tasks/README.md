@@ -29,7 +29,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V4-09 Lệnh aiteam run (Codex viết code dự phòng)](V4-09-aiteam-run-dev.md) | A | `agent-a/V4-09-aiteam-run-dev` | ✅ Đã merge (vòng 1) |
 | [H3-06 Hub: trang Provider](H3-06-hub-providers.md) | B | `agent-b/H3-06-hub-providers` | ✅ Đã merge (vòng 1) |
 | [V4-10 aiteam providers hiện trạng thái nghỉ (Codex làm)](V4-10-providers-rest-status.md) | C | `agent-c/V4-10-providers-rest-status` | ✅ Đã merge (vòng 1) |
-| [V4-11 ReviewService: tên file riêng mỗi lần review (Codex làm)](V4-11-review-unique-files.md) | C | `agent-c/V4-11-review-unique-files` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 10:08 24/10/2026 |
+| [V4-11 ReviewService: tên file riêng mỗi lần review (Codex làm)](V4-11-review-unique-files.md) | C | `agent-c/V4-11-review-unique-files` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 10:10 24/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
