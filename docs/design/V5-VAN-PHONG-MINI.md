@@ -71,8 +71,8 @@ Mockup để duyệt: `docs/design/v5-van-phong-mini-mockup.html`. Chưa viết 
   | Giao lại kèm góp ý | `team.ps1 assign … -Resume -Feedback "…"` | góp ý ≤ 2.000 ký tự |
   | Chạy lại cổng KT | `team.ps1 verify -Project P -Task T` | có worktree |
   | Merge | `team.ps1 merge …` | CHỈ khi có mục duyệt `approved` đúng commit (như hiện nay) |
-  - Danh sách lệnh CỐ ĐỊNH, tham số kiểm mẫu (`^[A-Za-z0-9-]+$`, dự án trong projects.json), gọi `ProcessStartInfo.ArgumentList` (không qua shell), chạy nền, log ra `logs\hub-jobs\*.log`; 1 lệnh / task cùng lúc.
-  - **Nhật ký thao tác** `%LOCALAPPDATA%\AITeam\state\audit.jsonl`: giờ, nút, tham số, kết quả.
+  - Danh sách lệnh CỐ ĐỊNH, tham số kiểm mẫu (`^[A-Za-z0-9-]+$`, dự án trong projects.json), gọi `ProcessStartInfo.ArgumentList` (không qua shell), chạy nền, log ra `<AITeam>\.state\hub-jobs\*.log` (đã gitignore); 1 lệnh / task cùng lúc, tối đa 3 lệnh chạy cùng lúc.
+  - **Nhật ký thao tác** `<AITeam>\.state\audit.jsonl` (cạnh `providers.json`, đã gitignore): giờ, nút, tham số, kết quả.
 - **Phòng họp** = trang Giao việc hiện có (luồng phiếu) + tin nhắn tiến độ của agent theo task.
 
 ### C3. AI Accounts (Cài đặt → AI Accounts)
@@ -117,8 +117,8 @@ Mockup để duyệt: `docs/design/v5-van-phong-mini-mockup.html`. Chưa viết 
 | P1 | V5-02 | Claude | `assign` đặt `.agents/mcp_config.json` + lời nhắn "báo tiến độ qua aiteam_post_message"; Codex qua `-c`; thử thật | V5-01 |
 | P1 | V5-03 | Lan | Dịch vụ tin nhắn task (đọc `messages.jsonl`) + hiện trong trang Task / Giao việc | V5-01 |
 | P1 | V5-04 | Lan | Trang **Văn phòng** (bàn làm việc, trạng thái, tin nhắn mới nhất) — theo mockup | V5-03 |
-| P1 | V5-05 | Minh | **CommandService** + nút điều khiển (giao / dừng / giao lại / chạy lại KT) + nhật ký thao tác; test bảo mật | V5-04 |
-| P2 | V5-06 | Lan | AI Accounts (metadata, trạng thái chuẩn, kiểm tra bằng CLI chính thức) | — |
+| P1 | V5-05 | Lan | **CommandService** + nút điều khiển (giao / dừng / giao lại / chạy lại KT) + nhật ký thao tác; test bảo mật | V5-04 |
+| P2 | V5-06 | Minh | AI Accounts (metadata, trạng thái chuẩn, kiểm tra bằng CLI chính thức) | — |
 | P3 | V5-07 | Minh + Lan | Phòng nghiên cứu: ManualConnector, dựng lời nhắn đã lọc, lưu kết quả `research/` | V5-06 |
 | P4 | V5-08 | Claude | Đếm vòng review ≤ 3 ⇒ xin duyệt; Playwright E2E cho Hub | — |
 | P5 | — | — | Research Pool nhiều AI, cache, theo dõi sẵn sàng — khi P3 dùng ổn | P3 |

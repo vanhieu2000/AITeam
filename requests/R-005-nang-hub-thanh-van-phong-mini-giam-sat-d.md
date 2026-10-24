@@ -44,6 +44,7 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-005` để `team.ps1 reque
 | 01:49 | Claude: Văn phòng thành trang chủ `/`, Tổng quan chuyển `/Overview` | |
 | 01:51 | Claude: V5-02 assign đặt `.agents/mcp_config.json`; chạy thật với agy ⇒ tin "Minh (A)" vào MessageStore | |
 | 02:05 | Giao V5-05 (Lan): khung CommandService + 30 ca nghiệm thu (gồm chống CSRF, chạy tiến trình thật cmd.exe) | |
+| 02:30 | Giao V5-06 (Minh): khung Tài khoản AI (danh mục 7 dịch vụ, kho metadata, 11 luật trạng thái) + 2 file nghiệm thu | song song V5-05 |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;

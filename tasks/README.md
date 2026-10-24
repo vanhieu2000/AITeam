@@ -33,6 +33,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V5-01 MCP Gateway: aiteam mcp](V5-01-mcp-gateway.md) | A | `agent-a/V5-01-mcp-gateway` | ✅ Đã merge (vòng 1) |
 | [V5-04 Hub: trang Văn phòng](V5-04-hub-office.md) | B | `agent-b/V5-04-hub-office` | ✅ Đã merge (vòng 1) |
 | [V5-05 Hub: nút điều khiển Văn phòng](V5-05-hub-control.md) | B | `agent-b/V5-05-hub-control` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 02:00 25/10/2026 |
+| [V5-06 Tài khoản AI](V5-06-ai-accounts.md) | A | `agent-a/V5-06-ai-accounts` | ⬜ Chưa giao |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
