@@ -40,14 +40,15 @@ Trong `ReviewService`:
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln -m:1 --no-restore`: exit 0, 0 lỗi, 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 0 lỗi, 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
 | Toàn bộ test pass | `dotnet test AITeam.sln --no-restore --no-build -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip. |
-| Gồm nghiệm thu V4-11 và review cũ | Chạy toàn bộ hai assembly bằng lệnh trên, bao gồm 2 ca V4-11; giữ nguyên file test nghiệm thu. |
-- Đã kiểm tra: ReviewAsync dùng stamp giờ + 8 ký tự hex cho prompt/schema/kết quả, mọi nhánh SaveResult dùng chung stamp; không cần sửa thêm logic.
-- Xác minh lỗi mạng: `dotnet restore AITeam.sln --force --disable-parallel -m:1` exit 0 nhưng vẫn 3 warning NU1900: không tải được `https://api.nuget.org/v3/index.json`; buộc restore lại không khắc phục được.
-- File đổi lượt này: chỉ file task này để cập nhật kết quả kiểm tra và nguyên nhân bị chặn; giữ nguyên BOM UTF-8.
-- Quyết định: giữ phạm vi task, không sửa cấu hình ngoài phạm vi hoặc tắt/ẩn cảnh báo kiểm tra lỗ hổng để làm cổng kiểm tra xanh; dùng `-m:1` và timeout test 2m theo chỉ dẫn vận hành.
-- Chưa xác minh: build 0 warning và dữ liệu lỗ hổng NuGet; cần môi trường truy cập được NuGet để chạy lại cổng kiểm tra. Không chạy app/chụp ảnh theo phân công.
+| Gồm 2 ca nghiệm thu V4-11 và review cũ | Chạy toàn bộ hai assembly bằng lệnh trên; không sửa test nghiệm thu. |
+- Đã kiểm tra code: stamp giờ + 8 ký tự hex dùng chung cho prompt/schema/kết quả và mọi nhánh SaveResult; giữ nguyên logic đúng thiết kế.
+- Xác minh lại NU1900: `dotnet restore AITeam.sln --force --disable-parallel -m:1` exit 0 nhưng vẫn 3 warning; `Invoke-WebRequest https://api.nuget.org/v3/index.json -UseBasicParsing -TimeoutSec 15` exit 1, lỗi kết nối bị đóng khi nhận dữ liệu.
+- `dotnet build AITeam.sln` exit 1, chỉ hiện Build FAILED, 0 warning/0 error; chạy lại tuần tự bằng `-m:1 --no-restore` cho kết quả chi tiết ở bảng.
+- File đổi lượt này: chỉ file task để cập nhật bằng chứng; giữ nguyên BOM UTF-8. Không sửa code hoặc cấu hình ngoài phạm vi.
+- Quyết định: không tắt audit hay ẩn NU1900; lỗi truy cập nguồn dữ liệu lỗ hổng cần được xử lý tại môi trường chạy, chưa có cách khắc phục trong phạm vi task.
+- Chưa đạt/chưa xác minh: build 0 warning, dữ liệu lỗ hổng NuGet; không chạy app/chụp ảnh theo phân công.
 - Không chạy lệnh git theo chỉ dẫn Codex dự phòng; hệ thống thực hiện commit/push.
 
 ## Review (Claude)
