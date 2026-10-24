@@ -55,16 +55,26 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C1, E (PoC 25/10: agy kh�
 - **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (25/10/2026, Claude)
+- Cổng kiểm tra ĐẠT; 15/15 ca nghiệm thu (có ca chạy thật `aiteam mcp` qua client MCP chính thức); 155 + 289 test; 183/220 dòng.
+- **Vòng review AI tự động đầy đủ lần đầu:** Codex review 1 (52s) ⇒ CẦN SỬA: giới hạn 60 tin bị vượt khi gọi đồng thời ⇒ `assign` tự giao lại Minh ⇒ sửa trong 2 phút + test đồng thời. Codex review 2 (44s) ⇒ CẦN SỬA: đọc file qua symlink trong thư mục log.
+- Claude sửa (~10 dòng + 1 test): công cụ từ chối đọc symlink / reparse point. Ghi chú: trên máy này user thường KHÔNG tạo được symlink (cần admin) và agent tự nó đã đọc được mọi file ⇒ rủi ro thấp; đây là lớp phòng thủ thêm.
+- [TK] (quy trình) Claude commit bản sửa cùng lệnh chạy test ⇒ 1 lần test core báo hỏng lúc máy đang build song song nhánh khác; chạy lại 5 lần riêng: 155/155. Theo dõi test chập chờn.
+
+Nhân viên: Minh (A) — 2 lượt (1 do review AI), ~10 phút, 183/220 dòng.
 
 ## Kết quả
+- **Không có chức năng mới nhìn thấy ngay** — `aiteam mcp`: máy chủ MCP gắn với 1 task, 4 công cụ (đọc task, báo tiến độ / hỏi / báo xong, xem kết quả cổng KT, xem danh sách file của task), giới hạn 60 tin / lượt, không đọc ngoài task.
+- **Kiểm chứng:** 15 ca nghiệm thu + chạy thật qua client MCP; Codex review 2 vòng.
+- **Cần cải tiến:** nối vào `assign` để agent dùng thật (V5-02).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Minh (A) | | | | | |
-| 6. Review / QC | Cổng KT + Codex + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-005) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | ~20' | PoC thật trước khi thiết kế | — | Giữ |
+| 3. Plan / thiết kế | Claude | 4 | ~25' | Đặc tả thiếu đồng thời + symlink (Codex bắt) | TK | Mục kiểm tra mẫu task: "đọc file theo đường dẫn ⇒ symlink? gọi đồng thời ⇒ khóa?" |
+| 4. Giao việc | Claude | 5 | ~10' | — | — | — |
+| 5. Thực hiện code | Minh (A) | 5 | ~10' (2 lượt) | Đúng đặc tả, sửa nhanh theo reviewer | — | — |
+| 6. Review / QC | Cổng KT + Codex + Claude | 5 | ~15' | Vòng tự sửa theo review AI chạy trọn | — | Giữ |
+| 7. Đánh giá & bàn giao | Claude | 4 | ~10' | Commit trước khi xem kết quả test | TK | Tách lệnh test và commit |
