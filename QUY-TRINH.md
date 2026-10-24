@@ -19,7 +19,7 @@
    - việc đơn giản ghi `Model: gemini-3.8-flash-medium`.
    - Việc ≤ ~100 dòng: Claude làm thẳng, không giao.
 3. `team.ps1 assign -Project X -Task T-xxx` (nền). Cổng kiểm tra tự chạy: commit, BOM, build 0 warning, test (chặn treo 3 phút), phạm vi; vượt ngân sách chỉ cảnh báo.
-4. `team.ps1 review -Project X -Task T-xxx` → đọc gói review. **Claude sửa code (dù 1 dòng) ⇒ chạy build + TOÀN BỘ test trước khi commit** (IMP-001; Hub đang chạy khóa `hub\bin` ⇒ tạm dừng Hub, test, bật lại). Chụp ảnh bằng `tools/UiSnapshot` nếu có UI.
+4. `team.ps1 review -Project X -Task T-xxx` → đọc gói review. **Claude sửa code (dù 1 dòng) ⇒ chạy build + TOÀN BỘ test trước khi commit; test và commit là 2 lệnh riêng — đọc kết quả test rồi mới commit** (IMP-001, IMP-005; Hub đang chạy khóa `hub\bin` ⇒ tạm dừng Hub, test, bật lại). Chụp ảnh bằng `tools/UiSnapshot` nếu có UI.
    - Lỗi ≤ ~50 dòng: **Claude tự sửa**.
    - Còn sót nhưng phần chính đạt: merge, tách **task nhỏ mới**.
    - Chỉ trả agent khi phải làm lại nhiều (`assign -Resume -Feedback`).
@@ -35,7 +35,7 @@
 - Agent: giới hạn thời gian theo task; chỉ đọc file liệt kê; không ảnh / không chạy app; báo cáo ≤ 15 dòng; commit sớm; test có `--blame-hang-timeout`.
 - Claude sửa `team.ps1` ⇒ chạy `tools\test-verify.ps1` (test hồi quy cổng kiểm tra, IMP-001) trước khi commit. **Không để `team.ps1` sửa dở khi giao việc** — `assign` chạy đúng file trên đĩa (R-002: bảng việc ghi nhầm "AI review PASS").
 - **Codex viết code** (R-004): `assign -Dev codex` (việc NHỎ — hạn mức Codex nhỏ); agy hết hạn mức ⇒ tự chuyển Codex (`-Dev agy` để tắt). Codex không ghi được .git ⇒ team.ps1 commit + push thay; task do Codex code ⇒ reviewer AI không có ⇒ Claude review. Mỗi lệnh assign tối đa 2 lượt agent.
-- **Thêm tham số / nhánh mới cho `assign`** ⇒ chạy thử cả lệnh với 1 task nhỏ trước khi dùng thật; `tools\test-verify.ps1` có kiểm tra tĩnh biến cục bộ đè tham số (R-004: `\` đè `-Dev`).
+- **Thêm tham số / nhánh mới cho `assign`** ⇒ chạy thử cả lệnh với 1 task nhỏ trước khi dùng thật; `tools\test-verify.ps1` có kiểm tra tĩnh biến cục bộ đè tham số (R-004: `$dev` đè `-Dev`).
 - **Review AI tự động** (R-002): sau cổng KT, `assign` gọi `aiteam review --auto` cho task `Độ khó: L` hoặc có `- **Review AI:** có`; reviewer luôn khác agy; CẦN SỬA ⇒ tự giao lại 1 lần; BLOCKED ⇒ Claude review. Kết quả: `<workDir>\logs\<Task>.review-n.json`, Hub tab Báo cáo & review. Tắt: `-NoReview`.
 - Claude: đọc trang này thay vì sổ tay 167 dòng; `review` / `merge` thay chuỗi lệnh tay; tự sửa nhỏ thay vòng agent 20–30 phút; số đo tự ghi (`metrics/runs`).
 
