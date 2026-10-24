@@ -38,15 +38,15 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 (lượt trả về NU1900) |
+| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, không có chẩn đoán; chạy lại `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 NU1900 (3 project, lặp restore/build), 14,03 giây. |
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, không có chẩn đoán; chạy lại `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 NU1900 (3 project, lặp restore/build), 14,21 giây. |
 | Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
-| Kết nối NuGet — BỊ CHẶN | `curl.exe --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: exit 7, không kết nối được proxy 127.0.0.1:9. |
+| Kết nối NuGet trực tiếp — BỊ CHẶN | `curl.exe --head --noproxy "*" --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: curl báo lỗi 35, PowerShell exit 1; TLS `SEC_E_NO_CREDENTIALS`. |
 - Đã đọc AGENTS.md và hai file mục Đọc; Review (Claude) trống; ReviewService đã dùng cùng stamp riêng cho prompt/schema/kết quả và giữ prompt/schema UTF-8 không BOM.
-- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng; giữ nguyên BOM hiện có; không sửa mã nguồn hoặc test nghiệm thu.
-- Quyết định: dùng `-m:1` khi build mặc định thất bại không có chẩn đoán; không tắt audit, không ẩn cảnh báo, không sửa cấu hình ngoài phạm vi hoặc cấu hình máy.
-- Chưa xác minh được dữ liệu lỗ hổng NuGet; cần môi trường có kết nối NuGet hoạt động để đạt build 0 warning. Chưa hoàn thành yêu cầu sửa NU1900 trong môi trường này.
+- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng, giữ nguyên BOM; không sửa mã nguồn hoặc test nghiệm thu.
+- Quyết định: dùng `-m:1` do build mặc định thất bại không có chẩn đoán; thử kết nối trực tiếp bằng tham số curl, không đổi cấu hình máy; không tắt audit hoặc ẩn cảnh báo để vượt cổng kiểm tra.
+- Chưa hoàn thành sửa NU1900: môi trường không tải được dữ liệu lỗ hổng NuGet; cần khôi phục kết nối NuGet/TLS trong môi trường chạy rồi kiểm tra lại build 0 warning.
 - Không chạy app/chụp ảnh hoặc lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
 ## Review (Claude)
 
