@@ -294,6 +294,9 @@ function Invoke-Assign {
     if (-not $branch) { throw 'File task thiếu dòng **Nhánh:** `tên-nhánh`' }
 
     Assert-NotClaimedElsewhere $r $Task
+    foreach ($o in (Get-ScopeOverlaps $r $taskFile $text)) {
+        Say "CẢNH BÁO: trùng phạm vi với task đang chạy $o ⇒ dễ xung đột khi merge (cân nhắc giao tuần tự)." Yellow
+    }
     Set-BoardStatus $r $Task (Get-ClaimText)
 
     New-Item -ItemType Directory -Force $r.Logs | Out-Null
@@ -384,6 +387,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     Say "[$(Get-Date -Format HH:mm:ss)] $($r.Info.name) $Task → $(Get-StaffName $agentId), nhánh $branch, thư mục $work" Cyan
     # Start-Process: agy in trạng thái ra stderr; gọi trực tiếp thì PowerShell 5.1 coi là lỗi và dừng script.
     $err = $log -replace '\.json$', '.stderr.txt'
+    $mainBefore = (git -C $r.Path rev-parse origin/main 2>$null)
     $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
         -RedirectStandardOutput $log -RedirectStandardError $err
     $logText = Get-Content $log -Raw -ErrorAction SilentlyContinue
@@ -400,6 +404,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     }
     $pushed = git -C $r.Path ls-remote --heads origin $branch
     Say ("Nhánh trên GitHub: " + $(if ($pushed) { "đã push" } else { "CHƯA push" }))
+    Test-AgentTouchedMain $r $work $mainBefore
 
     if (Test-QuotaExhausted $logText $errText) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
     if ($NoVerify) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🔵 Chờ review"; return }
@@ -435,6 +440,37 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
             }
         }
     }
+}
+
+# R-004: task khác đang chạy (🟡 trên bảng việc) có Phạm vi trùng ⇒ dễ xung đột merge. Bỏ qua thư mục test chung (tests/, core.tests/…).
+function Get-ScopeOverlaps($r, $taskFile, [string]$text) {
+    $notTests = { $_ -notmatch '(^|/)[\w.-]*tests?/?$' }
+    $mine = @(Get-BacktickPaths (Get-Section $text "Phạm vi") | Where-Object $notTests)
+    $board = Join-Path $r.Path "tasks\README.md"
+    if (-not $mine -or -not (Test-Path $board)) { return @() }
+    $out = @()
+    foreach ($m in [regex]::Matches((Get-Content $board -Raw -Encoding UTF8), '\]\(([^)]+\.md)\)[^\r\n]*🟡')) {
+        $f = Join-Path (Join-Path $r.Path "tasks") $m.Groups[1].Value
+        if (-not (Test-Path $f) -or (Resolve-Path $f).Path -eq $taskFile.FullName) { continue }
+        $other = @(Get-BacktickPaths (Get-Section (Get-Content $f -Raw -Encoding UTF8) "Phạm vi") | Where-Object $notTests)
+        $hit = @($mine | Where-Object { $p = $_; @($other | Where-Object { $_.StartsWith($p) -or $p.StartsWith($_) }).Count -gt 0 })
+        if ($hit) { $out += "$([IO.Path]::GetFileNameWithoutExtension($f)): $($hit -join ', ')" }
+    }
+    $out
+}
+
+# B6 (R-004): sau lượt agent, origin/main đổi bởi chính agent (vượt hook pre-push bằng --no-verify…) ⇒ báo động.
+function Test-AgentTouchedMain($r, [string]$work, [string]$mainBefore) {
+    if (-not $mainBefore) { return }
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git -C $r.Path fetch -q origin 2>$null
+    $after = (git -C $r.Path rev-parse origin/main 2>$null)
+    $who = (git -C $work config user.name 2>$null)
+    if ($after -and $after -ne $mainBefore -and $who) {
+        $bad = @(git -C $r.Path log --format="%h|%an|%s" "$mainBefore..$after" 2>$null | Where-Object { ($_ -split '\|')[1] -eq $who })
+        if ($bad) { Say "BÁO ĐỘNG: agent '$who' đã đẩy $($bad.Count) commit thẳng lên main: $($bad -join '; ') — kiểm tra / revert ngay." Red }
+    }
+    $ErrorActionPreference = $eap
 }
 
 # aiteam.exe (lõi C#) bản Release, tự build lại khi mã nguồn core mới hơn.
@@ -625,7 +661,13 @@ function Install-Hook([string]$repoPath) {
     $scan = (Join-Path $Root "tools\secret-scan.ps1") -replace '\\', '/'
     $hook = "#!/bin/sh`n# AITeam: chặn commit có bí mật`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$scan`" -Repo `"`$(git rev-parse --show-toplevel)`"`n"
     [IO.File]::WriteAllText((Join-Path $hooks "pre-commit"), $hook.Replace("`r", ""), $Utf8)
-    Say "  [OK] Hook chặn bí mật: $repoPath" Green
+    # B6 (R-004): worktree của agent (git-dir chứa /worktrees/) KHÔNG được push lên main/master — chỉ team.ps1 merge ở repo chính.
+    $push = "#!/bin/sh`n# AITeam: agent khong duoc push len main/master (chi Claude merge bang team.ps1 o repo chinh)`n" +
+        "gd=`$(git rev-parse --git-dir)`ncase `"`$gd`" in`n  */worktrees/*)`n    while read lref lsha rref rsha; do`n" +
+        "      case `"`$rref`" in`n        refs/heads/main|refs/heads/master) echo `"AITeam: worktree agent KHONG duoc push len `$rref`" >&2; exit 1 ;;`n      esac`n" +
+        "    done ;;`nesac`nexit 0`n"
+    [IO.File]::WriteAllText((Join-Path $hooks "pre-push"), $push, (New-Object Text.UTF8Encoding $false))
+    Say "  [OK] Hook chặn bí mật + chặn agent push main: $repoPath" Green
 }
 
 function Invoke-InstallHooks {
