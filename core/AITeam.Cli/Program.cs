@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using AITeam.Core.Review;
 using AITeam.Core.Routing;
@@ -133,7 +133,8 @@ async Task<int> Review()
 string? Arg(string name)
 {
     var i = Array.IndexOf(args, name);
-    return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+    // Giá trị không được là tùy chọn khác ("--dev --auto" ⇒ thiếu giá trị, KHÔNG phải dev="--auto") — Codex review V4-08 phát hiện.
+    return i >= 0 && i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal) ? args[i + 1] : null;
 }
 
 static string FindRoot()
