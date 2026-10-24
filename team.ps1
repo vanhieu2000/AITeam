@@ -458,8 +458,9 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work) {
     $exe = Get-AITeamExe
     if (-not $exe) { Say "Không build được aiteam.exe ⇒ bỏ qua review AI." Yellow; return $null }
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-    $dir = Join-Path $r.Logs "$Task-review"; New-Item -ItemType Directory -Force $dir | Out-Null
-    $n = @(Get-ChildItem $r.Logs -Filter "$Task-review-*.json" -ErrorAction SilentlyContinue).Count + 1
+    # Tên "<Task>.review-n.json" (dấu chấm): KHÔNG khớp mẫu log lượt chạy "<Task>-n.json" của assign -Resume và Hub.
+    $dir = Join-Path $r.Logs "$Task.review"; New-Item -ItemType Directory -Force $dir | Out-Null
+    $n = @(Get-ChildItem $r.Logs -Filter "$Task.review-*.json" -ErrorAction SilentlyContinue).Count + 1
     $diff = Join-Path $dir "diff-$n.txt"
     git -C $work fetch -q origin 2>$null
     $base = (git -C $work merge-base origin/main HEAD 2>$null | Select-Object -First 1)
@@ -467,7 +468,7 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work) {
     Start-Process git -ArgumentList "-C `"$work`" diff $base HEAD" -NoNewWindow -Wait -RedirectStandardOutput $diff -RedirectStandardError "$diff.err" | Out-Null
     $verify = Get-ChildItem $r.Logs -Filter "$Task-verify-*.md" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
     $taskInWork = Join-Path (Join-Path $work "tasks") $taskFileName
-    $out = Join-Path $r.Logs "$Task-review-$n.json"
+    $out = Join-Path $r.Logs "$Task.review-$n.json"
     $a = @("review", "--auto", "--task-file", $taskInWork, "--diff-file", $diff, "--workdir", $work, "--logdir", $dir, "--dev", "agy", "--out", $out, "--root", $Root)
     if ($verify) { $a += @("--verify-file", $verify.FullName) }
     Say "Review AI (aiteam review --auto)…" Cyan

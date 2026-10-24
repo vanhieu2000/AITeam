@@ -12,13 +12,15 @@ public class TaskModel : PageModel
     private readonly ITeamConfigService _configService;
     private readonly IAgentRunService? _runService;
     private readonly ITeamInsightsService? _insights;
+    private readonly IAiReviewService? _aiReviews;
 
-    public TaskModel(ITaskBoardService boardService, ITeamConfigService configService, IAgentRunService? runService = null, ITeamInsightsService? insights = null)
+    public TaskModel(ITaskBoardService boardService, ITeamConfigService configService, IAgentRunService? runService = null, ITeamInsightsService? insights = null, IAiReviewService? aiReviews = null)
     {
         _boardService = boardService;
         _configService = configService;
         _runService = runService;
         _insights = insights;
+        _aiReviews = aiReviews;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -31,6 +33,9 @@ public class TaskModel : PageModel
 
     /// <summary>Dữ liệu Hub v3 (dòng thời gian, đánh giá quy trình) của task; null nếu không có dịch vụ / lỗi đọc (R-003 / H3-05).</summary>
     public TaskInsight? Insight { get; private set; }
+
+    /// <summary>Các lần review AI (aiteam review), mới nhất trước — R-002 P0-8.</summary>
+    public IReadOnlyList<AiReview> AiReviews { get; private set; } = Array.Empty<AiReview>();
     public ProjectInfo? Project { get; private set; }
 
     public string Priority { get; private set; } = "bình thường";
@@ -63,6 +68,7 @@ public class TaskModel : PageModel
         Project = _configService.FindProject(Name);
         Detail = _boardService.GetTask(Name, Id);
         try { Insight = _insights?.GetTask(Name, Id); } catch { Insight = null; }
+        try { AiReviews = _aiReviews?.GetReviews(Name, Id) ?? Array.Empty<AiReview>(); } catch { AiReviews = Array.Empty<AiReview>(); }
 
         if (Detail == null)
         {

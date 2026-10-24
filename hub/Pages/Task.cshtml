@@ -310,7 +310,34 @@ else
                 </div>
 
                 <!-- Tab 4: Review -->
-                <div id="tabReviewContent" style="display:@(activeTab == "report" ? "block" : "none"); border-top:1px solid var(--line); flex:none; padding:12px 14px;"><h3 class="sec-h">Review của Claude</h3>
+                <div id="tabReviewContent" style="display:@(activeTab == "report" ? "block" : "none"); border-top:1px solid var(--line); flex:none; padding:12px 14px;"><h3 class="sec-h">Review AI (provider khác agent)</h3>
+                    @if (Model.AiReviews.Count == 0)
+                    {
+                        <div class="muted" style="margin-bottom:12px;">Chưa có review AI — chỉ chạy tự động cho task độ khó L hoặc có dòng "Review AI: có".</div>
+                    }
+                    else
+                    {
+                        var ar = Model.AiReviews[0];
+                        var (arCss, arText) = ar.Verdict switch { "PASS" => ("pill ok", "PASS"), "CHANGES_REQUESTED" => ("pill fix", "CẦN SỬA"), _ => ("pill err", "BLOCKED") };
+                        <div style="margin-bottom:12px;">
+                            <div class="row" style="gap:8px; flex-wrap:wrap;">
+                                <span class="@arCss">@arText</span>
+                                <span>@ar.Summary</span>
+                                <span class="muted" style="font-size:12px;">lần @ar.Attempt · @ar.At.ToString("HH:mm dd/MM")@(Model.AiReviews.Count > 1 ? $" · {Model.AiReviews.Count} lần review" : "")</span>
+                            </div>
+                            @if (ar.Notes.Count > 0)
+                            {
+                                <ul class="muted" style="font-size:12px; margin:6px 0 0 18px;">
+                                    @foreach (var note in ar.Notes) { <li>@note</li> }
+                                </ul>
+                            }
+                            @if (!string.IsNullOrEmpty(ar.Feedback))
+                            {
+                                <div style="white-space:pre-wrap; overflow-wrap:anywhere; margin-top:6px; padding:8px 10px; background:var(--s2, #f1f3f6); border-radius:var(--r);">@ar.Feedback</div>
+                            }
+                        </div>
+                    }
+                    <h3 class="sec-h">Review của Claude</h3>
                     @if (reviewRounds.Count == 0)
                     {
                         <div class="empty">Chưa có đánh giá review nào</div>
