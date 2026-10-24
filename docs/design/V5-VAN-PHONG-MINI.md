@@ -125,7 +125,21 @@ Mockup để duyệt: `docs/design/v5-van-phong-mini-mockup.html`. Chưa viết 
 
 Mỗi task: nhánh riêng, khung + test nghiệm thu trước, cổng KT, review, merge qua `team.ps1`; rollback = revert merge (không đổi dữ liệu cũ, các trang cũ giữ nguyên).
 
-## G. Cần chủ dự án quyết
-1. Cho Hub **chạy lệnh thật** (giao / dừng / giao lại / chạy lại KT) — đổi nguyên tắc "Hub chỉ ghi quyết định". Merge vẫn chỉ qua duyệt.
-2. Chatbot web: **chỉ thủ công** (khuyến nghị) hay thử 1 connector tự động sau (rủi ro điều khoản).
-3. Văn phòng là **trang chủ mới** (Tổng quan giữ làm tab / trang riêng).
+## G. Chủ dự án đã quyết (25/10/2026)
+1. **Hub điều khiển có giới hạn** — chỉ lệnh cố định (giao / dừng / giao lại kèm góp ý / chạy lại KT), có xác nhận + nhật ký; merge vẫn chỉ sau Duyệt.
+2. **Chat trên Hub, tự nhận phản hồi (không copy thủ công)** ⇒ Phòng nghiên cứu dùng connector TỰ ĐỘNG:
+   | AI | Connector | Chính thức? | Ghi chú |
+   |---|---|---|---|
+   | ChatGPT | Codex CLI `codex exec --sandbox read-only` (tài khoản ChatGPT) | Có | Đã có, hạn mức nhỏ |
+   | Gemini | Gemini CLI 0.65.0 `gemini -p … -o json --approval-mode plan` (tài khoản Google) | Có | Đã cài 25/10; chờ chủ dự án đăng nhập 1 lần (`gemini`) |
+   | Claude | Claude Code CLI | Có | Chưa cài; dùng chung hạn mức với phiên quản lý ⇒ tắt mặc định |
+   | DeepSeek · Grok | **BrowserConnector** (Playwright .NET, Apache-2.0) điều khiển trình duyệt RIÊNG của AITeam | Không (tự động hóa web) | Mặc định TẮT; chủ dự án bật từng cái sau khi đọc cảnh báo điều khoản; tự đăng nhập trong cửa sổ đó; AITeam KHÔNG đọc / xuất cookie, KHÔNG vượt CAPTCHA / MFA (gặp ⇒ `LoginRequired`, hiện cửa sổ cho người làm); hồ sơ `%LOCALAPPDATA%\AITeam\profiles\<provider>\default` (ACL user hiện tại, không sao lưu); giới hạn 1 câu hỏi / 60 giây; lỗi / đổi giao diện ⇒ tự chuyển `ManualOnly` (Copy + dán) |
+   Manual handoff vẫn có cho MỌI AI làm đường dự phòng.
+3. **Văn phòng là trang chủ**; Tổng quan giữ trong menu.
+
+### Kế hoạch cập nhật cho P3 / P5
+| Task | Nội dung |
+|---|---|
+| V5-07 | Phòng nghiên cứu: `IAgentConnector` + CliConnector (Codex, Gemini) + ManualConnector; chat theo phiếu / task; lưu `research/` |
+| V5-10 | BrowserConnector DeepSeek (thử 1 cái trước, smoke test, chỉ khi bật) |
+| V5-11 | BrowserConnector Grok (sau khi V5-10 chạy ổn) |

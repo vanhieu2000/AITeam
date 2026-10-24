@@ -28,6 +28,7 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-005` để `team.ps1 reque
 | 01:12 | Đọc docs MCP Antigravity: `<workspace>/.agents/mcp_config.json`, stdio | |
 | 01:15 | **PoC**: máy chủ MCP C# (ModelContextProtocol 2.3.0) + agy không tương tác ⇒ gọi công cụ thật, 40s | khả thi |
 | 01:17 | Xong audit + kiến trúc + rủi ro + kế hoạch + mockup; chờ chủ dự án duyệt 3 quyết định | |
+| 01:24 | Chủ dự án quyết: Hub điều khiển có giới hạn; chat nghiên cứu TỰ ĐỘNG (ChatGPT qua Codex CLI, Gemini qua Gemini CLI — đã cài 0.65.0, chờ đăng nhập; DeepSeek/Grok qua trình duyệt tự động, bật từng cái); Văn phòng là trang chủ | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
