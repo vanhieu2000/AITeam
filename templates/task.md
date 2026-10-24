@@ -40,7 +40,9 @@ KIỂM TRA "HỢP ĐỒNG NGOÀI & KHUNG" (IMP-001 — lỗi TK lặp 3/3 task c
 - [ ] Mọi file khung trong commit "Test nghiệm thu" đều nằm trong Phạm vi, hoặc ghi rõ "KHÔNG đổi" ở Không làm.
 - [ ] Task dùng hàm / lớp từ task khác: hàm đó đã có trên main (chưa có ⇒ đưa vào khung của task này).
 - [ ] Trang / dịch vụ mới: đã đăng ký DI trong khung + thêm trang vào test dựng trang thật (R-003: /Requests trắng trang).
-- [ ] Đọc dữ liệu thật (metrics, phiếu, git, file người dùng): ≥ 1 ca nghiệm thu dựng từ bản sao dữ liệu THẬT, đủ dài / nhiều ngày (R-003: khung giờ, số đo cộng dồn). -->
+- [ ] Đọc dữ liệu thật (metrics, phiếu, git, file người dùng): ≥ 1 ca nghiệm thu dựng từ bản sao dữ liệu THẬT, đủ dài / nhiều ngày (R-003: khung giờ, số đo cộng dồn).
+- [ ] (IMP-005) Đọc file theo đường dẫn ⇒ chặn symlink / reparse point; dịch vụ singleton / gọi đồng thời (MCP, Hub) ⇒ khóa + 1 ca test đồng thời (V5-01: Codex bắt cả hai).
+- [ ] (IMP-005) Hiển thị ghép chữ / giờ ⇒ dựng thử đặc tả bằng dữ liệu đang có (phiếu, log) trước khi giao (V5-04: bàn Claude hiện 2 giờ). -->
 -
 
 ## Dữ liệu mẫu thật

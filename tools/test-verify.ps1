@@ -87,6 +87,9 @@ try {
         }
     }
     Check "không biến cục bộ nào đè tham số script ngoài danh sách cho phép" ($bad.Count -eq 0) ($bad -join "`n")
+    # IMP-005 (V5-04): dòng ghi "🔵 Chờ review" sau cổng KT từng bị mất ⇒ Văn phòng hiện agent "đang làm" mãi.
+    $assignFn = $ast.Find({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq "Invoke-Assign" }, $true)
+    Check "Invoke-Assign ghi bảng việc 🔵 Chờ review / 🔴 Cần sửa sau cổng KT" ($assignFn -and $assignFn.Extent.Text -match 'Set-BoardStatus[^\r\n]*Chờ review[^\r\n]*Cần sửa') $null
 
     Write-Host "Kịch bản 1: agent điền file khung nhưng làm MẤT BOM (H3-01), không đụng file khung khác" -ForegroundColor Cyan
     $r = New-Scenario "s1" { param($wt) W (Join-Path $wt "src\Agent.cs") ("// Khung agent điền — có chữ Việt`r`nclass Agent {`r`n" + (Lines 8 "agent") + "`r`n}`r`n") $NoBom }
