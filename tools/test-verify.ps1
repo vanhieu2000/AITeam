@@ -20,7 +20,7 @@ function Check($name, [bool]$cond, $out) {
 function Lines($n, $prefix) { (1..$n | ForEach-Object { "    // $prefix dòng $_" }) -join "`r`n" }
 
 # Dựng 1 kịch bản: $agentChanges = scriptblock nhận $wt (worktree) để agent sửa file rồi commit.
-function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20) {
+function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [string]$build = "") {
     $S = Join-Path $T $name
     $root = Join-Path $S "AITeam"; $demo = Join-Path $S "Demo"; $work = Join-Path $S "work"; $origin = Join-Path $S "origin.git"
     New-Item -ItemType Directory -Force $root, (Join-Path $root "tools") | Out-Null
@@ -29,7 +29,7 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20) {
     $cfg = Get-Content (Join-Path $src "team.json") -Raw -Encoding UTF8 | ConvertFrom-Json
     $cfg.projectsRoot = $S; $cfg.workRoot = $work
     W (Join-Path $root "team.json") ($cfg | ConvertTo-Json -Depth 10) $NoBom
-    W (Join-Path $root "projects.json") (ConvertTo-Json -Depth 5 @(@{ name = "Demo"; repo = "local/demo"; path = $demo; workDir = $work; build = ""; test = ""; stack = "test"; areas = @{} })) $NoBom
+    W (Join-Path $root "projects.json") (ConvertTo-Json -Depth 5 @(@{ name = "Demo"; repo = "local/demo"; path = $demo; workDir = $work; build = $build; test = ""; stack = "test"; areas = @{} })) $NoBom
 
     G init -q --bare -b main $origin | Out-Null
     G clone -q $origin $demo | Out-Null
@@ -100,6 +100,15 @@ try {
         W (Join-Path $wt "tests\AcceptanceX01Tests.cs") "// agent sửa test`r`nclass AcceptanceX01Tests { }`r`n" $Bom }
     Check "bắt sửa test nghiệm thu" ($r.Out -match 'SỬA test nghiệm thu[^\r\n]*AcceptanceX01Tests') $r.Out
     Check "kết luận KHÔNG ĐẠT" ($r.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT') $r.Out
+
+    Write-Host "Kịch bản 5: build chỉ có cảnh báo NU1900 (mất mạng khi NuGet tải dữ liệu lỗ hổng — V4-11 bị giao lại ~28 lần)" -ForegroundColor Cyan
+    $r = New-Scenario "s5" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build 'cmd /c echo D:\x\y.csproj : warning NU1900: Error occurred while getting package vulnerability data'
+    Check "NU1900 không làm trượt cổng" ($r.Out -match 'Cổng kiểm tra: ĐẠT') $r.Out
+    Check "có ghi chú bỏ qua NU1900" ($r.Out -match 'Bỏ qua 1 cảnh báo NU1900') $r.Out
+
+    Write-Host "Kịch bản 6: build có cảnh báo code thật (CS0168)" -ForegroundColor Cyan
+    $r = New-Scenario "s6" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build 'cmd /c echo D:\x\Agent.cs(3,5): warning CS0168: The variable e is declared but never used'
+    Check "cảnh báo code thật vẫn làm trượt" (($r.Out -match 'Build có 1 warning') -and ($r.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r.Out
 }
 finally {
     if (-not $Keep) { Get-ChildItem $T -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { $_.Attributes = 'Normal' }; Remove-Item $T -Recurse -Force -ErrorAction SilentlyContinue }

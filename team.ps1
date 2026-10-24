@@ -432,7 +432,10 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
     if ($NoVerify) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🔵 Chờ review"; return }
     $v = Invoke-Verify
-    if (-not $v.Ok -and -not $script:VerifyRetried) {
+    # Tự giao lại tối đa 1 lần / lệnh assign (R-004: cờ chưa từng được bật ⇒ V4-11 bị giao lại ~28 lần khi lỗi mạng NU1900).
+    $script:AssignRuns = [int]$script:AssignRuns + 1
+    if (-not $v.Ok -and -not $script:VerifyRetried -and $script:AssignRuns -lt 3) {
+        $script:VerifyRetried = $true
         # Lỗi cơ học (chưa commit / build / test / BOM...) → trả agent sửa luôn 1 lần, không tốn lượt review của Claude.
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $true)
         Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi." Yellow
@@ -1077,6 +1080,9 @@ function Invoke-Verify {
     if ($r.Info.build) {
         $b = Invoke-ShellCapture $r.Info.build $work
         $w = @([regex]::Matches($b.Output, '(?m)^.*: warning [A-Za-z]+\d+:.*$') | ForEach-Object { ($_.Value -replace '\s*\[[^\]]+\]\s*$', '').Trim() } | Select-Object -Unique)
+        # NU1900 = NuGet không tải được dữ liệu lỗ hổng (lỗi MẠNG, không phải lỗi code) ⇒ ghi chú, không đánh trượt (R-004 / V4-11).
+        $netWarn = @($w | Where-Object { $_ -match ': warning NU1900:' })
+        if ($netWarn) { $w = @($w | Where-Object { $_ -notmatch ': warning NU1900:' }); [void]$notes.Add("Bỏ qua $($netWarn.Count) cảnh báo NU1900 (lỗi mạng khi tải dữ liệu lỗ hổng NuGet)") }
         if ($b.Code -ne 0) {
             $errs = @([regex]::Matches($b.Output, '(?m)^.*: error [A-Za-z]+\d+:.*$') | ForEach-Object { $_.Value.Trim() } | Select-Object -Unique -First 10)
             [void]$fails.Add("Build LỖI (mã $($b.Code)):`n  " + ($errs -join "`n  "))
