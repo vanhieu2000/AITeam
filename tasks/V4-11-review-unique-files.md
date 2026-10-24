@@ -41,13 +41,14 @@ Trong `ReviewService`:
 | Tiêu chí hoàn thành | Bằng chứng kiểm tra lại ngày 24/10/2026 |
 |---|---|
 | Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, chỉ hiện Build FAILED, không nêu nguyên nhân. |
-| Build tuần tự — còn 3 NU1900 | `dotnet build AITeam.sln --no-restore -m:1`: exit 0; 0 lỗi, 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
-| Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ | `dotnet test AITeam.sln --no-restore --no-build -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip. |
-| Khắc phục NU1900 — BỊ CHẶN bởi kết nối | `Invoke-WebRequest -Uri 'https://api.nuget.org/v3/index.json' -UseBasicParsing -TimeoutSec 20`: exit 1; “The underlying connection was closed: An unexpected error occurred on a receive.” |
-- Đã đối chiếu code: stamp đúng thiết kế, dùng chung cho prompt/schema/kết quả ở mọi nhánh; không cần sửa logic. Test nghiệm thu giữ nguyên.
-- File đổi lượt này: chỉ file task, cập nhật bằng chứng thực tế; giữ nguyên BOM UTF-8. Mục Review (Claude) chưa có nội dung.
-- Quyết định: không tắt audit/ẩn NU1900, không sửa cấu hình ngoài phạm vi; cần khôi phục kết nối NuGet trong môi trường chạy rồi restore/build lại.
-- Chưa đạt: build 0 warning và xác minh dữ liệu lỗ hổng NuGet. Không chạy app/chụp ảnh theo phân công.
+| Build tuần tự | `dotnet build AITeam.sln --no-restore -m:1`: exit 0; 0 lỗi, 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
+| Toàn bộ test, gồm nghiệm thu V4-11 và review cũ | `dotnet test AITeam.sln --no-restore --no-build -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip. |
+| Xử lý NU1900 — BỊ CHẶN bởi kết nối môi trường | `dotnet restore AITeam.sln --force -m:1`: exit 0 nhưng vẫn 3 NU1900; không khôi phục được dữ liệu audit. |
+| Bằng chứng nguyên nhân kết nối | `curl.exe --head --max-time 15 https://api.nuget.org/v3/index.json`: exit 1, curl (7), không kết nối được proxy 127.0.0.1:9; `Invoke-WebRequest` cũng exit 1 do kết nối bị đóng. |
+- Đối chiếu code: stamp đúng thiết kế, dùng chung cho prompt/schema/kết quả ở mọi nhánh; không cần sửa logic. Giữ nguyên test nghiệm thu.
+- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng và nguyên nhân chặn; giữ nguyên BOM UTF-8. Review (Claude) chưa có nội dung.
+- Quyết định: không tắt audit/ẩn warning, không sửa proxy hoặc cấu hình ngoài phạm vi; cần môi trường cho phép kết nối NuGet rồi restore/build lại.
+- Chưa xác minh: build 0 warning và dữ liệu lỗ hổng NuGet; tiêu chí hoàn thành chưa đạt. Không chạy app/chụp ảnh theo phân công.
 - Không chạy lệnh git theo chỉ dẫn Codex dự phòng; hệ thống phụ trách commit/push.
 ## Review (Claude)
 
