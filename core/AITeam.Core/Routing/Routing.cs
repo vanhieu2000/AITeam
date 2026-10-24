@@ -171,6 +171,21 @@ public sealed class ProviderStateStore
             list.Add(new ProviderRest(r.ProviderId, until, r.Status, detail, now));
         }
 
+        Save(list);
+    }
+
+    /// <summary>Xóa trạng thái nghỉ của provider (chủ dự án biết hạn mức đã có lại / vừa đổi tài khoản). Trả false nếu không có bản ghi.</summary>
+    public bool Clear(string providerId)
+    {
+        var all = All();
+        var list = all.Where(x => !x.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (list.Count == all.Count) return false;
+        Save(list);
+        return true;
+    }
+
+    private void Save(List<ProviderRest> list)
+    {
         var dir = Path.GetDirectoryName(FilePath)!;
         Directory.CreateDirectory(dir);
         var tmp = Path.Combine(dir, $"providers.{Guid.NewGuid():N}.tmp");
