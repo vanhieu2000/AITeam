@@ -72,6 +72,22 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
 }
 
 try {
+    Write-Host "Kiểm tra tĩnh: hàm không gán biến cục bộ trùng tên tham số script (PowerShell không phân biệt hoa thường — R-004: `$dev đè -Dev)" -ForegroundColor Cyan
+    $teamFile = if ($TeamPs1) { $TeamPs1 } else { Join-Path $src "team.ps1" }
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($teamFile, [ref]$null, [ref]$null)
+    $params = @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
+    # Cho phép: biến gán có chủ đích thay giá trị tham số trong hàm không đọc tham số đó (đã rà 24/10).
+    $allow = @{ "Invoke-Assign" = @("prompt", "model"); "Set-ManagerIdentity" = @("name"); "Invoke-SecretList" = @("names"); "Save-RunMetrics" = @("name"); "Invoke-ApprovalRequest" = @("title") }
+    $bad = @()
+    foreach ($fn in $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)) {
+        foreach ($as in $fn.FindAll({ $args[0] -is [System.Management.Automation.Language.AssignmentStatementAst] }, $true)) {
+            $v = $as.Left; if ($v -isnot [System.Management.Automation.Language.VariableExpressionAst]) { continue }
+            $nm = $v.VariablePath.UserPath; if ($nm -match ':') { continue }
+            if (($params | Where-Object { $_ -ieq $nm }) -and -not ($allow[$fn.Name] -contains $nm.ToLower())) { $bad += "$($fn.Name):$($v.Extent.StartLineNumber) `$$nm" }
+        }
+    }
+    Check "không biến cục bộ nào đè tham số script ngoài danh sách cho phép" ($bad.Count -eq 0) ($bad -join "`n")
+
     Write-Host "Kịch bản 1: agent điền file khung nhưng làm MẤT BOM (H3-01), không đụng file khung khác" -ForegroundColor Cyan
     $r = New-Scenario "s1" { param($wt) W (Join-Path $wt "src\Agent.cs") ("// Khung agent điền — có chữ Việt`r`nclass Agent {`r`n" + (Lines 8 "agent") + "`r`n}`r`n") $NoBom }
     Check "tự trả BOM cho src/Agent.cs (file chỉ có trên nhánh)" ($r.Out -match 'ĐÃ TỰ SỬA: trả lại BOM UTF-8 cho src/Agent.cs') $r.Out
