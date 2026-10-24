@@ -198,29 +198,30 @@ public sealed class ReviewService
     /// - provider trả !Ok (TimedOut, QuotaExhausted, NotLoggedIn, ConfigError, Unavailable, Failed) ⇒ Blocked, lý do chứa tên trạng thái;
     /// - ParseOutput trả null ⇒ Blocked "không đọc được kết luận";
     /// - verdict PASS mà có finding Blocker hoặc Required ⇒ đổi thành ChangesRequested (kết luận phải khớp nội dung);
-    /// - ghi kết quả (JSON, có DiffHash, provider, model, token, thời gian) ra logDir/review-{yyyyMMdd-HHmmss}.json.
+    /// - ghi kết quả (JSON, có DiffHash, provider, model, token, thời gian) ra logDir/review-{stamp}.json.
     /// </summary>
     public async Task<ReviewResult> ReviewAsync(ReviewPack pack, IAgentProvider reviewer, string developerProviderId,
         string workDir, string logDir, TimeSpan timeout, CancellationToken ct)
     {
+        var stamp = $"{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}"[..24];
         Directory.CreateDirectory(logDir);
 
         if (string.Equals(reviewer.Id, developerProviderId, StringComparison.OrdinalIgnoreCase))
         {
-            return SaveResult(logDir, new ReviewResult(
+            return SaveResult(logDir, stamp, new ReviewResult(
                 ReviewVerdict.Blocked, [], [], reviewer.Id, null, TimeSpan.Zero, TokenUsage.Unknown, pack.DiffHash,
                 $"Chặn tự duyệt: reviewer '{reviewer.Id}' trùng developer '{developerProviderId}'."));
         }
 
         if (!reviewer.HasReadOnlySandbox)
         {
-            return SaveResult(logDir, new ReviewResult(
+            return SaveResult(logDir, stamp, new ReviewResult(
                 ReviewVerdict.Blocked, [], [], reviewer.Id, null, TimeSpan.Zero, TokenUsage.Unknown, pack.DiffHash,
                 $"Provider '{reviewer.Id}' không hỗ trợ sandbox chỉ đọc (HasReadOnlySandbox = false)."));
         }
 
-        var promptFile = Path.Combine(logDir, "prompt-review.md");
-        var schemaFile = Path.Combine(logDir, "schema-review.json");
+        var promptFile = Path.Combine(logDir, $"prompt-review-{stamp}.md");
+        var schemaFile = Path.Combine(logDir, $"schema-review-{stamp}.json");
         // UTF-8 KHÔNG BOM: Codex từ chối lược đồ có BOM ("not valid JSON: expected value at line 1 column 1") — phát hiện khi chạy thật 23/10.
         await File.WriteAllTextAsync(promptFile, pack.Prompt, NoBom, ct);
         await File.WriteAllTextAsync(schemaFile, OutputSchemaJson, NoBom, ct);
@@ -237,7 +238,7 @@ public sealed class ReviewService
         var runResult = await reviewer.RunAsync(request, ct);
         if (!runResult.Ok)
         {
-            return SaveResult(logDir, new ReviewResult(
+            return SaveResult(logDir, stamp, new ReviewResult(
                 ReviewVerdict.Blocked, [], [], reviewer.Id, runResult.Model, runResult.Duration, runResult.Tokens, pack.DiffHash,
                 $"Provider lỗi ({runResult.Status}): {runResult.Detail}"));
         }
@@ -245,7 +246,7 @@ public sealed class ReviewService
         var parsed = ParseOutput(runResult.Text);
         if (parsed is null)
         {
-            return SaveResult(logDir, new ReviewResult(
+            return SaveResult(logDir, stamp, new ReviewResult(
                 ReviewVerdict.Blocked, [], [], reviewer.Id, runResult.Model, runResult.Duration, runResult.Tokens, pack.DiffHash,
                 "Không đọc được kết luận review từ phản hồi của provider."));
         }
@@ -257,13 +258,13 @@ public sealed class ReviewService
         }
 
         var blockedReason = verdict == ReviewVerdict.Blocked ? "Reviewer trả kết luận BLOCKED." : "";
-        return SaveResult(logDir, new ReviewResult(
+        return SaveResult(logDir, stamp, new ReviewResult(
             verdict, findings, unverified, reviewer.Id, runResult.Model, runResult.Duration, runResult.Tokens, pack.DiffHash, blockedReason));
     }
 
-    private static ReviewResult SaveResult(string logDir, ReviewResult result)
+    private static ReviewResult SaveResult(string logDir, string stamp, ReviewResult result)
     {
-        var path = Path.Combine(logDir, $"review-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+        var path = Path.Combine(logDir, $"review-{stamp}.json");
         File.WriteAllText(path, JsonSerializer.Serialize(result, SaveJsonOptions), Encoding.UTF8);
         return result;
     }
