@@ -1,6 +1,6 @@
 ﻿# IMP-003 · Chu kỳ cải tiến 3 (H3-05 · V4-07 · V4-08)
 
-- **Trạng thái:** ✅ Đã áp dụng <!-- 🟡 Đề xuất · 🔵 Chờ chủ dự án duyệt · ✅ Đã áp dụng · 📏 Đã đo kết quả -->
+- **Trạng thái:** 📏 Đã đo kết quả (xem IMP-004 mục 5) <!-- 🟡 Đề xuất · 🔵 Chờ chủ dự án duyệt · ✅ Đã áp dụng · 📏 Đã đo kết quả -->
 - **Task trong chu kỳ:** AITeam/H3-05, AITeam/V4-07, AITeam/V4-08
 - **Ngày:** 24/10/2026
 

@@ -13,3 +13,4 @@ Tên chỉ dùng trong log và đánh giá. Codex không ghi được `.git` tro
 ## Nhận xét theo nhiệm vụ
 | Ngày | Yêu cầu / Task | Kết quả (lượt · phút · vòng · dòng/ngân sách) | Làm tốt | Lỗi (AG) | Hướng cải thiện |
 |---|---|---|---|---|---|
+| 24/10 | R-004 / V4-11 | 1 lượt hữu ích (+27 thừa do công cụ) · 82 giây · 1 · 11/25 | Đúng đặc tả từng dòng; commit qua team.ps1 | — | — |

@@ -3,7 +3,7 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-Cập nhật lần cuối: **24/10/2026 ~09:40 · máy nhà DESKTOP-PP14EFS** · **quy trình 3.2: đọc `QUY-TRINH.md`**
+Cập nhật lần cuối: **24/10/2026 ~11:15 · máy nhà DESKTOP-PP14EFS** · **quy trình 3.3: đọc `QUY-TRINH.md`**
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
 Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUAT-LOG.md`.
@@ -37,6 +37,7 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
 ## 2. Việc đang dở
 | Việc | Trạng thái | Làm tiếp thế nào |
 |---|---|---|
+| **R-004 Codex developer dự phòng (P1)** | ✅ XONG 24/10 ~11:15: `assign -Dev codex` + tự chuyển Codex khi agy hết hạn mức (Codex chạy thật V4-11: đúng đặc tả, 82 giây); trang Provider trên Hub; hook chặn agent push main (3 dự án); cảnh báo trùng phạm vi; tối đa 2 lượt / assign | Máy công ty: chạy `.\team.ps1 install-hooks` 1 lần (hook pre-push). P1 còn: cảnh báo lỗi liên tiếp theo provider, Pester cho team.ps1, MEMORY.md mỗi repo |
 | **R-003 Hub v3 toàn diện** | ✅ XONG 24/10 ~01:20 — H3-01…05 merge, 5/5 đạt vòng 1, 48 phút agent. Hub mới: Tổng quan (chỉ số + biểu đồ thời gian), Giao việc (chat theo phiếu), Cần anh duyệt, Đội ngũ, Quy trình & cải tiến, tab Dòng thời gian / Đánh giá quy trình trong task | Optional: `request-report` cột Dòng/ngân sách vẫn tính khung + test của Claude; biểu đồ so sánh giữa các chu kỳ IMP |
 | **A-001 đã duyệt (chủ dự án bấm trên Hub 00:36)** | Tạo user Windows `aiteam-agy2` cho tài khoản Antigravity số 2 | Cần chủ dự án: bấm UAC tạo user + đăng nhập user đó 1 lần (thiết kế V4 mục B3b). Sau đó Claude làm `runAs` trong assign / stop |
 | **R-002 AITeam v4 đa AI** | ✅ P0 XONG 24/10 ~09:40: định tuyến provider (cấm tự duyệt, nghỉ khi hết hạn mức — `.state/providers.json` theo máy), `aiteam review`, `assign` tự review AI sau cổng KT (task L / `Review AI: có`), Hub hiện kết luận review. Codex chạy thật bắt 2 lỗi trong V4-08 | P1 (sau 1 tuần chạy ổn): reviewer dự phòng (Claude CLI chưa cài), developer dự phòng codex khi agy hết hạn mức. User Windows thứ 2: xem dòng A-001 |
