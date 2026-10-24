@@ -38,16 +38,16 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật, kiểm tra lại 24/10/2026) |
+| Tiêu chí hoàn thành | Bằng chứng kiểm tra lại ngày 24/10/2026 |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, chỉ hiện Build FAILED, 0 warning/0 error; chưa xác định nguyên nhân chạy mặc định thất bại. |
-| Build tuần tự | `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 0 lỗi, 3 warning NU1900 (Hub, Hub.Tests, Core.Tests). |
-| Toàn bộ test pass, gồm 2 ca V4-11 và review cũ | `dotnet test AITeam.sln --no-restore --no-build -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip. |
-| Khắc phục NU1900 — BỊ CHẶN | `dotnet restore AITeam.sln --force --disable-parallel -m:1`: exit 0 nhưng vẫn 3 NU1900, không tải được `https://api.nuget.org/v3/index.json`. |
-- Code đã đúng thiết kế: stamp giờ + 8 ký tự hex dùng chung prompt/schema/kết quả ở mọi nhánh; không cần sửa thêm logic.
-- File đổi lượt này: chỉ file task để cập nhật kết quả kiểm tra lại; giữ nguyên BOM UTF-8. Không sửa test nghiệm thu.
-- Quyết định: không tắt audit/ẩn warning hoặc sửa cấu hình ngoài phạm vi; cần môi trường truy cập được nguồn audit NuGet để đạt cổng kiểm tra.
-- Chưa xác minh: dữ liệu lỗ hổng NuGet và build 0 warning; không chạy app/chụp ảnh theo phân công. Review (Claude) hiện chưa có nội dung.
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, chỉ hiện Build FAILED, không nêu nguyên nhân. |
+| Build tuần tự — còn 3 NU1900 | `dotnet build AITeam.sln --no-restore -m:1`: exit 0; 0 lỗi, 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
+| Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ | `dotnet test AITeam.sln --no-restore --no-build -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip. |
+| Khắc phục NU1900 — BỊ CHẶN bởi kết nối | `Invoke-WebRequest -Uri 'https://api.nuget.org/v3/index.json' -UseBasicParsing -TimeoutSec 20`: exit 1; “The underlying connection was closed: An unexpected error occurred on a receive.” |
+- Đã đối chiếu code: stamp đúng thiết kế, dùng chung cho prompt/schema/kết quả ở mọi nhánh; không cần sửa logic. Test nghiệm thu giữ nguyên.
+- File đổi lượt này: chỉ file task, cập nhật bằng chứng thực tế; giữ nguyên BOM UTF-8. Mục Review (Claude) chưa có nội dung.
+- Quyết định: không tắt audit/ẩn NU1900, không sửa cấu hình ngoài phạm vi; cần khôi phục kết nối NuGet trong môi trường chạy rồi restore/build lại.
+- Chưa đạt: build 0 warning và xác minh dữ liệu lỗ hổng NuGet. Không chạy app/chụp ảnh theo phân công.
 - Không chạy lệnh git theo chỉ dẫn Codex dự phòng; hệ thống phụ trách commit/push.
 ## Review (Claude)
 
