@@ -48,10 +48,10 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C1, E (PoC 25/10: agy kh�
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 15 ca nghiệm thu V5-01, có 1 ca chạy thật `aiteam mcp` qua client MCP). | `dotnet build AITeam.sln` → `0 Warning(s), 0 Error(s)`. `dotnet test AITeam.sln --blame-hang-timeout 3m` → `Passed! 153/153 (AITeam.Core.Tests, gồm 15/15 AcceptanceV501McpTests) + 289/289 (AITeam.Hub.Tests)`. |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 15 ca nghiệm thu V5-01, có 1 ca chạy thật `aiteam mcp` qua client MCP). | `dotnet build AITeam.sln` → `0 Warning(s), 0 Error(s)`. `dotnet test AITeam.sln --blame-hang-timeout 3m` → `Passed! 154/154 (AITeam.Core.Tests, gồm 15/15 AcceptanceV501McpTests + 1 ca đồng thời) + 289/289 (AITeam.Hub.Tests)`. |
 
 - **Đã làm:** Hiện thực `McpTaskTools` (`ToolsFor`, `GetTask`, `PostMessage`, `GetTestResults`, `GetArtifacts`) và `McpServerCommand.RunAsync` (MCP stdio qua `ModelContextProtocol` 2.3.0, log stderr, kiểm tra tham số trước khi chạy).
-- **File đã đổi:** `core/AITeam.Core/Mcp/McpTaskTools.cs` (logic 4 công cụ MCP theo task/vai trò), `core/AITeam.Cli/McpServerCommand.cs` (khởi chạy MCP stdio server & kiểm tra tham số), `tasks/V5-01-mcp-gateway.md` (báo cáo).
+- **File đã đổi:** `core/AITeam.Core/Mcp/McpTaskTools.cs` (logic 4 công cụ MCP theo task/vai trò, khóa đồng bộ bộ đếm tin nhắn phiên), `core/AITeam.Cli/McpServerCommand.cs` (khởi chạy MCP stdio server & kiểm tra tham số), `core.tests/McpTaskToolsConcurrencyTests.cs` (test gọi đồng thời ngưỡng 59 tin), `tasks/V5-01-mcp-gateway.md` (báo cáo).
 - **Điều chưa chắc:** Không có.
 
 ## Review (Claude)

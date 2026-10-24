@@ -23,6 +23,7 @@ public sealed class McpTaskTools
     public static IReadOnlyList<string> ToolsFor(string role)
         => role is "developer" or "reviewer" ? ["aiteam_get_task", "aiteam_post_message", "aiteam_get_test_results", "aiteam_get_artifacts"] : [];
 
+    private readonly object _gate = new();
     private int _msgCount;
     private static string Cut(string s) => s.Length > MaxRead ? s[..MaxRead] + $"\n…(đã cắt, file dài {s.Length} ký tự)" : s;
 
@@ -71,9 +72,12 @@ public sealed class McpTaskTools
             };
             if (!ok) return $"LỖI: loại '{kind}' không được phép cho {_s.Role}";
             if (string.IsNullOrWhiteSpace(text)) return "LỖI: tin nhắn rỗng";
-            if (_msgCount >= MaxMessagesPerSession) return $"LỖI: quá {MaxMessagesPerSession} tin nhắn trong lượt này";
+            lock (_gate)
+            {
+                if (_msgCount >= MaxMessagesPerSession) return $"LỖI: quá {MaxMessagesPerSession} tin nhắn trong lượt này";
             _store.Append(_s.TaskId, _s.From, kind, text, _now());
-            return $"Đã ghi tin nhắn ({++_msgCount}/{MaxMessagesPerSession}).";
+                return $"Đã ghi tin nhắn ({++_msgCount}/{MaxMessagesPerSession}).";
+            }
         }
         catch (Exception ex) { return $"LỖI: {ex.Message}"; }
     }
