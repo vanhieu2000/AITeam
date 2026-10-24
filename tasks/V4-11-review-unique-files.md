@@ -38,17 +38,17 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng kiểm tra lại ngày 24/10/2026 (lượt sửa NU1900) |
+| Tiêu chí hoàn thành | Bằng chứng kiểm tra lại ngày 24/10/2026 (lượt trả về NU1900) |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, chỉ báo Build FAILED; chưa rõ nguyên nhân lỗi chạy song song. |
-| Build tuần tự | `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 0 lỗi, vẫn 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
+| Build mặc định — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, Build FAILED, 0 warning/0 error; không có chẩn đoán nguyên nhân. |
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 0 error, 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
 | Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; vẫn 3 NU1900. |
-| Nguyên nhân NU1900 — BỊ CHẶN bởi môi trường | `curl.exe --head --max-time 15 https://api.nuget.org/v3/index.json`: exit 1, curl (7), không kết nối được 127.0.0.1:9; biến HTTP_PROXY/HTTPS_PROXY/ALL_PROXY trỏ tới proxy này. |
-- Đã đối chiếu: ReviewService dùng đúng stamp cho prompt/schema/kết quả ở mọi nhánh; giữ nguyên chữ ký public, mã nguồn và test nghiệm thu.
-- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng thực tế và giữ nguyên trạng thái BOM UTF-8.
-- Quyết định: không tắt audit/ẩn warning, không đổi cấu hình mạng hay sửa file ngoài phạm vi; cần môi trường truy cập NuGet để làm mới dữ liệu audit.
-- Chưa hoàn thành: build 0 warning; chưa xác minh được dữ liệu lỗ hổng NuGet. Không chạy app/chụp ảnh theo phân công. Review (Claude) chưa có nội dung.
-- Không chạy lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
+| Chẩn đoán kết nối NuGet | HTTP_PROXY/HTTPS_PROXY/ALL_PROXY trỏ `127.0.0.1:9`; `curl.exe --noproxy "*" --head --max-time 15 https://api.nuget.org/v3/index.json`: exit 35, TLS SEC_E_NO_CREDENTIALS. |
+- Đã đọc đúng 2 file trong mục Đọc: ReviewService đã dùng cùng stamp cho prompt/schema/kết quả và mọi nhánh SaveResult; không sửa mã nguồn hay test nghiệm thu.
+- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng và giữ nguyên BOM UTF-8 hiện có.
+- Quyết định: không tắt audit/ẩn warning hoặc đổi cấu hình ngoài phạm vi; lỗi truy cập NuGet chưa khắc phục được trong sandbox hiện tại.
+- Chưa xác minh: dữ liệu lỗ hổng NuGet và nguyên nhân build mặc định thất bại; cần môi trường NuGet hoạt động để kiểm tra lại tiêu chí 0 warning. Review (Claude) đang trống.
+- Không chạy app/chụp ảnh, không chạy lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
 ## Review (Claude)
 
 ## Kết quả
