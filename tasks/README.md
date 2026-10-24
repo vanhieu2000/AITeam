@@ -30,6 +30,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H3-06 Hub: trang Provider](H3-06-hub-providers.md) | B | `agent-b/H3-06-hub-providers` | ✅ Đã merge (vòng 1) |
 | [V4-10 aiteam providers hiện trạng thái nghỉ (Codex làm)](V4-10-providers-rest-status.md) | C | `agent-c/V4-10-providers-rest-status` | ✅ Đã merge (vòng 1) |
 | [V4-11 ReviewService: tên file riêng mỗi lần review (Codex làm)](V4-11-review-unique-files.md) | C | `agent-c/V4-11-review-unique-files` | ✅ Đã merge (vòng 1) |
+| [V5-01 MCP Gateway: aiteam mcp](V5-01-mcp-gateway.md) | A | `agent-a/V5-01-mcp-gateway` | ⬜ Chưa giao |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
