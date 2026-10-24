@@ -1,4 +1,4 @@
-﻿# V4-08 · Lệnh `aiteam review`: chọn reviewer, thử reviewer kế khi hết hạn mức, mã thoát cho team.ps1
+# V4-08 · Lệnh `aiteam review`: chọn reviewer, thử reviewer kế khi hết hạn mức, mã thoát cho team.ps1
 
 - **Agent:** B
 - **Nhánh:** `agent-b/V4-08-aiteam-review-cli`
@@ -48,17 +48,20 @@ Thiết kế: `docs/design/V4-MULTI-AI.md` mục B4, B5, C (P0-3, P0-7). V4-07 (
 - `core.tests/AcceptanceV408ReviewRunnerTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 9 ca nghiệm thu V4-08).
-- [ ] `aiteam review` không đủ tham số trả 2; `--auto` với task độ khó M trả 4 và in "SKIP: …" (agent thử bằng file tạm, KHÔNG gọi Codex thật).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 9 ca nghiệm thu V4-08).
+- [x] `aiteam review` không đủ tham số trả 2; `--auto` với task độ khó M trả 4 và in "SKIP: …" (agent thử bằng file tạm, KHÔNG gọi Codex thật).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln` pass hết | `dotnet build AITeam.sln` → 0 Warning, 0 Error; `dotnet test AITeam.sln --blame-hang-timeout 2m` → Core.Tests 108/108 pass (9/9 ca nghiệm thu V4-08), Hub.Tests 270/270 pass |
+| `aiteam review` thiếu tham số trả 2; `--auto` với task độ khó M trả 4, in `SKIP: …` | Kiểm thử trong `ReviewCliTests.Missing_args_returns_2_and_auto_medium_task_returns_4_with_skip_json`: gọi `aiteam.dll review` trên file tạm trả 2 và 4 (`SKIP: Độ khó S/M — Claude tự review (Codex hạn mức nhỏ)` + `--out` JSON `SKIPPED`) |
+|---|---|
 | | |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `ReviewRunner` (`RunAsync`, `Summarize`, `Feedback`, `OutcomeJson`, lớp bọc `StateRecordingProvider` ghi `ProviderStateStore`), thêm lệnh `aiteam review` vào `Program.cs` (cập nhật `Help()`, kiểm tra `--auto` qua `ReviewPolicy.Decide`, chạy `ReviewRunner`, xuất JSON UTF-8 không BOM) và thêm test CLI `ReviewCliTests.cs`.
+- **File đã đổi:** `core/AITeam.Core/Review/ReviewRunner.cs`, `core/AITeam.Cli/Program.cs`, `core.tests/ReviewCliTests.cs`, `tasks/V4-08-aiteam-review-cli.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
 

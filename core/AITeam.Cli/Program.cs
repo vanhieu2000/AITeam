@@ -1,4 +1,7 @@
 using System.Text;
+using System.Text.Json;
+using AITeam.Core.Review;
+using AITeam.Core.Routing;
 using AITeam.Core.Process;
 using AITeam.Core.Providers;
 using AITeam.Core.Tasks;
@@ -13,6 +16,7 @@ try
     {
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
+        "review" => await Review(),
         _ => Help(),
     };
 }
@@ -56,7 +60,74 @@ int Help()
 {
     Console.WriteLine("aiteam providers [--root D:\\AITeam]      Kiểm tra từng provider (cài chưa, đăng nhập chưa) + thứ tự routing");
     Console.WriteLine("aiteam task-info --file <task.md>        Đọc thông tin chuẩn hóa của 1 file task");
+    Console.WriteLine("aiteam review --task-file <f> --diff-file <f> [--verify-file <f>] --workdir <d> --logdir <d> --dev <id> [--timeout-min 15] [--out <f>] [--auto]");
     return 0;
+}
+
+async Task<int> Review()
+{
+    var taskFile = Arg("--task-file");
+    var diffFile = Arg("--diff-file");
+    var verifyFile = Arg("--verify-file");
+    var workDir = Arg("--workdir");
+    var logDir = Arg("--logdir");
+    var dev = Arg("--dev");
+    var outFile = Arg("--out");
+    if (string.IsNullOrWhiteSpace(taskFile) || string.IsNullOrWhiteSpace(diffFile) ||
+        string.IsNullOrWhiteSpace(workDir) || string.IsNullOrWhiteSpace(logDir) || string.IsNullOrWhiteSpace(dev))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--task-file, --diff-file, --workdir, --logdir, --dev).");
+        return 2;
+    }
+
+    var utf8NoBom = new UTF8Encoding(false);
+    if (args.Contains("--auto") && File.Exists(taskFile))
+    {
+        var decision = ReviewPolicy.Decide(await File.ReadAllTextAsync(taskFile));
+        if (!decision.AutoReview)
+        {
+            var summary = $"SKIP: {decision.Reason}";
+            Console.WriteLine(summary);
+            if (!string.IsNullOrWhiteSpace(outFile))
+            {
+                if (Path.GetDirectoryName(outFile) is { Length: > 0 } dir) Directory.CreateDirectory(dir);
+                var skipJson = JsonSerializer.Serialize(new
+                {
+                    exitCode = 4,
+                    verdict = "SKIPPED",
+                    summary,
+                    notes = Array.Empty<string>(),
+                    feedback = "",
+                    provider = (string?)null,
+                    diffHash = (string?)null,
+                });
+                await File.WriteAllTextAsync(outFile, skipJson, utf8NoBom);
+            }
+            return 4;
+        }
+    }
+
+    var timeoutMin = int.TryParse(Arg("--timeout-min"), out var tm) && tm > 0 ? tm : 15;
+    var settings = ProviderSettings.Load(root);
+    var state = new ProviderStateStore(root);
+    var router = new ProviderRouter(settings, state);
+    var proc = new ProcessRunner();
+    var runner = new ReviewRunner(settings, router, state, c => settings.Create(c, proc), () => DateTime.Now);
+    var input = new ReviewRunInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, TimeSpan.FromMinutes(timeoutMin));
+    var outcome = await runner.RunAsync(input, CancellationToken.None);
+
+    Console.WriteLine(outcome.Summary);
+    foreach (var note in outcome.Notes)
+        Console.WriteLine($"  - {note}");
+    if (outcome.Result != null && ReviewRunner.Feedback(outcome.Result) is { Length: > 0 } fb)
+        Console.WriteLine(fb);
+
+    if (!string.IsNullOrWhiteSpace(outFile))
+    {
+        if (Path.GetDirectoryName(outFile) is { Length: > 0 } dir) Directory.CreateDirectory(dir);
+        await File.WriteAllTextAsync(outFile, ReviewRunner.OutcomeJson(outcome), utf8NoBom);
+    }
+    return outcome.ExitCode;
 }
 
 string? Arg(string name)
