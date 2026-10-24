@@ -15,6 +15,7 @@
     var isTeamActive = currentPage.Equals("/Team", StringComparison.OrdinalIgnoreCase);
     var isProcessActive = currentPage.Equals("/Process", StringComparison.OrdinalIgnoreCase);
     var isRequestsActive = currentPage.Equals("/Requests", StringComparison.OrdinalIgnoreCase);
+    var isProvidersActive = currentPage.Equals("/Providers", StringComparison.OrdinalIgnoreCase);
     var pendingApprovals = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending);
 
     var reqTheme = Context.Request.Query["theme"].ToString();
@@ -148,6 +149,13 @@
             </a>
 
             <div class="grp">Hệ thống</div>
+            <a href="/Providers" class="nav @(isProvidersActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2.5" y="2.5" width="11" height="4" rx="1"/><rect x="2.5" y="9.5" width="11" height="4" rx="1"/>
+                    <path d="M5 4.5h.01M5 11.5h.01"/>
+                </svg>
+                <span>Provider AI</span>
+            </a>
             <a href="/Accounts" class="nav @(isAccountsActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
                     <rect x="2" y="3" width="12" height="10" rx="1.5"/>

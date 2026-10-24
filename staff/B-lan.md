@@ -10,6 +10,8 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 ## Lưu ý riêng
 <!-- Mỗi dòng "- ..." được tự đưa vào lời giao việc lần sau. Chỉ ghi lỗi AG đã lặp ≥ 2 lần hoặc nghiêm trọng (bảo mật). Bỏ dòng khi 3 nhiệm vụ liền không tái phạm. -->
 
+- Giữ BOM UTF-8 của MỌI file .cs / .cshtml đang có BOM, kể cả file khung Claude vừa tạo: sửa bằng công cụ ghi lại đúng mã hóa, không ghi đè cả file bằng UTF-8 không BOM. (Mất BOM ở V4-08 và H3-06.)
+
 ## Nhận xét theo nhiệm vụ
 | Ngày | Yêu cầu / Task | Kết quả (lượt · phút · vòng · dòng/ngân sách) | Làm tốt | Lỗi (AG) | Hướng cải thiện |
 |---|---|---|---|---|---|
@@ -21,3 +23,4 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 | 24/10 | R-003 / H3-03 | 1 · 7′ · 1 · 255/280 | Đúng đặc tả + bố cục, giữ BOM, báo cáo đối chiếu từng mục | — | — |
 | 24/10 | R-003 / H3-02 | 1 · 13′ · 1 · 370/330 | Đúng đặc tả, SVG chuẩn số thập phân bất biến | — | — |
 | 24/10 | R-002 / V4-08 | 1 · 7′ · 1 · ~330/220 | CLI đủ mã thoát, fail-safe đúng đặc tả | BOM (lần 1) · test CLI phụ thuộc thứ tự build | Test tiến trình con dùng ProjectReference |
+| 24/10 | R-004 / H3-06 | 1 · 12′ · 1 · 265/260 | Đúng đặc tả + bố cục; Kiểm tra provider thật chạy đúng | BOM (lần 2) | Lưu ý riêng đã thêm |
