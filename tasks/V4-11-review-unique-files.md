@@ -40,14 +40,16 @@ Trong `ReviewService`:
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln -m:1 --no-restore`: exit 0, 3 NU1900, 0 error, 13,58 giây. |
-| Toàn bộ test, gồm nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
-| Tên file riêng, cùng stamp; chữ ký public và UTF-8 không BOM — ĐẠT | Mã hiện có đúng thiết kế; bộ 129 test Core pass, gồm 2 ca nghiệm thu V4-11; không sửa mã/test. |
-| Khắc phục NU1900 — BỊ CHẶN | Bỏ HTTP_PROXY/HTTPS_PROXY/ALL_PROXY trong tiến trình, NO_PROXY=*; `dotnet restore AITeam.sln --disable-parallel --force --no-http-cache -m:1 -p:NuGetAudit=true`: exit 0, vẫn 3 NU1900 do không truy cập được https://api.nuget.org/v3/index.json. |
-- File đổi: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng; giữ nguyên trạng thái BOM UTF-8.
-- Quyết định: giữ audit và phạm vi mã; không tắt/ẩn cảnh báo để đạt giả tiêu chí. Restore không có `-m:1` exit 1 không chẩn đoán; bản tuần tự chạy được.
-- Chưa xác minh: dữ liệu lỗ hổng package; cần môi trường truy cập NuGet hoạt động để đạt 0 warning. Không sửa cấu hình máy.
-- Review (Claude) trống; PROJECT_MAP.md không tồn tại. Không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 3 NU1900, 0 error, 13,41 giây. |
+| Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289, Core 129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
+| Tên file riêng, cùng stamp; public và UTF-8 không BOM — ĐẠT | Đọc mã hiện có đúng thiết kế; 129 test Core pass; không sửa mã hoặc test nghiệm thu. |
+| Khắc phục NU1900 — BỊ CHẶN BỞI MÔI TRƯỜNG | `dotnet restore AITeam.sln --force --no-http-cache --disable-parallel -m:1 -p:NuGetAudit=true`: exit 0, vẫn 3 NU1900. |
+| Chẩn đoán kết nối NuGet | `Test-NetConnection api.nuget.org -Port 443 -InformationLevel Quiet`: True; `curl.exe -I --connect-timeout 10 --max-time 20 https://api.nuget.org/v3/index.json`: exit 1, proxy 127.0.0.1:9 không kết nối được. |
+| Chẩn đoán bỏ qua proxy | `curl.exe --noproxy '*' -I --connect-timeout 10 --max-time 20 https://api.nuget.org/v3/index.json`: exit 1, TLS SEC_E_NO_CREDENTIALS (0x8009030E). |
+- File đổi: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng và giữ nguyên trạng thái BOM UTF-8.
+- Quyết định: giữ audit; không tắt/ẩn NU1900, không sửa cấu hình máy hay mở rộng phạm vi mã để né lỗi hạ tầng.
+- Chưa xác minh: dữ liệu lỗ hổng package; cần môi trường truy cập HTTPS NuGet hoạt động để đạt build 0 warning.
+- Review (Claude) trống. Không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
 
 ## Review (Claude)
 
