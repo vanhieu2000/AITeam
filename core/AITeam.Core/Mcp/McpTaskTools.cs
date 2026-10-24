@@ -27,6 +27,15 @@ public sealed class McpTaskTools
     private int _msgCount;
     private static string Cut(string s) => s.Length > MaxRead ? s[..MaxRead] + $"\n…(đã cắt, file dài {s.Length} ký tự)" : s;
 
+    /// <summary>Đọc file nhưng từ chối liên kết tượng trưng / reparse point (chặn trỏ ra ngoài vùng task) — Codex review V5-01.</summary>
+    private static string ReadNoLink(string path)
+    {
+        var fi = new FileInfo(path);
+        if (fi.LinkTarget != null || fi.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            return "LỖI: từ chối đọc liên kết (symlink / reparse point)";
+        return Cut(File.ReadAllText(path, Encoding.UTF8));
+    }
+
     private readonly McpSession _s;
     private readonly MessageStore _store;
     private readonly Func<DateTime> _now;
@@ -48,7 +57,7 @@ public sealed class McpTaskTools
         {
             if (string.IsNullOrWhiteSpace(_s.TaskFile) || !File.Exists(_s.TaskFile))
                 return $"LỖI: không thấy file task {_s.TaskId}";
-            return Cut(File.ReadAllText(_s.TaskFile, Encoding.UTF8));
+            return ReadNoLink(_s.TaskFile);
         }
         catch (Exception ex) { return $"LỖI: {ex.Message}"; }
     }
@@ -104,7 +113,7 @@ public sealed class McpTaskTools
                 if (int.TryParse(name.AsSpan(prefix.Length, name.Length - prefix.Length - 3), NumberStyles.None, CultureInfo.InvariantCulture, out var n) && n > bestN)
                 { bestN = n; best = f; }
             }
-            return best is null ? $"Chưa có kết quả cổng kiểm tra cho {_s.TaskId}." : Cut(File.ReadAllText(best, Encoding.UTF8));
+            return best is null ? $"Chưa có kết quả cổng kiểm tra cho {_s.TaskId}." : ReadNoLink(best);
         }
         catch (Exception ex) { return $"LỖI: {ex.Message}"; }
     }
