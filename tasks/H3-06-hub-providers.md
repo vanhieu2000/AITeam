@@ -69,16 +69,26 @@ Hub đã tham chiếu `AITeam.Core` (R-004) ⇒ dùng chung cấu hình provider
 - **Điều chưa chắc:** Không có (chưa chạy Hub thật theo quy định prompt, chờ Claude kiểm tra khi review).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 10/10 ca nghiệm thu + trang /Providers dựng thật trong test; 111 + 289 test; build 0 warning; ~12 phút, 1 lượt; 265/260 dòng.
+- Xem Hub thật (cổng 5058): bảng provider, thứ tự dự phòng, lịch sử nghỉ; bấm **Kiểm tra** với agy và Codex THẬT ⇒ cả hai OK ("Đã đăng nhập", "Logged in using ChatGPT").
+- [AG] (BOM) mất BOM 3 file khung — lần 2 của Lan (V4-08, H3-06) ⇒ thêm Lưu ý riêng. Cổng KT tự trả.
+- [CK] (công cụ) review bỏ qua trả mã 4 rò thành mã thoát của `assign` ⇒ lượt chạy báo "failed" dù đạt. Claude đã sửa (`$global:LASTEXITCODE = 0`).
+
+Nhân viên: Lan (B) — 1 lượt, ~12 phút, 265/260 dòng.
 
 ## Kết quả
+- **Chức năng mới — trang Provider:** xem AI nào sẵn sàng / đang nghỉ tới giờ nào (hết hạn mức, chưa đăng nhập), nút Kiểm tra (đã cài, đã đăng nhập chưa) và Hết nghỉ, thứ tự dự phòng, lịch sử nghỉ.
+- **Kiểm chứng:** 10 ca nghiệm thu; bấm Kiểm tra thật với agy + Codex.
+- **Cần cải tiến:** chưa có cảnh báo "lỗi liên tiếp" theo provider (P1 sau).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Lan (B) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-004) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-004) | Dùng lại lõi C# trong Hub thay vì viết lại | — | — |
+| 3. Plan / thiết kế | Claude | 5 | ~20' | Khung nói rõ cách dựng PartialViewResult (bài học PageContext) | — | — |
+| 4. Giao việc | Claude | 5 | ~10' | Trang mới có sẵn trong test dựng trang (IMP-002) | — | — |
+| 5. Thực hiện code | Lan (B) | 4 | ~12' (1 lượt) | Đúng đặc tả; mất BOM lần 2 | AG | Lưu ý riêng |
+| 6. Review / QC | Cổng KT + Claude | 4 | ~10' | Mã thoát 4 rò ra ngoài | CK | Đã sửa |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
