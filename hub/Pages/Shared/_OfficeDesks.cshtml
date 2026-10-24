@@ -79,9 +79,32 @@
                 }
                 @if (d.Task is { } tf && !string.IsNullOrEmpty(tf.Project))
                 {
-                    <div class="row" style="gap:6px; margin-top:auto">
+                    <div class="row" style="gap:6px; margin-top:auto; flex-wrap:wrap">
                         <a class="btn sm" href="/p/@tf.Project/t/@tf.Id">Mở task</a>
                         <a class="btn sm" href="/p/@tf.Project/t/@tf.Id?tab=report">Xem báo cáo</a>
+                        @if (Model.ControlsEnabled)
+                        {
+                            var isAgentDesk = d.Key is "A" or "B" or "C";
+                            if (isAgentDesk && d.State == DeskState.Working)
+                            {
+                                @* hx-confirm phải nằm trên form (HTMX 2 bỏ qua hx-confirm trên nút submit) ⇒ mỗi lệnh 1 form *@
+                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Dừng task @tf.Id? Agent sẽ bị dừng ngay." style="display:inline; margin:0">
+                                    <input type="hidden" name="target" value="@tf.Project/@tf.Id" />
+                                    <button type="submit" class="btn sm danger" name="command" value="Stop">Dừng</button>
+                                </form>
+                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Chạy lại cổng kiểm tra cho @tf.Id?" style="display:inline; margin:0">
+                                    <input type="hidden" name="target" value="@tf.Project/@tf.Id" />
+                                    <button type="submit" class="btn sm" name="command" value="Verify">Kiểm tra lại</button>
+                                </form>
+                            }
+                            else if (d.Key == "gate")
+                            {
+                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Chạy lại cổng kiểm tra cho @tf.Id?" style="display:inline; margin:0">
+                                    <input type="hidden" name="target" value="@tf.Project/@tf.Id" />
+                                    <button type="submit" class="btn sm" name="command" value="Verify">Kiểm tra lại</button>
+                                </form>
+                            }
+                        }
                     </div>
                 }
             </div>

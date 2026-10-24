@@ -22,3 +22,10 @@
 <div hx-get="?handler=Desks" hx-trigger="every 10s" hx-swap="outerHTML">
     <partial name="_OfficeDesks" model="Model" />
 </div>
+
+@if (Model.ControlsEnabled)
+{
+    <div style="margin-top:16px">
+        <partial name="_OfficeControl" model="Model" />
+    </div>
+}

@@ -14,6 +14,7 @@ public static class FakeServices
         services.AddSingleton<IHealthService, FakeHealthService>();
         services.AddSingleton<IVaultService, FakeVaultService>();
         services.AddSingleton<IInboxService, FakeInboxService>();
+        services.AddSingleton<IProcessStarter, NoopProcessStarter>(); // V5-05: dữ liệu giả ⇒ không chạy team.ps1 thật
         services.AddHubV3(); // _Layout cần IApprovalService
     }
 }
