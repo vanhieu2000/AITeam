@@ -48,29 +48,45 @@ Thiết kế: `docs/design/V4-MULTI-AI.md` mục B4, B5, C (P0-3, P0-7). V4-07 (
 - `core.tests/AcceptanceV408ReviewRunnerTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 9 ca nghiệm thu V4-08).
-- [ ] `aiteam review` không đủ tham số trả 2; `--auto` với task độ khó M trả 4 và in "SKIP: …" (agent thử bằng file tạm, KHÔNG gọi Codex thật).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 9 ca nghiệm thu V4-08).
+- [x] `aiteam review` không đủ tham số trả 2; `--auto` với task độ khó M trả 4 và in "SKIP: …" (agent thử bằng file tạm, KHÔNG gọi Codex thật).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln` pass hết | `dotnet build AITeam.sln` → 0 Warning, 0 Error; `dotnet test AITeam.sln --blame-hang-timeout 2m` → Core.Tests 108/108 pass (9/9 ca nghiệm thu V4-08), Hub.Tests 270/270 pass |
+| `aiteam review` thiếu tham số trả 2; `--auto` với task độ khó M trả 4, in `SKIP: …` | Kiểm thử trong `ReviewCliTests.Missing_args_returns_2_and_auto_medium_task_returns_4_with_skip_json`: gọi `aiteam.dll review` trên file tạm trả 2 và 4 (`SKIP: Độ khó S/M — Claude tự review (Codex hạn mức nhỏ)` + `--out` JSON `SKIPPED`) |
+|---|---|
 | | |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `ReviewRunner` (`RunAsync`, `Summarize`, `Feedback`, `OutcomeJson`, lớp bọc `StateRecordingProvider` ghi `ProviderStateStore`), thêm lệnh `aiteam review` vào `Program.cs` (cập nhật `Help()`, kiểm tra `--auto` qua `ReviewPolicy.Decide`, chạy `ReviewRunner`, xuất JSON UTF-8 không BOM) và thêm test CLI `ReviewCliTests.cs`.
+- **File đã đổi:** `core/AITeam.Core/Review/ReviewRunner.cs`, `core/AITeam.Cli/Program.cs`, `core.tests/ReviewCliTests.cs`, `tasks/V4-08-aiteam-review-cli.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 9/9 ca nghiệm thu; build 0 warning; ~8 phút, 1 lượt.
+- **Chạy thật với Codex** (review chính diff V4-08, 46 giây): ra CHANGES_REQUESTED kèm 1 lỗi có thật ⇒ cả chuỗi `aiteam review` → Codex chỉ đọc → JSON → mã thoát hoạt động. Lần 2 qua `team.ps1 Invoke-AutoReview` (43 giây): thêm 1 lỗi có thật. Task độ khó M ⇒ `SKIP`, mã 4 đúng.
+- [AG] (BOM) mất BOM 2 file khung (lần 1 của Lan) — cổng KT tự trả.
+- [TK] (bảo mật) hàm `Arg` của CLI (Claude viết từ P0-1) nhận tùy chọn kế tiếp làm giá trị: `--dev --auto` ⇒ dev="--auto" ⇒ mất cấm tự duyệt. Codex phát hiện.
+- [TK] (chất lượng) đặc tả `RunAsync` không nói lỗi bất ngờ (thư mục log là file, provider ném lỗi) ⇒ lệnh sập, không ra BLOCKED. Codex phát hiện.
+- [TK] (quy trình) Claude để phần nối review dở trong `team.ps1` khi giao V4-08 ⇒ wrapper gọi `aiteam` cũ (chưa có lệnh review, in hướng dẫn, mã 0) ⇒ bảng việc ghi nhầm "AI review PASS". Đã sửa: chỉ tin kết luận khi file `--out` hợp lệ và khớp mã thoát.
+- Claude sửa (~20 dòng + 2 test, 15 phút): `Arg` từ chối giá trị bắt đầu "--"; `RunAsync` bọc lỗi ⇒ BLOCKED có lý do. 110 + 270 test pass.
+
+Nhân viên: Lan (B) — 1 lượt, ~8 phút.
 
 ## Kết quả
+- **Không có chức năng mới nhìn thấy ngay** — lệnh `aiteam review` + `team.ps1 assign` tự gọi review AI sau khi cổng kiểm tra đạt (task độ khó L hoặc "Review AI: có"); reviewer khác AI đã code; hết hạn mức ⇒ nghỉ đúng giờ và thử reviewer kế; CẦN SỬA ⇒ tự giao lại agent 1 lần kèm danh sách lỗi.
+- **Kiểm chứng:** 9 ca nghiệm thu + 2 ca lỗi bất ngờ; chạy thật với Codex 2 lần (46 và 43 giây), bắt 2 lỗi có thật trong chính code này.
+- **Cần cải tiến:** Hub chưa hiện kết luận review AI (P0-8); chưa có reviewer dự phòng thứ 2 (Claude CLI chưa cài).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Lan (B) | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-002) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-002) | — | — | — |
+| 3. Plan / thiết kế | Claude | 3 | ~25' | Đặc tả thiếu nhánh lỗi bất ngờ; hàm `Arg` cũ có lỗ hổng | TK | Mục kiểm tra mẫu task: "mọi lỗi bất ngờ ⇒ kết quả fail-safe, có test" |
+| 4. Giao việc | Claude | 3 | ~10' | Giao khi `team.ps1` còn sửa dở ⇒ bảng việc ghi nhầm | TK | Không sửa `team.ps1` trên main khi đang có agent chạy; sửa trong nhánh / commit trước |
+| 5. Thực hiện code | Lan (B) | 4 | ~8' (1 lượt) | Đúng đặc tả; mất BOM | AG | — (lần 1) |
+| 6. Review / QC | Cổng KT + Codex + Claude | 5 | ~20' | Codex review thật bắt 2 lỗi mà test nghiệm thu + Claude bỏ sót | — | Giữ Codex cho task L / bảo mật |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
