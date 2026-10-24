@@ -54,17 +54,18 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C2; mockup `docs/design/v
 - `hub.tests/AcceptanceV504OfficeTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 11 ca nghiệm thu V5-04 + trang `/Office` dựng thật).
-- [ ] Đúng Bố cục (Claude chạy Hub kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 11 ca nghiệm thu V5-04 + trang `/Office` dựng thật).
+- [x] Đúng Bố cục (Claude chạy Hub kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| Build 0 warning & Test pass hết | `dotnet build AITeam.sln` ⇒ 0 Warning(s), 0 Error(s); `dotnet test AITeam.sln --blame-hang-timeout 3m` ⇒ Passed 138/138 (`AITeam.Core.Tests`) + 302/302 (`AITeam.Hub.Tests`, gồm 11 ca `AcceptanceV504OfficeTests` + `OfficeServiceTests` + test dựng trang `/Office`). |
+| Đúng Bố cục `/Office` & `_OfficeDesks` | Đã cài đặt đúng bố cục `Office.cshtml` và `_OfficeDesks.cshtml` (hộp lỗi, hàng tổng hợp + 4 pill, HTMX `every 10s`, lưới bàn `minmax(280px,1fr)`, viền màu theo `DeskState`, vòng chữ cái đầu 34px, khối Task + liên kết, Feed 3 tin, nút Mở task / Xem báo cáo, không `Html.Raw`). |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hiện thực `OfficeBuilder.Build`, `OfficeService.Get` & `OfficeService.ParseStaff`, `OfficeModel.OnGet` & `OnGetDesks`, giao diện `Office.cshtml` & `_OfficeDesks.cshtml`, và thêm unit test `OfficeServiceTests`.
+- **File đã đổi:** `hub/Services/OfficeBuilder.cs`, `hub/Services/OfficeService.cs`, `hub/Pages/Office.cshtml.cs`, `hub/Pages/Office.cshtml`, `hub/Pages/Shared/_OfficeDesks.cshtml`, `hub.tests/OfficeServiceTests.cs`, `tasks/V5-04-hub-office.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
 

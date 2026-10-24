@@ -59,5 +59,91 @@ public static class OfficeBuilder
     /// Đếm: Working / Idle / Resting = số BÀN AGENT ở trạng thái đó; Review = n. At = Now.
     /// </summary>
     public static OfficeView Build(OfficeInput input)
-        => throw new NotImplementedException(); // TODO(agent)
+        => BuildCore(input);
+
+    private static OfficeView BuildCore(OfficeInput input)
+    {
+        var desks = new List<Desk>();
+
+        if (input.CurrentRequest is { } req)
+        {
+            var feed = (req.Events ?? Array.Empty<RequestEvent>())
+                .TakeLast(2)
+                .Reverse()
+                .Select(e => new TaskMessage(input.Now, req.Id, "Claude", "note", $"{e.Time} {e.Text}"))
+                .ToList();
+            desks.Add(new Desk("claude", "Claude", "Quản lý · thiết kế · review", DeskState.Manager, req.Status,
+                new DeskTask("", req.Id, req.Title, null), feed));
+        }
+        else
+        {
+            desks.Add(new Desk("claude", "Claude", "Quản lý · thiết kế · review", DeskState.Manager,
+                "Không có phiếu đang làm", null, Array.Empty<TaskMessage>()));
+        }
+
+        int working = 0, idle = 0, resting = 0;
+
+        RunningAgent? FindRunning(TaskCard t) =>
+            input.Running.FirstOrDefault(r =>
+                string.Equals(r.Project, t.Project, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(r.Task, t.Id, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var s in input.Staff.OrderBy(x => x.Agent, StringComparer.OrdinalIgnoreCase))
+        {
+            var assigned = input.Tasks
+                .Where(t => t.State == TaskState.Assigned && string.Equals(t.Agent, s.Agent, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var task = assigned.FirstOrDefault(t => FindRunning(t) != null) ?? assigned.FirstOrDefault();
+
+            if (task != null)
+            {
+                working++;
+                var run = FindRunning(task);
+                int? elapsed = run != null ? (int)Math.Floor((input.Now - run.StartedAt).TotalMinutes) : null;
+                var stateText = elapsed is { } m ? $"Đang làm {m}′" : "Đang làm (máy khác / chưa chạy)";
+                var feed = (input.Messages(task.Project, task.Id) ?? Array.Empty<TaskMessage>())
+                    .TakeLast(3)
+                    .Reverse()
+                    .ToList();
+                desks.Add(new Desk(s.Agent, s.Name, s.Role, DeskState.Working, stateText,
+                    new DeskTask(task.Project, task.Id, task.Title, elapsed), feed));
+            }
+            else if (input.Rests.FirstOrDefault(r =>
+                string.Equals(r.ProviderId, s.Provider, StringComparison.OrdinalIgnoreCase) && r.Until > input.Now) is { } rest)
+            {
+                resting++;
+                var stateText = $"Nghỉ tới {rest.Until.ToString("HH:mm dd/MM", CultureInfo.InvariantCulture)}";
+                desks.Add(new Desk(s.Agent, s.Name, s.Role, DeskState.Resting, stateText, null, Array.Empty<TaskMessage>()));
+            }
+            else
+            {
+                idle++;
+                desks.Add(new Desk(s.Agent, s.Name, s.Role, DeskState.Idle, "Rảnh", null, Array.Empty<TaskMessage>()));
+            }
+        }
+
+        var reviewTasks = input.Tasks.Where(t => t.State == TaskState.Review).ToList();
+        var reviewCount = reviewTasks.Count;
+        if (reviewCount > 0)
+        {
+            var latest = reviewTasks.OrderByDescending(t => t.LastRun?.Time ?? DateTime.MinValue).First();
+            var feed = (input.Messages(latest.Project, latest.Id) ?? Array.Empty<TaskMessage>())
+                .TakeLast(3)
+                .Reverse()
+                .ToList();
+            desks.Add(new Desk("gate", "Cổng kiểm tra + Review AI", "build · test · BOM · phạm vi · review AI",
+                DeskState.Review, $"{reviewCount} chờ review",
+                new DeskTask(latest.Project, latest.Id, latest.Title, null), feed));
+        }
+        else
+        {
+            desks.Add(new Desk("gate", "Cổng kiểm tra + Review AI", "build · test · BOM · phạm vi · review AI",
+                DeskState.Idle, "Không có việc chờ", null, Array.Empty<TaskMessage>()));
+        }
+
+        desks.Add(new Desk("research", "Phòng nghiên cứu", "ChatGPT · Gemini · DeepSeek · Grok",
+            DeskState.Idle, "Sắp có (V5-07)", null, Array.Empty<TaskMessage>()));
+
+        return new OfficeView(desks, working, reviewCount, idle, resting, input.Now);
+    }
 }

@@ -36,12 +36,83 @@ public sealed class OfficeService : IOfficeService
     /// Now = DateTime.Now. Trả OfficeBuilder.Build(...).
     /// </summary>
     public OfficeView Get()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var staffDir = Path.Combine(_paths.AITeamRoot, "staff");
+        var staff = Directory.Exists(staffDir)
+            ? Directory.EnumerateFiles(staffDir, "*.md")
+                .Select(f => ParseStaff(Path.GetFileName(f), File.ReadAllText(f)))
+                .Where(s => s != null)
+                .Select(s => s!)
+                .OrderBy(s => s.Agent, StringComparer.OrdinalIgnoreCase)
+                .ToList()
+            : new List<StaffMember>();
+
+        var projects = _config.GetProjects();
+        var tasks = new List<TaskCard>();
+        foreach (var p in projects.Where(p => p.ExistsLocally))
+        {
+            try { tasks.AddRange(_board.GetBoard(p.Name).Tasks); }
+            catch { }
+        }
+
+        var running = _runs.GetRunning();
+        var rests = new ProviderStateStore(_paths.AITeamRoot).All();
+
+        IReadOnlyList<TaskMessage> GetMessages(string project, string task)
+        {
+            try
+            {
+                var proj = projects.FirstOrDefault(p => string.Equals(p.Name, project, StringComparison.OrdinalIgnoreCase))
+                           ?? _config.FindProject(project);
+                if (proj == null || string.IsNullOrEmpty(proj.WorkDir)) return Array.Empty<TaskMessage>();
+                return new MessageStore(Path.Combine(proj.WorkDir, "logs")).Read(task, 3);
+            }
+            catch
+            {
+                return Array.Empty<TaskMessage>();
+            }
+        }
+
+        RequestThread? currentReq = null;
+        try
+        {
+            currentReq = _requests.GetAll().FirstOrDefault(r => r.Status != null && r.Status.StartsWith("🟡", StringComparison.Ordinal));
+        }
+        catch { }
+
+        return OfficeBuilder.Build(new OfficeInput(DateTime.Now, staff, tasks, running, rests, GetMessages, currentReq));
+    }
+
 
     /// <summary>
     /// staff/A-minh.md ⇒ Agent = phần trước "-" đầu của tên file; Name = "- **Tên:**"; Role = "- **Chuyên môn:**" (cắt còn 40 ký tự, thiếu ⇒ "");
     /// Provider = "codex" nếu dòng "- **Chạy bằng:**" chứa "Codex" (không phân biệt hoa thường), ngược lại "agy". Thiếu Tên ⇒ null.
     /// </summary>
     public static StaffMember? ParseStaff(string fileName, string markdown)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var baseName = Path.GetFileNameWithoutExtension(fileName ?? "");
+        var dash = baseName.IndexOf('-');
+        var agent = (dash > 0 ? baseName[..dash] : baseName).Trim();
+        if (string.IsNullOrEmpty(agent)) return null;
+
+        string name = "", role = "", provider = "agy";
+        foreach (var raw in (markdown ?? "").Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None))
+        {
+            var line = raw.Trim();
+            if (line.StartsWith("- **Tên:**", StringComparison.OrdinalIgnoreCase))
+                name = line["- **Tên:**".Length..].Trim();
+            else if (line.StartsWith("- **Chuyên môn:**", StringComparison.OrdinalIgnoreCase))
+                role = line["- **Chuyên môn:**".Length..].Trim();
+            else if (line.StartsWith("- **Chạy bằng:**", StringComparison.OrdinalIgnoreCase))
+            {
+                var runBy = line["- **Chạy bằng:**".Length..].Trim();
+                provider = runBy.Contains("Codex", StringComparison.OrdinalIgnoreCase) ? "codex" : "agy";
+            }
+        }
+
+        if (string.IsNullOrEmpty(name)) return null;
+        if (role.Length > 40) role = role[..40];
+        return new StaffMember(agent, name, role, provider);
+    }
+
 }
