@@ -38,15 +38,15 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 sau yêu cầu sửa NU1900 |
+| Tiêu chí hoàn thành | Bằng chứng chạy lại theo yêu cầu quản lý ngày 24/10/2026 |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, không có chẩn đoán; `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 NU1900 (3 project, lặp restore/build), 14,34 giây. |
-| Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
-| Tên file riêng, cùng stamp; giữ nguyên chữ ký và UTF-8 không BOM — ĐẠT | Đọc đúng hai file mục Đọc: mã hiện có đúng thiết kế; toàn bộ test Core pass; không sửa mã nguồn hoặc test nghiệm thu. |
-| Truy cập nguồn audit NuGet — BỊ CHẶN | `curl.exe --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: lỗi 7, proxy 127.0.0.1:9 không kết nối; thêm `--noproxy '*'`: lỗi 35, Schannel SEC_E_NO_CREDENTIALS (0x8009030E). |
-- File đổi: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật kết quả thực tế; giữ nguyên trạng thái BOM UTF-8.
-- Quyết định: dùng `-m:1` sau khi build mặc định thất bại không chẩn đoán; không tắt audit hoặc che NU1900 để làm sai bằng chứng kiểm tra; không đổi cấu hình máy/project ngoài phạm vi.
-- Chưa xử lý được tiêu chí 0 warning: môi trường cần truy cập HTTPS tới NuGet thành công; sửa logic ReviewService không khắc phục được lỗi kết nối audit này.
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, không chẩn đoán; chạy lại `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 NU1900 (3 project, lặp restore/build), 14,34 giây. |
+| Toàn bộ test, gồm nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
+| Tên file riêng, cùng stamp; chữ ký public và UTF-8 không BOM — ĐẠT | Đọc hai file mục Đọc: mã hiện có đúng thiết kế; toàn bộ test Core pass; không sửa mã hoặc test nghiệm thu. |
+| Khắc phục NU1900 — BỊ CHẶN BỞI MÔI TRƯỜNG | `curl.exe --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: lỗi 7, proxy 127.0.0.1:9 không kết nối; thêm `--noproxy '*'`: lỗi 35, Schannel SEC_E_NO_CREDENTIALS (0x8009030E). |
+- File đổi: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng chạy lại; giữ nguyên trạng thái BOM UTF-8.
+- Quyết định: dùng `-m:1` vì build mặc định thất bại không chẩn đoán; không tắt audit, che cảnh báo hoặc sửa cấu hình ngoài phạm vi để đạt giả tiêu chí 0 warning.
+- Chưa xác minh được audit bảo mật package; cần môi trường truy cập HTTPS NuGet thành công trước khi chạy lại cổng kiểm tra.
 - Review (Claude) trống; không chạy app/chụp ảnh hoặc lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
 ## Review (Claude)
 
