@@ -55,17 +55,18 @@ Hub đã tham chiếu `AITeam.Core` (R-004) ⇒ dùng chung cấu hình provider
 - `hub.tests/AcceptanceH306Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 11 ca nghiệm thu H3-06).
-- [ ] Trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 11 ca nghiệm thu H3-06).
+- [x] Trang đúng mục Bố cục (Claude chạy Hub kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết | `dotnet build AITeam.sln` → 0 Warning(s), 0 Error(s); `dotnet test AITeam.sln --blame-hang-timeout 3m` → Passed: 111 (`AITeam.Core.Tests`) + 289 (`AITeam.Hub.Tests`), gồm 11/11 ca `AcceptanceH306Tests` và 1 ca `ProvidersPageTests`. |
+| Trang đúng mục Bố cục | Đã viết `Providers.cshtml` và `_ProviderHealthPartial.cshtml` đúng mục Bố cục, kiểm qua `AcceptanceH306Tests.Razor_markup_follows_layout` (Passed). |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `ProvidersModel` (`OnGet`, `OnPostClear`, `OnGetHealthAsync`, `TagOf`), giao diện `Providers.cshtml`, partial `_ProviderHealthPartial.cshtml`, và thêm test `ProvidersPageTests.cs`.
+- **File đã đổi:** `hub/Pages/Providers.cshtml.cs`, `hub/Pages/Providers.cshtml`, `hub/Pages/Shared/_ProviderHealthPartial.cshtml`, `hub.tests/ProvidersPageTests.cs`, `tasks/H3-06-hub-providers.md`.
+- **Điều chưa chắc:** Không có (chưa chạy Hub thật theo quy định prompt, chờ Claude kiểm tra khi review).
 
 ## Review (Claude)
 
