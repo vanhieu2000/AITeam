@@ -13,6 +13,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AITeam.Core\AITeam.Core.csproj" />
+    <!-- R-005: MCP Gateway (SDK chính thức, MIT) — đã PoC với agy 25/10 -->
+    <PackageReference Include="ModelContextProtocol" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
   </ItemGroup>
 
 </Project>

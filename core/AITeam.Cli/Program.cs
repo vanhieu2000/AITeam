@@ -18,6 +18,7 @@ try
         "task-info" => TaskInfo(),
         "review" => await Review(),
         "run" => await Run(),
+        "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         _ => Help(),
     };
 }
