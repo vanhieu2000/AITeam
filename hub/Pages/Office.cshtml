@@ -1,0 +1,24 @@
+﻿@page "/Office"
+@model AITeam.Hub.Pages.OfficeModel
+@{ ViewData["Title"] = "Văn phòng"; }
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="panel" style="border-color:#dc2626;background:#fef2f2;color:#b91c1c">@Model.Error</div>
+}
+
+@if (Model.View is { } v)
+{
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <span class="muted">Cập nhật @v.At.ToString("HH:mm:ss") · tự làm mới 10 giây</span>
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+            <span class="pill run">@v.Working đang làm</span>
+            <span class="pill rev">@v.Review chờ review</span>
+            <span class="pill ok">@v.Idle rảnh</span>
+            <span class="pill err">@v.Resting nghỉ</span>
+        </div>
+    </div>
+}
+
+<div hx-get="?handler=Desks" hx-trigger="every 10s" hx-swap="outerHTML">
+    <partial name="_OfficeDesks" model="Model" />
+</div>

@@ -1,0 +1,91 @@
+﻿@model AITeam.Hub.Pages.OfficeModel
+@using AITeam.Hub.Services
+
+<div id="office-desks" hx-get="?handler=Desks" hx-trigger="every 10s" hx-swap="outerHTML">
+@if (Model.View is { } v)
+{
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px">
+        @foreach (var d in v.Desks)
+        {
+            var borderColor = d.State switch
+            {
+                DeskState.Working => "var(--run)",
+                DeskState.Review => "var(--rev)",
+                DeskState.Idle => "var(--ok)",
+                DeskState.Resting => "var(--err)",
+                DeskState.Manager => "#7c3aed",
+                _ => "var(--bd)"
+            };
+            var avatarColor = d.Key switch
+            {
+                "claude" => "#7c3aed",
+                "A" => "#2563eb",
+                "B" => "#0d9488",
+                "C" => "#111827",
+                "gate" => "#64748b",
+                "research" => "#ea580c",
+                _ => "#9aa1ab"
+            };
+            var pillClass = d.State switch
+            {
+                DeskState.Working => "run",
+                DeskState.Review => "rev",
+                DeskState.Idle => "ok",
+                DeskState.Resting => "err",
+                _ => "n"
+            };
+            var initial = string.IsNullOrEmpty(d.Name) ? "?" : d.Name[..1].ToUpperInvariant();
+            <div class="panel" style="border-left:4px solid @borderColor; margin:0; display:flex; flex-direction:column; gap:10px; min-width:0">
+                <div class="row" style="justify-content:space-between; align-items:center; gap:8px">
+                    <div class="row" style="gap:8px; min-width:0; flex:1">
+                        <div style="width:34px; height:34px; border-radius:50%; background:@avatarColor; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0">@initial</div>
+                        <div style="min-width:0">
+                            <div><b>@d.Name</b></div>
+                            <div class="muted" style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">@d.Role</div>
+                        </div>
+                    </div>
+                    <span class="pill @pillClass" style="flex-shrink:0">@d.StateText</span>
+                </div>
+                @if (d.Task is { } t)
+                {
+                    <div style="background:var(--s2); padding:8px 10px; border-radius:6px; font-size:13px">
+                        <div>
+                            @if (!string.IsNullOrEmpty(t.Project))
+                            {
+                                <a href="/p/@t.Project/t/@t.Id"><b>@t.Id</b></a>
+                            }
+                            else
+                            {
+                                <b>@t.Id</b>
+                            }
+                            @t.Title
+                        </div>
+                        @if (t.ElapsedMin is { } min)
+                        {
+                            <div class="muted" style="font-size:12px">@min phút</div>
+                        }
+                    </div>
+                }
+                @if (d.Feed.Count > 0)
+                {
+                    <div style="display:flex; flex-direction:column; gap:4px">
+                        @foreach (var m in d.Feed)
+                        {
+                            <div style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="@m.Text">
+                                <b>@m.At.ToString("HH:mm")</b> @m.Text
+                            </div>
+                        }
+                    </div>
+                }
+                @if (d.Task is { } tf && !string.IsNullOrEmpty(tf.Project))
+                {
+                    <div class="row" style="gap:6px; margin-top:auto">
+                        <a class="btn sm" href="/p/@tf.Project/t/@tf.Id">Mở task</a>
+                        <a class="btn sm" href="/p/@tf.Project/t/@tf.Id?tab=report">Xem báo cáo</a>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+</div>

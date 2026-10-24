@@ -13,6 +13,7 @@ public static class HubV3Registration
         services.TryAddSingleton<ITeamInsightsService, TeamInsightsService>();
         services.TryAddSingleton<IRequestService, RequestService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();
+        services.TryAddSingleton<IOfficeService, OfficeService>();
         return services;
     }
 }
