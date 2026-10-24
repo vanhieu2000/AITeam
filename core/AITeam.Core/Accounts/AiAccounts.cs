@@ -55,6 +55,8 @@ public sealed record AiAccountSetting(string Id, string Alias, AiMode Mode);
 public sealed class AiAccountStore(string file)
 {
     public const int MaxAlias = 40;
+    private static readonly UTF8Encoding Utf8NoBom = new(false);
+    private static readonly JsonSerializerOptions WriteOpts = new() { WriteIndented = true };
 
     public static string DefaultFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AITeam", "config", "accounts.json");
 
@@ -67,7 +69,38 @@ public sealed class AiAccountStore(string file)
     /// Alias qua CleanAlias. Không bao giờ ném lỗi.
     /// </summary>
     public IReadOnlyList<AiAccountSetting> Load()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var found = new Dictionary<string, AiAccountSetting>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            if (File.Exists(FilePath))
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(FilePath, Encoding.UTF8));
+                if (doc.RootElement.ValueKind == JsonValueKind.Object
+                    && doc.RootElement.TryGetProperty("accounts", out var arr)
+                    && arr.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in arr.EnumerateArray())
+                    {
+                        if (item.ValueKind != JsonValueKind.Object) continue;
+                        var rawId = item.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.String ? idProp.GetString() : null;
+                        var svc = AiCatalog.Find(rawId);
+                        if (svc == null || found.ContainsKey(svc.Id)) continue;
+
+                        var rawAlias = item.TryGetProperty("alias", out var aliasProp) && aliasProp.ValueKind == JsonValueKind.String ? aliasProp.GetString() : null;
+                        var rawMode = item.TryGetProperty("mode", out var modeProp) && modeProp.ValueKind == JsonValueKind.String ? modeProp.GetString() : null;
+                        var mode = TryParseMode(rawMode, out var parsed) ? parsed : svc.DefaultMode;
+                        if (mode == AiMode.Automatic && !svc.AutomaticAvailable) mode = AiMode.Manual;
+
+                        found[svc.Id] = new AiAccountSetting(svc.Id, CleanAlias(rawAlias), mode);
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return AiCatalog.All.Select(s => found.TryGetValue(s.Id, out var row) ? row : new AiAccountSetting(s.Id, "", s.DefaultMode)).ToList();
+    }
 
     /// <summary>
     /// Lưu 1 dịch vụ (giữ nguyên các dịch vụ khác theo Load()). Id không có trong danh mục ⇒ ArgumentException("Dịch vụ không hợp lệ.").
@@ -76,11 +109,48 @@ public sealed class AiAccountStore(string file)
     /// Tạo thư mục; ghi file tạm cùng thư mục rồi File.Move(overwrite: true). Trả bản đã lưu.
     /// </summary>
     public AiAccountSetting Save(string id, string? alias, AiMode mode)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var svc = AiCatalog.Find(id) ?? throw new ArgumentException("Dịch vụ không hợp lệ.");
+        if (mode == AiMode.Automatic && !svc.AutomaticAvailable)
+            throw new InvalidOperationException($"{svc.Name} chưa hỗ trợ chế độ tự động.");
+
+        var updated = new AiAccountSetting(svc.Id, CleanAlias(alias), mode);
+        var rows = Load().Select(r => r.Id == svc.Id ? updated : r).ToList();
+        var payload = new
+        {
+            version = 1,
+            accounts = rows.Select(r => new { id = r.Id, alias = r.Alias, mode = r.Mode.ToString() }).ToList(),
+        };
+
+        var dir = Path.GetDirectoryName(FilePath)!;
+        Directory.CreateDirectory(dir);
+        var tmp = Path.Combine(dir, $"accounts.{Guid.NewGuid():N}.tmp");
+        File.WriteAllText(tmp, JsonSerializer.Serialize(payload, WriteOpts), Utf8NoBom);
+        File.Move(tmp, FilePath, overwrite: true);
+        return updated;
+    }
 
     /// <summary>Bỏ ký tự điều khiển, Trim, cắt còn MaxAlias ký tự (rồi Trim lại). null ⇒ "".</summary>
     public static string CleanAlias(string? alias)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (string.IsNullOrEmpty(alias)) return "";
+        var s = new string(alias.Where(c => !char.IsControl(c)).ToArray()).Trim();
+        return s.Length > MaxAlias ? s[..MaxAlias].Trim() : s;
+    }
+
+    internal static bool TryParseMode(string? raw, out AiMode mode)
+    {
+        foreach (var m in Enum.GetValues<AiMode>())
+        {
+            if (string.Equals(raw, m.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                mode = m;
+                return true;
+            }
+        }
+        mode = default;
+        return false;
+    }
 }
 
 /// <summary>Kết quả 1 lần kiểm tra (Probe null ⇒ chưa kiểm tra lần nào từ lúc mở Hub). ProbeError: kiểm tra ném lỗi / quá giờ.</summary>
@@ -106,7 +176,31 @@ public static class AiStatusResolver
     /// Detail = dòng đầu (không rỗng) của ProbeError ?? Probe.Detail, cắt 160 ký tự; không có ⇒ "".
     /// </summary>
     public static AiAccountView Resolve(AiService service, AiAccountSetting setting, AiCheck check, ProviderRest? rest, bool busy, DateTime now)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var (status, text) = ResolveStatus(service, setting, check, rest, busy, now);
+        var rawDetail = check.ProbeError ?? check.Probe?.Detail;
+        var detail = (rawDetail ?? "")
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim())
+            .FirstOrDefault(l => l.Length > 0) ?? "";
+        if (detail.Length > 160) detail = detail[..160];
+        return new AiAccountView(service, setting.Alias, setting.Mode, status, text, detail, check.CheckedAt);
+    }
+
+    private static (AiStatus Status, string Text) ResolveStatus(AiService service, AiAccountSetting setting, AiCheck check, ProviderRest? rest, bool busy, DateTime now)
+    {
+        if (setting.Mode == AiMode.Disabled) return (AiStatus.Disconnected, "Đang tắt");
+        if (setting.Mode == AiMode.Manual) return (AiStatus.ManualOnly, "Thủ công (copy / dán)");
+        if (!service.AutomaticAvailable) return (AiStatus.Unsupported, "Chưa hỗ trợ tự động");
+        if (rest != null && rest.Until > now) return (AiStatus.RateLimited, $"Nghỉ tới {rest.Until:HH:mm dd/MM}");
+        if (busy) return (AiStatus.Busy, "Đang chạy việc");
+        if (check.ProbeError != null) return (AiStatus.Error, "Lỗi kiểm tra");
+        if (check.Probe == null) return (AiStatus.Disconnected, "Chưa kiểm tra");
+        if (!check.Probe.Installed) return (AiStatus.Unsupported, $"Chưa cài {service.Via}");
+        if (check.Probe.LoggedIn == false) return (AiStatus.LoginRequired, "Cần đăng nhập");
+        if (check.Probe.LoggedIn == true) return (AiStatus.Connected, "Đã kết nối");
+        return (AiStatus.Disconnected, "Chưa xác minh đăng nhập");
+    }
 }
 
 /// <summary>Kiểm tra CLI không có lệnh "login status": chỉ xem exe có trên PATH và tệp đăng nhập CÓ hay KHÔNG (không đọc nội dung).</summary>
@@ -117,7 +211,26 @@ public static class CliProbes
     /// trả đường dẫn đầy đủ đầu tiên có thật; không có ⇒ null. Tên có ký tự đường dẫn ('\\', '/', ':' hoặc "..") ⇒ null.
     /// </summary>
     public static string? FindOnPath(string name, string? pathEnv)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(pathEnv)) return null;
+        if (name.Contains('\\') || name.Contains('/') || name.Contains(':') || name.Contains("..")) return null;
+        string[] exts = [".exe", ".cmd", ".bat"];
+        foreach (var rawDir in pathEnv.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var dir = rawDir.Trim().Trim('"').Trim();
+            if (dir.Length == 0) continue;
+            foreach (var ext in exts)
+            {
+                try
+                {
+                    var full = Path.Combine(dir, name + ext);
+                    if (File.Exists(full)) return full;
+                }
+                catch { }
+            }
+        }
+        return null;
+    }
 
     /// <summary>
     /// gemini: exe = FindOnPath("gemini", pathEnv). Không có ⇒ ProviderHealth("gemini", false, null, "Chưa cài gemini CLI").
@@ -125,9 +238,20 @@ public static class CliProbes
     /// false ⇒ "Chưa đăng nhập: chạy `gemini` trong terminal, chọn Login with Google".
     /// </summary>
     public static ProviderHealth Gemini(string? pathEnv, string userProfile)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var exe = FindOnPath("gemini", pathEnv);
+        if (exe == null) return new ProviderHealth("gemini", false, null, "Chưa cài gemini CLI");
+        var loggedIn = !string.IsNullOrWhiteSpace(userProfile) && File.Exists(Path.Combine(userProfile, ".gemini", "oauth_creds.json"));
+        return new ProviderHealth("gemini", true, loggedIn,
+            loggedIn ? "Có tệp đăng nhập của gemini CLI" : "Chưa đăng nhập: chạy `gemini` trong terminal, chọn Login with Google");
+    }
 
     /// <summary>claude: exe = FindOnPath("claude", pathEnv). Không có ⇒ ("claude", false, null, "Chưa cài claude CLI"); có ⇒ ("claude", true, null, "Đã cài: " + exe).</summary>
     public static ProviderHealth Claude(string? pathEnv)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var exe = FindOnPath("claude", pathEnv);
+        return exe == null
+            ? new ProviderHealth("claude", false, null, "Chưa cài claude CLI")
+            : new ProviderHealth("claude", true, null, "Đã cài: " + exe);
+    }
 }

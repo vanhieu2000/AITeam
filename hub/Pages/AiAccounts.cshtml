@@ -1,0 +1,50 @@
+﻿@page "/AiAccounts"
+@model AITeam.Hub.Pages.AiAccountsModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{ ViewData["Title"] = "Tài khoản AI"; }
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(46, 160, 67, 0.15); border: 1px solid var(--ok); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--ok); margin-right: 8px;">✓</span><span>@Model.Message</span>
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--err); margin-right: 8px;">✗</span><span>@Model.ErrorMessage</span>
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
+        <span style="font-weight: 600; color: var(--err); margin-right: 8px;">✗</span><span>@Model.Error</span>
+    </div>
+}
+
+<section class="screen on" id="s-ai-accounts">
+    <p class="muted" style="margin: 0 0 12px 0; font-size: 13px;">
+        Chỉ lưu tên gợi nhớ và chế độ ở %LOCALAPPDATA%\AITeam\config\accounts.json. Không lưu mật khẩu, cookie hay khóa API. Đăng nhập luôn làm trong CLI / trang chính thức của từng hãng.
+    </p>
+    <div class="panel" style="overflow-x: auto;">
+        <div class="hd"><span>Tài khoản AI</span></div>
+        <table class="hub-table">
+            <thead>
+                <tr>
+                    <th>Dịch vụ</th>
+                    <th>Kết nối qua</th>
+                    <th>Chế độ</th>
+                    <th>Trạng thái</th>
+                    <th>Kiểm tra lúc</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <partial name="_AiAccountRow" model="row" />
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
