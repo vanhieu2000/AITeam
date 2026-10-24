@@ -38,16 +38,17 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 sau yêu cầu sửa NU1900 |
+| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 theo yêu cầu quản lý |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, không chẩn đoán, 1,90 giây. `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 NU1900 (3 project, lặp restore/build), 14,30 giây. |
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error nhưng không có chẩn đoán, 3,93 giây. Chạy lại `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 NU1900 (3 project, lặp restore/build), 14,75 giây. |
 | Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
-| Tên file riêng, cùng stamp; chữ ký public và UTF-8 không BOM — ĐẠT | Đọc hai file mục Đọc: mã hiện có đúng thiết kế; toàn bộ 129 test Core pass; không sửa mã hoặc test nghiệm thu. |
-| Khắc phục NU1900 — BỊ CHẶN BỞI MÔI TRƯỜNG | `curl.exe --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: exit 1, curl lỗi 7, không kết nối được proxy 127.0.0.1:9. |
-- File đổi: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng chạy lại và giữ nguyên BOM UTF-8.
-- Quyết định: dùng `-m:1` sau lỗi build mặc định; không tắt audit, che warning, vượt hạn chế mạng hoặc sửa cấu hình ngoài phạm vi task.
-- Chưa xác minh được bảo mật package; cần môi trường truy cập được NuGet rồi chạy lại cổng kiểm tra. Yêu cầu 0 warning chưa hoàn thành.
+| Tên file riêng, cùng stamp; chữ ký public và UTF-8 không BOM — ĐẠT | Mã hiện có đúng thiết kế trong task; toàn bộ 129 test Core pass; không sửa mã hoặc test nghiệm thu. |
+| Khắc phục NU1900 — BỊ CHẶN BỞI MÔI TRƯỜNG | `curl.exe --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: exit 1, curl lỗi 7, proxy 127.0.0.1:9 từ chối kết nối. |
+- File đổi: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật kết quả thực tế; giữ nguyên BOM UTF-8.
+- Quyết định: dùng `-m:1` sau lỗi build mặc định; không tắt audit hoặc che warning; không sửa cấu hình ngoài phạm vi task.
+- Chưa xác minh được bảo mật package; quản lý cần khôi phục truy cập NuGet trong môi trường chạy và chạy lại cổng kiểm tra. Yêu cầu 0 warning vẫn chưa đạt.
 - Review (Claude) trống; không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
+
 ## Review (Claude)
 
 ## Kết quả
