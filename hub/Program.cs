@@ -18,6 +18,7 @@ if (Environment.GetEnvironmentVariable("HUB_EMPTY") == "1")
     builder.Services.AddSingleton<IHealthService, AITeam.Hub.DevData.FakeHealthService>();
     builder.Services.AddSingleton<IVaultService, AITeam.Hub.DevData.FakeVaultService>();
     builder.Services.AddSingleton<IInboxService, AITeam.Hub.DevData.FakeInboxService>();
+    builder.Services.AddSingleton<IProcessStarter, NoopProcessStarter>();
 }
 else if (Environment.GetEnvironmentVariable("HUB_FAKE") == "1")
 {
