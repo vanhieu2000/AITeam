@@ -63,16 +63,26 @@ Thiết kế: `docs/design/V4-MULTI-AI.md` mục B2 (Developer: agy → codex). 
 - **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 11/11 ca nghiệm thu; 124 + 276 test; build 0 warning; ~8 phút, 1 lượt; 155/170 dòng; giữ BOM.
+- **Review AI tự động lần đầu trong quy trình thật** (P0-7): `assign` gọi `aiteam review --auto` ⇒ Codex PASS, 0 phát hiện, 39 giây.
+- Claude đọc lại: thứ tự kiểm tra đầu vào đúng đặc tả, không gọi provider khi sai / đang nghỉ, bọc lỗi bất ngờ, CLI dùng `Arg` an toàn.
+- Không có lỗi Blocker / Required.
+
+Nhân viên: Minh (A) — 1 lượt, ~8 phút, 155/170 dòng.
 
 ## Kết quả
+- **Không có chức năng mới nhìn thấy ngay** — lệnh `aiteam run` cho Codex (hoặc AI khác có vai trò Developer) viết code trong thư mục task; hết hạn mức ⇒ nghỉ đúng giờ; đang nghỉ thì không gọi. `team.ps1 assign` sẽ dùng lệnh này để tự chuyển sang Codex khi Antigravity hết hạn mức (Claude nối tiếp).
+- **Kiểm chứng:** 11 ca nghiệm thu; Codex review tự động PASS.
+- **Cần cải tiến:** nối vào `assign` (Claude, R-004).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Minh (A) | | | | | |
-| 6. Review / QC | Cổng KT + Codex + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | ~5' | — | — | — |
+| 2. Ý tưởng | Claude | 5 | ~10' | Thử thật Codex workspace-write TRƯỚC khi thiết kế ⇒ biết Codex không commit được | — | Giữ "thử thật trước khi thiết kế" với CLI ngoài |
+| 3. Plan / thiết kế | Claude | 5 | ~15' | Mục kiểm tra mẫu task dùng đủ (lỗi bất ngờ, giờ qua tham số) | — | — |
+| 4. Giao việc | Claude | 5 | ~10' | `Review AI: có` ⇒ thử luôn P0-7 | — | — |
+| 5. Thực hiện code | Minh (A) | 5 | ~8' (1 lượt) | Đúng đặc tả, giữ BOM | — | — |
+| 6. Review / QC | Cổng KT + Codex + Claude | 5 | ~5' | Review AI tự động chạy trọn | — | — |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
