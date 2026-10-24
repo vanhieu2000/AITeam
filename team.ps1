@@ -323,6 +323,8 @@ function Invoke-Assign {
     }
 
     $dev = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
+    # Mã agent chưa khai báo trong team.json (vd. C = Codex lần đầu, R-004) ⇒ mặc định, không để null làm sập assign.
+    if (-not $dev) { $dev = [pscustomobject]@{ id = $agentId; name = "Agent $agentId"; focus = "việc được giao trong file task" } }
     # Lưu ý riêng của nhân viên (rút ra từ các lần review trước) — staff/<mã>-*.md, mục "Lưu ý riêng".
     $staffNotes = ""
     $staffFile = Get-ChildItem (Join-Path $Root "staff") -Filter "$agentId-*.md" -ErrorAction SilentlyContinue | Select-Object -First 1
