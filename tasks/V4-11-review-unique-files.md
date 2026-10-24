@@ -49,16 +49,27 @@ Trong `ReviewService`:
 - Chưa xác minh: dữ liệu lỗ hổng NuGet; cảnh báo có thể trở lại khi cổng kiểm tra restore với audit bật mà không truy cập được NuGet. Chưa đạt bảo đảm build mặc định/cổng kiểm tra.
 - Không sửa cấu hình ngoài phạm vi, không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex.
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- **Lần đầu Codex viết code thật trong quy trình** (`assign -Dev codex`): `aiteam run` → Codex sửa file trong sandbox → `team.ps1` commit "Agent C (Codex)" + push → cổng KT. Code đúng đặc tả từng dòng: 11/25 dòng, 2/2 ca nghiệm thu, 129 + 289 test.
+- **Sự cố:** cổng KT trượt vì 3 cảnh báo `NU1900` (NuGet không tải được dữ liệu lỗ hổng — lỗi MẠNG, không phải code) và cờ "đã tự giao lại" chưa từng được bật ⇒ Codex bị giao lại **28 lần** (41 phút, ~6,9 triệu token vào (phần lớn cache), 50 nghìn token ra) tới khi mạng có lại.
+  - [CK] (công cụ) cổng KT coi NU1900 là lỗi code ⇒ đã sửa: bỏ qua NU1900, ghi chú; test-verify thêm 2 kịch bản (bản cũ hỏng đúng 2 kiểm tra).
+  - [CK] (công cụ) `$script:VerifyRetried` chỉ đọc, không bao giờ gán ⇒ đã sửa + giới hạn cứng 2 lượt / lệnh assign. (Lỗi có từ trước: V4-06 hôm qua cũng bị giao lại 2 lần.)
+- Codex vẫn còn hạn mức sau 28 lượt (`aiteam providers --no-check`: Sẵn sàng).
+
+Nhân viên: Codex (C) — 28 lượt (27 thừa do công cụ), lượt cuối 82 giây, 11/25 dòng.
 
 ## Kết quả
+- **Không có chức năng mới nhìn thấy ngay** — mỗi lần review AI giờ có file lời nhắn / lược đồ / kết quả riêng (`…-yyyyMMdd-HHmmss-xxxxxxxx`), 2 review cùng lúc không ghi đè nhau.
+- **Kiểm chứng:** 2 ca nghiệm thu (tuần tự + 4 review song song).
+- **Luồng Codex viết code đã chạy thật end-to-end.**
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Codex | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-004) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | ~5' | Việc thật từ hàng chờ để thử Codex | — | — |
+| 3. Plan / thiết kế | Claude | 5 | ~10' | Đặc tả từng dòng, test song song | — | — |
+| 4. Giao việc | Claude | 4 | ~5' | — | — | — |
+| 5. Thực hiện code | Codex (C) | 5 | 82s / lượt | Đúng đặc tả | — | — |
+| 6. Review / QC | Cổng KT + Claude | 1 | ~60' | Vòng lặp 28 lượt do cổng KT coi lỗi mạng là lỗi code + cờ giới hạn không hoạt động | CK | Đã sửa + test; giới hạn cứng số lượt |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~10' | — | — | — |
