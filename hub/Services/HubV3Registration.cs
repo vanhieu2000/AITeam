@@ -14,6 +14,8 @@ public static class HubV3Registration
         services.TryAddSingleton<IRequestService, RequestService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();
         services.TryAddSingleton<IOfficeService, OfficeService>();
+        // V5-06: tài khoản AI (chỉ metadata, %LOCALAPPDATA%\AITeam\config\accounts.json).
+        services.TryAddSingleton<IAiAccountsService>(sp => new AiAccountsService(sp.GetRequiredService<HubPaths>(), sp.GetRequiredService<IAgentRunService>()));
         // V5-05: điều khiển từ Văn phòng. Chế độ giả / rỗng đăng ký NoopProcessStarter TRƯỚC (không chạy lệnh thật).
         services.TryAddSingleton<IProcessStarter, RealProcessStarter>();
         services.TryAddSingleton<ICommandService>(sp => new CommandService(

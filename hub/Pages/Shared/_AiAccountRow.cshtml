@@ -1,0 +1,59 @@
+﻿@model AITeam.Core.Accounts.AiAccountView
+@using AITeam.Core.Accounts
+@using AITeam.Hub.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<tr id="acc-@Model.Service.Id">
+    <td>
+        <b>@Model.Service.Name</b>
+        <div class="muted" style="font-size: 12px;">
+            @Model.Service.Role@(!string.IsNullOrEmpty(Model.Alias) ? $" · {Model.Alias}" : "")
+        </div>
+    </td>
+    <td>@Model.Service.Via</td>
+    <td>
+        <form method="post" asp-page="/AiAccounts" asp-page-handler="Save" class="row" style="gap:6px">
+            <input type="hidden" name="id" value="@Model.Service.Id" />
+            <input class="inp" name="alias" maxlength="40" placeholder="Tên gợi nhớ" value="@Model.Alias" style="width: 130px;" />
+            <select class="inp" name="mode">
+                @foreach (var m in Enum.GetValues<AiMode>())
+                {
+                    var isSelected = Model.Mode == m;
+                    var isDisabled = m == AiMode.Automatic && !Model.Service.AutomaticAvailable;
+                    <option value="@m" selected="@isSelected" disabled="@isDisabled">@AiAccountsModel.ModeText(m)</option>
+                }
+            </select>
+            <button type="submit" class="btn sm">Lưu</button>
+        </form>
+    </td>
+    <td>
+        <span class="pill @AiAccountsModel.PillClass(Model.Status)">@Model.StatusText</span>
+        @if (!string.IsNullOrEmpty(Model.Detail))
+        {
+            <div class="muted" style="font-size: 12px; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@Model.Detail">@Model.Detail</div>
+        }
+    </td>
+    <td>@(Model.CheckedAt?.ToString("HH:mm:ss") ?? "—")</td>
+    <td>
+        <div class="row" style="gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="btn sm" hx-get="/AiAccounts?handler=Check&id=@Model.Service.Id" hx-target="#acc-@Model.Service.Id" hx-swap="outerHTML">Kiểm tra</button>
+            <a class="btn sm" href="@Model.Service.OfficialUrl" target="_blank" rel="noopener noreferrer">Trang chính thức</a>
+            <details style="display: inline-block;">
+                <summary class="btn sm" style="list-style: none; cursor: pointer;">Đăng nhập</summary>
+                <div class="muted" style="font-size: 12px; margin-top: 4px; max-width: 260px;">
+                    @Model.Service.LoginHint
+                    @if (Model.Service.Id == "antigravity")
+                    {
+                        <a href="/Accounts" style="margin-left: 4px;">/Accounts</a>
+                    }
+                </div>
+            </details>
+            @if (Model.Mode != AiMode.Disabled)
+            {
+                <form method="post" asp-page="/AiAccounts" asp-page-handler="Disable" style="display: inline;">
+                    <input type="hidden" name="id" value="@Model.Service.Id" />
+                    <button type="submit" class="btn sm danger" onclick="return confirm('Ngắt @Model.Service.Name? Không xóa gì.')">Ngắt</button>
+                </form>
+            }
+        </div>
+    </td>
+</tr>

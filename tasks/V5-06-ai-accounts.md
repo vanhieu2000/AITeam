@@ -63,17 +63,43 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C3 và G2. DI đã đăng
 - `hub.tests/AcceptanceV506AiAccountsTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm mọi ca nghiệm thu V5-06).
-- [ ] Đúng Bố cục (Claude chạy Hub kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm mọi ca nghiệm thu V5-06).
+- [x] Đúng Bố cục (Claude chạy Hub kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
+| Build 0 warning | `dotnet build AITeam.sln` → `Build succeeded. 0 Warning(s) 0 Error(s)` |
+| Test pass hết (gồm nghiệm thu V5-06) | `dotnet test AITeam.sln --blame-hang-timeout 2m` → Core: 183 passed (28 test V5-06), Hub: 312 passed (10 test V5-06), 0 failed |
+| Đúng Bố cục & bảo mật | `AcceptanceV506AiAccountsTests.Razor_markup_follows_layout` & `Page_renders_and_post_needs_antiforgery` pass; không `Html.Raw`, không `type="password"` |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `AiAccountStore` (Load/Save/CleanAlias), `AiStatusResolver.Resolve`, `CliProbes` (FindOnPath/Gemini/Claude), `AiAccountsService` (List/CheckAsync/Save/DefaultProbe), `AiAccountsModel` và 2 view `AiAccounts.cshtml`, `Shared/_AiAccountRow.cshtml`.
+- **File đã đổi:** `core/AITeam.Core/Accounts/AiAccounts.cs`, `hub/Services/AiAccountsService.cs`, `hub/Pages/AiAccounts.cshtml.cs`, `hub/Pages/AiAccounts.cshtml`, `hub/Pages/Shared/_AiAccountRow.cshtml`, `tasks/V5-06-ai-accounts.md`.
+- **Điều chưa chắc:** Không có (nhánh khởi tạo ở `b8a0094` trước commit tạo file task `339c15b` trên `main`, nên đã lấy `tasks/V5-06-ai-accounts.md` từ `339c15b` để điền báo cáo).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (25/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 381/420 dòng; 38 ca nghiệm thu; giữ BOM.
+- Đọc code: accounts.json chỉ 3 trường; tệp đăng nhập gemini chỉ `File.Exists`; mode chỉ nhận đúng tên enum; ghi file tạm + Move.
+- Chạy Hub dữ liệu thật (cổng 5059), bấm Kiểm tra: Antigravity "Đã kết nối" (agy models < 30 giây), Codex "Đã kết nối · Logged in using ChatGPT", Gemini "Chưa đăng nhập…", Claude "Chưa cài claude CLI".
+- Claude sửa: gộp main (V5-05) — xung đột 2 dòng đăng ký DI; thêm mục menu "Tài khoản AI"; thêm `/AiAccounts` vào test dựng trang thật.
+- [TK] (tài liệu) Claude tạo nhánh TRƯỚC khi đẩy file task lên main (ngược `QUY-TRINH.md` bước 2) ⇒ Minh phải tự lấy file task. Lần sau: task lên main trước.
+- Optional (hàng chờ): Antigravity hiện "Đang chạy việc" khi BẤT KỲ agent nào chạy (đúng đặc tả, nhưng che trạng thái đăng nhập); Hub chế độ giả vẫn ghi accounts.json thật nếu bấm Lưu.
+
+Nhân viên: Minh (A) — 1 lượt, ~9 phút, 381/420 dòng.
 
 ## Kết quả
+- **Chức năng mới — trang "Tài khoản AI"** (menu Hệ thống): 7 dịch vụ, chế độ Tắt / Thủ công / Tự động, trạng thái chuẩn, kiểm tra bằng CLI chính thức, trang chính thức, hướng dẫn đăng nhập, Ngắt (không xóa gì).
+- **Kiểm chứng:** 38 ca nghiệm thu (chặn id lạ, mode số, tệp bí mật không bị đọc, chống CSRF); bấm thử với dữ liệu thật.
+- **Cần cải tiến:** Phòng nghiên cứu dùng trạng thái này (V5-07); anh đăng nhập Gemini CLI.
+
+## Đánh giá quy trình
+| Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
+|---|---|---|---|---|---|---|
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-005) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung R-005) | Đã quyết ở G2 | — | — |
+| 3. Plan / thiết kế | Claude | 5 | ~25' | 11 luật trạng thái đủ, dữ liệu thật khớp | — | — |
+| 4. Giao việc | Claude | 4 | ~5' | Nhánh tạo trước file task | TK | Giữ thứ tự QUY-TRINH bước 2 |
+| 5. Thực hiện code | Minh (A) | 5 | ~9' (1 lượt) | Đúng đặc tả | — | — |
+| 6. Review / QC | Cổng KT + Claude | 5 | ~15' | Kiểm tra thật cả 4 CLI | — | — |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
