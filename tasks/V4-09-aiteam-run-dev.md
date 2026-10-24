@@ -49,17 +49,18 @@ Thiết kế: `docs/design/V4-MULTI-AI.md` mục B2 (Developer: agy → codex). 
 - `core.tests/AcceptanceV409DevRunnerTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 11 ca nghiệm thu V4-09).
-- [ ] `aiteam run` thiếu tham số trả 2 (thử bằng dòng lệnh, KHÔNG gọi provider thật).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 11 ca nghiệm thu V4-09).
+- [x] `aiteam run` thiếu tham số trả 2 (thử bằng dòng lệnh, KHÔNG gọi provider thật).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 11 ca nghiệm thu V4-09) | `dotnet build AITeam.sln` → `Build succeeded. 0 Warning(s) 0 Error(s)`; `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → `Passed! 124 (Core.Tests) + 276 (Hub.Tests) = 400 passed, 0 failed` (11/11 `AcceptanceV409DevRunnerTests` + 2/2 `DevRunnerCliTests`). |
+| `aiteam run` thiếu tham số trả 2 (thử bằng dòng lệnh, KHÔNG gọi provider thật) | `dotnet core/AITeam.Cli/bin/Debug/net10.0-windows/aiteam.dll run --provider codex` → stderr `LỖI: thiếu tham số bắt buộc (--provider, --workdir, --prompt-file, --logdir).`, `ExitCode=2`. |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hiện thực `DevRunner.RunAsync` (kiểm tra cấu hình/vai trò/file/workDir/trạng thái nghỉ, chạy provider ở `RunMode.Develop`, ghi `ProviderStateStore.Record`, tạo `Summary` và bắt ngoại lệ bất ngờ trả `Failed`) cùng `DevRunner.OutcomeJson`; thêm lệnh `aiteam run` và dòng `Help()` trong `Program.cs`; thêm test CLI `DevRunnerCliTests.cs`.
+- **File đã đổi:** `core/AITeam.Core/Providers/DevRunner.cs`, `core/AITeam.Cli/Program.cs`, `core.tests/DevRunnerCliTests.cs`, `tasks/V4-09-aiteam-run-dev.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
 

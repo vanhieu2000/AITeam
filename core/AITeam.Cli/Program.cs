@@ -17,6 +17,7 @@ try
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
         "review" => await Review(),
+        "run" => await Run(),
         _ => Help(),
     };
 }
@@ -61,6 +62,7 @@ int Help()
     Console.WriteLine("aiteam providers [--root D:\\AITeam]      Kiểm tra từng provider (cài chưa, đăng nhập chưa) + thứ tự routing");
     Console.WriteLine("aiteam task-info --file <task.md>        Đọc thông tin chuẩn hóa của 1 file task");
     Console.WriteLine("aiteam review --task-file <f> --diff-file <f> [--verify-file <f>] --workdir <d> --logdir <d> --dev <id> [--timeout-min 15] [--out <f>] [--auto]");
+    Console.WriteLine("aiteam run --provider <id> --workdir <d> --prompt-file <f> --logdir <d> [--timeout-min 30] [--model <m>] [--out <f>]");
     return 0;
 }
 
@@ -126,6 +128,38 @@ async Task<int> Review()
     {
         if (Path.GetDirectoryName(outFile) is { Length: > 0 } dir) Directory.CreateDirectory(dir);
         await File.WriteAllTextAsync(outFile, ReviewRunner.OutcomeJson(outcome), utf8NoBom);
+    }
+    return outcome.ExitCode;
+}
+
+async Task<int> Run()
+{
+    var provider = Arg("--provider");
+    var workDir = Arg("--workdir");
+    var promptFile = Arg("--prompt-file");
+    var logDir = Arg("--logdir");
+    var model = Arg("--model");
+    var outFile = Arg("--out");
+    if (string.IsNullOrWhiteSpace(provider) || string.IsNullOrWhiteSpace(workDir) ||
+        string.IsNullOrWhiteSpace(promptFile) || string.IsNullOrWhiteSpace(logDir))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--provider, --workdir, --prompt-file, --logdir).");
+        return 2;
+    }
+
+    var timeoutMin = int.TryParse(Arg("--timeout-min"), out var tm) && tm > 0 ? tm : 30;
+    var settings = ProviderSettings.Load(root);
+    var state = new ProviderStateStore(root);
+    var proc = new ProcessRunner();
+    var runner = new DevRunner(settings, state, c => settings.Create(c, proc), () => DateTime.Now);
+    var input = new DevRunInput(provider, workDir, promptFile, logDir, TimeSpan.FromMinutes(timeoutMin), model);
+    var outcome = await runner.RunAsync(input, CancellationToken.None);
+
+    Console.WriteLine(outcome.Summary);
+    if (!string.IsNullOrWhiteSpace(outFile))
+    {
+        if (Path.GetDirectoryName(outFile) is { Length: > 0 } dir) Directory.CreateDirectory(dir);
+        await File.WriteAllTextAsync(outFile, DevRunner.OutcomeJson(outcome), new UTF8Encoding(false));
     }
     return outcome.ExitCode;
 }

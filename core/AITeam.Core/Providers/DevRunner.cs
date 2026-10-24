@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using AITeam.Core.Routing;
 
 namespace AITeam.Core.Providers;
@@ -49,8 +50,53 @@ public sealed class DevRunner
     ///    nếu không Succeeded thêm " — {Detail}" (Detail cắt còn 200 ký tự).
     /// 4. Lỗi bất ngờ (trừ OperationCanceledException) ⇒ (ExitFailed, "Failed", "LỖI: {Kiểu}: {Message}", null).
     /// </summary>
-    public Task<DevRunOutcome> RunAsync(DevRunInput input, CancellationToken ct)
-        => throw new NotImplementedException(); // TODO(agent)
+    public async Task<DevRunOutcome> RunAsync(DevRunInput input, CancellationToken ct)
+    {
+        try
+        {
+            var cfg = _settings.Providers.FirstOrDefault(p => p.Id.Equals(input.ProviderId, StringComparison.OrdinalIgnoreCase));
+            if (cfg is null)
+                return new(ExitConfig, "Config", $"LỖI: không có provider {input.ProviderId}", null);
+            if (!cfg.Enabled)
+                return new(ExitConfig, "Config", $"LỖI: provider {cfg.Id} đang tắt", null);
+            if (!cfg.Roles.Contains(AgentRole.Developer))
+                return new(ExitConfig, "Config", $"LỖI: provider {cfg.Id} không có vai trò Developer", null);
+            if (string.IsNullOrWhiteSpace(input.PromptFile) || !File.Exists(input.PromptFile))
+                return new(ExitConfig, "Config", $"LỖI: không thấy file {input.PromptFile}", null);
+            if (string.IsNullOrWhiteSpace(input.WorkDir) || !Directory.Exists(input.WorkDir))
+                return new(ExitConfig, "Config", $"LỖI: không thấy thư mục {input.WorkDir}", null);
+            if (_state.RestOf(cfg.Id, _now()) is { } rest)
+                return new(ExitResting, "Resting", $"NGHỈ: {cfg.Id} nghỉ tới {rest.Until.ToString("HH:mm dd/MM", CultureInfo.InvariantCulture)} ({rest.Reason})", null);
+
+            Directory.CreateDirectory(input.LogDir);
+            var req = new AgentRunRequest(input.WorkDir, input.PromptFile, RunMode.Develop, input.Timeout, input.Model, null, input.LogDir);
+            var r = await _factory(cfg).RunAsync(req, ct);
+            _state.Record(r, _now());
+
+            var exit = r.Status switch
+            {
+                RunStatus.Succeeded => ExitOk,
+                RunStatus.QuotaExhausted => ExitQuota,
+                RunStatus.NotLoggedIn => ExitLogin,
+                RunStatus.TimedOut => ExitTimeout,
+                _ => ExitFailed,
+            };
+            var sec = (int)Math.Round(r.Duration.TotalSeconds);
+            var tok = r.Tokens.IsKnown ? $"token {r.Tokens.Input}/{r.Tokens.Output}" : "token ?";
+            var summary = $"{r.Status} · {cfg.Id} · {sec}s · {tok}";
+            if (r.Status != RunStatus.Succeeded)
+            {
+                var d = r.Detail ?? "";
+                if (d.Length > 200) d = d[..200];
+                summary += $" — {d}";
+            }
+            return new(exit, r.Status.ToString(), summary, r);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return new(ExitFailed, "Failed", $"LỖI: {ex.GetType().Name}: {ex.Message}", null);
+        }
+    }
 
     /// <summary>
     /// JSON cho team.ps1 (camelCase, thụt lề): { "exitCode", "status", "summary", "provider", "model", "durationSec" (số nguyên, 0 nếu không có),
@@ -58,5 +104,21 @@ public sealed class DevRunner
     /// Result null ⇒ provider / model / conversationId null, text / detail "", durationSec 0, token -1.
     /// </summary>
     public static string OutcomeJson(DevRunOutcome o)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var r = o.Result;
+        return JsonSerializer.Serialize(new
+        {
+            exitCode = o.ExitCode,
+            status = o.Status,
+            summary = o.Summary,
+            provider = r?.ProviderId,
+            model = r?.Model,
+            durationSec = r is null ? 0 : (int)Math.Round(r.Duration.TotalSeconds),
+            inputTokens = r is { Tokens.IsKnown: true } ? r.Tokens.Input : -1L,
+            outputTokens = r is { Tokens.IsKnown: true } ? r.Tokens.Output : -1L,
+            conversationId = r?.ConversationId,
+            text = r?.Text ?? "",
+            detail = r?.Detail ?? "",
+        }, new JsonSerializerOptions { WriteIndented = true });
+    }
 }
