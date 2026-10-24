@@ -322,9 +322,9 @@ function Invoke-Assign {
         $ErrorActionPreference = $eap
     }
 
-    $dev = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
+    $devInfo = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
     # Mã agent chưa khai báo trong team.json (vd. C = Codex lần đầu, R-004) ⇒ mặc định, không để null làm sập assign.
-    if (-not $dev) { $dev = [pscustomobject]@{ id = $agentId; name = "Agent $agentId"; focus = "việc được giao trong file task" } }
+    if (-not $devInfo) { $devInfo = [pscustomobject]@{ id = $agentId; name = "Agent $agentId"; focus = "việc được giao trong file task" } }
     # Lưu ý riêng của nhân viên (rút ra từ các lần review trước) — staff/<mã>-*.md, mục "Lưu ý riêng".
     $staffNotes = ""
     $staffFile = Get-ChildItem (Join-Path $Root "staff") -Filter "$agentId-*.md" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -334,9 +334,9 @@ function Invoke-Assign {
         if ($notes) { $staffNotes = "`nLƯU Ý RIÊNG CHO BẠN (từ các lần review trước — bắt buộc tránh lặp lại):`n$notes" }
     }
     $null = Set-ManagerIdentity $r.Path $cfg.github.owner
-    Set-AgentIdentity $r.Path $work $dev $r.Info.name
+    Set-AgentIdentity $r.Path $work $devInfo $r.Info.name
     $prompt = @"
-Bạn là $($dev.name) (mã $($dev.id), chuyên: $($dev.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.$staffNotes
+Bạn là $($devInfo.name) (mã $($devInfo.id), chuyên: $($devInfo.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.$staffNotes
 Thư mục hiện tại là bản làm việc riêng của bạn, đã ở đúng nhánh $branch.
 Đọc AGENTS.md rồi làm task tasks/$($taskFile.Name) đến hết "Tiêu chí hoàn thành".
 Build: $($r.Info.build)   Test: $($r.Info.test)
