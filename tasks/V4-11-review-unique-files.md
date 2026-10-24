@@ -38,18 +38,17 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng kiểm tra lại ngày 24/10/2026 |
+| Tiêu chí hoàn thành | Bằng chứng kiểm tra lại ngày 24/10/2026 (lượt sửa NU1900) |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, chỉ hiện Build FAILED, không nêu nguyên nhân. |
-| Build tuần tự | `dotnet build AITeam.sln --no-restore -m:1`: exit 0; 0 lỗi, 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
-| Toàn bộ test, gồm nghiệm thu V4-11 và review cũ | `dotnet test AITeam.sln --no-restore --no-build -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip. |
-| Xử lý NU1900 — BỊ CHẶN bởi kết nối môi trường | `dotnet restore AITeam.sln --force -m:1`: exit 0 nhưng vẫn 3 NU1900; không khôi phục được dữ liệu audit. |
-| Bằng chứng nguyên nhân kết nối | `curl.exe --head --max-time 15 https://api.nuget.org/v3/index.json`: exit 1, curl (7), không kết nối được proxy 127.0.0.1:9; `Invoke-WebRequest` cũng exit 1 do kết nối bị đóng. |
-- Đối chiếu code: stamp đúng thiết kế, dùng chung cho prompt/schema/kết quả ở mọi nhánh; không cần sửa logic. Giữ nguyên test nghiệm thu.
-- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng và nguyên nhân chặn; giữ nguyên BOM UTF-8. Review (Claude) chưa có nội dung.
-- Quyết định: không tắt audit/ẩn warning, không sửa proxy hoặc cấu hình ngoài phạm vi; cần môi trường cho phép kết nối NuGet rồi restore/build lại.
-- Chưa xác minh: build 0 warning và dữ liệu lỗ hổng NuGet; tiêu chí hoàn thành chưa đạt. Không chạy app/chụp ảnh theo phân công.
-- Không chạy lệnh git theo chỉ dẫn Codex dự phòng; hệ thống phụ trách commit/push.
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, chỉ báo Build FAILED; chưa rõ nguyên nhân lỗi chạy song song. |
+| Build tuần tự | `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 0 lỗi, vẫn 3 warning NU1900 tại Hub, Hub.Tests, Core.Tests. |
+| Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; vẫn 3 NU1900. |
+| Nguyên nhân NU1900 — BỊ CHẶN bởi môi trường | `curl.exe --head --max-time 15 https://api.nuget.org/v3/index.json`: exit 1, curl (7), không kết nối được 127.0.0.1:9; biến HTTP_PROXY/HTTPS_PROXY/ALL_PROXY trỏ tới proxy này. |
+- Đã đối chiếu: ReviewService dùng đúng stamp cho prompt/schema/kết quả ở mọi nhánh; giữ nguyên chữ ký public, mã nguồn và test nghiệm thu.
+- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng thực tế và giữ nguyên trạng thái BOM UTF-8.
+- Quyết định: không tắt audit/ẩn warning, không đổi cấu hình mạng hay sửa file ngoài phạm vi; cần môi trường truy cập NuGet để làm mới dữ liệu audit.
+- Chưa hoàn thành: build 0 warning; chưa xác minh được dữ liệu lỗ hổng NuGet. Không chạy app/chụp ảnh theo phân công. Review (Claude) chưa có nội dung.
+- Không chạy lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
 ## Review (Claude)
 
 ## Kết quả
