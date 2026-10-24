@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using AITeam.Core.Providers;
 using AITeam.Core.Routing;
 
