@@ -26,6 +26,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H3-05 Hub v3: trang Giao việc + tab Dòng thời gian / Đánh giá quy trình](H3-05-hub-requests-task-tabs.md) | A | `agent-a/H3-05-hub-requests-task-tabs` | ✅ Đã merge (vòng 1) |
 | [V4-07 Định tuyến provider (cấm tự duyệt, nghỉ khi hết hạn mức)](V4-07-provider-routing.md) | A | `agent-a/V4-07-provider-routing` | ✅ Đã merge (vòng 1) |
 | [V4-08 Lệnh aiteam review (chọn reviewer, thử reviewer kế, mã thoát)](V4-08-aiteam-review-cli.md) | B | `agent-b/V4-08-aiteam-review-cli` | ✅ Đã merge (vòng 1) |
+| [V4-09 Lệnh aiteam run (Codex viết code dự phòng)](V4-09-aiteam-run-dev.md) | A | `agent-a/V4-09-aiteam-run-dev` | ⬜ Chưa giao |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
