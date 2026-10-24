@@ -10,6 +10,7 @@
   .\team.ps1 add-project -Project Ten -New                   Tạo dự án mới (thư mục + git + kho private)
   .\team.ps1 new-task -Project Ten -Task T-003 -Title "..." -Agent B
   .\team.ps1 assign -Project Ten -Task T-003 [-Resume] [-Feedback "..."] [-NoVerify] [-Force]
+  .\team.ps1 assign -Project Ten -Task T-003 -Dev codex   Giao cho Codex viết code (mặc định agy; agy hết hạn mức tự chuyển Codex, -Dev agy để tắt)
                                                     Giao task (chờ tới khi agent xong). Ghi "đang chạy · máy X" lên bảng việc;
                                                     xong thì tự chạy cổng kiểm tra, không đạt thì tự giao lại 1 lần.
   .\team.ps1 verify -Project Ten -Task T-003        Cổng kiểm tra: commit/push, BOM (tự sửa), phạm vi, test nghiệm thu, build 0 warning, test
@@ -48,6 +49,7 @@ param(
     [string] $Agent = "A",
     [string] $Request = "",
     [string] $Kind = "",
+    [ValidateSet("", "agy", "codex")] [string] $Dev = "",
     [switch] $NoLaunch,
     [string] $Name = "",
     [string[]] $Names = @(),
@@ -388,11 +390,15 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     # Start-Process: agy in trạng thái ra stderr; gọi trực tiếp thì PowerShell 5.1 coi là lỗi và dừng script.
     $err = $log -replace '\.json$', '.stderr.txt'
     $mainBefore = (git -C $r.Path rev-parse origin/main 2>$null)
-    $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
-        -RedirectStandardOutput $log -RedirectStandardError $err
-    $logText = Get-Content $log -Raw -ErrorAction SilentlyContinue
-    $errText = Get-Content $err -Raw -ErrorAction SilentlyContinue
-    Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
+    $devProvider = "agy"
+    $logText = ""; $errText = ""
+    if ($Dev -ne "codex") {
+        $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
+            -RedirectStandardOutput $log -RedirectStandardError $err
+        $logText = Get-Content $log -Raw -ErrorAction SilentlyContinue
+        $errText = Get-Content $err -Raw -ErrorAction SilentlyContinue
+        Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
+    }
     if ($errText -match 'waiting up to \d+m\d+s for \d+ background task') {
         Say "CẢNH BÁO: agent đã ngồi chờ một lệnh nền bị treo (agy chờ tối đa 30 phút rồi cắt). Lượt này có thể chưa commit / chưa báo cáo." Yellow
     }
@@ -406,7 +412,22 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     Say ("Nhánh trên GitHub: " + $(if ($pushed) { "đã push" } else { "CHƯA push" }))
     Test-AgentTouchedMain $r $work $mainBefore
 
-    if (Test-QuotaExhausted $logText $errText) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
+    # R-004: -Dev codex ⇒ Codex viết code; agy hết hạn mức ⇒ tự chuyển sang Codex (trừ -Dev agy). Codex không ghi được .git ⇒ team.ps1 commit + push.
+    $agyQuota = ($Dev -ne "codex") -and (Test-QuotaExhausted $logText $errText)
+    if ($Dev -eq "codex" -or ($agyQuota -and $Dev -ne "agy")) {
+        if ($agyQuota) {
+            Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
+            Say "Antigravity hết hạn mức → tự chuyển $Task sang Codex (dự phòng)." Yellow
+            $log = Join-Path $r.Logs ("$Task-{0}.json" -f ($n + 1))
+        }
+        $devProvider = "codex"; $model = "codex"
+        $cx = Invoke-CodexDevelop $r $Task $work $branch $prompt $log $maxMin
+        if (-not $cx.Ok) {
+            Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
+            Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)"
+            return
+        }
+    } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
     if ($NoVerify) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🔵 Chờ review"; return }
     $v = Invoke-Verify
     if (-not $v.Ok -and -not $script:VerifyRetried) {
@@ -421,7 +442,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $false)
     # P0-7 (R-002): cổng KT đạt ⇒ review AI tự động (chỉ task Độ khó L hoặc "Review AI: có" — Codex hạn mức nhỏ).
     if ($v.Ok) {
-        $rv = Invoke-AutoReview $r $taskFile.Name $work
+        $rv = Invoke-AutoReview $r $taskFile.Name $work $devProvider
         if ($rv) {
             switch ($rv.Code) {
                 0 { Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review PASS" }
@@ -487,9 +508,45 @@ function Get-AITeamExe {
     if (Test-Path $exe) { $exe } else { $null }
 }
 
+# R-004: Codex viết code trong worktree qua `aiteam run`. Codex KHÔNG ghi được .git (sandbox — thử thật 24/10) ⇒ commit + push ở đây.
+# Ghi $logFile cùng định dạng log agy (status / usage / duration_seconds) để số đo, Hub, báo cáo dùng lại được.
+function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin) {
+    $exe = Get-AITeamExe
+    if (-not $exe) { return [pscustomobject]@{ Ok = $false; Status = "không build được aiteam.exe" } }
+    $note = "CHẠY BẰNG CODEX (dự phòng Antigravity): KHÔNG chạy lệnh git (sandbox chặn ghi .git) — hệ thống tự commit + push sau khi bạn xong; bỏ qua mọi yêu cầu commit / push bên dưới. Vẫn phải điền mục 'Báo cáo của agent' trong file task.`n`n"
+    $pf = $logFile -replace '\.json$', '.codex.prompt.md'
+    [IO.File]::WriteAllText($pf, $note + $prompt, (New-Object Text.UTF8Encoding $false))
+    $out = $logFile -replace '\.json$', '.codex.json'
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    Say "[$(Get-Date -Format HH:mm:ss)] $TaskName → Codex (aiteam run), thư mục $work" Cyan
+    & $exe run --provider codex --workdir $work --prompt-file $pf --logdir (Join-Path $r.Logs "$TaskName.codex") --timeout-min $maxMin --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
+    $code = $LASTEXITCODE
+    $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
+    $in = if ($j -and $j.inputTokens -ge 0) { [long]$j.inputTokens } else { 0 }
+    $outTok = if ($j -and $j.outputTokens -ge 0) { [long]$j.outputTokens } else { 0 }
+    $agyLike = [ordered]@{
+        status = $(if ($code -eq 0) { "SUCCESS" } else { "ERROR" }); provider = "codex"
+        response = $(if ($j) { $j.text } else { "" }); error = $(if ($code -ne 0 -and $j) { $j.summary } else { $null })
+        duration_seconds = $(if ($j) { [int]$j.durationSec } else { 0 })
+        usage = [ordered]@{ input_tokens = $in; output_tokens = $outTok; thinking_tokens = 0; total_tokens = $in + $outTok }
+        conversation_id = ""
+    }
+    [IO.File]::WriteAllText($logFile, ($agyLike | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding $false))
+    if ($code -eq 0) {
+        if (@(git -C $work status --porcelain 2>$null | Where-Object { $_ }).Count -gt 0) {
+            git -C $work add -A 2>$null
+            git -C $work commit -q -m "${TaskName}: Codex viết code (dự phòng Antigravity)" 2>&1 | Select-Object -Last 3 | ForEach-Object { Say "  $_" Yellow }
+        }
+        git -C $work push -q -u origin $branch 2>$null
+    }
+    $ErrorActionPreference = $eap
+    Say "[$(Get-Date -Format HH:mm:ss)] $TaskName Codex kết thúc: $(if ($j) { $j.summary } else { "mã $code" })" Cyan
+    [pscustomobject]@{ Ok = ($code -eq 0); Status = $(if ($j) { $j.status } else { "mã $code" }); Code = $code }
+}
+
 # Review AI cho task vừa qua cổng KT: aiteam review --auto (tự quyết có review không), reviewer ≠ agy (cấm tự duyệt).
 # Trả $null nếu bỏ qua / không chạy được; ngược lại { Code (0 PASS · 1 CẦN SỬA · 3 BLOCKED · 4 bỏ qua), Json, Out }.
-function Invoke-AutoReview($r, [string]$taskFileName, [string]$work) {
+function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$devProvider = "agy") {
     if ($NoReview) { Say "Bỏ qua review AI (-NoReview)."; return $null }
     $exe = Get-AITeamExe
     if (-not $exe) { Say "Không build được aiteam.exe ⇒ bỏ qua review AI." Yellow; return $null }
@@ -505,7 +562,7 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work) {
     $verify = Get-ChildItem $r.Logs -Filter "$Task-verify-*.md" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
     $taskInWork = Join-Path (Join-Path $work "tasks") $taskFileName
     $out = Join-Path $r.Logs "$Task.review-$n.json"
-    $a = @("review", "--auto", "--task-file", $taskInWork, "--diff-file", $diff, "--workdir", $work, "--logdir", $dir, "--dev", "agy", "--out", $out, "--root", $Root)
+    $a = @("review", "--auto", "--task-file", $taskInWork, "--diff-file", $diff, "--workdir", $work, "--logdir", $dir, "--dev", $devProvider, "--out", $out, "--root", $Root)
     if ($verify) { $a += @("--verify-file", $verify.FullName) }
     Say "Review AI (aiteam review --auto)…" Cyan
     & $exe @a 2>&1 | ForEach-Object { Say "  $_" }
