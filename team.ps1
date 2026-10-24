@@ -335,8 +335,13 @@ function Invoke-Assign {
     }
     $null = Set-ManagerIdentity $r.Path $cfg.github.owner
     Set-AgentIdentity $r.Path $work $devInfo $r.Info.name
+    # V5-02 (R-005): MCP Gateway cho agy ⇒ agent báo tiến độ lên Văn phòng. Codex hiện tắt MCP theo lần gọi.
+    $mcpNote = ""
+    if ($Dev -ne "codex" -and (Set-McpConfig $r $work $taskFile $agentId)) {
+        $mcpNote = "`nBÁO TIẾN ĐỘ QUA MCP (chủ dự án theo dõi trên trang Văn phòng): có công cụ aiteam_post_message. Gọi NGẮN (1 câu): khi bắt đầu; sau mỗi phần chạy được; khi gặp vướng cần quản lý quyết (kind question); khi xong (kind done, kèm số test pass). Không gọi quá 15 lần. Công cụ khác: aiteam_get_test_results (kết quả cổng kiểm tra lần trước)."
+    }
     $prompt = @"
-Bạn là $($devInfo.name) (mã $($devInfo.id), chuyên: $($devInfo.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.$staffNotes
+Bạn là $($devInfo.name) (mã $($devInfo.id), chuyên: $($devInfo.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.$staffNotes$mcpNote
 Thư mục hiện tại là bản làm việc riêng của bạn, đã ở đúng nhánh $branch.
 Đọc AGENTS.md rồi làm task tasks/$($taskFile.Name) đến hết "Tiêu chí hoàn thành".
 Build: $($r.Info.build)   Test: $($r.Info.test)
@@ -499,6 +504,30 @@ function Test-AgentTouchedMain($r, [string]$work, [string]$mainBefore) {
         if ($bad) { Say "BÁO ĐỘNG: agent '$who' đã đẩy $($bad.Count) commit thẳng lên main: $($bad -join '; ') — kiểm tra / revert ngay." Red }
     }
     $ErrorActionPreference = $eap
+}
+
+# V5-02 (R-005): đặt <worktree>\.agents\mcp_config.json để agy gọi được MCP Gateway của AITeam (aiteam mcp) — gắn ĐÚNG task này.
+# Thư mục .agents/ được thêm vào info/exclude (không lên git, không làm cổng KT báo "chưa commit"). Trả $true nếu đặt được.
+function Set-McpConfig($r, [string]$work, $taskFile, [string]$agentId) {
+    $exe = Get-AITeamExe
+    if (-not $exe) { Say "Không build được aiteam.exe ⇒ agent chạy không có MCP (không báo tiến độ lên Văn phòng)." Yellow; return $false }
+    $taskInWork = Join-Path (Join-Path $work "tasks") $taskFile.Name
+    $cfg = [ordered]@{ mcpServers = [ordered]@{ aiteam = [ordered]@{
+        command = $exe
+        args = @("mcp", "--project", $r.Info.name, "--task", (Get-TaskId $taskFile), "--role", "developer",
+                 "--task-file", $taskInWork, "--logs", $r.Logs, "--from", (Get-StaffName $agentId), "--root", $Root)
+        timeoutSeconds = 30 } } }
+    $dir = Join-Path $work ".agents"; New-Item -ItemType Directory -Force $dir | Out-Null
+    [IO.File]::WriteAllText((Join-Path $dir "mcp_config.json"), ($cfg | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    $common = git -C $work rev-parse --git-common-dir 2>$null
+    $ErrorActionPreference = $eap
+    if ($common) {
+        if (-not [IO.Path]::IsPathRooted($common)) { $common = Join-Path $work $common }
+        $ex = Join-Path $common "info\exclude"; New-Item -ItemType Directory -Force (Split-Path $ex) | Out-Null
+        if (-not (Test-Path $ex) -or -not (Select-String -Path $ex -Pattern '^/?\.agents/$' -Quiet)) { Add-Content $ex "/.agents/" -Encoding ASCII }
+    }
+    return $true
 }
 
 # aiteam.exe (lõi C#) bản Release, tự build lại khi mã nguồn core mới hơn.
