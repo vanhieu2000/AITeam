@@ -6,6 +6,7 @@
 - **Ngân sách:** ~400 dòng
 - **Yêu cầu:** R-xxx
 - **Thời gian tối đa:** 25 phút
+<!-- Tùy chọn: - **Review AI:** có ⇒ Codex review tự động sau cổng KT (bắt buộc ghi khi task có ràng buộc bảo mật / tham số dòng lệnh / dữ liệu ngoài; Độ khó L tự bật). -->
 - **Độ khó:** M <!-- S (≤150 dòng, rõ ràng) · M (≤400, vài file) · L (>400 / nhiều module / rủi ro cao) -->
 <!-- Tùy chọn: - **Model:** `gemini-3.8-flash-medium` cho việc nhỏ / dữ liệu; bỏ trống = mặc định. Xem: .\team.ps1 models -->
 

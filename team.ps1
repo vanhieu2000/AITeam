@@ -1105,7 +1105,10 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
         $base = git -C $work merge-base origin/main HEAD 2>$null | Select-Object -First 1
         if ($base) {
-            foreach ($line in (git -C $work diff --numstat $base HEAD 2>$null)) {
+            # Chỉ đếm dòng agent viết: bỏ khung + test nghiệm thu của Claude (commit "Test nghiệm thu…") — trước đây V4-07 báo 512/230, thật 176.
+            $seed = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+            $from = if ($seed) { $seed } else { $base }
+            foreach ($line in (git -C $work diff --numstat $from HEAD 2>$null)) {
                 $p = $line -split "`t"
                 if ($p.Count -ge 3 -and $p[2] -notmatch '^tasks/' -and $p[0] -match '^\d+$') { $added += [int]$p[0]; $removed += [int]$p[1]; $files++ }
             }

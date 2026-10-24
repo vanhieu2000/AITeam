@@ -1,4 +1,4 @@
-# Hướng dẫn cho AI agent — dự án AITeam (AITeam Hub)
+﻿# Hướng dẫn cho AI agent — dự án AITeam (AITeam Hub)
 
 Bạn là lập trình viên trong team AI. **Quản lý: Claude**. Claude giao task, review, test và quyết định merge.
 Chủ dự án: HieuDV.
@@ -43,6 +43,7 @@ Chủ dự án: HieuDV.
 - Sau khi push, **cổng kiểm tra tự động** (`team.ps1 verify`) chạy ngay: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên, có báo cáo. Không đạt sẽ bị giao lại kèm danh sách lỗi.
 
 ## Lỗi hay gặp (đã xảy ra nhiều lần — bắt buộc tránh)
+- Test chạy tiến trình con (exe / dll của project khác): KHÔNG trỏ `bin\Debug` của project đó — thêm ProjectReference để file được chép kèm, dùng `Path.Combine(AppContext.BaseDirectory, "x.dll")`. (V4-08: clean-clone chạy nhầm bản cũ.)
 - **Giữ nguyên BOM UTF-8** của file đang có BOM khi sửa; script `.ps1` luôn lưu UTF-8 có BOM.
 - **Không viết test luôn pass**: không `if (...) return;` sớm, không `Assert.True(true)`, không bắt exception rồi bỏ qua. Bỏ phần code mới đi thì test phải đỏ.
 - Kiểm tra chuỗi lệnh đã gửi (tới thiết bị / tiến trình) bằng `Contains` phần cốt lõi, không `StartsWith`: lệnh thật thường có tiền tố.

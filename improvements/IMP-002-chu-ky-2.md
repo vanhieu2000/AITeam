@@ -1,6 +1,6 @@
 ﻿# IMP-002 · Chu kỳ cải tiến 2 (H3-03 · H3-04 · H3-02)
 
-- **Trạng thái:** ✅ Đã áp dụng <!-- 🟡 Đề xuất · 🔵 Chờ chủ dự án duyệt · ✅ Đã áp dụng · 📏 Đã đo kết quả -->
+- **Trạng thái:** 📏 Đã đo kết quả <!-- 🟡 Đề xuất · 🔵 Chờ chủ dự án duyệt · ✅ Đã áp dụng · 📏 Đã đo kết quả -->
 - **Task trong chu kỳ:** AITeam/H3-03, AITeam/H3-04, AITeam/H3-02
 - **Ngày:** 24/10/2026
 
@@ -32,8 +32,8 @@ Hiệu suất: phút agent / task 7′ · 8′ · 13′ (TB 9,3′); đạt vòn
 ## 4. Cần chủ dự án duyệt
 Không (sửa mẫu task / test của Claude).
 
-## 5. Kết quả (điền sau chu kỳ 3: H3-05 + 2 task kế)
+## 5. Kết quả (đo trên chu kỳ 3: H3-05, V4-07, V4-08)
 | Giải pháp | Trước | Sau | Có tác dụng? | Giữ / bỏ |
 |---|---|---|---|---|
-| 1. DI + test dựng trang | 1 lần (H3-05) | | | |
-| 2. Ca nghiệm thu dữ liệu thật | 2 lần (H3-02) | | | |
+| 1. DI + test dựng trang | 1 lần (H3-05) | 0 (đã bắt cả trang mới P0-8 trong test) | **Có** | Giữ |
+| 2. Ca nghiệm thu dữ liệu thật | 2 lần (H3-02) | 0 lỗi dữ liệu (V4-07 dùng câu lỗi thật Codex / agy) | **Có** | Giữ |

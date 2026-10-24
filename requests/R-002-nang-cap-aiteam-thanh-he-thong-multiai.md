@@ -1,7 +1,7 @@
 ﻿# R-002 · Nang cap AITeam thanh he thong multi-AI
 
 - **Nhận lúc:** 23:16 23/10/2026 · máy DESKTOP-PP14EFS
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong P0 08:58 24/10/2026 (còn: user Windows thứ 2 — chờ chủ dự án)
 - **Lời chủ dự án:**
   > NHIỆM VỤ: NÂNG CẤP AITEAM THÀNH HỆ THỐNG MULTI-AI TỐI ƯU CHO CÁ NHÂN (bản đầy đủ 17 mục do chủ dự án dán vào chat 23/10: audit, kiến trúc Role ↔ Provider, Codex review độc lập, cross-provider review, adapter, job state, Hub, hiệu suất, memory, bảo mật, nghiên cứu Agent Office, roadmap P0/P1/P2, triển khai P0)
 
@@ -22,7 +22,7 @@
 | V4-07 định tuyến (P0-4/5) | AITeam | Minh (A) | ~230 | mặc định | lớp thuần, 39 ca nghiệm thu |
 | V4-08 lệnh aiteam review (P0-3/7) | AITeam | Lan (B) | ~250 | mặc định | sau V4-07 |
 | P0-7 gắn review vào team.ps1 assign | AITeam | Claude | ~60 | | glue PowerShell |
-| P0-8 Hub hiện kết luận review | AITeam | (sau) | | | |
+| P0-8 Hub hiện kết luận review | AITeam | Claude | ~120 | | nhỏ, Claude tự làm |
 
 Mỗi file task phải có dòng `- **Yêu cầu:** R-002` để `team.ps1 request-report` gom số liệu.
 
@@ -57,30 +57,33 @@ Sự kiện cần ghi:
 - báo chủ dự án.
 
 ## 4. Đánh giá sau khi xong (Claude)
-Dán kết quả `.\team.ps1 request-report -Request R-002`, rồi điền:
+`.\team.ps1 request-report -Request R-002`: 4 task giao agent (V4-03, V4-06, V4-07, V4-08) · 6 lượt · 46 phút agent · 499k token · vòng TB 1,00 · đạt vòng 1: 4/4 · cổng KT đạt lần đầu 3/4. Claude tự làm P0-1, P0-2, P0-7, P0-8.
 
 | Chỉ số | Giá trị |
 |---|---|
-| Tổng thời gian (nhận → báo xong) | |
-| Thời gian Claude (phân tích + thiết kế + review + tự sửa) | |
-| Thời gian agent (cộng mọi lượt) | |
-| Thời gian chờ không ai làm (vd. chờ hạn mức, chờ chủ dự án) | |
-| Số lượt agent / số vòng review | |
-| Dòng code / ngân sách | |
-| Claude tự sửa: số lần / tổng dòng | |
-| Lỗi theo nguyên nhân: TK / AG / CK | |
+| Tổng thời gian (nhận → báo xong) | 23/10 tối → 24/10 ~09:30 (xen giữa: nghỉ đêm, R-003 Hub v3) |
+| Thời gian Claude | ~3 giờ (audit + thiết kế V4 + P0-1/2 ~1,5 giờ; khung + nghiệm thu 4 task ~1 giờ; P0-7/8 + review + chạy thật ~40′) |
+| Thời gian agent (cộng mọi lượt) | 46 phút (9 · 23 · 7 · 7) |
+| Thời gian chờ không ai làm | Codex hết hạn mức 23/10 23:50 → 24/10 04:19 (không chặn việc: đổi sang Claude review) |
+| Số lượt agent / số vòng review | 6 / 4 (V4-06: 2 lượt thừa do cổng KT báo nhầm) |
+| Dòng code / ngân sách (agent viết) | ~1.100 / 950 (V4-03 321/250 · V4-06 242/250 · V4-07 176/230 · V4-08 ~330/220) |
+| Claude tự sửa: số lần / tổng dòng | 5 / ~60 dòng (NoBom lược đồ, tách JobModels, Arg, RunAsync fail-safe, test CLI) |
+| Lỗi theo nguyên nhân: TK / AG / CK / HT | 6 / 2 / 2 / 1 |
 
-**Đánh giá nhân viên** (chi tiết ghi thêm vào `staff/<mã>-<tên>.md`):
+**Đánh giá nhân viên**:
 
 | Nhân viên | Task | Lượt · phút | Vòng | Dòng / ngân sách | Làm tốt | Lỗi AG | Hướng cải thiện |
 |---|---|---|---|---|---|---|---|
+| Minh (A) | V4-03, V4-07 | 2 · 16′ | 1 / 1 | 497 / 480 | Regex chống treo, không gọi DateTime.Now, ghi file an toàn; giữ BOM sau khi có Lưu ý riêng | — | — |
+| Lan (B) | V4-06, V4-08 | 4 · 30′ | 1 / 1 | ~570 / 470 | Xử lý đúng khi cổng KT báo nhầm (ghi lý do); CLI đủ mã thoát | BOM (lần 1) · test CLI phụ thuộc thứ tự build | Test chạy tiến trình con phải dùng file đi kèm bản build (ProjectReference), không trỏ bin\Debug của project khác |
 
-**Team đang bất ổn ở đâu** (mỗi mục ghi bằng chứng từ nhật ký):
-- Kỹ thuật (công cụ, build, cổng kiểm tra, môi trường, model):
-- Quy trình (thiết kế, chia task, giao việc, review, phối hợp 2 máy):
-- Quản lý (Claude: lỗi TK, quyết định sai, chậm review):
-- **Tốn thời gian nhất ở đâu:**
-- **Cái gì làm tốt (giữ lại):**
-- **Cải tiến quy trình áp dụng cho yêu cầu sau** (tối đa 2, cụ thể, sửa file nào):
-  1.
-- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có / chưa
+**Team đang bất ổn ở đâu:**
+- Kỹ thuật: cổng KT với luồng "khung trên nhánh" (V4-03, V4-06) — đã có `tools/test-verify.ps1`; clean-clone là chốt cuối bắt được test phụ thuộc thứ tự build (V4-08).
+- Quy trình: Claude sửa `team.ps1` trên main khi agent đang chạy ⇒ wrapper chạy bản dở (V4-08).
+- Quản lý (Claude): 6 lỗi TK — 2 lỗi bảo mật / độ bền chỉ Codex bắt được (Arg, lỗi bất ngờ).
+- **Tốn thời gian nhất ở đâu:** thiết kế + chạy thử CLI thật (Codex, agy) ở P0-1/2/3 — đổi lại agent làm 7–9′ / task.
+- **Cái gì làm tốt (giữ lại):** chạy thật với Codex trước khi merge (bắt 2 lỗi thật); định tuyến đọc giờ reset từ câu lỗi thật; 4/4 đạt vòng 1.
+- **Cải tiến quy trình áp dụng cho yêu cầu sau:**
+  1. Không sửa `team.ps1` trực tiếp trên main khi có agent đang chạy (assign đọc file trên đĩa): commit + `tools/test-verify.ps1` trước khi giao việc kế tiếp — ghi vào `QUY-TRINH.md`.
+  2. Task có ràng buộc bảo mật / tham số dòng lệnh / dữ liệu ngoài ⇒ ghi `- **Review AI:** có` (Codex chạy thật đã bắt 4 lỗi thật: 2 ở secret-scan, 2 ở V4-08) — thêm vào mục kiểm tra `templates/task.md`.
+- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có

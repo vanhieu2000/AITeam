@@ -3,7 +3,7 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-Cập nhật lần cuối: **24/10/2026 ~01:20 · máy nhà DESKTOP-PP14EFS** · **quy trình 3.1: đọc `QUY-TRINH.md`**
+Cập nhật lần cuối: **24/10/2026 ~09:40 · máy nhà DESKTOP-PP14EFS** · **quy trình 3.2: đọc `QUY-TRINH.md`**
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
 Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUAT-LOG.md`.
@@ -39,7 +39,7 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
 |---|---|---|
 | **R-003 Hub v3 toàn diện** | ✅ XONG 24/10 ~01:20 — H3-01…05 merge, 5/5 đạt vòng 1, 48 phút agent. Hub mới: Tổng quan (chỉ số + biểu đồ thời gian), Giao việc (chat theo phiếu), Cần anh duyệt, Đội ngũ, Quy trình & cải tiến, tab Dòng thời gian / Đánh giá quy trình trong task | Optional: `request-report` cột Dòng/ngân sách vẫn tính khung + test của Claude; biểu đồ so sánh giữa các chu kỳ IMP |
 | **A-001 đã duyệt (chủ dự án bấm trên Hub 00:36)** | Tạo user Windows `aiteam-agy2` cho tài khoản Antigravity số 2 | Cần chủ dự án: bấm UAC tạo user + đăng nhập user đó 1 lần (thiết kế V4 mục B3b). Sau đó Claude làm `runAs` trong assign / stop |
-| **R-002 AITeam v4 đa AI** (`requests/R-002-…`, `docs/design/V4-MULTI-AI.md`) | P0-1, P0-2 (Claude), V4-03 Codex review (Minh), V4-06 trạng thái job (Lan) ĐÃ MERGE 24/10 00:15. Codex hết hạn mức tới 4:19 sáng 24/10 | Tiếp: P0-4/5 (chọn provider theo hạn mức + dự phòng, Codex chỉ cho task lớn/rủi ro), P0-7 (review tự động trong assign), P0-8 (Hub). User Windows thứ 2: chờ chủ dự án |
+| **R-002 AITeam v4 đa AI** | ✅ P0 XONG 24/10 ~09:40: định tuyến provider (cấm tự duyệt, nghỉ khi hết hạn mức — `.state/providers.json` theo máy), `aiteam review`, `assign` tự review AI sau cổng KT (task L / `Review AI: có`), Hub hiện kết luận review. Codex chạy thật bắt 2 lỗi trong V4-08 | P1 (sau 1 tuần chạy ổn): reviewer dự phòng (Claude CLI chưa cài), developer dự phòng codex khi agy hết hạn mức. User Windows thứ 2: xem dòng A-001 |
 | **R-001** | ✅ XONG 22:15 — C-011, T-005, T-007 đã merge; đã đánh giá (quy trình lên phiên bản 2) | — |
 | **Máy công ty 21/10 (chưa có phiếu R)** | ✅ XONG — làm theo quy trình cũ trước khi có v3, nên không có phiếu `requests/` | Không cần làm gì; chi tiết review trong từng file task |
 | AITeam H-006 / H-007 / H-008 — Hub v2 (khung phẳng, Tổng quan, Dự án, Task, Agent, Hộp thư, Tài khoản, Bí mật, Cài đặt) | ✅ Đã merge vòng 1. H-007/H-008 agent hết credits giữa chừng ⇒ Claude chụp ảnh, sửa, điền báo cáo. Claude sửa: XSS qua `?drawer=`, nhãn tab hiện mã HTML, nhãn "Cổng kiểm tra ĐẠT" sai nghĩa, ngăn kéo cuộn ngang, cột Agent ghi cứng "A", nút lọc `.seg a`. 159/159 test, clone sạch | Optional: vòng review hiện trùng (danh sách + Markdown gốc); review cũ không có `###` gộp 1 khối; `PaginationSummary` ghi cứng 8; cột phải Tổng quan bị cắt chữ khi cửa sổ hẹp |

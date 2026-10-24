@@ -22,3 +22,4 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 | 24/10 | R-003 / H3-01 | 1 · 8′ · 1 · 285/320 | Đúng đặc tả, chịu dữ liệu hỏng, gọi git an toàn | BOM | Giữ BOM file khung |
 | 24/10 | R-003 / H3-04 | 1 · 8′ · 1 · 330/320 | Đúng đặc tả, giữ BOM | — | — |
 | 24/10 | R-003 / H3-05 | 1 · 11′ · 1 · 348/380 | Đúng đặc tả, bảo mật đầu vào tốt | BOM (lần 2) | Lưu ý riêng đã thêm |
+| 24/10 | R-002 / V4-07 | 1 · 7′ · 1 · 176/230 | Regex chống treo, giờ qua tham số, giữ BOM | — | — |

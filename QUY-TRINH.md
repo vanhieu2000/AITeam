@@ -33,7 +33,8 @@
 
 ## Tiết kiệm token / thời gian — đã cài vào công cụ
 - Agent: giới hạn thời gian theo task; chỉ đọc file liệt kê; không ảnh / không chạy app; báo cáo ≤ 15 dòng; commit sớm; test có `--blame-hang-timeout`.
-- Claude sửa `team.ps1` ⇒ chạy `tools\test-verify.ps1` (test hồi quy cổng kiểm tra, IMP-001) trước khi commit.
+- Claude sửa `team.ps1` ⇒ chạy `tools\test-verify.ps1` (test hồi quy cổng kiểm tra, IMP-001) trước khi commit. **Không để `team.ps1` sửa dở khi giao việc** — `assign` chạy đúng file trên đĩa (R-002: bảng việc ghi nhầm "AI review PASS").
+- **Review AI tự động** (R-002): sau cổng KT, `assign` gọi `aiteam review --auto` cho task `Độ khó: L` hoặc có `- **Review AI:** có`; reviewer luôn khác agy; CẦN SỬA ⇒ tự giao lại 1 lần; BLOCKED ⇒ Claude review. Kết quả: `<workDir>\logs\<Task>.review-n.json`, Hub tab Báo cáo & review. Tắt: `-NoReview`.
 - Claude: đọc trang này thay vì sổ tay 167 dòng; `review` / `merge` thay chuỗi lệnh tay; tự sửa nhỏ thay vòng agent 20–30 phút; số đo tự ghi (`metrics/runs`).
 
 ## Mục tiêu đo ở R-002 (so với R-001)

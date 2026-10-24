@@ -20,3 +20,4 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 <!-- Claude cập nhật sau mỗi kỳ: đổi model, chia task kiểu khác, thêm lưu ý riêng, đổi vùng code phụ trách... -->
 | 24/10 | R-003 / H3-03 | 1 · 7′ · 1 · 255/280 | Đúng đặc tả + bố cục, giữ BOM, báo cáo đối chiếu từng mục | — | — |
 | 24/10 | R-003 / H3-02 | 1 · 13′ · 1 · 370/330 | Đúng đặc tả, SVG chuẩn số thập phân bất biến | — | — |
+| 24/10 | R-002 / V4-08 | 1 · 7′ · 1 · ~330/220 | CLI đủ mã thoát, fail-safe đúng đặc tả | BOM (lần 1) · test CLI phụ thuộc thứ tự build | Test tiến trình con dùng ProjectReference |
