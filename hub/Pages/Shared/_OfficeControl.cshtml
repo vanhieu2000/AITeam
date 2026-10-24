@@ -1,0 +1,57 @@
+﻿@model AITeam.Hub.Pages.OfficeModel
+
+<div id="office-control" class="panel">
+    <div style="margin-bottom:10px">
+        <h3 style="margin:0 0 4px 0">Điều khiển</h3>
+        <div class="muted" style="font-size:12px">Chỉ 5 lệnh cố định · mỗi lệnh hỏi xác nhận và ghi nhật ký · merge chỉ ở trang Cần anh duyệt</div>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.Notice))
+    {
+        <div class="panel" style="background:#ecfdf5;color:#047857;border-color:#10b981;margin-bottom:10px">@Model.Notice</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.CommandError))
+    {
+        <div class="panel" style="border-color:#dc2626;background:#fef2f2;color:#b91c1c;margin-bottom:10px">@Model.CommandError</div>
+    }
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-bottom:14px">
+        <div style="background:var(--s2);padding:12px;border-radius:8px;min-width:0">
+            <div style="font-weight:600;margin-bottom:8px">Giao task</div>
+            <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Giao task đã chọn?" style="display:flex;flex-direction:column;gap:8px;margin:0">
+                @{ var hasAssign = Model.Assignable.Count > 0; }
+                <select class="inp" name="target" disabled="@(!hasAssign)" style="width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    @if (hasAssign)
+                    {
+                        @foreach (var t in Model.Assignable) { <option value="@t.Project/@t.Id">@t.Project · @t.Id · @t.Agent — @t.Title</option> }
+                    }
+                    else { <option>Không có task chưa giao / cần sửa</option> }
+                </select>
+                <div class="row" style="gap:8px;flex-wrap:wrap">
+                    <button type="submit" class="btn pri sm" name="command" value="Assign" disabled="@(!hasAssign)">Giao task</button>
+                    <button type="submit" class="btn sm" name="command" value="AssignCodex" disabled="@(!hasAssign)">Giao cho Codex</button>
+                </div>
+            </form>
+        </div>
+        <div style="background:var(--s2);padding:12px;border-radius:8px;min-width:0">
+            <div style="font-weight:600;margin-bottom:8px">Giao lại / kiểm tra lại</div>
+            <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Gửi lệnh cho task đã chọn?" style="display:flex;flex-direction:column;gap:8px;margin:0">
+                @{ var hasResume = Model.Resumable.Count > 0; }
+                <select class="inp" name="target" disabled="@(!hasResume)" style="width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    @if (hasResume)
+                    {
+                        @foreach (var t in Model.Resumable) { <option value="@t.Project/@t.Id">@t.Project · @t.Id · @t.Agent — @t.Title</option> }
+                    }
+                    else { <option>Không có task chưa giao / cần sửa</option> }
+                </select>
+                <textarea class="inp" name="feedback" rows="3" maxlength="2000" placeholder="Góp ý cho agent (bắt buộc khi giao lại)" disabled="@(!hasResume)" style="width:100%;max-width:100%"></textarea>
+                <div class="row" style="gap:8px;flex-wrap:wrap">
+                    <button type="submit" class="btn pri sm" name="command" value="Resume" disabled="@(!hasResume)">Giao lại kèm góp ý</button>
+                    <button type="submit" class="btn sm" name="command" value="Verify" disabled="@(!hasResume)">Kiểm tra lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <h4 style="margin:0 0 8px 0">Lệnh gần đây</h4>
+    <div id="office-jobs" hx-get="/?handler=Jobs" hx-trigger="every 10s" hx-swap="innerHTML">
+        <partial name="_OfficeJobs" model="Model" />
+    </div>
+</div>

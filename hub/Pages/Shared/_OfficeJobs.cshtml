@@ -1,0 +1,31 @@
+﻿@model AITeam.Hub.Pages.OfficeModel
+@using AITeam.Hub.Services
+
+@if (Model.Jobs.Count == 0)
+{
+    <div class="muted">Chưa có lệnh nào từ lúc mở Hub.</div>
+}
+else
+{
+    <table class="hub-table">
+        <thead>
+            <tr><th>Giờ</th><th>Lệnh</th><th>Task</th><th>Trạng thái</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var j in Model.Jobs)
+            {
+                <tr>
+                    <td>@j.StartedAt.ToString("HH:mm:ss")</td>
+                    <td>@CommandService.Label(j.Request.Command)</td>
+                    <td>@j.Request.Project · @j.Request.Task</td>
+                    <td>
+                        @if (j.Running) { <span class="pill run">đang chạy</span> }
+                        else if (j.ExitCode == 0) { <span class="pill ok">xong</span> }
+                        else { <span class="pill err">lỗi @j.ExitCode</span> }
+                    </td>
+                    <td><a href="/?handler=JobLog&id=@j.Id" target="_blank">Xem log</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,4 +1,5 @@
-﻿using AITeam.Hub.Models;
+﻿using System.Text;
+using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -59,7 +60,22 @@ public class OfficeModel : PageModel
     /// Lỗi đọc (vd. bảng việc hỏng) ⇒ các danh sách rỗng, CommandError = "Không đọc được danh sách task: " + ex.Message (nếu CommandError đang null).
     /// </summary>
     public void LoadControl()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (_commands == null) return;
+        try
+        {
+            Assignable = _commands.Assignable();
+            Resumable = _commands.Resumable();
+            Jobs = _commands.Jobs().Take(8).ToList();
+        }
+        catch (Exception ex)
+        {
+            Assignable = Array.Empty<TaskCard>();
+            Resumable = Array.Empty<TaskCard>();
+            Jobs = Array.Empty<CommandJob>();
+            CommandError ??= "Không đọc được danh sách task: " + ex.Message;
+        }
+    }
 
     /// <summary>
     /// HTMX tự làm mới (GET ?handler=Desks mỗi 10 giây): nạp như OnGet rồi trả PartialViewResult "_OfficeDesks"
@@ -79,7 +95,36 @@ public class OfficeModel : PageModel
     /// Luôn: LoadControl() rồi trả Self("_OfficeControl") (model = trang này).
     /// </summary>
     public IActionResult OnPostCommand(string? command, string? target, string? feedback)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (_commands == null)
+        {
+            CommandError = "Hub đang ở chế độ chỉ xem.";
+            return Self("_OfficeControl");
+        }
+        if (string.IsNullOrWhiteSpace(command) ||
+            !Enum.GetNames<HubCommand>().Any(n => string.Equals(n, command, StringComparison.OrdinalIgnoreCase)) ||
+            !Enum.TryParse<HubCommand>(command, ignoreCase: true, out var cmd))
+        {
+            CommandError = "Lệnh không hợp lệ.";
+            LoadControl();
+            return Self("_OfficeControl");
+        }
+
+        var slash = target?.IndexOf('/') ?? -1;
+        var project = slash >= 0 ? target![..slash] : "";
+        var task = slash >= 0 ? target![(slash + 1)..] : "";
+
+        try
+        {
+            var job = _commands.Start(new CommandRequest(cmd, project, task, feedback));
+            Notice = $"Đã bắt đầu: {CommandService.Label(cmd)} {job.Request.Task}.";
+        }
+        catch (InvalidOperationException ex) { CommandError = ex.Message; }
+        catch (Exception ex) { CommandError = "Không chạy được lệnh: " + ex.Message; }
+
+        LoadControl();
+        return Self("_OfficeControl");
+    }
 
     /// <summary>GET ?handler=Jobs (bảng "Lệnh gần đây" tự làm mới): LoadControl() rồi Partial "_OfficeJobs".</summary>
     public IActionResult OnGetJobs()
@@ -94,7 +139,21 @@ public class OfficeModel : PageModel
     /// (file chưa có ⇒ "(chưa có output)"; đọc với FileShare.ReadWrite vì tiến trình còn đang ghi).
     /// </summary>
     public IActionResult OnGetJobLog(string? id)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (_commands == null || string.IsNullOrEmpty(id)) return NotFound();
+        var job = _commands.Jobs().FirstOrDefault(j => string.Equals(j.Id, id, StringComparison.Ordinal));
+        if (job == null) return NotFound();
+
+        string content = "(chưa có output)";
+        if (System.IO.File.Exists(job.LogFile))
+        {
+            using var fs = new FileStream(job.LogFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var sr = new StreamReader(fs, Encoding.UTF8);
+            var text = sr.ReadToEnd();
+            content = text.Length > 8000 ? text[^8000..] : text;
+        }
+        return new ContentResult { Content = content, ContentType = "text/plain; charset=utf-8" };
+    }
 
     private PartialViewResult Self(string name) => new()
     {
