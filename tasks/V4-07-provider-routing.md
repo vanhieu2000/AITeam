@@ -42,16 +42,16 @@ Thiết kế: `docs/design/V4-MULTI-AI.md` mục B2 (vai trò ↔ provider) và 
 - `core.tests/AcceptanceV407RoutingTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 39 ca nghiệm thu V4-07).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 39 ca nghiệm thu V4-07).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| | |
+| Build 0 warning & Test pass hết (gồm 39 ca V4-07) | `dotnet build AITeam.sln`: 0 Warning(s), 0 Error(s). `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m`: `AITeam.Core.Tests` 98/98 pass (39/39 ca `AcceptanceV407RoutingTests`), `AITeam.Hub.Tests` 270/270 pass. |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hiện thực `QuotaResetParser.Parse` (4 mẫu thời gian, chọn mẫu đầu tiên > `now`), `ProviderStateStore` (`All`, `RestOf`, `Record` ghi tạm rồi `File.Move` UTF-8 không BOM, đọc hỏng trả rỗng), `ProviderRouter.Pick` (kiểm cấu hình/bật/vai trò/cấm tự duyệt/nghỉ), `ReviewPolicy.Decide` (ưu tiên `Review AI` trước `Độ khó: L`).
+- **File đã đổi:** `core/AITeam.Core/Routing/Routing.cs` (giữ nguyên UTF-8 BOM), `tasks/V4-07-provider-routing.md`.
+- **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
 
