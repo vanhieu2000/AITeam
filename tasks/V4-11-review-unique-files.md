@@ -40,13 +40,15 @@ Trong `ReviewService`:
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 3 NU1900, 0 error; 13,40 giây. |
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error nhưng không có chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 3 NU1900, 0 error, 13,44 giây. |
 | Toàn bộ test, gồm 2 ca V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289 + Core 129 = 418 pass, 0 fail, 0 skip; còn 3 NU1900. |
-| Tên file riêng, cùng stamp; public và UTF-8 không BOM — ĐẠT | Đọc mã xác nhận đúng thiết kế; Core 129 test pass; không sửa mã hoặc test nghiệm thu. |
-| Khắc phục NU1900 — BỊ CHẶN | Bỏ HTTP_PROXY/HTTPS_PROXY/ALL_PROXY trong tiến trình rồi chạy `dotnet restore AITeam.sln --force --disable-parallel -m:1 -p:NuGetAudit=true`: exit 0, vẫn 3 NU1900 do không truy cập được https://api.nuget.org/v3/index.json. |
+| Tên file riêng, cùng stamp; public và UTF-8 không BOM — ĐẠT | Đọc ReviewAsync/SaveResult xác nhận đúng thiết kế; Core 129 test pass; giữ nguyên mã và test nghiệm thu. |
+| Khắc phục NU1900 — BỊ CHẶN MÔI TRƯỜNG | `dotnet restore AITeam.sln --disable-parallel -m:1 -p:NuGetAudit=true`: exit 0, vẫn 3 NU1900. |
+| Kiểm tra kết nối NuGet | `curl.exe -I --connect-timeout 10 --max-time 20 https://api.nuget.org/v3/index.json`: lỗi (7), proxy 127.0.0.1:9 không kết nối được; thêm `--noproxy "*"`: exit 1, lỗi (35) TLS SEC_E_NO_CREDENTIALS. |
 - File đổi: chỉ `tasks/V4-11-review-unique-files.md` để cập nhật bằng chứng; giữ nguyên trạng thái BOM UTF-8.
-- Quyết định: giữ audit bật, không ẩn warning hoặc sửa cấu hình ngoài phạm vi; cần môi trường kết nối NuGet hoạt động để đạt 0 warning.
-- Chưa xác minh: dữ liệu lỗ hổng package; Review (Claude) đang trống. Không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex.
+- Quyết định: không tắt audit/ẩn warning, không sửa cấu hình ngoài phạm vi; dùng MSBuild một luồng vì lệnh build mặc định thất bại không có chẩn đoán.
+- Chưa xác minh: dữ liệu lỗ hổng package; cần môi trường truy cập NuGet hoạt động để đạt build 0 warning. Review (Claude) đang trống.
+- Không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex.
 ## Review (Claude)
 
 ## Kết quả
