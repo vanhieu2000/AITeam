@@ -54,6 +54,7 @@ param(
     [string] $Prompt = "",
     [string] $Model = "",
     [switch] $NoVerify,
+    [switch] $NoReview,
     [switch] $Force
 )
 $ErrorActionPreference = "Stop"
@@ -413,6 +414,75 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         return
     }
     Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $false)
+    # P0-7 (R-002): cổng KT đạt ⇒ review AI tự động (chỉ task Độ khó L hoặc "Review AI: có" — Codex hạn mức nhỏ).
+    if ($v.Ok) {
+        $rv = Invoke-AutoReview $r $taskFile.Name $work
+        if ($rv) {
+            switch ($rv.Code) {
+                0 { Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review PASS" }
+                1 {
+                    if (-not $script:ReviewRetried -and $rv.Json -and $rv.Json.feedback) {
+                        $script:ReviewRetried = $true; $script:VerifyRetried = $false
+                        Say "AI review CẦN SỬA → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi của reviewer." Yellow
+                        $script:Resume = $true
+                        $script:Feedback = "Reviewer AI (provider khác) yêu cầu sửa. Sửa đúng các mục Blocker / Required dưới đây, không làm thêm; chạy lại build + test, cập nhật báo cáo, commit và push:`n" + $rv.Json.feedback
+                        Invoke-Assign
+                        return
+                    }
+                    Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review CẦN SỬA (Claude xem)"
+                }
+                3 { Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review BLOCKED (Claude review)" }
+            }
+        }
+    }
+}
+
+# aiteam.exe (lõi C#) bản Release, tự build lại khi mã nguồn core mới hơn.
+function Get-AITeamExe {
+    $proj = Join-Path $Root "core\AITeam.Cli\AITeam.Cli.csproj"
+    $exe = Join-Path $Root "core\AITeam.Cli\bin\Release\net10.0-windows\aiteam.exe"
+    $newer = $true
+    if (Test-Path $exe) {
+        $t0 = (Get-Item $exe).LastWriteTimeUtc
+        $newer = [bool](Get-ChildItem (Join-Path $Root "core") -Recurse -File -Include *.cs, *.csproj |
+            Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' -and $_.LastWriteTimeUtc -gt $t0 } | Select-Object -First 1)
+    }
+    if ($newer) { $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"; dotnet build $proj -c Release -v q -nologo 2>&1 | Out-Null; $ErrorActionPreference = $eap }
+    if (Test-Path $exe) { $exe } else { $null }
+}
+
+# Review AI cho task vừa qua cổng KT: aiteam review --auto (tự quyết có review không), reviewer ≠ agy (cấm tự duyệt).
+# Trả $null nếu bỏ qua / không chạy được; ngược lại { Code (0 PASS · 1 CẦN SỬA · 3 BLOCKED · 4 bỏ qua), Json, Out }.
+function Invoke-AutoReview($r, [string]$taskFileName, [string]$work) {
+    if ($NoReview) { Say "Bỏ qua review AI (-NoReview)."; return $null }
+    $exe = Get-AITeamExe
+    if (-not $exe) { Say "Không build được aiteam.exe ⇒ bỏ qua review AI." Yellow; return $null }
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    $dir = Join-Path $r.Logs "$Task-review"; New-Item -ItemType Directory -Force $dir | Out-Null
+    $n = @(Get-ChildItem $r.Logs -Filter "$Task-review-*.json" -ErrorAction SilentlyContinue).Count + 1
+    $diff = Join-Path $dir "diff-$n.txt"
+    git -C $work fetch -q origin 2>$null
+    $base = (git -C $work merge-base origin/main HEAD 2>$null | Select-Object -First 1)
+    # Ghi diff bằng Start-Process (PowerShell 5.1 ">" ghi UTF-16 làm hỏng tiếng Việt).
+    Start-Process git -ArgumentList "-C `"$work`" diff $base HEAD" -NoNewWindow -Wait -RedirectStandardOutput $diff -RedirectStandardError "$diff.err" | Out-Null
+    $verify = Get-ChildItem $r.Logs -Filter "$Task-verify-*.md" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
+    $taskInWork = Join-Path (Join-Path $work "tasks") $taskFileName
+    $out = Join-Path $r.Logs "$Task-review-$n.json"
+    $a = @("review", "--auto", "--task-file", $taskInWork, "--diff-file", $diff, "--workdir", $work, "--logdir", $dir, "--dev", "agy", "--out", $out, "--root", $Root)
+    if ($verify) { $a += @("--verify-file", $verify.FullName) }
+    Say "Review AI (aiteam review --auto)…" Cyan
+    & $exe @a 2>&1 | ForEach-Object { Say "  $_" }
+    $code = $LASTEXITCODE
+    $ErrorActionPreference = $eap
+    $json = $null; if (Test-Path $out) { try { $json = Read-Json $out } catch { } }
+    if ($code -eq 4) { return $null }
+    # Fail-safe: chỉ tin kết luận khi có file --out đúng định dạng và khớp mã thoát (aiteam cũ không có lệnh review ⇒ in hướng dẫn, mã 0).
+    $expect = @{ 0 = "PASS"; 1 = "CHANGES_REQUESTED"; 3 = "BLOCKED" }
+    if (-not $json -or -not $expect.ContainsKey([int]$code) -or $json.verdict -ne $expect[[int]$code]) {
+        Say "Review AI không ra kết luận hợp lệ (mã $code, file $out) ⇒ coi như BLOCKED, Claude review." Yellow
+        return [pscustomobject]@{ Code = 3; Json = $json; Out = $out }
+    }
+    [pscustomobject]@{ Code = $code; Json = $json; Out = $out }
 }
 
 # Agent hết hạn mức? Lần chạy báo SUCCESS thì không. Còn lại dò từ khóa, "429"/"quota" phải đứng riêng

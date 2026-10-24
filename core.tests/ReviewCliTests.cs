@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using AITeam.Core.Process;
 
 namespace AITeam.Core.Tests;
@@ -12,9 +12,9 @@ public sealed class ReviewCliTests : IDisposable
     [Fact]
     public async Task Missing_args_returns_2_and_auto_medium_task_returns_4_with_skip_json()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "AITeam.sln"))) dir = dir.Parent;
-        var dll = Path.Combine(dir!.FullName, "core", "AITeam.Cli", "bin", "Debug", "net10.0-windows", "aiteam.dll");
+        // aiteam.dll được chép kèm vào thư mục test (ProjectReference) ⇒ luôn là bản vừa build, không phụ thuộc thứ tự build.
+        var dll = Path.Combine(AppContext.BaseDirectory, "aiteam.dll");
+        Assert.True(File.Exists(dll), dll);
         var runner = new ProcessRunner();
 
         var r1 = await runner.RunAsync(new ProcessSpec("dotnet", [dll, "review", "--task-file", "x.md"], _tmp, null, TimeSpan.FromSeconds(30), null), CancellationToken.None);
