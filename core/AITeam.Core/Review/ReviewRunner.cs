@@ -59,6 +59,16 @@ public sealed class ReviewRunner
     /// </summary>
     public async Task<ReviewRunOutcome> RunAsync(ReviewRunInput input, CancellationToken ct)
     {
+        // Lỗi bất ngờ (thư mục log hỏng, provider ném lỗi…) ⇒ BLOCKED có lý do, vẫn ghi --out được — không bao giờ làm sập lệnh (Codex review V4-08).
+        try { return await RunCoreAsync(input, ct); }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return new ReviewRunOutcome(ExitBlocked, $"BLOCKED: lỗi khi review — {ex.GetType().Name}: {ex.Message}", [], null);
+        }
+    }
+
+    private async Task<ReviewRunOutcome> RunCoreAsync(ReviewRunInput input, CancellationToken ct)
+    {
         if (string.IsNullOrWhiteSpace(input.TaskFile) || !File.Exists(input.TaskFile))
             return new ReviewRunOutcome(ExitConfig, $"LỖI: không thấy file {input.TaskFile}", [], null);
         if (string.IsNullOrWhiteSpace(input.DiffFile) || !File.Exists(input.DiffFile))
