@@ -38,6 +38,12 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-005` để `team.ps1 reque
 | 01:27 | Thử API client MCP C# với PoC (CallToolAsync OK) ⇒ test nghiệm thu dùng client thật | |
 | 01:35 | Giao V5-01 (Minh): khung + 15 ca nghiệm thu (1 ca chạy thật aiteam mcp) | |
 | 01:32 | Giao V5-04 (Lan): khung OfficeBuilder + 11 ca nghiệm thu + trang dựng thật | song song |
+| 01:41 | V5-01: Codex review CẦN SỬA (giới hạn tin không khóa) ⇒ tự giao lại Minh sửa; Claude sửa đọc symlink | review AI chạy thật |
+| 01:44 | Merge V5-01 (vòng 1) | |
+| 01:47 | Review V5-04 ĐẠT vòng 1 (Claude sửa giờ bàn Claude [TK]; sửa team.ps1 trạng thái bảng việc sau cổng KT [CK]); merge | |
+| 01:49 | Claude: Văn phòng thành trang chủ `/`, Tổng quan chuyển `/Overview` | |
+| 01:51 | Claude: V5-02 assign đặt `.agents/mcp_config.json`; chạy thật với agy ⇒ tin "Minh (A)" vào MessageStore | |
+| 02:05 | Giao V5-05 (Lan): khung CommandService + 30 ca nghiệm thu (gồm chống CSRF, chạy tiến trình thật cmd.exe) | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
