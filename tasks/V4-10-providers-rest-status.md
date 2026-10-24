@@ -50,16 +50,26 @@ Sửa `Providers()` trong `Program.cs`:
 - **Điều chưa chắc:** Không có.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (24/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 3/3 ca nghiệm thu; 127 + 276 test; build 0 warning; ~5 phút, 1 lượt; 20/40 dòng.
+- **Lượt này thực tế do agy chạy, KHÔNG phải Codex** (log có conversation_id của agy, không có file `.codex.*`): trong `assign`, biến cục bộ `$dev` (thông tin developer) đè tham số `-Dev` vì PowerShell không phân biệt hoa thường ⇒ `-Dev codex` bị bỏ qua. Lần giao trước đó sập vì cùng biến này (null).
+- [TK] (công cụ) Claude thử riêng `Invoke-CodexDevelop` nhưng chưa thử cả lệnh `assign -Dev codex` trước khi giao. Đã sửa (đổi tên `$devInfo`) + rà toàn bộ team.ps1: không còn biến cục bộ nào đè tham số mà còn được đọc.
+- Code: đúng đặc tả, `--no-check` không gọi CLI ngoài, giờ in theo InvariantCulture.
+
+Nhân viên: agy dưới mã C (Codex sẽ thử lại ở V4-11) — 1 lượt, ~5 phút, 20/40 dòng.
 
 ## Kết quả
+- **Chức năng nhỏ:** `aiteam providers` hiện AI nào đang nghỉ tới giờ nào và vì sao; `--no-check` liệt kê nhanh không chạy thử từng AI.
+- **Kiểm chứng:** 3 ca nghiệm thu chạy CLI thật.
+- **Cần cải tiến:** thử lại luồng Codex viết code thật (V4-11).
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | Codex | | | | | |
-| 6. Review / QC | Cổng KT + Claude | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-004) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | ~5' | Task nhỏ có ích để thử luồng Codex | — | — |
+| 3. Plan / thiết kế | Claude | 5 | ~10' | Test CLI không gọi CLI ngoài, giờ bất biến văn hóa | — | — |
+| 4. Giao việc | Claude | 2 | ~10' | `-Dev codex` không có tác dụng (biến đè tham số); lần đầu còn sập | TK | Thử cả lệnh `assign` với tham số mới (dry run) trước khi giao thật; rà biến đè tham số |
+| 5. Thực hiện code | agy (mã C) | 5 | ~5' | Đúng đặc tả | — | — |
+| 6. Review / QC | Cổng KT + Claude | 4 | ~10' | Claude phát hiện nhờ đọc log (không có file .codex) | — | Cổng KT ghi rõ provider thật đã chạy |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~5' | — | — | — |
