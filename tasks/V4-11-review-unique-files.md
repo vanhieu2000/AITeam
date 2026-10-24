@@ -38,16 +38,16 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 (lượt sửa NU1900) |
+| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 (lượt trả về NU1900) |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 warning NU1900 (3 project, lặp restore/build), 14,07 giây. |
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error, không có chẩn đoán; chạy lại `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 NU1900 (3 project, lặp restore/build), 14,03 giây. |
 | Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
-| Xác minh kết nối NuGet — BỊ CHẶN | `curl.exe --noproxy '*' --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: exit 35, Schannel SEC_E_NO_CREDENTIALS; build vẫn không tải được chỉ mục NuGet. |
-- Đã đọc AGENTS.md và đúng hai file mục Đọc; Review (Claude) trống; mã hiện có dùng cùng stamp riêng cho prompt/schema/kết quả, giữ prompt/schema UTF-8 không BOM.
-- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md` để cập nhật bằng chứng; giữ nguyên trạng thái BOM UTF-8, không sửa mã nguồn hoặc test nghiệm thu.
-- Quyết định: không tắt audit hoặc ẩn NU1900; không sửa cấu hình ngoài phạm vi, không thay đổi cấu hình hệ thống. Dùng `-m:1` như lượt trước.
-- Điểm chặn còn lại: cần môi trường kết nối NuGet hoạt động để kiểm tra lỗ hổng; chưa đạt build 0 warning, không thể sửa lỗi kết nối bằng mã ReviewService trong phạm vi được giao.
-- Không chạy app/chụp ảnh, không chạy lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
+| Kết nối NuGet — BỊ CHẶN | `curl.exe --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: exit 7, không kết nối được proxy 127.0.0.1:9. |
+- Đã đọc AGENTS.md và hai file mục Đọc; Review (Claude) trống; ReviewService đã dùng cùng stamp riêng cho prompt/schema/kết quả và giữ prompt/schema UTF-8 không BOM.
+- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng; giữ nguyên BOM hiện có; không sửa mã nguồn hoặc test nghiệm thu.
+- Quyết định: dùng `-m:1` khi build mặc định thất bại không có chẩn đoán; không tắt audit, không ẩn cảnh báo, không sửa cấu hình ngoài phạm vi hoặc cấu hình máy.
+- Chưa xác minh được dữ liệu lỗ hổng NuGet; cần môi trường có kết nối NuGet hoạt động để đạt build 0 warning. Chưa hoàn thành yêu cầu sửa NU1900 trong môi trường này.
+- Không chạy app/chụp ảnh hoặc lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
 ## Review (Claude)
 
 ## Kết quả
