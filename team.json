@@ -13,7 +13,8 @@
   },
   "developers": [
     { "id": "A", "name": "Agent A", "focus": "Nền tảng: kiến trúc, build, đóng gói, CSDL, hạ tầng" },
-    { "id": "B", "name": "Agent B", "focus": "Tính năng: module, màn hình, nghiệp vụ" }
+    { "id": "B", "name": "Agent B", "focus": "Tính năng: module, màn hình, nghiệp vụ" },
+    { "id": "C", "name": "Agent C (Codex)", "focus": "Dự phòng: việc nhỏ khi Antigravity hết hạn mức (chạy bằng Codex CLI)" }
   ],
   "review": {
     "maxRounds": 3,

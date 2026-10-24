@@ -323,6 +323,8 @@ function Invoke-Assign {
     }
 
     $dev = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
+    # Mã agent chưa khai báo trong team.json (vd. C = Codex lần đầu, R-004) ⇒ mặc định, không để null làm sập assign.
+    if (-not $dev) { $dev = [pscustomobject]@{ id = $agentId; name = "Agent $agentId"; focus = "việc được giao trong file task" } }
     # Lưu ý riêng của nhân viên (rút ra từ các lần review trước) — staff/<mã>-*.md, mục "Lưu ý riêng".
     $staffNotes = ""
     $staffFile = Get-ChildItem (Join-Path $Root "staff") -Filter "$agentId-*.md" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -520,7 +522,7 @@ function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$bran
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Say "[$(Get-Date -Format HH:mm:ss)] $TaskName → Codex (aiteam run), thư mục $work" Cyan
     & $exe run --provider codex --workdir $work --prompt-file $pf --logdir (Join-Path $r.Logs "$TaskName.codex") --timeout-min $maxMin --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
-    $code = $LASTEXITCODE
+    $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
     $in = if ($j -and $j.inputTokens -ge 0) { [long]$j.inputTokens } else { 0 }
     $outTok = if ($j -and $j.outputTokens -ge 0) { [long]$j.outputTokens } else { 0 }
@@ -566,7 +568,7 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
     if ($verify) { $a += @("--verify-file", $verify.FullName) }
     Say "Review AI (aiteam review --auto)…" Cyan
     & $exe @a 2>&1 | ForEach-Object { Say "  $_" }
-    $code = $LASTEXITCODE
+    $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $ErrorActionPreference = $eap
     $json = $null; if (Test-Path $out) { try { $json = Read-Json $out } catch { } }
     if ($code -eq 4) { return $null }
