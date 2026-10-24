@@ -18,6 +18,7 @@
     <ProjectReference Include="..\core\AITeam.Core\AITeam.Core.csproj" />
     <!-- Test CLI chạy đúng aiteam.dll của bản build này (V4-08: tham chiếu thẳng bin\Debug bị dùng bản cũ). -->
     <ProjectReference Include="..\core\AITeam.Cli\AITeam.Cli.csproj" />
+    <PackageReference Include="ModelContextProtocol" Version="2.3.0" />
     <None Include="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
