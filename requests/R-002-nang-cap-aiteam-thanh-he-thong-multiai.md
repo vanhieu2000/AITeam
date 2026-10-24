@@ -1,4 +1,4 @@
-# R-002 · Nang cap AITeam thanh he thong multi-AI
+﻿# R-002 · Nang cap AITeam thanh he thong multi-AI
 
 - **Nhận lúc:** 23:16 23/10/2026 · máy DESKTOP-PP14EFS
 - **Trạng thái:** 🟡 Đang làm
@@ -19,7 +19,10 @@
 | P0-2 Provider adapter (agy, Codex) | AITeam | Claude | ~350 | — | Chốt hợp đồng provider |
 | V4-03 Codex review chỉ đọc | AITeam | Minh (A) | ~250 | mặc định | Khung + test nghiệm thu có sẵn |
 | V4-06 Trạng thái job + phục hồi | AITeam | Lan (B) | ~250 | mặc định | Khung + test nghiệm thu có sẵn |
-| P0-4/5 routing + cấm tự duyệt, P0-7 gắn vào assign, P0-8 Hub | AITeam | (sau V4-03/06) | | | |
+| V4-07 định tuyến (P0-4/5) | AITeam | Minh (A) | ~230 | mặc định | lớp thuần, 39 ca nghiệm thu |
+| V4-08 lệnh aiteam review (P0-3/7) | AITeam | Lan (B) | ~250 | mặc định | sau V4-07 |
+| P0-7 gắn review vào team.ps1 assign | AITeam | Claude | ~60 | | glue PowerShell |
+| P0-8 Hub hiện kết luận review | AITeam | (sau) | | | |
 
 Mỗi file task phải có dòng `- **Yêu cầu:** R-002` để `team.ps1 request-report` gom số liệu.
 

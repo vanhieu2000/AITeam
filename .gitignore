@@ -7,3 +7,4 @@ obj/
 *.user
 inbox.md.bak
 *.bak
+/.state/
