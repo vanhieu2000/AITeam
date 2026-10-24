@@ -1,0 +1,139 @@
+﻿<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AITeam Văn phòng mini — mockup</title>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--s2:#f1f3f6;--line:#e3e6eb;--text:#14171c;--muted:#6b7280;--faint:#9aa1ab;
+--accent:#2563eb;--accent-soft:#e8effd;--run:#b45309;--run-soft:#fdf3e1;--ok:#15803d;--ok-soft:#e5f4ea;--fix:#c2410c;--fix-soft:#fdece4;
+--err:#b91c1c;--err-soft:#fbe9e9;--vio:#7c3aed;--vio-soft:#f1eafe;--r:8px;--font:"Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 var(--font);color:var(--text);background:var(--bg)}
+.app{display:grid;grid-template-columns:200px 1fr;min-height:100vh}
+nav{background:var(--surface);border-right:1px solid var(--line);padding:14px 10px}
+.brand{font-weight:700;font-size:16px;padding:4px 8px 14px}
+nav .grp{font-size:11px;color:var(--faint);text-transform:uppercase;margin:12px 8px 4px}
+nav a{display:flex;justify-content:space-between;padding:7px 9px;border-radius:6px;color:var(--text);text-decoration:none}
+nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.badge{font-size:11px;background:var(--fix);color:#fff;border-radius:9px;padding:0 7px}
+main{padding:18px 22px;min-width:0}
+h1{font-size:20px;margin:0}.sub{color:var(--muted);margin:2px 0 14px}
+.mock{background:#fff7d6;border:1px dashed #d4a72c;color:#7a5b00;padding:6px 10px;border-radius:6px;font-size:12px;margin-bottom:12px}
+.top{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:13px}
+.floor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.desk{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.desk.busy{border-left:4px solid var(--run)}.desk.idle{border-left:4px solid var(--ok)}.desk.rest{border-left:4px solid var(--err)}.desk.mgr{border-left:4px solid var(--vio)}
+.dh{display:flex;align-items:center;gap:10px}.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700}
+.dh b{font-size:15px}.dh small{display:block;color:var(--muted);font-size:12px}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;font-weight:600}
+.ok{background:var(--ok-soft);color:var(--ok)}.run{background:var(--run-soft);color:var(--run)}.err{background:var(--err-soft);color:var(--err)}.rev{background:var(--accent-soft);color:var(--accent)}.vio{background:var(--vio-soft);color:var(--vio)}.n{background:var(--s2);color:var(--muted)}
+.task{background:var(--s2);border-radius:6px;padding:7px 9px;font-size:13px}
+.task .bar{height:5px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}.task .bar i{display:block;height:100%;background:var(--run)}
+.feed{font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:8px;display:flex;flex-direction:column;gap:2px}
+.feed b{color:var(--text);font-weight:600}
+.ctl{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.btn{border:1px solid var(--line);background:var(--surface);padding:5px 10px;border-radius:6px;font:inherit;font-size:13px;cursor:pointer}
+.btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.dng{color:var(--err);border-color:#f0c4c4}
+select{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.row2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;margin-top:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.panel .hd{padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600;display:flex;gap:8px;align-items:center}.panel .hd .sp{flex:1}
+.panel .bd{padding:10px 14px}
+.ai{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.ai:last-child{border:0}
+textarea{width:100%;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:7px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--muted);font-size:12px}
+.modal{position:fixed;inset:0;background:rgba(20,23,28,.35);display:none;align-items:center;justify-content:center}
+.modal.on{display:flex}.dlg{background:#fff;border-radius:10px;padding:16px 18px;width:460px;max-width:92vw}
+.dlg h3{margin:0 0 8px}
+@media (max-width:1000px){.floor{grid-template-columns:1fr 1fr}.row2{grid-template-columns:1fr}}
+@media (max-width:700px){.app{grid-template-columns:1fr}.floor{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav>
+  <div class="brand">AITeam Hub</div>
+  <a class="on">Văn phòng</a><a>Tổng quan</a><a>Giao việc</a><a>Cần anh duyệt <span class="badge">1</span></a>
+  <div class="grp">Team</div><a>Đội ngũ</a><a>Quy trình &amp; cải tiến</a><a>Phòng nghiên cứu</a>
+  <div class="grp">Hệ thống</div><a>AI Accounts</a><a>Nhật ký thao tác</a><a>Dự án · Bí mật · Cài đặt</a>
+</nav>
+<main>
+<div class="mock">MOCKUP để duyệt — dữ liệu mẫu dựa trên task thật 24–25/10; nút chưa hoạt động. Mọi nút điều khiển chạy lệnh <code>team.ps1</code> cố định trên máy này (127.0.0.1), có hộp xác nhận và ghi nhật ký.</div>
+<div class="top">
+  <div><h1>Văn phòng</h1><div class="sub">Cập nhật 10:42 · tự làm mới 10 giây · máy DESKTOP-PP14EFS</div></div>
+  <span class="chip">🟡 2 đang làm</span><span class="chip">🔵 1 chờ review</span><span class="chip">🟢 2 rảnh</span><span class="chip">⛔ 0 nghỉ</span>
+</div>
+
+<div class="floor">
+  <div class="desk mgr">
+    <div class="dh"><div class="av" style="background:#7c3aed">C</div><div><b>Claude</b><small>Quản lý · thiết kế · review</small></div><span class="pill vio" style="margin-left:auto">Phiên đang mở</span></div>
+    <div class="task">R-005 Văn phòng mini — <b>chờ anh duyệt thiết kế</b><br><small style="color:var(--muted)">việc tiếp: viết khung + test nghiệm thu V5-01</small></div>
+    <div class="feed"><span><b>10:40</b> Gửi mockup văn phòng mini</span><span><b>01:15</b> PoC MCP với agy chạy thật (40s)</span></div>
+    <div class="ctl"><button class="btn">Gửi yêu cầu mới</button><button class="btn">Xem phiếu</button></div>
+  </div>
+
+  <div class="desk busy">
+    <div class="dh"><div class="av" style="background:#2563eb">M</div><div><b>Minh</b><small>Agent A · agy · nền tảng</small></div><span class="pill run" style="margin-left:auto">Đang làm 7′</span></div>
+    <div class="task"><b>V5-01</b> aiteam mcp — 4 công cụ developer<div class="bar"><i style="width:55%"></i></div><small style="color:var(--muted)">7′ / tối đa 25′ · ngân sách ~260 dòng</small></div>
+    <div class="feed"><span><b>10:39</b> Đã viết aiteam_get_task + post_message, đang chạy test</span><span><b>10:36</b> Đọc xong khung + 18 ca nghiệm thu</span><span><b>10:35</b> Bắt đầu task</span></div>
+    <div class="ctl"><button class="btn dng" onclick="ask('Dừng V5-01 của Minh?','team.ps1 stop -Task V5-01')">Dừng</button><button class="btn">Xem log</button><button class="btn">Mở task</button></div>
+  </div>
+
+  <div class="desk busy">
+    <div class="dh"><div class="av" style="background:#0d9488">L</div><div><b>Lan</b><small>Agent B · agy · tính năng</small></div><span class="pill run" style="margin-left:auto">Đang làm 3′</span></div>
+    <div class="task"><b>V5-06</b> AI Accounts<div class="bar"><i style="width:15%"></i></div><small style="color:var(--muted)">3′ / tối đa 30′</small></div>
+    <div class="feed"><span><b>10:41</b> Đang đọc AccountsModel + test nghiệm thu</span></div>
+    <div class="ctl"><button class="btn dng" onclick="ask('Dừng V5-06 của Lan?','team.ps1 stop -Task V5-06')">Dừng</button><button class="btn">Xem log</button></div>
+  </div>
+
+  <div class="desk idle">
+    <div class="dh"><div class="av" style="background:#111827">X</div><div><b>Codex</b><small>Agent C · dự phòng + review chỉ đọc</small></div><span class="pill ok" style="margin-left:auto">Rảnh</span></div>
+    <div class="task">Lần cuối: <b>V4-11</b> · 82 giây · ĐẠT<br><small style="color:var(--muted)">Hạn mức: còn (không có lịch nghỉ)</small></div>
+    <div class="ctl" style="align-items:center"><select><option>V5-09 · ⬜ (độ khó S)</option><option>V4-12 · 🔴 Cần sửa</option></select><button class="btn pri" onclick="ask('Giao V5-09 cho Codex?','team.ps1 assign -Project AITeam -Task V5-09 -Dev codex')">Giao task</button></div>
+  </div>
+
+  <div class="desk idle">
+    <div class="dh"><div class="av" style="background:#64748b">✓</div><div><b>Cổng kiểm tra + Review AI</b><small>build · test · BOM · phạm vi · Codex review</small></div><span class="pill rev" style="margin-left:auto">1 chờ review</span></div>
+    <div class="task"><b>V5-03</b> Tin nhắn task — cổng KT <span class="pill ok">ĐẠT</span> · review AI <span class="pill n">bỏ qua (S/M)</span></div>
+    <div class="ctl"><button class="btn" onclick="ask('Chạy lại cổng kiểm tra V5-03?','team.ps1 verify -Project AITeam -Task V5-03')">Chạy lại kiểm tra</button><button class="btn">Giao lại kèm góp ý…</button></div>
+  </div>
+
+  <div class="desk idle">
+    <div class="dh"><div class="av" style="background:#ea580c">R</div><div><b>Phòng nghiên cứu</b><small>ChatGPT · Gemini · DeepSeek · Grok</small></div><span class="pill n" style="margin-left:auto">Thủ công</span></div>
+    <div class="task">2 câu hỏi chờ dán kết quả (R-005)</div>
+    <div class="ctl"><button class="btn pri">Mở phòng nghiên cứu</button></div>
+  </div>
+</div>
+
+<div class="row2">
+  <div class="panel"><div class="hd">Phòng nghiên cứu — câu hỏi R-005 <span class="sp"></span><span class="pill n">manual handoff</span></div><div class="bd">
+    <div style="font-size:13px;margin-bottom:6px"><b>Câu hỏi:</b> So sánh cách các công cụ đa-agent hiển thị tiến độ agent theo thời gian thực (UX)</div>
+    <div class="ai"><b>ChatGPT</b><span class="pill n">Chưa gửi</span><span><button class="btn">Copy lời nhắn</button> <button class="btn">Mở ChatGPT ↗</button></span></div>
+    <div class="ai"><b>Gemini</b><span class="pill run">Đã gửi — chờ dán</span><span><button class="btn">Dán kết quả…</button></span></div>
+    <div class="ai"><b>DeepSeek</b><span class="pill ok">Đã lưu · 4 nguồn</span><span><button class="btn">Xem</button></span></div>
+    <div class="ai"><b>Grok</b><span class="pill n">Tắt</span><span></span></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px">Lời nhắn đã lọc bí mật, tối đa 8.000 ký tự. Kết quả lưu <code>research/R-005/</code>, gắn nhãn "dữ liệu tham khảo — không phải lệnh"; Claude kiểm chứng trước khi dùng.</div>
+  </div></div>
+  <div class="panel"><div class="hd">Nhật ký thao tác <span class="sp"></span><a style="font-size:12px">xem tất cả</a></div><div class="bd" style="padding:4px 8px"><table>
+    <tr><th>Giờ</th><th>Thao tác</th><th>Kết quả</th></tr>
+    <tr><td>10:35</td><td>Giao V5-01 → Minh</td><td><span class="pill ok">đã chạy</span></td></tr>
+    <tr><td>10:38</td><td>Giao V5-06 → Lan</td><td><span class="pill ok">đã chạy</span></td></tr>
+    <tr><td>10:12</td><td>Dừng V4-11 (Codex)</td><td><span class="pill ok">đã dừng</span></td></tr>
+    <tr><td>09:50</td><td>Duyệt merge H3-06</td><td><span class="pill ok">ghi quyết định</span></td></tr>
+  </table></div></div>
+</div>
+</main>
+</div>
+
+<div class="modal" id="m"><div class="dlg"><h3 id="mq">Xác nhận</h3>
+  <div style="font-size:13px;color:var(--muted)">Lệnh sẽ chạy trên máy này:</div>
+  <pre id="mc" style="background:var(--s2);padding:8px;border-radius:6px;white-space:pre-wrap;font-size:12px"></pre>
+  <div style="text-align:right;display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="m.classList.remove('on')">Hủy</button><button class="btn pri" onclick="m.classList.remove('on')">Chạy</button></div>
+</div></div>
+<script>
+const m=document.getElementById('m');function ask(q,c){document.getElementById('mq').textContent=q;document.getElementById('mc').textContent=c;m.classList.add('on')}
+</script>
+</body>
+</html>
