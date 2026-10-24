@@ -38,15 +38,15 @@ Trong `ReviewService`:
 - [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm 2 ca nghiệm thu V4-11 và các test review cũ).
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 (lượt trả về NU1900 hiện tại) |
+| Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 (lượt sửa NU1900) |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 warning NU1900 (3 project, lặp ở restore/build), 14,18 giây. |
+| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln -m:1`: exit 0, 0 error, 6 warning NU1900 (3 project, lặp restore/build), 14,07 giây. |
 | Toàn bộ test, gồm 2 ca nghiệm thu V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289/289, Core 129/129; tổng 418 pass, 0 fail, 0 skip; 3 NU1900. |
-| Xác minh điểm chặn | `curl.exe --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: lệnh thất bại, curl báo (7), không kết nối được 127.0.0.1:9; HTTP_PROXY/HTTPS_PROXY/ALL_PROXY cùng trỏ proxy này. |
-- Đã đọc AGENTS.md và hai file được chỉ định; Review (Claude) trống; mã nguồn hiện có dùng cùng stamp cho prompt/schema/kết quả, giữ UTF-8 không BOM cho prompt/schema.
-- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật báo cáo, giữ nguyên trạng thái BOM UTF-8; không sửa mã nguồn hay test nghiệm thu.
-- Quyết định: dùng `-m:1` theo kết quả lượt trước; không tắt audit, ẩn NU1900, sửa cấu hình ngoài phạm vi hay vượt hạn chế mạng của sandbox.
-- Chưa đạt/điều chưa xác minh: build 0 warning cần môi trường truy cập NuGet hoạt động; không thể khắc phục proxy bằng mã ReviewService trong phạm vi task.
+| Xác minh kết nối NuGet — BỊ CHẶN | `curl.exe --noproxy '*' --head --connect-timeout 5 --max-time 15 https://api.nuget.org/v3/index.json`: exit 35, Schannel SEC_E_NO_CREDENTIALS; build vẫn không tải được chỉ mục NuGet. |
+- Đã đọc AGENTS.md và đúng hai file mục Đọc; Review (Claude) trống; mã hiện có dùng cùng stamp riêng cho prompt/schema/kết quả, giữ prompt/schema UTF-8 không BOM.
+- File đổi lượt này: chỉ `tasks/V4-11-review-unique-files.md` để cập nhật bằng chứng; giữ nguyên trạng thái BOM UTF-8, không sửa mã nguồn hoặc test nghiệm thu.
+- Quyết định: không tắt audit hoặc ẩn NU1900; không sửa cấu hình ngoài phạm vi, không thay đổi cấu hình hệ thống. Dùng `-m:1` như lượt trước.
+- Điểm chặn còn lại: cần môi trường kết nối NuGet hoạt động để kiểm tra lỗ hổng; chưa đạt build 0 warning, không thể sửa lỗi kết nối bằng mã ReviewService trong phạm vi được giao.
 - Không chạy app/chụp ảnh, không chạy lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng.
 ## Review (Claude)
 
