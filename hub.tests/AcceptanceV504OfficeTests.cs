@@ -183,7 +183,7 @@ public sealed class AcceptanceV504OfficeTests
     public void Razor_markup_follows_layout()
     {
         var page = Source(Path.Combine("hub", "Pages", "Office.cshtml"));
-        Assert.Contains("@page \"/Office\"", page);
+        Assert.Contains("@page \"/\"", page);   // Văn phòng là trang chủ (chủ dự án chọn 25/10)
         Assert.Contains("hx-get=\"?handler=Desks\"", page);
         Assert.Contains("every 10s", page);
         Assert.Contains("_OfficeDesks", page);
