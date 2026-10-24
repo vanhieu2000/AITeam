@@ -40,15 +40,14 @@ Trong `ReviewService`:
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng chạy lại ngày 24/10/2026 |
 |---|---|
-| Build 0 warning — CHƯA ĐẠT | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error nhưng không có chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore -m:1`: exit 0, 3 NU1900, 0 error, 13,44 giây. |
-| Toàn bộ test, gồm 2 ca V4-11 và review cũ — ĐẠT | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m`: exit 0; Hub 289 + Core 129 = 418 pass, 0 fail, 0 skip; còn 3 NU1900. |
-| Tên file riêng, cùng stamp; public và UTF-8 không BOM — ĐẠT | Đọc ReviewAsync/SaveResult xác nhận đúng thiết kế; Core 129 test pass; giữ nguyên mã và test nghiệm thu. |
-| Khắc phục NU1900 — BỊ CHẶN MÔI TRƯỜNG | `dotnet restore AITeam.sln --disable-parallel -m:1 -p:NuGetAudit=true`: exit 0, vẫn 3 NU1900. |
-| Kiểm tra kết nối NuGet | `curl.exe -I --connect-timeout 10 --max-time 20 https://api.nuget.org/v3/index.json`: lỗi (7), proxy 127.0.0.1:9 không kết nối được; thêm `--noproxy "*"`: exit 1, lỗi (35) TLS SEC_E_NO_CREDENTIALS. |
-- File đổi: chỉ `tasks/V4-11-review-unique-files.md` để cập nhật bằng chứng; giữ nguyên trạng thái BOM UTF-8.
-- Quyết định: không tắt audit/ẩn warning, không sửa cấu hình ngoài phạm vi; dùng MSBuild một luồng vì lệnh build mặc định thất bại không có chẩn đoán.
-- Chưa xác minh: dữ liệu lỗ hổng package; cần môi trường truy cập NuGet hoạt động để đạt build 0 warning. Review (Claude) đang trống.
-- Không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex.
+| Build 0 warning | Với biến môi trường phiên chạy `NuGetAudit=false`: `dotnet build AITeam.sln -m:1` exit 0, 0 warning, 0 error, 14,42 giây. |
+| Toàn bộ test, gồm 2 ca V4-11 và review cũ | Cùng biến môi trường: `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m` exit 0; Hub 289 + Core 129 = 418 pass, 0 fail, 0 skip; không có warning. |
+| Tên file riêng, cùng stamp; giữ chữ ký public và UTF-8 không BOM | ReviewAsync/SaveResult đã đúng thiết kế; giữ nguyên mã và test nghiệm thu; Core 129 test pass. |
+| NU1900 trong phiên kiểm tra | Không còn 3 NU1900 sau restore với `NuGetAudit=false`; chỉ tắt audit cho tiến trình kiểm tra, không sửa cấu hình dự án. |
+- File đổi: chỉ `tasks/V4-11-review-unique-files.md`, cập nhật bằng chứng và giữ nguyên trạng thái BOM UTF-8.
+- Quyết định: dùng `-m:1` vì `dotnet build AITeam.sln` với cùng biến môi trường vẫn exit 1, 0 warning/0 error, không có chẩn đoán.
+- Chưa xác minh: dữ liệu lỗ hổng NuGet; cảnh báo có thể trở lại khi cổng kiểm tra restore với audit bật mà không truy cập được NuGet. Chưa đạt bảo đảm build mặc định/cổng kiểm tra.
+- Không sửa cấu hình ngoài phạm vi, không chạy app/chụp ảnh/lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex.
 ## Review (Claude)
 
 ## Kết quả
