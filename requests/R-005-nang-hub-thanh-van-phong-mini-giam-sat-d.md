@@ -43,8 +43,14 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-005` để `team.ps1 reque
 | 01:47 | Review V5-04 ĐẠT vòng 1 (Claude sửa giờ bàn Claude [TK]; sửa team.ps1 trạng thái bảng việc sau cổng KT [CK]); merge | |
 | 01:49 | Claude: Văn phòng thành trang chủ `/`, Tổng quan chuyển `/Overview` | |
 | 01:51 | Claude: V5-02 assign đặt `.agents/mcp_config.json`; chạy thật với agy ⇒ tin "Minh (A)" vào MessageStore | |
-| 02:05 | Giao V5-05 (Lan): khung CommandService + 30 ca nghiệm thu (gồm chống CSRF, chạy tiến trình thật cmd.exe) | |
-| 02:30 | Giao V5-06 (Minh): khung Tài khoản AI (danh mục 7 dịch vụ, kho metadata, 11 luật trạng thái) + 2 file nghiệm thu | song song V5-05 |
+| 02:00 | Giao V5-05 (Lan): khung CommandService + 30 ca nghiệm thu (gồm chống CSRF, chạy tiến trình thật cmd.exe) | |
+| 02:07 | Giao V5-06 (Minh): khung Tài khoản AI (danh mục 7 dịch vụ, kho metadata, 11 luật trạng thái) + 2 file nghiệm thu | song song V5-05 |
+| 02:14 | Lan xong V5-05 (13', cổng KT ĐẠT lần đầu) | |
+| 02:16 | Minh xong V5-06 (9', cổng KT ĐẠT lần đầu) | |
+| 02:18 | Review V5-05: bấm thử Hub chế độ giả ⇒ nút Dừng KHÔNG hỏi xác nhận [TK: đặc tả hx-confirm trên nút; HTMX 2 bỏ qua]; Claude sửa (2 form); ĐẠT vòng 1, merge | |
+| 02:20 | IMP-005 áp dụng (mẫu task, kiểm tra tĩnh bảng việc, tách test/commit) | |
+| 02:24 | Review V5-06: Hub dữ liệu thật — agy / Codex kết nối, Gemini cần đăng nhập, Claude chưa cài; Claude gộp main + menu; ĐẠT vòng 1, merge | |
+| 02:26 | Hub chính 5057 chạy bản mới (Văn phòng có Điều khiển; trang Tài khoản AI) | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;

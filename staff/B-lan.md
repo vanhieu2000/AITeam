@@ -24,3 +24,5 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 | 24/10 | R-003 / H3-02 | 1 · 13′ · 1 · 370/330 | Đúng đặc tả, SVG chuẩn số thập phân bất biến | — | — |
 | 24/10 | R-002 / V4-08 | 1 · 7′ · 1 · ~330/220 | CLI đủ mã thoát, fail-safe đúng đặc tả | BOM (lần 1) · test CLI phụ thuộc thứ tự build | Test tiến trình con dùng ProjectReference |
 | 24/10 | R-004 / H3-06 | 1 · 12′ · 1 · 265/260 | Đúng đặc tả + bố cục; Kiểm tra provider thật chạy đúng | BOM (lần 2) | Lưu ý riêng đã thêm |
+| 25/10 | R-005 / V5-04 | 1 · 13′ · 1 · 354/330 | Đúng bố cục Văn phòng, giữ BOM (Lưu ý riêng có tác dụng) | — | Tốt |
+| 25/10 | R-005 / V5-05 | 1 · 13′ · 1 · 397/400 | Khóa toàn bộ Start, ArgumentList, log chỉ mở theo Id job | — (lỗi xác nhận nút Dừng do đặc tả Claude) | Tốt; BOM 2 task liền không tái phạm |
