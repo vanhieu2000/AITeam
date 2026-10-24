@@ -24,7 +24,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H3-02 Hub v3: trang Tổng quan (chỉ số, biểu đồ thời gian, nhiệm vụ)](H3-02-hub-overview-v3.md) | B | `agent-b/H3-02-hub-overview-v3` | ✅ Đã merge (vòng 1) |
 | [H3-04 Hub v3: trang Đội ngũ + Quy trình & cải tiến](H3-04-hub-team-process.md) | A | `agent-a/H3-04-hub-team-process` | ✅ Đã merge (vòng 1) |
 | [H3-05 Hub v3: trang Giao việc + tab Dòng thời gian / Đánh giá quy trình](H3-05-hub-requests-task-tabs.md) | A | `agent-a/H3-05-hub-requests-task-tabs` | ✅ Đã merge (vòng 1) |
-| [V4-07 Định tuyến provider (cấm tự duyệt, nghỉ khi hết hạn mức)](V4-07-provider-routing.md) | A | `agent-a/V4-07-provider-routing` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 08:28 24/10/2026 |
+| [V4-07 Định tuyến provider (cấm tự duyệt, nghỉ khi hết hạn mức)](V4-07-provider-routing.md) | A | `agent-a/V4-07-provider-routing` | ✅ Đã merge (vòng 1) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
