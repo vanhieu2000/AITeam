@@ -32,7 +32,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V4-11 ReviewService: tên file riêng mỗi lần review (Codex làm)](V4-11-review-unique-files.md) | C | `agent-c/V4-11-review-unique-files` | ✅ Đã merge (vòng 1) |
 | [V5-01 MCP Gateway: aiteam mcp](V5-01-mcp-gateway.md) | A | `agent-a/V5-01-mcp-gateway` | ✅ Đã merge (vòng 1) |
 | [V5-04 Hub: trang Văn phòng](V5-04-hub-office.md) | B | `agent-b/V5-04-hub-office` | ✅ Đã merge (vòng 1) |
-| [V5-05 Hub: nút điều khiển Văn phòng](V5-05-hub-control.md) | B | `agent-b/V5-05-hub-control` | 🔵 Chờ review · cổng KT ĐẠT |
+| [V5-05 Hub: nút điều khiển Văn phòng](V5-05-hub-control.md) | B | `agent-b/V5-05-hub-control` | ✅ Đã merge (vòng 1) |
 | [V5-06 Tài khoản AI](V5-06-ai-accounts.md) | A | `agent-a/V5-06-ai-accounts` | 🔵 Chờ review · cổng KT ĐẠT |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
