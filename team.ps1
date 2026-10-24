@@ -445,6 +445,8 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         return
     }
     Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $false)
+    # Bảng việc theo kết quả cổng KT (dòng này từng bị mất ⇒ task xong vẫn hiện 🟡 trên bảng / Văn phòng — R-005). Review AI bên dưới có thể ghi đè.
+    Set-BoardStatus $r $Task $(if ($v.Ok) { "🔵 Chờ review · cổng KT ĐẠT" } else { "🔴 Cần sửa · cổng KT KHÔNG ĐẠT" })
     # P0-7 (R-002): cổng KT đạt ⇒ review AI tự động (chỉ task Độ khó L hoặc "Review AI: có" — Codex hạn mức nhỏ).
     if ($v.Ok) {
         $rv = Invoke-AutoReview $r $taskFile.Name $work $devProvider
