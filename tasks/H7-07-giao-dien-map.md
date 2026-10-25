@@ -1,4 +1,4 @@
-﻿# H7-07 · Giao diện Map
+# H7-07 · Giao diện Map
 
 - **Agent:** B
 - **Nhánh:** `agent-b/H7-07-giao-dien-map`
@@ -99,10 +99,12 @@ Hoàn thiện khung `MapModel.OnGet()` và `OnPost()`, dựng Razor và CSS cụ
 - **Quyết định tự đưa ra:** Dùng RegexOptions.IgnoreCase và StringComparison.OrdinalIgnoreCase cho tiền tố Roles; dùng int.TryParse chặn số vượt Int32; không commit file test mới vào hub.tests để tuân thủ phạm vi task.
 - **Chưa chắc:** Kiểm tra giao diện trực quan 1280x800/1000px trên trình duyệt thật (bàn giao Claude nghiệm thu ở bước 7).
 ## Review (Claude)
-<!-- Claude điền khi review. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Lan 2 vòng (sửa 2 điểm QC: textarea xuống dòng đầu, …); cổng KT ĐẠT; Codex QC PASS 0 phát hiện.
+- Claude mở Hub giả 1000×800: `/Map` 11 nghiệp vụ, mỗi dòng chọn 6 tác nhân, không tràn ngang.
 
 ## Kết quả
-<!-- Claude điền khi đạt. -->
+- **Chức năng mới — trang Map** (`/Map`): gán thủ công tác nhân + ghi chú quyền hạn cho 11 nghiệp vụ từ tiếp nhận tới publish git; lưu team.json (workflow.roles).
 
 ## Đánh giá quy trình
 <!-- Claude điền sau nghiệm thu. -->
