@@ -35,7 +35,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V5-05 Hub: nút điều khiển Văn phòng](V5-05-hub-control.md) | B | `agent-b/V5-05-hub-control` | ✅ Đã merge (vòng 1) |
 | [V5-06 Tài khoản AI](V5-06-ai-accounts.md) | A | `agent-a/V5-06-ai-accounts` | ✅ Đã merge (vòng 1) |
 | [V5-07a Phòng nghiên cứu (lõi)](V5-07a-research-core.md) | A | `agent-a/V5-07a-research-core` | ✅ Đã merge (vòng 1) |
-| [V5-07b Hub: Phòng nghiên cứu](V5-07b-research-page.md) | B | `agent-b/V5-07b-research-page` | 🔵 Chờ review · cổng KT ĐẠT |
+| [V5-07b Hub: Phòng nghiên cứu](V5-07b-research-page.md) | B | `agent-b/V5-07b-research-page` | ✅ Đã merge (vòng 1) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
