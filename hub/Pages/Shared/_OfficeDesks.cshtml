@@ -77,6 +77,12 @@
                         }
                     </div>
                 }
+                @if (d.Key == "research")
+                {
+                    <div class="row" style="margin-top:auto">
+                        <a class="btn sm pri" href="/Research">Mở phòng nghiên cứu</a>
+                    </div>
+                }
                 @if (d.Task is { } tf && !string.IsNullOrEmpty(tf.Project))
                 {
                     <div class="row" style="gap:6px; margin-top:auto; flex-wrap:wrap">

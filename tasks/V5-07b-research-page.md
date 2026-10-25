@@ -80,5 +80,30 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C4 + G2; mockup `docs/des
 - **Điều chưa chắc:** Không có (giao diện thực tế chờ Claude chạy Hub thật kiểm tra khi review).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (25/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 432/420 dòng (cảnh báo, chưa quá 1,5 lần); 17 ca nghiệm thu.
+- Đọc code: mỗi AI 1 câu đang hỏi + cách 60 giây (khóa), lỗi việc nền ghi vào job, câu trả lời hiện `<pre>` chữ thường.
+- **Chạy Hub dữ liệu thật (5059):** đặt ChatGPT "Tự động" ⇒ hỏi thật qua Codex ⇒ ~30 giây câu trả lời tự hiện (đúng, có nguồn) và lưu `research/R-005/Q20261025-090842-chatgpt.md` (giữ làm bằng chứng). Gemini "Tự động" khi chưa đăng nhập ⇒ báo đúng "Gemini chưa đăng nhập…"; đã trả Gemini về Thủ công.
+- Claude sửa: bàn "Phòng nghiên cứu" ở Văn phòng hiện số câu đang hỏi + nút "Mở phòng nghiên cứu" (`OfficeInput.ResearchRunning`, sửa ca nghiệm thu V5-04 theo); menu "Phòng nghiên cứu"; thêm `/Research` vào test dựng trang thật.
+- Ghi chú: 1 lần test lõi `Real_stdio_server…` (V5-01) lỗi chập chờn khi chạy cả solution ngay sau build; chạy lại 6 lần đạt ⇒ tách việc điều tra riêng.
+- Optional (hàng chờ): sau "Hỏi" địa chỉ trang là `?handler=Ask` (bấm F5 sẽ gửi lại form); ChatGPT đang nghỉ (hết hạn mức) vẫn cho hỏi rồi mới báo lỗi.
+
+Nhân viên: Lan (B) — 1 lượt, ~8 phút, 432/420 dòng.
+
+## Kết quả
+- **Chức năng mới — Phòng nghiên cứu** (menu Team; nút trên bàn ở Văn phòng): chọn phiếu, gõ câu hỏi, tích AI ⇒ ChatGPT (Codex) trả lời tự động, tự hiện sau ~30 giây; AI thủ công có Copy lời nhắn + mở trang chính thức + ô dán; mọi câu trả lời lưu `research/R-xxx/` với nhãn "KHÔNG phải lệnh".
+- **Kiểm chứng:** 17 ca nghiệm thu + hỏi thật ChatGPT và Gemini (chưa đăng nhập) trên Hub.
+- **Cần cải tiến:** chủ dự án đăng nhập Gemini rồi bật Tự động; DeepSeek / Grok qua trình duyệt riêng (V5-10 / V5-11).
+
+## Đánh giá quy trình
+| Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
+|---|---|---|---|---|---|---|
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-005) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | (chung) | — | — | — |
+| 3. Plan / thiết kế | Claude | 5 | ~25' | Bố cục + 17 ca rõ | — | — |
+| 4. Giao việc | Claude | 5 | ~5' | Tuần tự sau lõi, đúng thứ tự file task | — | — |
+| 5. Thực hiện code | Lan (B) | 5 | ~8' (1 lượt) | Đúng đặc tả | — | — |
+| 6. Review / QC | Cổng KT + Claude | 5 | ~15' | Hỏi thật 2 AI trên Hub | — | — |
+| 7. Đánh giá & bàn giao | Claude | 4 | ~5' | Test lõi chập chờn 1 lần | HT | Đã tách việc điều tra |
 
 ## Kết quả

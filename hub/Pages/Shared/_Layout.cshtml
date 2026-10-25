@@ -17,7 +17,8 @@
     var isProcessActive = currentPage.Equals("/Process", StringComparison.OrdinalIgnoreCase);
     var isRequestsActive = currentPage.Equals("/Requests", StringComparison.OrdinalIgnoreCase);
     var isProvidersActive = currentPage.Equals("/Providers", StringComparison.OrdinalIgnoreCase);
-    var isAiAccountsActive = currentPage.Equals("/AiAccounts", StringComparison.OrdinalIgnoreCase);
+    var isResearchActive = currentPage.Equals("/Research", StringComparison.OrdinalIgnoreCase);
+    var isAiAccountsActive =currentPage.Equals("/AiAccounts", StringComparison.OrdinalIgnoreCase);
     var pendingApprovals = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending);
 
     var reqTheme = Context.Request.Query["theme"].ToString();
@@ -137,6 +138,12 @@
                     <path d="M2 13.5h12M4 11V7M8 11V4M12 11V8.5"/>
                 </svg>
                 <span>Quy trình &amp; cải tiến</span>
+            </a>
+            <a href="/Research" class="nav @(isResearchActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/>
+                </svg>
+                <span>Phòng nghiên cứu</span>
             </a>            <a href="/Agents" class="nav @(isAgentsActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="8" cy="5.5" r="2.5"/>

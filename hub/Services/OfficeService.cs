@@ -18,13 +18,16 @@ public sealed class OfficeService : IOfficeService
     private readonly IAgentRunService _runs;
     private readonly IRequestService _requests;
 
-    public OfficeService(HubPaths paths, ITeamConfigService config, ITaskBoardService board, IAgentRunService runs, IRequestService requests)
+    private readonly IResearchService? _research;
+
+    public OfficeService(HubPaths paths, ITeamConfigService config, ITaskBoardService board, IAgentRunService runs, IRequestService requests, IResearchService? research = null)
     {
         _paths = paths;
         _config = config;
         _board = board;
         _runs = runs;
         _requests = requests;
+        _research = research;
     }
 
     /// <summary>
@@ -80,7 +83,9 @@ public sealed class OfficeService : IOfficeService
         }
         catch { }
 
-        return OfficeBuilder.Build(new OfficeInput(DateTime.Now, staff, tasks, running, rests, GetMessages, currentReq));
+        int researchRunning = 0;
+        try { researchRunning = _research?.RunningCount() ?? 0; } catch { }
+        return OfficeBuilder.Build(new OfficeInput(DateTime.Now, staff, tasks, running, rests, GetMessages, currentReq, researchRunning));
     }
 
 

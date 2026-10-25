@@ -129,7 +129,10 @@ public sealed class AcceptanceV504OfficeTests
     public void Research_desk_placeholder()
     {
         var r = OfficeBuilder.Build(Input()).Desks.Last();
-        Assert.Equal(("research", "Phòng nghiên cứu", DeskState.Idle, "Sắp có (V5-07)"), (r.Key, r.Name, r.State, r.StateText));
+        Assert.Equal(("research", "Phòng nghiên cứu", DeskState.Idle, "Rảnh"), (r.Key, r.Name, r.State, r.StateText));
+        var busy = OfficeBuilder.Build(Input() with { ResearchRunning = 2 }).Desks.Last();
+        Assert.Equal((DeskState.Working, "2 câu đang hỏi"), (busy.State, busy.StateText));
+        Assert.Equal(2, OfficeBuilder.Build(Input() with { ResearchRunning = 2 }).Working);   // bàn nghiên cứu không tính vào đếm agent (V5-07, Claude sửa)
     }
 
     [Theory]
