@@ -78,6 +78,27 @@ public sealed class MapModel(IWorkflowRolesService service) : PageModel
             return Page();
         }
 
+        if (Request.HasFormContentType)
+        {
+            foreach (var key in Request.Form.Keys)
+            {
+                if (key.StartsWith("Roles[", StringComparison.Ordinal))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(key, @"^Roles\[(\d+)\]\.(Code|Actor|Note)$");
+                    if (!match.Success || int.Parse(match.Groups[1].Value) >= 11)
+                    {
+                        Error = "Phân vai không hợp lệ.";
+                        return Page();
+                    }
+                }
+                else if (key.StartsWith("Roles", StringComparison.Ordinal))
+                {
+                    Error = "Phân vai không hợp lệ.";
+                    return Page();
+                }
+            }
+        }
+
         var seenCodes = new HashSet<string>(StringComparer.Ordinal);
         var roleList = new List<WorkflowRole>(11);
         foreach (var r in Roles)

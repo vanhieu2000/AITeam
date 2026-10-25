@@ -50,7 +50,7 @@
                                     </select>
                                 </td>
                                 <td class="col-note">
-                                    <textarea id="@($"role_note_{i}")" name="Roles[@i].Note" maxlength="500" aria-label="@($"Ghi chú quyền hạn {label}")" class="map-note" rows="1">@role.Note</textarea>
+                                    <textarea id="@($"role_note_{i}")" name="Roles[@i].Note" maxlength="500" aria-label="@($"Ghi chú quyền hạn {label}")" class="map-note" rows="1">@Html.Raw("\n")@role.Note</textarea>
                                 </td>
                             </tr>
                         }
