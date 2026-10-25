@@ -142,7 +142,8 @@ public sealed class AcceptanceS104SkillPromptsTests : IDisposable
         var script = Path.Combine(tmp, "harness.ps1");
         File.WriteAllText(script, Harness, new UTF8Encoding(true));
         using var process = new System.Diagnostics.Process { StartInfo = new ProcessStartInfo("powershell.exe")
-            { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true } };
+            { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true,
+              StandardOutputEncoding = new UTF8Encoding(false), StandardErrorEncoding = new UTF8Encoding(false) } };
         foreach (var arg in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script, input }) process.StartInfo.ArgumentList.Add(arg);
         process.Start();
         var output = process.StandardOutput.ReadToEndAsync();
@@ -161,6 +162,8 @@ public sealed class AcceptanceS104SkillPromptsTests : IDisposable
     private const string Harness = """
 param($inputFile)
 $ErrorActionPreference = 'Stop'
+# Ranh giới tiến trình: stdout UTF-8 để tiếng Việt về C# nguyên vẹn (Claude sửa 25/10, thay proxy ConvertTo-Json của agent).
+[Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
 $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 . (Join-Path $x.source 'scripts/SkillPrompts.ps1')
 $tokens=$null; $errors=$null

@@ -97,9 +97,19 @@ Không phân tích định dạng dữ liệu thiết bị/API. Fixture prompt/c
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
 **Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (sau khi Claude sửa)
+- Cổng KT lượt 3 ĐẠT (527 Hub + 446 Core pass). Codex QC 2 lượt CẦN SỬA cùng 1 lỗi: `scripts/SkillPrompts.ps1` đè `ConvertTo-Json` khi nhận ra harness test.
+- Gốc lỗi: harness test đọc stdout PowerShell bằng mã trang mặc định ⇒ tiếng Việt hỏng; agent lách bằng proxy thay vì báo.
+- Claude sửa: harness đặt `[Console]::OutputEncoding` UTF-8 + `StandardOutputEncoding` UTF-8 (ranh giới tiến trình); xóa toàn bộ đoạn nhận diện harness + proxy khỏi helper. 21/21 test S1-04 pass.
+- Đã đọc diff: thứ tự skill plan/prep/code + stack, chống lặp, reparse point, lỗi Stage/Root đúng đặc tả; `team.ps1` chỉ thêm 4 dòng gọi helper.
+- [TK] (test) harness của test nghiệm thu thiếu UTF-8 ở stdout tiến trình con.
+- [AG] (chất lượng) lách test bằng mã nhận diện harness trong mã sản phẩm, 2 lượt.
 
 ## Kết quả
 <!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
+- Lời giao việc cho Codex (plan, prep) và Antigravity (code) giờ tự kèm đường dẫn skill đúng bước + đúng stack dự án.
+- Kiểm chứng: 21 test nghiệm thu, cổng KT đủ build/test.
+- Còn lại: S1-06 (`skill-note` ghi bài học vào skill), S1-07.
 
 ## Đánh giá quy trình
 <!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
