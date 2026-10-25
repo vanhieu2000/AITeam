@@ -28,6 +28,11 @@ catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException o
     Console.Error.WriteLine($"LỖI cấu hình: {ex.Message}");
     return 2;
 }
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"LỖI: {ex.Message}");
+    return 1;
+}
 
 async Task<int> Providers()
 {
@@ -123,7 +128,7 @@ int ReviewRounds()
     try
     {
         var dirInfo = new DirectoryInfo(logsDir);
-        if (dirInfo.Exists && (dirInfo.Attributes & FileAttributes.ReparsePoint) == 0)
+        if (dirInfo.Exists && !HasReparsePointInPath(dirInfo))
         {
             string prefix = taskId + ".review-";
             string suffix = ".json";
@@ -158,6 +163,25 @@ int ReviewRounds()
     int count = ReviewRoundCounter.Count(taskContent, logsList);
     Console.WriteLine(count);
     return 0;
+
+    static bool HasReparsePointInPath(DirectoryInfo dir)
+    {
+        try
+        {
+            var current = new DirectoryInfo(dir.FullName);
+            while (current != null)
+            {
+                if (current.Exists && (current.Attributes & FileAttributes.ReparsePoint) != 0)
+                    return true;
+                current = current.Parent;
+            }
+        }
+        catch
+        {
+            return true;
+        }
+        return false;
+    }
 
     static bool IsValidTaskId(string id)
     {

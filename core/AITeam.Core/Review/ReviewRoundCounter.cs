@@ -1,39 +1,10 @@
-﻿using System.Runtime.InteropServices;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace AITeam.Core.Review;
 
 /// <summary>Đếm vòng review từ nội dung đã nạp; không đọc file, cấu hình hay gọi provider.</summary>
 public static class ReviewRoundCounter
 {
-    static ReviewRoundCounter()
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            try
-            {
-                var temp = Environment.GetEnvironmentVariable("TEMP");
-                if (!string.IsNullOrEmpty(temp) && !temp.StartsWith(@"\\?\"))
-                {
-                    SetEnvironmentVariableWin32("TEMP", @"\\?\" + temp);
-                    Environment.SetEnvironmentVariable("TEMP", @"\\?\" + temp);
-                }
-                var tmp = Environment.GetEnvironmentVariable("TMP");
-                if (!string.IsNullOrEmpty(tmp) && !tmp.StartsWith(@"\\?\"))
-                {
-                    SetEnvironmentVariableWin32("TMP", @"\\?\" + tmp);
-                    Environment.SetEnvironmentVariable("TMP", @"\\?\" + tmp);
-                }
-            }
-            catch
-            {
-            }
-        }
-    }
-
-    [DllImport("kernel32.dll", EntryPoint = "SetEnvironmentVariableW", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern bool SetEnvironmentVariableWin32(string lpName, string? lpValue);
-
     /// <summary>
     /// Trả số tiêu đề cấp 3 "### Vòng N" (N là dãy chữ số ASCII, có thể có hậu tố)
     /// trong mục "## Review (Claude)" đầu tiên đến tiêu đề cấp 2 tiếp theo, cộng số JSON
@@ -147,10 +118,15 @@ public static class ReviewRoundCounter
             // Kiểm tra tiêu đề cấp 2 ngoài khối mã: bắt đầu bằng "##" theo sau là khoảng trắng hoặc kết thúc chuỗi
             if (trimmed.StartsWith("## ", StringComparison.Ordinal) || trimmed == "##")
             {
+                string title = trimmed.Length > 2 ? trimmed.Substring(2).Trim() : "";
+                while (title.EndsWith('#'))
+                {
+                    title = title.Substring(0, title.Length - 1).TrimEnd();
+                }
+
                 if (reviewSectionState == 0)
                 {
-                    string headingTitle = trimmed.Substring(2).TrimStart();
-                    if (headingTitle.StartsWith("Review (Claude)", StringComparison.Ordinal))
+                    if (title == "Review (Claude)")
                     {
                         reviewSectionState = 1;
                     }

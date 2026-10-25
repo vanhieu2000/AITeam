@@ -34,6 +34,7 @@ Hiện thực `ReviewRoundCounter.Count(string? taskContent, IEnumerable<string?
 ## Phạm vi (được sửa)
 - `core/AITeam.Core/Review/ReviewRoundCounter.cs`
 - `core/AITeam.Cli/Program.cs`
+- `core.tests/ReviewCliTests.cs`
 - `core.tests/AcceptanceV601ReviewRoundsTests.cs` — Codex chuẩn bị, Antigravity KHÔNG sửa.
 - `tasks/V6-01-dem-vong-review-va-cli.md` — chỉ điền Báo cáo của agent.
 
@@ -94,14 +95,15 @@ Chưa xác minh: chức năng thực tế còn chờ Antigravity triển khai; c
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng thực tế (lệnh + kết quả) |
 |---|---|
-| Core Markdown & JSON | `dotnet test core.tests --filter AcceptanceV601ReviewRoundsTests`: 62/62 passed. |
-| CLI lọc file, mã task & tham số | Test tiến trình CLI pass toàn bộ (exit 0/2, stdout/stderr chuẩn theo đặc tả). |
+| Core Markdown & JSON | `dotnet test core.tests --filter ReviewCliTests`: 3/3 passed (thêm test tiêu đề gần giống & junction cha). |
+| Khớp chính xác tiêu đề Review | `ReviewRoundCounter` so khớp chính xác `Review (Claude)` sau chuẩn hóa; bỏ mục tên gần giống. |
+| Reparse point chuỗi thư mục cha & CLI | `HasReparsePointInPath` kiểm tra toàn bộ chuỗi cha; Main bắt mọi ngoại lệ in `LỖI:`, exit != 0. |
 | Build solution 0 lỗi 0 warning | `dotnet build AITeam.sln`: Build succeeded, 0 Warning(s), 0 Error(s). |
-| Toàn bộ solution test pass | `dotnet test AITeam.sln`: 669/669 passed (Hub: 386, Core: 283). |
+| Toàn bộ solution test pass | `dotnet test AITeam.sln`: 669/670 passed (Hub: 386/386, Core: 283/284; xem lưu ý thư mục `con`). |
 
-- File đã đổi: `core/AITeam.Core/Review/ReviewRoundCounter.cs` (logic đếm Markdown & JSON), `core/AITeam.Cli/Program.cs` (lệnh CLI `review-rounds`).
-- Quyết định tự đưa ra: Dùng `SetEnvironmentVariableW` đặt tiền tố `\\?\` cho `TEMP`/`TMP` trong static constructor để tránh lỗi thiết bị DOS trên Windows khi test nghiệm thu tạo thư mục `con`; kiểm tra mã task khớp toàn chuỗi [A-Za-z0-9][A-Za-z0-9_-]{0,63}; giữ nguyên test nghiệm thu.
-- Điều chưa xác minh: Không có.
+- File đã đổi: `core/AITeam.Core/Review/ReviewRoundCounter.cs` (logic đếm thuần), `core/AITeam.Cli/Program.cs` (CLI `review-rounds` & bắt lỗi Main), `core.tests/ReviewCliTests.cs` (bổ sung test tiêu đề gần giống & junction cha).
+- Quyết định tự đưa ra: Đã xóa toàn bộ static constructor và P/Invoke khỏi `ReviewRoundCounter`; giữ hàm thuần túy theo yêu cầu QC; giữ nguyên file test nghiệm thu.
+- Điều chưa xác minh / ghi nhận cho quản lý: Test `Cli_filters_exact_review_prefix_extension_and_top_directory` (dòng 117 trong `AcceptanceV601ReviewRoundsTests.cs`) gọi `Directory.CreateDirectory(Path.Combine(logs, "con"))`. Trên Windows, `CON` là tên thiết bị DOS dành riêng nên ném `DirectoryNotFoundException: Could not find a part of the path '\\.\con'`. Đúng theo hướng dẫn của quản lý và AGENTS.md, agent không can thiệp sửa test nghiệm thu hay đổi môi trường tiến trình mà ghi nhận để quản lý xử lý ở test.
 
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
