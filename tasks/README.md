@@ -56,7 +56,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-05 Parser tiến độ và quy tắc chuyển bước](W1-05-parser-tien-do-va-quy-tac-chuyen-buoc.md) | B | `agent-b/W1-05-parser-tien-do-va-quy-tac-chuyen-buoc` | ✅ Đã merge (vòng 4) |
 | [W1-02 Helper dựng trang Hub](W1-02-helper-dung-trang-hub.md) | B | `agent-b/W1-02-helper-dung-trang-hub` | ✅ Đã merge (vòng 3) |
 | [V8-03 Gói nghiệm thu và quyết định một lệnh](V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh.md) | A | `agent-a/V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh` | 🔴 Cần sửa · cổng KT KHÔNG ĐẠT |
-| [W1-06 Dịch vụ tổng hợp việc theo dự án](W1-06-dich-vu-tong-hop-viec-theo-du-an.md) | B | `agent-b/W1-06-dich-vu-tong-hop-viec-theo-du-an` | ⬜ Chưa giao |
+| [W1-06 Dịch vụ tổng hợp việc theo dự án](W1-06-dich-vu-tong-hop-viec-theo-du-an.md) | B | `agent-b/W1-06-dich-vu-tong-hop-viec-theo-du-an` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 00:40 26/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
