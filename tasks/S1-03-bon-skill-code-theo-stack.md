@@ -1,4 +1,4 @@
-﻿# S1-03 · Bốn skill code theo stack
+# S1-03 · Bốn skill code theo stack
 
 - **Agent:** A
 - **Nhánh:** `agent-a/S1-03-bon-skill-code-theo-stack`
@@ -77,8 +77,10 @@ Nguồn: đã đọc năm skill gốc được chỉ định và bốn mục MAU
 Chưa xác minh: runtime/Designer/ảnh giao diện và code HDVTool/ChinaAndroidToolbox ngoài phạm vi; không chạy app. `quick_validate.py` không chạy được do thiếu Python (mã 9009); đã kiểm cấu trúc/BOM bằng PowerShell và 16 test nghiệm thu.
 Lưu ý kiểm tra: lần test riêng đầu dùng --no-build trả 0 nhưng không in số test, không dùng làm bằng chứng pass; số 16 ở trên là lần chạy sau build thành công.
 ## Review (Claude)
-<!-- Claude điền sau bước thực hiện. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Codex viết nội dung skill (assign -Dev codex); cổng KT ĐẠT; QC BLOCKED đúng luật (Codex không tự duyệt) ⇒ Claude xem cấu trúc: đủ 7–8 mục bắt buộc, ≤ 150 dòng, có ví dụ tốt/xấu + nguồn.
+- Optional (hàng chờ): bổ sung quy ước THẬT từ code HDVTool / ChinaAndroidToolbox / Hub vào skill code (lần này Codex chưa đọc vì ngoài danh sách file).
 
 ## Kết quả
-<!-- Claude điền khi review đạt. -->
+- Bộ skill S1-03 có trong `skills/`; S1-04 / S1-05 sẽ tự gắn skill vào lời nhắn từng bước.
 
