@@ -103,8 +103,8 @@ public sealed class AcceptanceV506AiAccountsTests : IDisposable
     {
         var probe = AiAccountsService.DefaultProbe(_env.Paths);
         Assert.Equal(new ProviderHealth("deepseek", false, null, "Chưa có connector tự động"), await probe("deepseek", CancellationToken.None));
-        var gem = await probe("gemini", CancellationToken.None);
-        Assert.Equal("gemini", gem.ProviderId);
+        var cl = await probe("claude", CancellationToken.None);   // gemini nay qua agy (chạy thật) ⇒ thử claude: chỉ xem PATH
+        Assert.Equal("claude", cl.ProviderId);
     }
 
     // ───────────── Trang ─────────────

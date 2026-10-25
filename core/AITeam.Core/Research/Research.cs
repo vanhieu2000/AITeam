@@ -244,12 +244,13 @@ public sealed class ResearchStore(string aiteamRoot)
 /// <summary>
 /// ChatGPT qua Codex CLI: provider.RunAsync(new AgentRunRequest(workDir, promptFile, RunMode.ReadOnly, timeout)) trong một thư mục TẠM RỖNG
 /// (Path.GetTempPath()/aiteam-research-{guid}; AI không đọc được repo), promptFile = file trong thư mục đó (UTF-8 không BOM).
-/// Ok = result.Ok; Text = result.Text.Trim(); Error: Ok ⇒ ""; NotLoggedIn ⇒ "Codex chưa đăng nhập (chạy `codex login`)";
-/// QuotaExhausted ⇒ "Codex hết hạn mức: " + Detail; TimedOut ⇒ "Quá thời gian"; khác ⇒ "Lỗi: " + Detail (dòng đầu, ≤ 300 ký tự).
+/// Ok = result.Ok; Text = result.Text.Trim(); Error: Ok ⇒ ""; NotLoggedIn ⇒ "{providerName} chưa đăng nhập ({loginHint})" (mặc định Codex / chạy `codex login`);
+/// QuotaExhausted ⇒ "{providerName} hết hạn mức: " + Detail; TimedOut ⇒ "Quá thời gian"; khác ⇒ "Lỗi: " + Detail (dòng đầu, ≤ 300 ký tự).
 /// Luôn xóa thư mục tạm (finally). Lỗi ném ra từ provider ⇒ Ok false, Status Failed, Error "Lỗi: " + ex.Message (riêng OperationCanceledException ném lại).
 /// onResult (nếu có) nhận AgentRunResult gốc (Hub dùng để ghi trạng thái nghỉ của provider).
 /// </summary>
-public sealed class ProviderResearchConnector(string ai, string via, IAgentProvider provider, TimeSpan timeout, Action<AgentRunResult>? onResult = null) : IResearchConnector
+public sealed class ProviderResearchConnector(string ai, string via, IAgentProvider provider, TimeSpan timeout, Action<AgentRunResult>? onResult = null,
+    string providerName = "Codex", string loginHint = "chạy `codex login`") : IResearchConnector
 {
     public string Ai => ai;
     public string Via => via;
@@ -268,8 +269,8 @@ public sealed class ProviderResearchConnector(string ai, string via, IAgentProvi
             var err = res.Status switch
             {
                 RunStatus.Succeeded => "",
-                RunStatus.NotLoggedIn => "Codex chưa đăng nhập (chạy `codex login`)",
-                RunStatus.QuotaExhausted => "Codex hết hạn mức: " + ResearchPrompt.FirstLine(res.Detail),
+                RunStatus.NotLoggedIn => $"{providerName} chưa đăng nhập ({loginHint})",
+                RunStatus.QuotaExhausted => $"{providerName} hết hạn mức: " + ResearchPrompt.FirstLine(res.Detail),
                 RunStatus.TimedOut => "Quá thời gian",
                 _ => "Lỗi: " + ResearchPrompt.FirstLine(res.Detail),
             };

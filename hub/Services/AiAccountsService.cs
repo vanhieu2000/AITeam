@@ -115,17 +115,17 @@ public sealed class AiAccountsService : IAiAccountsService
 
     /// <summary>
     /// Kiểm tra thật theo id:
-    ///   "antigravity" ⇒ provider "agy", "codex" / "chatgpt" ⇒ provider "codex" — lấy từ ProviderSettings.Load(AITeamRoot) rồi
+    ///   "antigravity" / "gemini" ⇒ provider "agy", "codex" / "chatgpt" ⇒ provider "codex" — lấy từ ProviderSettings.Load(AITeamRoot) rồi
     ///     settings.Create(cfg, new ProcessRunner()).CheckAsync(ct) (không có trong cấu hình ⇒ ProviderHealth(id, false, null, "Chưa cấu hình provider {pid}"));
-    ///   "gemini" ⇒ CliProbes.Gemini(PATH, paths.UserProfile); "claude" ⇒ CliProbes.Claude(PATH) (PATH = Environment.GetEnvironmentVariable("PATH"));
+    ///   "claude" ⇒ CliProbes.Claude(PATH) (PATH = Environment.GetEnvironmentVariable("PATH"));
     ///   khác ⇒ ProviderHealth(id, false, null, "Chưa có connector tự động").
     /// </summary>
     public static Func<string, CancellationToken, Task<ProviderHealth>> DefaultProbe(HubPaths paths) => async (id, ct) =>
     {
         var key = (id ?? "").ToLowerInvariant();
-        if (key is "antigravity" or "codex" or "chatgpt")
+        if (key is "antigravity" or "gemini" or "codex" or "chatgpt")
         {
-            var pid = key == "antigravity" ? "agy" : "codex";
+            var pid = key is "antigravity" or "gemini" ? "agy" : "codex";
             var settings = ProviderSettings.Load(paths.AITeamRoot);
             var cfg = settings.Providers.FirstOrDefault(p => string.Equals(p.Id, pid, StringComparison.OrdinalIgnoreCase));
             if (cfg == null) return new ProviderHealth(key, false, null, $"Chưa cấu hình provider {pid}");
@@ -134,7 +134,6 @@ public sealed class AiAccountsService : IAiAccountsService
         var pathEnv = Environment.GetEnvironmentVariable("PATH");
         return key switch
         {
-            "gemini" => CliProbes.Gemini(pathEnv, paths.UserProfile),
             "claude" => CliProbes.Claude(pathEnv),
             _ => new ProviderHealth(key, false, null, "Chưa có connector tự động"),
         };

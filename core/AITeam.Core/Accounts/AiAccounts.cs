@@ -33,8 +33,9 @@ public static class AiCatalog
             "Chạy `codex login` trong terminal.", AiMode.Automatic, true, "codex"),
         new("chatgpt", "ChatGPT", "Phòng nghiên cứu", "codex CLI (tài khoản ChatGPT)", "https://chatgpt.com",
             "Dùng chung đăng nhập Codex: `codex login`.", AiMode.Manual, true, "codex"),
-        new("gemini", "Gemini", "Phòng nghiên cứu", "gemini CLI", "https://gemini.google.com",
-            "Chạy `gemini` trong terminal, chọn Login with Google.", AiMode.Manual, true, null),
+        // 25/10/2026: Gemini CLI báo IneligibleTierError với tài khoản Google cá nhân miễn phí ("migrate to Antigravity") ⇒ hỏi Gemini qua agy.
+        new("gemini", "Gemini", "Phòng nghiên cứu", "Antigravity (agy · model Gemini)", "https://gemini.google.com",
+            "Dùng chung đăng nhập Antigravity (trang Tài khoản Antigravity). Gemini CLI không còn nhận tài khoản cá nhân miễn phí.", AiMode.Manual, true, "agy"),
         new("claude", "Claude", "Quản lý (phiên Claude Code) · CLI tùy chọn", "claude CLI", "https://claude.ai",
             "Tùy chọn: cài Claude Code CLI rồi chạy `claude` để đăng nhập (dùng chung hạn mức với phiên quản lý).", AiMode.Disabled, true, null),
         new("deepseek", "DeepSeek", "Phòng nghiên cứu", "trình duyệt riêng của AITeam (V5-10)", "https://chat.deepseek.com",

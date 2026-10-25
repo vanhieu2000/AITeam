@@ -123,7 +123,7 @@ public sealed class AcceptanceV506AccountsTests : IDisposable
         new object?[] { "antigravity", AiMode.Automatic, Probe(true, true), null, true, AiStatus.Busy, "Đang chạy việc" },
         new object?[] { "antigravity", AiMode.Automatic, new AiCheck(null, "Quá 30 giây", Now), null, false, AiStatus.Error, "Lỗi kiểm tra" },
         new object?[] { "antigravity", AiMode.Automatic, NotChecked, null, false, AiStatus.Disconnected, "Chưa kiểm tra" },
-        new object?[] { "gemini", AiMode.Automatic, Probe(false, null), null, false, AiStatus.Unsupported, "Chưa cài gemini CLI" },
+        new object?[] { "gemini", AiMode.Automatic, Probe(false, null), null, false, AiStatus.Unsupported, "Chưa cài Antigravity (agy · model Gemini)" },
         new object?[] { "gemini", AiMode.Automatic, Probe(true, false), null, false, AiStatus.LoginRequired, "Cần đăng nhập" },
         new object?[] { "claude", AiMode.Automatic, Probe(true, null), null, false, AiStatus.Disconnected, "Chưa xác minh đăng nhập" },
     };
