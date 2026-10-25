@@ -109,7 +109,7 @@ File đã đổi và lý do: `hub.tests/Support/HubTestHost.cs` (dựng Kestrel 
 
 Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` cho `FormTagHelper`; viết `SafeDisposeAsync` dọn từng instance riêng biệt (cả `IAsyncDisposable` và `IDisposable`) ở cả `HubTestHost` và `HubPageRenderer` để lỗi `Dispose`/`DisposeAsync` không che lỗi gốc và tiếp tục dọn các instance còn lại; đặt `HubHelpersCleanupRegressionTests` trong `HubPageRenderer.cs` để không sửa test nghiệm thu và giữ đúng danh sách file trong phạm vi.
 
-Điều chưa chắc / chưa xác minh: Lỗi cổng KT lượt 3 là `AcceptanceV601ReviewRoundsTests.Invalid_task_id_returns_exact_error` (máy quá tải, quản lý chạy lại riêng: PASS).
+Điều chưa chắc / chưa xác minh: lỗi cổng KT lượt 3 là `AcceptanceV601ReviewRoundsTests.Invalid_task_id_returns_exact_error` (máy quá tải, quản lý chạy lại riêng: PASS); lượt 5 gặp MSB3491 lock tạm ở bin/obj, đã chạy lại build/test sạch ở lượt 6.
 
 ## Review (Claude)
 <!-- Claude điền sau khi review. -->
