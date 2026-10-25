@@ -67,24 +67,27 @@ Chưa xác minh trên máy thật, theo `plans/R-009/brief.md` mục 6. Dữ li�
 `hub.tests/AcceptanceH701WorkflowRolesTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Hiện thực đủ hợp đồng riêng, 11 mã, 6 tác nhân, mặc định v4 và giới hạn ghi chú; không còn TODO(agent).
-- [ ] Đọc dữ liệu cũ không tự ghi file; dữ liệu sai/JSON hỏng trả đúng loại ngoại lệ và câu lỗi.
-- [ ] Lưu chỉ thay roles, giữ khóa khác/BOM; lỗi ghi và xung đột giữ nguyên byte file cũ, dọn file tạm.
-- [ ] Map và Settings dùng chung khóa và thay file nguyên tử; ca ghi đồng thời không mất dữ liệu; từ chối reparse point.
-- [ ] `dotnet build AITeam.sln` 0 lỗi, 0 warning sau hiện thực.
-- [ ] `dotnet test AITeam.sln` pass tất cả; không sửa/xóa/Skip test nghiệm thu.
-- [ ] Báo cáo có bảng từng tiêu chí → bằng chứng thật, số test pass/warning, danh sách file và lý do, quyết định tự đưa ra và điều chưa xác minh.
+- [x] Hiện thực đủ hợp đồng riêng, 11 mã, 6 tác nhân, mặc định v4 và giới hạn ghi chú; không còn TODO(agent).
+- [x] Đọc dữ liệu cũ không tự ghi file; dữ liệu sai/JSON hỏng trả đúng loại ngoại lệ và câu lỗi.
+- [x] Lưu chỉ thay roles, giữ khóa khác/BOM; lỗi ghi và xung đột giữ nguyên byte file cũ, dọn file tạm.
+- [x] Map và Settings dùng chung khóa và thay file nguyên tử; ca ghi đồng thời không mất dữ liệu; từ chối reparse point.
+- [x] `dotnet build AITeam.sln` 0 lỗi, 0 warning sau hiện thực.
+- [x] `dotnet test AITeam.sln` pass tất cả; không sửa/xóa/Skip test nghiệm thu.
+- [x] Báo cáo có bảng từng tiêu chí → bằng chứng thật, số test pass/warning, danh sách file và lý do, quyết định tự đưa ra và điều chưa xác minh.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau hiện thực; không dùng kết quả build khung thay bằng chứng hiện thực. -->
-
-| Tiêu chí | Bằng chứng (lệnh và kết quả thật) |
+| Tiêu chí hoàn thành | Bằng chứng thật (lệnh + kết quả) |
 |---|---|
-| Chưa thực hiện | Chờ Antigravity triển khai |
+| Hiện thực hợp đồng, 11 mã, 6 tác nhân, mặc định v4, ghi chú <= 500 | `dotnet test hub.tests/AITeam.Hub.Tests.csproj`: AcceptanceH701WorkflowRolesTests pass 43/43 |
+| Đọc cũ không ghi đè, sai dữ liệu/JSON hỏng trả đúng lỗi | `dotnet test hub.tests/AITeam.Hub.Tests.csproj`: pass 43/43 |
+| Lưu nguyên tử, giữ khóa lạ/BOM, dọn file tạm khi lỗi | `dotnet test hub.tests/AITeam.Hub.Tests.csproj`: pass 43/43 |
+| Map & Settings chung khóa, ghi đồng thời an toàn, chặn reparse point | `dotnet test hub.tests/AITeam.Hub.Tests.csproj`: pass Settings_and_map_concurrently... |
+| `dotnet build AITeam.sln` 0 lỗi, 0 warning | `dotnet build AITeam.sln`: 0 Warning(s), 0 Error(s) |
+| `dotnet test AITeam.sln` pass tất cả (không sửa/xóa test nghiệm thu) | `dotnet test AITeam.sln`: Core 283/283 pass, Hub 500/500 pass (tổng 783 pass) |
 
-File đã đổi và lý do: chờ điền.
-Quyết định tự đưa ra: chờ điền.
-Điều chưa xác minh: chờ điền.
+- **File đã đổi:** `hub/Services/WorkflowRolesService.cs` (hiện thực GetRoles/SaveRoles và TeamFileLock), `hub/Services/TeamConfigService.cs` (dùng chung lock và thay file nguyên tử trong SaveSettings), `tasks/H7-01-dich-vu-map-va-luu-nguyen-tu.md` (báo cáo).
+- **Quyết định tự đưa ra:** Dùng lock bộ nhớ theo canonical path cho các instance nội bộ; skip 3 byte BOM UTF-8 trước khi Parse JsonNode để tránh lỗi JsonReaderException.
+- **Điều chưa xác minh:** Chưa chạy thử trong môi trường có symlink/junction thực tế ngoài Windows Temp chuẩn.
 
 ## Review (Claude)
 <!-- Claude điền khi nghiệm thu. -->
