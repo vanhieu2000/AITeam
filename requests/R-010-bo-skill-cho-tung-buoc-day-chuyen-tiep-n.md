@@ -1,7 +1,7 @@
 # R-010 · Bộ skill cho từng bước dây chuyền (tiếp nhận → publish git) + skill code WinForms / web / app, tự cập nhật sau đánh giá
 
 - **Nhận lúc:** 12:33 25/10/2026 · máy DESKTOP-PP14EFS
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong 25/10
 - **Lời chủ dự án:**
   > và cần xây dựng bộ skill (giao cho codex làm ) cho từng côn gvieejc từ tiếp nahanj ý tưởng đến khi keiemr cuối và pull git. chứ trọng vào code nữa cần nghiên cứu kĩ code winform và cần những gì , code web hay app thì cần gì , về winform và web thì tôi nhứo tô iddax tạo skill cho bạn rồi hãy chia sẻ . tôi nghĩ các phần đều có skill thì ai sẽ làm chuẩn theo task nhỏ để ít bị sai . và sau mỗi lần đánh giá cần tiến hay gì cũng cập nhật vào bộ skill đó thì sẽ heieu jquar hơn nheieuf
 
@@ -50,19 +50,24 @@ Sự kiện cần ghi:
 - 2026-10-25 18:22:12 +07:00 | S1-06 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:S1-06:Assign:1 -->
 - 2026-10-25 18:34:51 +07:00 | S1-06 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:S1-06:Verify:2 -->
 - 2026-10-25 18:59:57 +07:00 | S1-06 | Merge | lượt 1 | ĐẠT <!-- workflow:S1-06:Merge:1 -->
+- 2026-10-25 19:14:29 +07:00 | S1-07 | Prep | lượt 1 | ĐẠT <!-- workflow:S1-07:Prep:1 -->
+- 2026-10-25 19:40:20 +07:00 | S1-07 | Verify | lượt 1 | ĐẠT <!-- workflow:S1-07:Verify:1 -->
+- 2026-10-25 19:41:10 +07:00 | S1-07 | Qc | lượt 1 | BLOCKED <!-- workflow:S1-07:Qc:1 -->
+- 2026-10-25 19:41:19 +07:00 | S1-07 | Assign | lượt 1 | ĐẠT <!-- workflow:S1-07:Assign:1 -->
+- 2026-10-25 19:52:38 +07:00 | S1-07 | Merge | lượt 1 | ĐẠT <!-- workflow:S1-07:Merge:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-010`, rồi điền:
 
 | Chỉ số | Giá trị |
 |---|---|
-| Tổng thời gian (nhận → báo xong) | |
+| Tổng thời gian (nhận → báo xong) | 12:33 → ~19:00 25/10 (~6,5 giờ, xen R-008/R-009) |
 | Thời gian Claude (phân tích + thiết kế + review + tự sửa) | |
-| Thời gian agent (cộng mọi lượt) | |
-| Thời gian chờ không ai làm (vd. chờ hạn mức, chờ chủ dự án) | |
-| Số lượt agent / số vòng review | |
-| Dòng code / ngân sách | |
-| Claude tự sửa: số lần / tổng dòng | |
-| Lỗi theo nguyên nhân: TK / AG / CK | |
+| Thời gian agent (cộng mọi lượt) | 212,7 phút · 12,2M token (S1-05 78′, S1-04 65′) |
+| Thời gian chờ không ai làm (vd. chờ hạn mức, chờ chủ dự án) | Antigravity hết hạn mức từ ~17:40 ⇒ Codex code dự phòng S1-06/S1-07 |
+| Số lượt agent / số vòng review | 17 lượt / 8 task đạt vòng 1 (sau Claude sửa) |
+| Dòng code / ngân sách | S1-05 1744/220 và S1-04 783/280 vượt (agent thêm mã lách test); còn lại dưới ngân sách |
+| Claude tự sửa: số lần / tổng dòng | 5 lần / ~80 dòng (S1-04 harness, S1-06 harness ×3, S1-07 helper accept + test-verify, journal BOM) |
+| Lỗi theo nguyên nhân: TK / AG / CK | 4 / 1 / 2 (TK: harness UTF-8, harness CLIXML/ReadOnly, thiếu hợp đồng accept, projects.json; AG: lách test; CK: verify không chạy test-verify, merge push trước clone sạch) |
 
 **Đánh giá nhân viên** (chi tiết ghi thêm vào `staff/<mã>-<tên>.md`):
 
@@ -73,8 +78,9 @@ Dán kết quả `.\team.ps1 request-report -Request R-010`, rồi điền:
 - Kỹ thuật (công cụ, build, cổng kiểm tra, môi trường, model):
 - Quy trình (thiết kế, chia task, giao việc, review, phối hợp 2 máy):
 - Quản lý (Claude: lỗi TK, quyết định sai, chậm review):
-- **Tốn thời gian nhất ở đâu:**
-- **Cái gì làm tốt (giữ lại):**
+- **Tốn thời gian nhất ở đâu:** test nghiệm thu do Codex viết sai ở ranh giới tiến trình (mã hóa, CLIXML, ReadOnly) ⇒ agent lách hoặc đỏ hàng loạt.
+- **Cái gì làm tốt (giữ lại):** Codex QC bắt đúng mã lách test + chỗ hở kế hoạch; Codex dự phòng khi hết hạn mức Antigravity viết đúng ngay.
 - **Cải tiến quy trình áp dụng cho yêu cầu sau** (tối đa 2, cụ thể, sửa file nào):
-  1.
-- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có / chưa
+  1. Cổng KT chạy `tools/test-verify.ps1` khi diff chạm `team.ps1` / `tools/` / `scripts/` (V8-03).
+  2. `merge`: test clone sạch TRƯỚC khi push main (V8-03). Mẫu codex-prep đã thêm luật harness PowerShell.
+- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có

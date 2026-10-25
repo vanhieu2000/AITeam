@@ -84,3 +84,4 @@ Chia 3 task lõi và đầu ra CLI; mỗi task ≤400 dòng triển khai, dự k
 - Gói nghiệm thu > 40 dòng: in 40 dòng đầu (ưu tiên phát hiện bắt buộc còn mở) + dòng "Gói nghiệm thu vượt 40 dòng — đầy đủ: <đường dẫn>"; ghi bản đầy đủ ra logs.
 - Cảnh báo "bước chỉ đọc làm thay đổi file" của `plan` báo nhầm khi tiến trình khác commit cùng lúc ⇒ V8-01 so `git status` chỉ trên file KHÔNG được commit bởi team.ps1 trong lúc chạy (hoặc so HEAD + status), thêm 1 ca test.
 - V6-02 (R-006, chặn quá 3 vòng review) vẫn chờ: giao sau V8-01 vì cùng sửa `team.ps1`.
+- Bổ sung 25/10 (Claude, từ đánh giá R-010) cho V8-03: (1) cổng KT chạy `tools/test-verify.ps1` khi diff chạm `team.ps1` / `tools/` / `scripts/`; (2) `merge` chạy build+test clone sạch TRƯỚC khi push main, đỏ thì không push. ĐÃ DUYỆT.
