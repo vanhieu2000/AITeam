@@ -96,7 +96,14 @@ Ghi chú chạy: test riêng ban đầu kẹt ở build không in kết quả, �
 ## Review (Claude)
 <!-- Claude điền sau khi coder hoàn thành. -->
 
+### Vòng 1 — ĐẠT (sau khi Claude sửa test)
+- Antigravity hết hạn mức (429) ⇒ Codex viết code dự phòng. Cổng KT 2 lượt KHÔNG ĐẠT chỉ do lỗi harness test nghiệm thu, không do code.
+- Claude sửa test: (1) `-EncodedCommand` làm stderr thành CLIXML ⇒ chạy `-File` script tạm; (2) Dispose bỏ cờ ReadOnly của object git trước khi xóa; (3) biến thể CRLF+BOM+giữa trùng fixture ⇒ `commit --allow-empty`. 51/51 pass.
+- Đọc code `scripts/SkillNotes.ps1`: chặn ID/DOS/reparse, chống trùng ordinal trong mục, chèn byte giữ BOM/CRLF, chỉ stage + commit đúng file, không push.
+- [TK] (test) harness S1-06 dùng -EncodedCommand + xóa repo git tạm không bỏ ReadOnly + biến thể trùng fixture.
 ## Kết quả
+- Có lệnh `team.ps1 skill-note -Skill <id> -Text "…" [-Source IMP-xxx]`: ghi 1 bài học vào mục Lỗi hay gặp của skill rồi tự commit (không push), lặp lại không ghi trùng.
+- Kiểm chứng: 51 test nghiệm thu.
 <!-- Claude điền khi review đạt. -->
 
 ## Đánh giá quy trình

@@ -38,7 +38,7 @@ public sealed class AcceptanceS106SkillNotesTests
         if (!middle) original = original[..next].TrimEnd('\r', '\n');
         File.WriteAllText(area.SkillFile, original, new UTF8Encoding(bom));
         await area.Git("add", "--", RelativeSkill);
-        await area.Git("commit", "-m", "Đặt biến thể fixture");
+        await area.Git("commit", "--allow-empty", "-m", "Đặt biến thể fixture"); // biến thể trùng fixture gốc ⇒ commit rỗng (Claude sửa 25/10)
         var head = await area.Git("rev-parse", "HEAD");
         var result = await area.Note(Id, "  Giữ nguyên\t tiếng Việt và dữ liệu cũ.  ", "  IMP-106  ");
         Assert.Equal(0, result.Code);
@@ -268,9 +268,14 @@ public sealed class AcceptanceS106SkillNotesTests
     private static string Quote(string value) => "'" + value.Replace("'", "''") + "'";
     private record Result(int Code, string Output, string Error);
 
-    private static Task<Result> RunPowerShell(string root, string script) => Run(root, "powershell.exe",
-        "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand",
-        Convert.ToBase64String(Encoding.Unicode.GetBytes("[Console]::OutputEncoding = New-Object Text.UTF8Encoding $false; $ErrorActionPreference='Stop'; " + script)));
+    // Chạy bằng -File (script tạm ngoài root): -EncodedCommand làm stderr thành CLIXML "Preparing modules…" (Claude sửa 25/10).
+    private static async Task<Result> RunPowerShell(string root, string script)
+    {
+        var file = Path.Combine(Path.GetTempPath(), "S106-run-" + Guid.NewGuid().ToString("N") + ".ps1");
+        await File.WriteAllTextAsync(file, "[Console]::OutputEncoding = New-Object Text.UTF8Encoding $false; $ErrorActionPreference='Stop'\r\n" + script, new UTF8Encoding(true));
+        try { return await Run(root, "powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", file); }
+        finally { File.Delete(file); }
+    }
 
     private static async Task<Result> Run(string root, string exe, params string[] args)
     {
@@ -346,6 +351,13 @@ public sealed class AcceptanceS106SkillNotesTests
             Assert.Equal(head, await Git("rev-parse", "HEAD"));
             Assert.Equal(index, await Git("diff", "--cached", "--binary"));
         }
-        public void Dispose() => Directory.Delete(Root, true);
+        // File object của git là chỉ-đọc ⇒ bỏ cờ ReadOnly trước khi xóa (Claude sửa 25/10).
+        public void Dispose()
+        {
+            if (!Directory.Exists(Root)) return;
+            foreach (var f in Directory.EnumerateFiles(Root, "*", SearchOption.AllDirectories))
+                File.SetAttributes(f, FileAttributes.Normal);
+            Directory.Delete(Root, true);
+        }
     }
 }
