@@ -109,7 +109,15 @@ Chưa xác minh: full solution pass, toàn bộ hồi quy test-verify, clean-clo
 ## Review (Claude)
 <!-- Claude điền khi nghiệm thu. -->
 
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code)
+- Cổng KT lượt 7: build 0 warning, Hub 527/527, Core 557/557 (gồm 38 ca V8-02). Mục "ngoài phạm vi" `core.tests/AcceptanceS104SkillPromptsTests.cs`: quản lý yêu cầu Codex sửa harness S1-04 cùng gốc lỗi ⇒ CHẤP NHẬN.
+- Gốc 13–17 test đỏ trước đó: harness test tự dựng sai (đọc ExitCode trước khi chờ, `$action` bị tham số `-Action` che ⇒ đệ quy); Codex chuyển sang `TestShell`, giữ nguyên assert.
+- Đọc diff `team.ps1`: `pipeline` worker riêng mỗi task, bộ đếm riêng, khóa Codex chỉ lúc prep/QC, fetch lỗi thì dừng, không merge; `assign -NoVerify` trả kết quả cho pipeline.
+- [TK] (test) harness V8-02 tự viết thay vì dùng helper chung (nay bắt buộc `TestShell`).
+- [CK] (chất lượng) mã model agy cũ bị gỡ + Opus hết lượt ⇒ 2 lượt agent không chạy, cổng KT vẫn build/giao lại.
 ## Kết quả
+- Có lệnh `team.ps1 pipeline -Request R-xxx`: tự chạy các task theo thứ tự phụ thuộc trong plan (prep → code → cổng KT → QC), mỗi task 1 dòng trạng thái, không merge.
+- Kiểm chứng: 38 test nghiệm thu + toàn bộ 1084 test.
 <!-- Claude điền khi review ĐẠT. -->
 
 ## Đánh giá quy trình
