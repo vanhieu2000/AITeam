@@ -1,6 +1,7 @@
 BƯỚC 4 của quy trình v4 (chia việc): bạn (Codex) chuẩn bị 1 task cho lập trình viên Antigravity. Bạn viết ĐẶC TẢ + KHUNG CODE + TEST NGHIỆM THU — KHÔNG viết phần thân hàm (để `throw new NotImplementedException(); // TODO(agent)`).
 
 Làm trong thư mục hiện tại (worktree của nhánh task). KHÔNG chạy lệnh git (hệ thống tự commit).
+TIẾT KIỆM TOKEN (bắt buộc): CHỈ đọc `AGENTS.md`, `templates/task.md`, các file trong "Phạm vi" của kế hoạch và tối đa 5 file mã liên quan trực tiếp (giao diện / lớp được gọi). KHÔNG quét cả repo, không đọc file task / phiếu cũ, không đọc thư mục bin/obj/logs. Chạy build tối đa 2 lần.
 
 1. Điền file `{TASKFILE}` (đã có khung từ templates/task.md, giữ nguyên các dòng Agent / Nhánh / Yêu cầu / Review AI ở đầu):
    - "## Tóm tắt" (3–5 gạch lời thường, có chức năng mới cho người dùng không), "## Đọc (CHỈ những file này)", "## Phạm vi (được sửa)" (đường dẫn trong backtick), "## Không làm", "## Ràng buộc", "## Tiêu chí hoàn thành";
