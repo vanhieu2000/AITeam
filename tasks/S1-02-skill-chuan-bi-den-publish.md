@@ -1,4 +1,4 @@
-﻿# S1-02 · Skill chuẩn bị đến publish
+# S1-02 · Skill chuẩn bị đến publish
 
 - **Agent:** B
 - **Nhánh:** `agent-b/S1-02-skill-chuan-bi-den-publish`
@@ -81,20 +81,28 @@ Khung Markdown đã có mục; agent phải thay TODO bằng nội dung, không 
 - Không chạy git theo yêu cầu; hệ thống tự commit. Các file tạo mới lưu UTF-8 BOM.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau khi hoàn thiện:
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-Ghi số test pass/fail, số warning, commit được kiểm; file đã đổi/lý do, quyết định, điều chưa xác minh.
--->
+| Sáu skill đủ mục, nguồn, ví dụ, không placeholder | PowerShell ReadAllLines/Regex: 6/6 file đủ 7 mục, 0 placeholder; test nghiệm thu 19/19 pass. |
+| Chính sách, phân quyền, thứ tự publish | Đã đối chiếu task: KT/QC/trực quan riêng; quyền/private → duyệt đúng commit → bản merge → clone sạch → build/test → push; test nghiệm thu 19/19 pass. |
+| Giới hạn dòng và phạm vi | PowerShell: 35/35/35/36/35/38 dòng, tổng 214 ≤360, BOM=True cả sáu; chỉ sửa sáu skill và mục báo cáo này, không sửa test. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1 -nodeReuse:false`: mã 0, 0 warning, 0 error. |
+| Toàn bộ test | `dotnet test AITeam.sln --no-build --no-restore -m:1 -nodeReuse:false --blame-hang-timeout 2m`: mã 0; Hub 457 + Core 302 = 759 pass, 0 fail, 0 skip. |
+| 19 ca nghiệm thu bất biến | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS102SkillWorkflowTests" --blame-hang-timeout 2m -m:1 -nodeReuse:false`: mã 0, 19 pass/0 fail/0 skip. |
+| Báo cáo, commit được kiểm | Bằng chứng trên thuộc nội dung checkout hiện tại; commit chưa xác minh, không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push. |
+File đổi/lý do: `skills/{06-chuan-bi-task,07-code,08-kiem-thu,09-qc,10-nghiem-thu,11-publish-git}/SKILL.md` — thay nội dung khung; file task — ghi báo cáo.
+Quyết định: giữ cấu trúc Markdown sẵn có, không thêm file/công cụ/UI; không chạy ví dụ skill-note/publish. Không có UI: không áp dụng ảnh.
+Chẩn đoán: build mặc định mã 1 (0 warning/0 error), build chẩn đoán thiếu assets NETSDK1004; `dotnet restore AITeam.sln -m:1 -v:minimal -nodeReuse:false -p:NuGetAudit=false` mã 0 rồi build/test tuần tự đạt.
+Chưa xác minh: commit/push và review nghĩa nội dung độc lập; lượt test mặc định đầu chưa trả kết quả dù gửi Ctrl+C, truy vấn tiến trình để dừng bị sandbox từ chối; không dùng lượt này làm bằng chứng pass.
 
 
 ## Review (Claude)
-<!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
-**Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
-**Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Codex viết nội dung skill (assign -Dev codex); cổng KT ĐẠT; QC BLOCKED đúng luật (Codex không tự duyệt) ⇒ Claude xem cấu trúc: đủ 7–8 mục bắt buộc, ≤ 150 dòng, có ví dụ tốt/xấu + nguồn.
+- Optional (hàng chờ): bổ sung quy ước THẬT từ code HDVTool / ChinaAndroidToolbox / Hub vào skill code (lần này Codex chưa đọc vì ngoài danh sách file).
 
 ## Kết quả
-<!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
+- Bộ skill S1-02 có trong `skills/`; S1-04 / S1-05 sẽ tự gắn skill vào lời nhắn từng bước.
 
 ## Đánh giá quy trình
 <!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
