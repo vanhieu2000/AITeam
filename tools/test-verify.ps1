@@ -20,7 +20,7 @@ function Check($name, [bool]$cond, $out) {
 function Lines($n, $prefix) { (1..$n | ForEach-Object { "    // $prefix dòng $_" }) -join "`r`n" }
 
 # Dựng 1 kịch bản: $agentChanges = scriptblock nhận $wt (worktree) để agent sửa file rồi commit.
-function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [string]$build = "") {
+function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [string]$build = "", [string]$test = "") {
     $S = Join-Path $T $name
     $root = Join-Path $S "AITeam"; $demo = Join-Path $S "Demo"; $work = Join-Path $S "work"; $origin = Join-Path $S "origin.git"
     New-Item -ItemType Directory -Force $root, (Join-Path $root "tools") | Out-Null
@@ -30,7 +30,7 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
     $cfg = Get-Content (Join-Path $src "team.json") -Raw -Encoding UTF8 | ConvertFrom-Json
     $cfg.projectsRoot = $S; $cfg.workRoot = $work
     W (Join-Path $root "team.json") ($cfg | ConvertTo-Json -Depth 10) $NoBom
-    W (Join-Path $root "projects.json") (ConvertTo-Json -Depth 5 @(@{ name = "Demo"; repo = "local/demo"; path = $demo; workDir = $work; build = $build; test = ""; stack = "test"; areas = @{} })) $NoBom
+    W (Join-Path $root "projects.json") (ConvertTo-Json -Depth 5 @(@{ name = "Demo"; repo = "local/demo"; path = $demo; workDir = $work; build = $build; test = $test; stack = "test"; areas = @{} })) $NoBom
 
     G init -q --bare -b main $origin | Out-Null
     G clone -q $origin $demo | Out-Null
@@ -69,7 +69,7 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
     G -C $wt add -A; G -C $wt commit -q -m "X-01: agent làm"
     G -C $wt push -q -u origin agent-a/X-01-demo 2>$null
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "team.ps1") verify -Project Demo -Task X-01 2>&1 | Out-String
-    [pscustomobject]@{ Out = $out; Wt = $wt }
+    [pscustomobject]@{ Out = $out; Wt = $wt; Root = $root; Demo = $demo; Work = $work; S = $S }
 }
 
 try {
@@ -129,6 +129,95 @@ try {
     Write-Host "Kịch bản 6: build có cảnh báo code thật (CS0168)" -ForegroundColor Cyan
     $r = New-Scenario "s6" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build 'cmd /c echo D:\x\Agent.cs(3,5): warning CS0168: The variable e is declared but never used'
     Check "cảnh báo code thật vẫn làm trượt" (($r.Out -match 'Build có 1 warning') -and ($r.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r.Out
+
+    # --- Kịch bản tiến trình giả V8-01: kiểm tra cổng thực hồi quy ---
+    $fakeRunner = Join-Path $T "fake-runner.ps1"
+    $runnerCode = @'
+param([string]$Mode)
+$stateFile = Join-Path $PSScriptRoot "state-$Mode.txt"
+$count = 0
+if (Test-Path $stateFile) { $count = [int](Get-Content $stateFile -Raw) }
+$count++
+[IO.File]::WriteAllText($stateFile, "$count")
+switch ($Mode) {
+    'retry-pass' {
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        else { Write-Output "Build succeeded."; exit 0 }
+    }
+    'double-infra' {
+        [Console]::Error.WriteLine("The process cannot access the file because it is being used by another process.")
+        exit 1
+    }
+    'retry-warning' {
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        else { Write-Output "Agent.cs(3,5): warning CS0168: unused"; exit 0 }
+    }
+    'retry-hang' {
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        else { [Console]::Error.WriteLine("The active test run was aborted"); exit 1 }
+    }
+    'retry-code' {
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        else { [Console]::Error.WriteLine("Agent.cs(3,5): error CS1002: ; expected"); exit 1 }
+    }
+    'mcp-error' {
+        [Console]::Error.WriteLine("mcp connection closed")
+        exit 1
+    }
+}
+'@
+    W $fakeRunner $runnerCode $NoBom
+
+    Write-Host "Kịch bản 7: tiến trình giả lỗi máy -> đạt sau thử lại" -ForegroundColor Cyan
+    $b7 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode retry-pass"
+    $r7 = New-Scenario "s7" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b7
+    Check "thử lại lỗi máy thành công" ($r7.Out -match 'Cổng kiểm tra: ĐẠT') $r7.Out
+    Check "báo cáo có ghi chú build ok" ($r7.Out -match 'Build: OK') $r7.Out
+
+    Write-Host "Kịch bản 8: tiến trình giả lỗi máy hai lần liên tiếp" -ForegroundColor Cyan
+    $b8 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode double-infra"
+    $r8 = New-Scenario "s8" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b8
+    Check "lỗi máy 2 lần làm cổng trượt" (($r8.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT') -and ($r8.Out -match 'Build LỖI')) $r8.Out
+
+    Write-Host "Kịch bản 9: lỗi máy lần 1, lần 2 có warning (CS0168)" -ForegroundColor Cyan
+    $b9 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode retry-warning"
+    $r9 = New-Scenario "s9" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b9
+    Check "lần 2 warning làm trượt cổng" (($r9.Out -match 'Build có 1 warning') -and ($r9.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r9.Out
+
+    Write-Host "Kịch bản 10: lỗi máy lần 1, lần 2 test bị hang" -ForegroundColor Cyan
+    $t10 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode retry-hang"
+    $r10 = New-Scenario "s10" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build 'cmd /c echo Build succeeded.' -test $t10
+    Check "lần 2 test hang làm trượt cổng" (($r10.Out -match 'Test bị TREO') -and ($r10.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r10.Out
+
+    Write-Host "Kịch bản 11: lỗi máy lần 1, lần 2 code fail (CS1002)" -ForegroundColor Cyan
+    $b11 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode retry-code"
+    $r11 = New-Scenario "s11" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b11
+    Check "lần 2 code fail làm trượt cổng" (($r11.Out -match 'Build LỖI') -and ($r11.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r11.Out
+
+    Write-Host "Kịch bản 12: MCP còn lỗi sau thử lại" -ForegroundColor Cyan
+    $b12 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode mcp-error"
+    $r12 = New-Scenario "s12" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b12
+    Check "MCP lỗi làm trượt cổng" (($r12.Out -match 'Build LỖI') -and ($r12.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r12.Out
+
+    Write-Host "Kịch bản 13: QC sau phục hồi (Invoke-WorkflowGate)" -ForegroundColor Cyan
+    . (Join-Path $src "tools\workflow-common.ps1")
+    $qcCalled = $false
+    $gateRes = Invoke-WorkflowGate -VerifyBlock {
+        [pscustomobject]@{ Ok = $true; Report = "report.md" }
+    } -QcBlock {
+        $qcCalled = $true
+        [pscustomobject]@{ Code = 0; Verdict = "PASS" }
+    }
+    Check "QC được gọi sau khi Verify ĐẠT / phục hồi" ($qcCalled -and $gateRes.Ok -and $gateRes.Review.Verdict -eq "PASS") $null
+
+    $qcCalled2 = $false
+    $gateRes2 = Invoke-WorkflowGate -VerifyBlock {
+        [pscustomobject]@{ Ok = $false; Report = "report.md" }
+    } -QcBlock {
+        $qcCalled2 = $true
+        [pscustomobject]@{ Code = 0; Verdict = "PASS" }
+    }
+    Check "QC không được gọi khi Verify KHÔNG ĐẠT" (-not $qcCalled2 -and -not $gateRes2.Ok -and $null -eq $gateRes2.Review) $null
 }
 finally {
     if (-not $Keep) { Get-ChildItem $T -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { $_.Attributes = 'Normal' }; Remove-Item $T -Recurse -Force -ErrorAction SilentlyContinue }

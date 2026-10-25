@@ -440,8 +440,26 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
             return
         }
     } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity"; return }
-    if ($NoVerify) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🔵 Chờ review"; return }
-    $v = Invoke-Verify
+    if ($NoVerify) {
+        Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
+        Set-BoardStatus $r $Task "🔵 Chờ review"
+        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $taskFile.Name -TaskId $Task -Event 'Assign' -Run $n -Result 'XONG'
+        return
+    }
+    $gate = Invoke-WorkflowGate -Verify { Invoke-Verify } -Qc {
+        Invoke-AutoReview $r $taskFile.Name $work $devProvider
+    }
+    $v = $gate.Verify
+    $rv = $gate.Review
+    if ($rv) {
+        $qcRes = switch ($rv.Code) {
+            0 { 'PASS' }
+            1 { 'CẦN SỬA' }
+            3 { 'BLOCKED' }
+            default { 'LỖI' }
+        }
+        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $taskFile.Name -TaskId $Task -Event 'Qc' -Run $n -Result $qcRes
+    }
     # Tự giao lại tối đa 1 lần / lệnh assign (R-004: cờ chưa từng được bật ⇒ V4-11 bị giao lại ~28 lần khi lỗi mạng NU1900).
     $script:AssignRuns = [int]$script:AssignRuns + 1
     if (-not $v.Ok -and -not $script:VerifyRetried -and $script:AssignRuns -lt 3) {
@@ -458,26 +476,25 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     # Bảng việc theo kết quả cổng KT (dòng này từng bị mất ⇒ task xong vẫn hiện 🟡 trên bảng / Văn phòng — R-005). Review AI bên dưới có thể ghi đè.
     Set-BoardStatus $r $Task $(if ($v.Ok) { "🔵 Chờ review · cổng KT ĐẠT" } else { "🔴 Cần sửa · cổng KT KHÔNG ĐẠT" })
     # P0-7 (R-002): cổng KT đạt ⇒ review AI tự động (chỉ task Độ khó L hoặc "Review AI: có" — Codex hạn mức nhỏ).
-    if ($v.Ok) {
-        $rv = Invoke-AutoReview $r $taskFile.Name $work $devProvider
-        if ($rv) {
-            switch ($rv.Code) {
-                0 { Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review PASS" }
-                1 {
-                    if (-not $script:ReviewRetried -and $rv.Json -and $rv.Json.feedback) {
-                        $script:ReviewRetried = $true; $script:VerifyRetried = $false
-                        Say "AI review CẦN SỬA → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi của reviewer." Yellow
-                        $script:Resume = $true
-                        $script:Feedback = "Reviewer AI (provider khác) yêu cầu sửa. Sửa đúng các mục Blocker / Required dưới đây, không làm thêm; chạy lại build + test, cập nhật báo cáo, commit và push:`n" + $rv.Json.feedback
-                        Invoke-Assign
-                        return
-                    }
-                    Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review CẦN SỬA (Claude xem)"
+    if ($v.Ok -and $rv) {
+        switch ($rv.Code) {
+            0 { Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review PASS" }
+            1 {
+                if (-not $script:ReviewRetried -and $rv.Json -and $rv.Json.feedback) {
+                    $script:ReviewRetried = $true; $script:VerifyRetried = $false
+                    Say "AI review CẦN SỬA → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi của reviewer." Yellow
+                    $script:Resume = $true
+                    $script:Feedback = "Reviewer AI (provider khác) yêu cầu sửa. Sửa đúng các mục Blocker / Required dưới đây, không làm thêm; chạy lại build + test, cập nhật báo cáo, commit và push:`n" + $rv.Json.feedback
+                    Invoke-Assign
+                    return
                 }
-                3 { Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review BLOCKED (Claude review)" }
+                Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review CẦN SỬA (Claude xem)"
             }
+            3 { Set-BoardStatus $r $Task "🔵 Chờ review · cổng KT ĐẠT · AI review BLOCKED (Claude review)" }
         }
     }
+    $assignResult = if ($v.Ok) { 'ĐẠT' } else { 'KHÔNG ĐẠT' }
+    Update-WorkflowJournal -RepoPath $r.Path -TaskFile $taskFile.Name -TaskId $Task -Event 'Assign' -Run $n -Result $assignResult
 }
 
 # R-004: task khác đang chạy (🟡 trên bảng việc) có Phạm vi trùng ⇒ dễ xung đột merge. Bỏ qua thư mục test chung (tests/, core.tests/…).
@@ -773,6 +790,15 @@ function Invoke-Qc {
     $text = @{ 0 = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS"; 1 = "🔴 Cần sửa · AI review CẦN SỬA"; 3 = "🔵 Chờ review · AI review BLOCKED (Claude review)" }[[int]$rv.Code]
     if ($text) { Set-BoardStatus $ctx.R $Task $text }
     Say "QC: mã $($rv.Code) · $($rv.Out)" Cyan
+    $qcRun = @(Get-ChildItem $ctx.R.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'prompt' }).Count
+    if ($qcRun -lt 1) { $qcRun = 1 }
+    $qcRes = switch ($rv.Code) {
+        0 { 'PASS' }
+        1 { 'CẦN SỬA' }
+        3 { 'BLOCKED' }
+        default { 'LỖI' }
+    }
+    Update-WorkflowJournal -RepoPath $ctx.R.Path -TaskFile $ctx.TaskFile.Name -TaskId $Task -Event 'Qc' -Run $qcRun -Result $qcRes
 }
 
 # Bước 2: plans/R-xxx/brief.md (Claude viết, ≤ 20 dòng) ⇒ Codex đọc repo CHỈ ĐỌC ⇒ plans/R-xxx/plan.md. -Name = tiền tố mã task (vd. V6).
@@ -869,14 +895,20 @@ function Invoke-Prep {
         $p = Join-Path $work $f
         if (Test-Path $p -PathType Leaf) { $b = [IO.File]::ReadAllBytes($p); if (-not (Test-HasBom $b)) { [IO.File]::WriteAllBytes($p, [byte[]](@(0xEF, 0xBB, 0xBF) + $b)) } }
     }
-    Push-Location $work
-    $bo = cmd /c "$($r.Info.build) 2>&1"; $bc = $LASTEXITCODE; $global:LASTEXITCODE = 0
-    if ($bc -ne 0 -and ("$bo" -match 'MSB3491|being used by another process|Access to the path .* is denied')) {
-        Say "Build lỗi do khóa file (lỗi máy) ⇒ tắt build server, build lại 1 lần." Yellow
-        dotnet build-server shutdown 2>&1 | Out-Null
-        $bo = cmd /c "$($r.Info.build) 2>&1"; $bc = $LASTEXITCODE; $global:LASTEXITCODE = 0
+    $bCheck = Invoke-WorkflowCheck -Stage 'Build' -Run {
+        param($attempt)
+        if ($attempt -gt 1) {
+            Say "Build lỗi do khóa file (lỗi máy) ⇒ tắt build server, build lại 1 lần." Yellow
+            dotnet build-server shutdown 2>&1 | Out-Null
+        }
+        Invoke-ShellCapture $r.Info.build $work
     }
-    Pop-Location
+    $bc = $bCheck.Code; $bo = $bCheck.Output
+    if ($bCheck.Attempts.Count -gt 1) {
+        $prepLog = Join-Path $r.Logs "$Task.prep.build.log"
+        $logContent = "=== Lần 1 (mã $($bCheck.Attempts[0].Code)) ===`r`n$($bCheck.Attempts[0].Output)`r`n=== Lần 2 (mã $($bCheck.Attempts[1].Code)) ===`r`n$($bCheck.Attempts[1].Output)"
+        [IO.File]::WriteAllText($prepLog, $logContent, $Utf8)
+    }
     if ($bc -ne 0) {
         Say "Build khung $Task LỖI ⇒ KHÔNG giao. Worktree giữ ở $work." Red
         $bo | Select-String -Pattern ' error ' | Select-Object -First 10 | ForEach-Object { Say "  $_" }
@@ -891,21 +923,29 @@ function Invoke-Prep {
     git -C $work push -q -u origin $branch 2>&1 | Select-Object -Last 2 | ForEach-Object { Say "  $_" }
 
     # File task + dòng bảng việc lên main (nội dung giống hệt trên nhánh ⇒ merge không xung đột).
-    git -C $r.Path pull -q --ff-only 2>$null
-    Copy-Item (Join-Path $work "tasks\$fileName") (Join-Path $r.Path "tasks\$fileName") -Force
-    $board = Join-Path $r.Path "tasks\README.md"
-    if (Test-Path $board) {
-        $bt = [IO.File]::ReadAllText($board)
-        $lines = [Collections.ArrayList]@($bt -split "`r?`n")
-        $last = -1; for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\| \[') { $last = $i } }
-        $row = "| [$Task $ttl]($fileName) | $agentId | ``$branch`` | ⬜ Chưa giao |"
-        if ($last -ge 0) { $lines.Insert($last + 1, $row) } else { [void]$lines.Add($row) }
-        $nl = if ($bt -match "`r`n") { "`r`n" } else { "`n" }
-        [IO.File]::WriteAllText($board, ($lines -join $nl), (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($board)))))
+    Invoke-RepoTransaction -RepoPath $r.Path -Action {
+        git -C $r.Path pull -q --ff-only 2>$null
+        Copy-Item (Join-Path $work "tasks\$fileName") (Join-Path $r.Path "tasks\$fileName") -Force
+        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $fileName -TaskId $Task -Event 'Prep' -Run 1 -Result 'ĐẠT'
+        $board = Join-Path $r.Path "tasks\README.md"
+        if (Test-Path $board) {
+            $bt = [IO.File]::ReadAllText($board)
+            $lines = [Collections.ArrayList]@($bt -split "`r?`n")
+            $last = -1; for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\| \[') { $last = $i } }
+            $row = "| [$Task $ttl]($fileName) | $agentId | ``$branch`` | ⬜ Chưa giao |"
+            if ($last -ge 0) { $lines.Insert($last + 1, $row) } else { [void]$lines.Add($row) }
+            $nl = if ($bt -match "`r`n") { "`r`n" } else { "`n" }
+            [IO.File]::WriteAllText($board, ($lines -join $nl), (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($board)))))
+        }
+        $commitFiles = @("tasks/$fileName", "tasks/README.md")
+        $reqMatch = [regex]::Match($tt, '\*\*Yêu cầu:\*\*\s*(R-\d+)')
+        if ($reqMatch.Success -and (Test-Path (Join-Path $r.Path "requests\$($reqMatch.Groups[1].Value).md"))) {
+            $commitFiles += "requests/$($reqMatch.Groups[1].Value).md"
+        }
+        git -C $r.Path add -- $commitFiles 2>$null
+        git -C $r.Path commit -q -m "Task $Task (Codex chuẩn bị, $Request)" -- $commitFiles 2>&1 | Out-Null
+        git -C $r.Path push -q 2>&1 | Out-Null
     }
-    git -C $r.Path add -- "tasks/$fileName" "tasks/README.md" 2>$null
-    git -C $r.Path commit -q -m "Task $Task (Codex chuẩn bị, $Request)" -- "tasks/$fileName" "tasks/README.md" 2>&1 | Out-Null
-    git -C $r.Path push -q 2>&1 | Out-Null
     # Gộp main (đã có file task giống hệt) vào nhánh ngay ⇒ tổ tiên chung có file task ⇒ lần sau agent sửa báo cáo không bị xung đột add/add (H6-07).
     git -C $work fetch -q origin 2>$null
     git -C $work merge -q --no-edit origin/main 2>&1 | Out-Null
@@ -1220,7 +1260,7 @@ function Invoke-Verify {
     if ($accept.Count -gt 0 -and -not ($fails | Where-Object { $_ -match 'test nghiệm thu' })) { [void]$notes.Add("Test nghiệm thu còn nguyên: $($accept.Count) file") }
 
     # 4. Phạm vi
-    $scope = Get-BacktickPaths (Get-Section $ctx.Text "Phạm vi")
+    $scope = @(Get-BacktickPaths (Get-Section $ctx.Text "Phạm vi"))
     if ($scope.Count -gt 0) {
         $always = @("tasks/$($ctx.TaskFile.Name)", "docs/screenshots/$Task", "CHANGELOG.md") + $accept
         $out = @($changed | Where-Object { -not (Test-PathInScope $_ ($scope + $always)) })
@@ -1283,8 +1323,16 @@ function Invoke-Verify {
     }
 
     # 8. Build (0 warning) + test
+    $buildAttempts = @()
     if ($r.Info.build) {
-        $b = Invoke-ShellCapture $r.Info.build $work
+        $bCheck = Invoke-WorkflowCheck -Stage 'Build' -Run {
+            param($attempt)
+            if ($attempt -gt 1) { dotnet build-server shutdown 2>&1 | Out-Null }
+            Invoke-ShellCapture $r.Info.build $work
+        }
+        $b = [pscustomobject]@{ Code = $bCheck.Code; Output = $bCheck.Output }
+        $buildAttempts = $bCheck.Attempts
+
         $w = @([regex]::Matches($b.Output, '(?m)^.*: warning [A-Za-z]+\d+:.*$') | ForEach-Object { ($_.Value -replace '\s*\[[^\]]+\]\s*$', '').Trim() } | Select-Object -Unique)
         # NU1900 = NuGet không tải được dữ liệu lỗ hổng (lỗi MẠNG, không phải lỗi code) ⇒ ghi chú, không đánh trượt (R-004 / V4-11).
         $netWarn = @($w | Where-Object { $_ -match ': warning NU1900:' })
@@ -1294,13 +1342,23 @@ function Invoke-Verify {
             [void]$fails.Add("Build LỖI (mã $($b.Code)):`n  " + ($errs -join "`n  "))
         } elseif ($w.Count -gt 0) {
             [void]$fails.Add("Build có $($w.Count) warning (yêu cầu 0):`n  " + (($w | Select-Object -First 10) -join "`n  "))
-        } else { [void]$notes.Add("Build: OK, 0 warning") }
+        } else {
+            $bSum = @($b.Output -split "`r?`n" | Where-Object { $_ -match '(?i)(Passed!|Build succeeded|0 Warning|OK)' } | ForEach-Object { $_.Trim() } | Select-Object -First 1)
+            [void]$notes.Add("Build: OK, 0 warning" + $(if ($bSum) { " ($bSum)" } else { "" }))
+        }
     }
+    $testAttempts = @()
     if ($r.Info.test -and -not ($fails | Where-Object { $_ -like 'Build LỖI*' })) {
         # Chốt chặn treo: test giao diện bật hộp thoại modal từng làm treo cả agent lẫn cổng kiểm tra (21/10/2026, 47 phút / task).
         $testCmd = $r.Info.test
         if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += " --blame-hang-timeout 3m --blame-hang-dump-type none" }
-        $t = Invoke-ShellCapture $testCmd $work
+        $tCheck = Invoke-WorkflowCheck -Stage 'Test' -Run {
+            param($attempt)
+            Invoke-ShellCapture $testCmd $work
+        }
+        $t = [pscustomobject]@{ Code = $tCheck.Code; Output = $tCheck.Output }
+        $testAttempts = $tCheck.Attempts
+
         if ($t.Output -match '(?i)blame-hang|hang timeout|The active test run was aborted') { [void]$fails.Add("Test bị TREO (quá 3 phút, thường do test giao diện mở hộp thoại / form / MessageBox thật). Xem luật 'Test giao diện' trong lời giao việc.") }
         $summary = @($t.Output -split "`r?`n" | Where-Object { $_ -match '(?i)(Passed!|Failed!|Total tests|Tổng số|Đạt!|Không đạt!)' } | ForEach-Object { $_.Trim() })
         if ($t.Code -ne 0) {
@@ -1331,7 +1389,24 @@ function Invoke-Verify {
     if ($fails.Count) { $md += "## Phải sửa"; $fails | ForEach-Object { $md += "- $_" }; $md += "" }
     if ($warns.Count) { $md += "## Cảnh báo (Claude xem khi review)"; $warns | ForEach-Object { $md += "- $_" }; $md += "" }
     $md += "## Đã kiểm tra"; $notes | ForEach-Object { $md += "- $_" }
+    if ($buildAttempts.Count -gt 1) {
+        $md += ""; $md += "## Chi tiết Build thử lại"
+        foreach ($att in $buildAttempts) {
+            $md += "### Lần $($att.Number) (mã $($att.Code))`r`n" + ([string]::new([char]96, 3)) + "`r`n$($att.Output)`r`n" + ([string]::new([char]96, 3))
+        }
+    }
+    if ($testAttempts.Count -gt 1) {
+        $md += ""; $md += "## Chi tiết Test thử lại"
+        foreach ($att in $testAttempts) {
+            $md += "### Lần $($att.Number) (mã $($att.Code))`r`n" + ([string]::new([char]96, 3)) + "`r`n$($att.Output)`r`n" + ([string]::new([char]96, 3))
+        }
+    }
     [IO.File]::WriteAllText($reportPath, ($md -join "`r`n"), $Utf8)
+    try {
+        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $ctx.TaskFile.Name -TaskId $Task -Event 'Verify' -Run $n -Result $(if ($ok) { 'ĐẠT' } else { 'KHÔNG ĐẠT' })
+    } catch {
+        Say "LỖI ghi nhật ký phiếu: $($_.Exception.Message)" Yellow
+    }
 
     foreach ($f in $fails) { Say "  [PHẢI SỬA] $f" Red }
     foreach ($w in $warns) { Say "  [CẢNH BÁO] $w" Yellow }
@@ -1361,36 +1436,38 @@ function Get-BoardClaim($r, [string]$taskId) {
 
 # Đổi ô cuối (trạng thái) của dòng task trên bảng việc, commit riêng file bảng việc và push lên main.
 function Set-BoardStatus($r, [string]$taskId, [string]$status) {
-    $ErrorActionPreference = "Continue"
-    $boardRel = "tasks/README.md"
-    $board = Join-Path $r.Path $boardRel
-    if (-not (Test-Path $board)) { return }
-    foreach ($try in 1..2) {
-        git -C $r.Path fetch origin --quiet 2>$null
-        $branchNow = git -C $r.Path rev-parse --abbrev-ref HEAD 2>$null
-        $dirtyBoard = git -C $r.Path status --porcelain -- $boardRel 2>$null
-        if ($branchNow -ne "main" -or $dirtyBoard) { Say "  (Bỏ qua cập nhật bảng việc: repo chính không ở main hoặc bảng việc đang sửa dở.)" Yellow; return }
-        git -C $r.Path merge --ff-only origin/main --quiet 2>$null
-        $text = [IO.File]::ReadAllText($board)
-        $lines = $text -split "`r?`n"
-        $idx = -1
-        for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|' -and $lines[$i] -match ("(\[|\(|\|\s*)" + [regex]::Escape($taskId) + "\b")) { $idx = $i; break } }
-        if ($idx -lt 0) { Say "  (Bảng việc chưa có dòng $taskId — không cập nhật.)" Yellow; return }
-        $cells = $lines[$idx].TrimEnd().TrimEnd('|') -split '\|'
-        $cells[$cells.Count - 1] = " $status "
-        $newLine = ($cells -join '|') + '|'
-        if ($newLine -eq $lines[$idx]) { return }
-        $lines[$idx] = $newLine
-        $nl = if ($text -match "`r`n") { "`r`n" } else { "`n" }
-        $bom = Test-HasBom ([IO.File]::ReadAllBytes($board))
-        [IO.File]::WriteAllText($board, ($lines -join $nl), (New-Object Text.UTF8Encoding $bom))
-        git -C $r.Path add -- $boardRel
-        git -C $r.Path commit -q -m "Bảng việc: $taskId $status" -- $boardRel 2>$null
-        git -C $r.Path push -q origin main 2>$null
-        if ($LASTEXITCODE -eq 0) { return }
-        git -C $r.Path reset -q --hard origin/main 2>$null   # bị máy khác push trước → làm lại trên bản mới
+    Invoke-RepoTransaction -RepoPath $r.Path -Action {
+        $ErrorActionPreference = "Continue"
+        $boardRel = "tasks/README.md"
+        $board = Join-Path $r.Path $boardRel
+        if (-not (Test-Path $board)) { return }
+        foreach ($try in 1..2) {
+            git -C $r.Path fetch origin --quiet 2>$null
+            $branchNow = git -C $r.Path rev-parse --abbrev-ref HEAD 2>$null
+            $dirtyBoard = git -C $r.Path status --porcelain -- $boardRel 2>$null
+            if ($branchNow -ne "main" -or $dirtyBoard) { Say "  (Bỏ qua cập nhật bảng việc: repo chính không ở main hoặc bảng việc đang sửa dở.)" Yellow; return }
+            git -C $r.Path merge --ff-only origin/main --quiet 2>$null
+            $text = [IO.File]::ReadAllText($board)
+            $lines = $text -split "`r?`n"
+            $idx = -1
+            for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|' -and $lines[$i] -match ("(\[|\(|\|\s*)" + [regex]::Escape($taskId) + "\b")) { $idx = $i; break } }
+            if ($idx -lt 0) { Say "  (Bảng việc chưa có dòng $taskId — không cập nhật.)" Yellow; return }
+            $cells = $lines[$idx].TrimEnd().TrimEnd('|') -split '\|'
+            $cells[$cells.Count - 1] = " $status "
+            $newLine = ($cells -join '|') + '|'
+            if ($newLine -eq $lines[$idx]) { return }
+            $lines[$idx] = $newLine
+            $nl = if ($text -match "`r`n") { "`r`n" } else { "`n" }
+            $bom = Test-HasBom ([IO.File]::ReadAllBytes($board))
+            [IO.File]::WriteAllText($board, ($lines -join $nl), (New-Object Text.UTF8Encoding $bom))
+            git -C $r.Path add -- $boardRel
+            git -C $r.Path commit -q -m "Bảng việc: $taskId $status" -- $boardRel 2>$null
+            git -C $r.Path push -q origin main 2>$null
+            if ($LASTEXITCODE -eq 0) { return }
+            git -C $r.Path reset -q --hard origin/main 2>$null   # bị máy khác push trước → làm lại trên bản mới
+        }
+        Say "  Không push được bảng việc (máy khác vừa đổi?). Cập nhật tay sau." Yellow
     }
-    Say "  Không push được bảng việc (máy khác vừa đổi?). Cập nhật tay sau." Yellow
 }
 
 function Get-ClaimText { "🟡 Đang chạy · máy $env:COMPUTERNAME · $(Get-Date -Format 'HH:mm dd/MM/yyyy')" }
@@ -1454,21 +1531,23 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
 }
 
 function Save-RunMetrics($record) {
-    $dir = Join-Path $Root "metrics\runs"
-    New-Item -ItemType Directory -Force $dir | Out-Null
-    $name = "{0}-{1}-{2}-{3}.json" -f ($record.at -replace '[^0-9]', ''), $record.machine, $record.project, ($record.log -replace '\.json$', '')
-    $file = Join-Path $dir $name
-    [IO.File]::WriteAllText($file, ($record | ConvertTo-Json), $Utf8)
-    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-    for ($i = 0; $i -lt 3; $i++) {
-        git -C $Root add -- "metrics/runs/$name" 2>$null
-        git -C $Root commit -q -m "Số đo: $($record.project) $($record.task) lượt $($record.run) ($($record.machine))" -- "metrics/runs/$name" 2>$null
-        git -C $Root pull -q --rebase --autostash 2>$null
-        git -C $Root push -q origin HEAD 2>$null
-        if ($LASTEXITCODE -eq 0) { break }
-        Start-Sleep -Seconds (2 + $i * 3)
+    Invoke-RepoTransaction -RepoPath $Root -Action {
+        $dir = Join-Path $Root "metrics\runs"
+        New-Item -ItemType Directory -Force $dir | Out-Null
+        $name = "{0}-{1}-{2}-{3}.json" -f ($record.at -replace '[^0-9]', ''), $record.machine, $record.project, ($record.log -replace '\.json$', '')
+        $file = Join-Path $dir $name
+        [IO.File]::WriteAllText($file, ($record | ConvertTo-Json), $Utf8)
+        $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        for ($i = 0; $i -lt 3; $i++) {
+            git -C $Root add -- "metrics/runs/$name" 2>$null
+            git -C $Root commit -q -m "Số đo: $($record.project) $($record.task) lượt $($record.run) ($($record.machine))" -- "metrics/runs/$name" 2>$null
+            git -C $Root pull -q --rebase --autostash 2>$null
+            git -C $Root push -q origin HEAD 2>$null
+            if ($LASTEXITCODE -eq 0) { break }
+            Start-Sleep -Seconds (2 + $i * 3)
+        }
+        $ErrorActionPreference = $eap
     }
-    $ErrorActionPreference = $eap
 }
 
 # Nhập các log agent cũ trên máy này (chưa có số đo) — chạy 1 lần mỗi máy.
@@ -1649,6 +1728,7 @@ function Invoke-Merge {
         }
     }
     Set-BoardStatus $r $tf.BaseName "✅ Đã merge (vòng $round)"
+    Update-WorkflowJournal -RepoPath $r.Path -TaskFile $tf.Name -TaskId $Task -Event 'Merge' -Run $round -Result 'ĐẠT'
     git -C $r.Path push -q origin HEAD 2>$null
     Say "Đã merge + push main." Green
     if ($approval) {
