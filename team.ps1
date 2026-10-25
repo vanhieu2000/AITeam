@@ -1562,8 +1562,12 @@ function Invoke-Verify {
             param($attempt)
             Invoke-ShellCapture $testCmd $work
         }
-        $t = [pscustomobject]@{ Code = $tCheck.Code; Output = $tCheck.Output }
-        $testAttempts = $tCheck.Attempts
+        $t = Invoke-FailedTestRetry -Code $tCheck.Code -Output $tCheck.Output -TestCommand $testCmd -Run {
+            param($command)
+            Invoke-ShellCapture $command $work
+        }
+        foreach ($warning in $t.Warnings) { [void]$warns.Add($warning) }
+        $testAttempts = @($tCheck.Attempts) + @($t.Attempts)
 
         if ($t.Output -match '(?i)blame-hang|hang timeout|The active test run was aborted') { [void]$fails.Add("Test bị TREO (quá 3 phút, thường do test giao diện mở hộp thoại / form / MessageBox thật). Xem luật 'Test giao diện' trong lời giao việc.") }
         $summary = @($t.Output -split "`r?`n" | Where-Object { $_ -match '(?i)(Passed!|Failed!|Total tests|Tổng số|Đạt!|Không đạt!)' } | ForEach-Object { $_.Trim() })
@@ -1996,6 +2000,12 @@ function Invoke-Merge {
     gh repo clone $r.Info.repo $clone -- -q 2>$null
     $testCmd = $r.Info.test; if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += " --blame-hang-timeout 3m --blame-hang-dump-type none" }
     $res = Invoke-ShellCapture $testCmd $clone
+    $res = Invoke-FailedTestRetry -Code $res.Code -Output $res.Output -TestCommand $testCmd -Run {
+        param($command)
+        Invoke-ShellCapture $command $clone
+    }
+    foreach ($warning in $res.Warnings) { Say $warning Yellow }
+    if ($res.Code -ne 0) { Say ("Clone sạch: KHÔNG ĐẠT`n" + $res.Output) Red }
     $lines = @($res.Output -split "`n" | Where-Object { $_ -match 'Passed!|Failed!' } | ForEach-Object { $_.Trim() })
     if (-not $lines) { Say "Clone sạch: KHÔNG đọc được kết quả test — kiểm tra tay!" Red }
     foreach ($l in $lines) { Say ("Clone sạch: " + $l) $(if ($l -match 'Failed!') { "Red" } else { "Green" }) }
