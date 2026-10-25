@@ -93,8 +93,8 @@ không phải hợp đồng tính tiến độ; dùng model riêng trong file đ
 ## Tiêu chí hoàn thành
 - [x] Triển khai đúng XML doc và các quy tắc trên trong duy nhất file thuộc phạm vi; không còn TODO/NotImplementedException.
 - [x] Parse được bảng cũ thật, BOM/CRLF/heading đánh số; loại trùng/sai; chuẩn hóa giờ, task, lượt, kết quả.
-- [x] Chín bước đúng, phân biệt Waiting/Current/Done/Failed; không suy diễn đã nghiệm thu.
-- [x] Lượt 10 sau 2; lỗi rồi thành công, QC BLOCKED, Assign che lỗi, Merge sau lỗi cũ đều đúng.
+- [ ] Chín bước đúng, phân biệt Waiting/Current/Done/Failed; không suy diễn đã nghiệm thu.
+- [ ] Lượt 10 sau 2; lỗi rồi thành công, QC BLOCKED, Assign che lỗi, Merge sau lỗi cũ đều đúng.
 - [x] Dữ liệu độc hại chỉ là chuỗi, hàm thuần không đổi đầu vào; thiếu giờ/người hiện đúng câu đã quy định.
 - [x] `dotnet build AITeam.sln` thành công, 0 warning mới.
 - [ ] `dotnet test AITeam.sln` thành công; nghiệm thu giữ nguyên và có bằng chứng số pass/fail/skip.
@@ -103,17 +103,19 @@ không phải hợp đồng tính tiến độ; dùng model riêng trong file đ
 ## Báo cáo của agent
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Đúng phạm vi, hết TODO | `Select-String hub/Services/WorkProgressParser.cs -Pattern 'TODO|NotImplementedException'`: không khớp; 264 dòng; gỡ file hồi quy ngoài phạm vi theo review. |
-| Parse bảng thật, BOM/CRLF, chuẩn hóa | Lệnh N: 63 pass/0 fail/0 skip, gồm toàn bộ ca Parse và fixture thật. |
-| Chín bước, Waiting/Current/Done/Failed | Lệnh N: 63 pass/0 fail/0 skip; chỉ hoàn thành bước có bằng chứng, không suy diễn Code hoặc Acceptance Done. |
-| Lượt, lỗi rồi đạt, BLOCKED, Assign, Merge | Lệnh N: 63 pass/0 fail/0 skip; giữ lỗi chưa giải quyết, chọn bước theo sự kiện thay vì bước đầu chưa Done. |
-| Hàm thuần, dữ liệu độc hại, metadata | Lệnh N: 63 pass/0 fail/0 skip, ca không đổi đầu vào và metadata pass. |
-| Build | `dotnet build AITeam.sln --no-restore -m:1 -p:UseSharedCompilation=false --nologo`: exit 0, 0 warning/0 error. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo --logger "console;verbosity=quiet"`: Hub 597 pass/9 fail/0 skip; Core không có tổng kết/output mới, dừng Ctrl+C sau hơn 3 phút theo giới hạn task, exit 1. |
-| BOM, nghiệm thu bất biến, báo cáo | Parser EF-BB-BF; SHA256 nghiệm thu giữ nguyên `83515705FD8E75C306C7DD0467841F17BF47E80470C53A15753C541182E95F04`; không sửa fixture/test nghiệm thu. |
-N = `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m --nologo`.
-File/lý do: sửa `hub/Services/WorkProgressParser.cs` để chuyển bước đúng; xóa `hub.tests/W105RuleRegressionTests.cs` theo review; cập nhật phiếu này.
-Quyết định/chưa xác minh: không sửa ngoài phạm vi; chạy riêng ca SettingsPageTests lỗi 1/1: UnauthorizedAccessException tại File.Replace trong TeamConfigService.SaveSettings; Core chưa xác định được ca chạy lâu vì không có output; fixture chưa có workflow thực thi thật; không chạy git, hệ thống tự commit/push nên chưa có commit được kiểm.
+| Phạm vi, hết TODO | Parser 260 dòng, không khớp `TODO|NotImplementedException`; khôi phục test theo yêu cầu mới, không thêm tính năng. |
+| Parse bảng thật, BOM/CRLF, chuẩn hóa | N: toàn bộ ca Parse/fixture pass; nghiệm thu tổng 48 pass/15 fail/0 skip. |
+| Chín bước, trạng thái, không suy diễn nghiệm thu | Chọn bước đầu từ Prep còn lỗi/chưa Done; 15 ca nghiệm thu và 2 hồi quy mâu thuẫn còn đỏ, xem dưới. |
+| Lượt, lỗi rồi đạt, BLOCKED, Assign, Merge | N: lọc lượt/task, Merge và xóa lỗi pass; các ca đòi bỏ qua bước thiếu bằng chứng fail. |
+| Hàm thuần, dữ liệu độc hại, metadata | N: `Untrusted_text_remains_data_and_input_is_not_mutated` pass; ca metadata fail tại CurrentStep trước khi kiểm metadata. |
+| Build | B: exit 0, 0 warning/0 error. |
+| Test toàn solution | T: Hub 582 pass/26 fail/0 skip; Core chưa có tổng kết, đã hiện 2 fail (AcceptanceS104SkillPromptsTests, AcceptanceV802PipelineTests); dừng Ctrl+C khi lệnh vượt 3 phút, exit 1. |
+| Báo cáo, BOM, giữ nguyên test | Parser/test hồi quy/phiếu đều EF-BB-BF; SHA256 nghiệm thu giữ nguyên `83515705FD8E75C306C7DD0467841F17BF47E80470C53A15753C541182E95F04`; hồi quy nguyên blob `bbd9913b91ce59d24dec54a4dabd55428204e99a` từ cha `18dca54b7f37ba36a3585fb7afdd1e1f036a58a3` của `6a26d12`. |
+N = `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests|FullyQualifiedName~W105RuleRegressionTests" --blame-hang-timeout 2m --nologo --logger "trx;LogFileName=w105-targeted.trx"`: 48 pass/17 fail/0 skip, exit 1; chi tiết `hub.tests/TestResults/w105-targeted.trx`.
+B = `dotnet build AITeam.sln --no-restore -m:1 -p:UseSharedCompilation=false --nologo`; T = `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo --logger "trx;LogFileName=w105-solution.trx" --logger "console;verbosity=quiet"`.
+File/lý do: `WorkProgressParser.cs` sửa chọn bước và giữ lỗi còn hiệu lực; `W105RuleRegressionTests.cs` khôi phục nguyên 1863 byte (SHA256 `DAAFD0F3D7714BDDAA8D1AE69CF32F9B532862A77CA38EE83A90B4D9876E0011`); phiếu này sửa báo cáo/kết quả.
+**Mâu thuẫn cần quản lý quyết:** nghiệm thu `Passed_gate_completes_only_evidenced_step` (Verify/Qc), `Failure_keeps_step_and_error` (Assign/Verify/Qc/Merge), `Assign_summary_cannot_hide_gate_failure` (3 ca), `Timestamp_order_uses_instant_not_offset_or_source_order`, `Assign_success_is_waiting_for_code_not_code_completed`, `Missing_metadata_uses_placeholder_and_source_order`, `Later_qc_success_does_not_bypass_unresolved_verify_failure`, `Success_after_failure_clears_current_error`, `Unknown_outcome_cannot_advance_gate_and_equal_times_keep_source_order` đều đòi CurrentStep sau Prep dù Prep chưa có kết quả đạt; trái quy tắc mới nhất. Hồi quy `Current_step_is_first_unresolved_step_after_qc_recovers` (false/true) đòi Verify/Acceptance và Code Done dù không có kết quả Code/Assign; quy tắc chỉ Done khi chính bước đạt buộc dừng tại Code. Giữ nguyên cả 17 ca đỏ.
+Quyết định/chưa xác minh: ưu tiên quy tắc quản lý mới nhất, giữ ngoại lệ Assign không chứng minh Code Done theo task; không sửa/Skip test. Ngoài W1-05 còn 9 lỗi Hub, có UnauthorizedAccessException khi lưu cấu hình; không sửa ngoài phạm vi. Core chạy lâu chưa rõ nguyên nhân, không sửa ngoài phạm vi; fixture chưa có workflow thực thi thật. Không chạy git, hệ thống tự commit/push; chưa có commit được kiểm.
 ## Review (Claude)
 <!-- Claude ghi kết quả review sau khi agent triển khai. -->
 

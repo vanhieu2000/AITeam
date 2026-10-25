@@ -1,0 +1,780 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="954e32d2-82a2-4cf6-82d6-79809e48127c" name="ADMIN@DESKTOP-PP14EFS 2026-10-26 00:10:09" runUser="DESKTOP-PP14EFS\ADMIN" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-26T00:10:09.5293610+07:00" queuing="2026-10-26T00:10:09.5293613+07:00" start="2026-10-26T00:10:08.3879869+07:00" finish="2026-10-26T00:10:09.6637184+07:00" />
+  <TestSettings name="default" id="b4ab33e0-0e7c-4936-8674-dc10e1904104">
+    <Deployment runDeploymentRoot="ADMIN_DESKTOP-PP14EFS_2026-10-26_00_10_09" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="01d4b3b5-e8b8-4c15-90fd-83cd9dd851a1" testId="3538199d-bbb8-ed06-8c4d-008715911d27" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Assign, step: Code)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003340" startTime="2026-10-26T00:10:09.5484966+07:00" endTime="2026-10-26T00:10:09.5484967+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="01d4b3b5-e8b8-4c15-90fd-83cd9dd851a1">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Code&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 193&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6c71c6a3-9049-463f-980b-6159dfcf2501" testId="a4214384-7aec-b435-0f50-bcd6f79e6d2b" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_handles_line_endings_bom_and_numbered_heading(newline: &quot;\r&quot;, bom: True)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0028388" startTime="2026-10-26T00:10:09.5644367+07:00" endTime="2026-10-26T00:10:09.5644368+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6c71c6a3-9049-463f-980b-6159dfcf2501" />
+    <UnitTestResult executionId="e9a39729-4bf3-4a0f-8630-1ed03d71b252" testId="e78d4315-1f46-500e-461d-6d0b5c3fca2b" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;ĐẠT&quot;, expected: Passed)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001660" startTime="2026-10-26T00:10:09.5086569+07:00" endTime="2026-10-26T00:10:09.5086570+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e9a39729-4bf3-4a0f-8630-1ed03d71b252" />
+    <UnitTestResult executionId="d99dc63c-46c4-4e1b-9eee-c57b547b7d65" testId="fa74eb62-ef6b-4eb4-c439-226ff0f0f570" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Untrusted_text_remains_data_and_input_is_not_mutated" computerName="DESKTOP-PP14EFS" duration="00:00:00.0087873" startTime="2026-10-26T00:10:09.5299597+07:00" endTime="2026-10-26T00:10:09.5299597+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d99dc63c-46c4-4e1b-9eee-c57b547b7d65" />
+    <UnitTestResult executionId="5715c1cc-1b84-4068-9dfa-d4c4b4a20eda" testId="7badd63c-0ba2-3563-b475-0f369c64b917" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Execute | lượt 2 | ĐẠT&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001586" startTime="2026-10-26T00:10:09.5221992+07:00" endTime="2026-10-26T00:10:09.5221993+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5715c1cc-1b84-4068-9dfa-d4c4b4a20eda" />
+    <UnitTestResult executionId="ef891634-194a-4d6e-a09a-e740c00dcdd3" testId="9461ab44-5a21-da40-6319-d2159cdcdb69" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Verify, done: Verify, current: Qc)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000558" startTime="2026-10-26T00:10:09.5379493+07:00" endTime="2026-10-26T00:10:09.5379494+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ef891634-194a-4d6e-a09a-e740c00dcdd3">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Qc&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(WorkAction action, WorkStep done, WorkStep current) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 174&#xD;
+   at InvokeStub_AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="35449e9a-3542-469a-bf8c-85c7cdf565ae" testId="b3a5f48b-5f3d-87c1-bb78-a8b047ab05f6" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | ../W1-05 | Verify | lượt 2 | ĐẠT&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001488" startTime="2026-10-26T00:10:09.5265775+07:00" endTime="2026-10-26T00:10:09.5265776+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="35449e9a-3542-469a-bf8c-85c7cdf565ae" />
+    <UnitTestResult executionId="611f3938-8973-4e64-a737-ed5700579da6" testId="11975a6c-8ca6-e9ba-ca69-6214f6e42c94" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Merge&quot;, expected: Merge)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001827" startTime="2026-10-26T00:10:09.5448003+07:00" endTime="2026-10-26T00:10:09.5448004+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="611f3938-8973-4e64-a737-ed5700579da6" />
+    <UnitTestResult executionId="16381760-11d7-4692-af21-1ceb5eaede10" testId="9bf06e7f-53c4-1cbb-596c-90462703335c" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Prep&quot;, expected: Prep)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0024678" startTime="2026-10-26T00:10:09.5423493+07:00" endTime="2026-10-26T00:10:09.5423494+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="16381760-11d7-4692-af21-1ceb5eaede10" />
+    <UnitTestResult executionId="de39114e-88d4-437c-a73a-60891a394a3a" testId="8443c78f-0760-302d-9550-82d274aaa258" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Verify, step: Verify)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000584" startTime="2026-10-26T00:10:09.5509050+07:00" endTime="2026-10-26T00:10:09.5509050+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="de39114e-88d4-437c-a73a-60891a394a3a">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Verify&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 193&#xD;
+   at InvokeStub_AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a9945c0e-483f-4a74-9329-f877efdaa8a0" testId="cfa9e247-2d07-1567-c989-62abb19d5042" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_handles_line_endings_bom_and_numbered_heading(newline: &quot;\n&quot;, bom: True)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001841" startTime="2026-10-26T00:10:09.5684638+07:00" endTime="2026-10-26T00:10:09.5684638+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a9945c0e-483f-4a74-9329-f877efdaa8a0" />
+    <UnitTestResult executionId="19851d74-580a-4037-8e6a-a24524d4fb50" testId="65a0bcc0-8cbb-c3b7-db15-3f4b3583b3a1" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;LỖI: dừng&quot;, expected: Failed)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001742" startTime="2026-10-26T00:10:09.4743559+07:00" endTime="2026-10-26T00:10:09.4743560+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="19851d74-580a-4037-8e6a-a24524d4fb50" />
+    <UnitTestResult executionId="4a5053a0-939e-4ee2-916d-e42bfb234f12" testId="e6a01743-83b4-9bce-1ab7-803366bbeb2f" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Board_without_merge_does_not_prove_any_gate(status: &quot;\ud83d\udd34 Cần sửa&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001484" startTime="2026-10-26T00:10:09.5328469+07:00" endTime="2026-10-26T00:10:09.5328470+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4a5053a0-939e-4ee2-916d-e42bfb234f12" />
+    <UnitTestResult executionId="b166d4d6-b0fa-4148-af1b-0879cb62b346" testId="176c0092-1458-db4b-12ea-250f710ef736" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Board_without_merge_does_not_prove_any_gate(status: &quot;\ud83d\udfe1 Đang chạy&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0005500" startTime="2026-10-26T00:10:09.5319032+07:00" endTime="2026-10-26T00:10:09.5319033+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b166d4d6-b0fa-4148-af1b-0879cb62b346" />
+    <UnitTestResult executionId="387f2039-c43a-4887-adfa-913cb65a8d43" testId="b05133a7-e970-4e8f-1895-1bfeaa921c12" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Qc, outcome: Blocked, step: Qc)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000568" startTime="2026-10-26T00:10:09.5567959+07:00" endTime="2026-10-26T00:10:09.5567960+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="387f2039-c43a-4887-adfa-913cb65a8d43">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Qc&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(WorkAction action, WorkOutcome outcome, WorkStep step) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 207&#xD;
+   at InvokeStub_AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a694445c-71ba-4bb0-b3f0-e780dc458fcf" testId="3537fff9-b2d1-ad83-a268-459e7cb4e592" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;FAIL: lỗi&quot;, expected: Failed)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001667" startTime="2026-10-26T00:10:09.4753584+07:00" endTime="2026-10-26T00:10:09.4753585+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a694445c-71ba-4bb0-b3f0-e780dc458fcf" />
+    <UnitTestResult executionId="89e6e1f2-6ce2-4ff1-a198-efe888634fcb" testId="f36680f4-20b7-608d-8e63-a59928388d03" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Empty_input_has_no_events(input: &quot;&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001126" startTime="2026-10-26T00:10:09.5581660+07:00" endTime="2026-10-26T00:10:09.5581661+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="89e6e1f2-6ce2-4ff1-a198-efe888634fcb" />
+    <UnitTestResult executionId="3626d623-3a68-4b54-9fe1-3143f352ca35" testId="ace017a2-d0c0-1588-19f3-107f29cf6009" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Real_board_status_is_consumable_without_inferring_gate_results" computerName="DESKTOP-PP14EFS" duration="00:00:00.0006826" startTime="2026-10-26T00:10:09.5845659+07:00" endTime="2026-10-26T00:10:09.5845660+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3626d623-3a68-4b54-9fe1-3143f352ca35" />
+    <UnitTestResult executionId="4f228bf3-38f0-4436-a2a3-22c8e2999fd5" testId="f8ffab56-26d1-0dd8-2cde-d3e24c349fb5" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Merge, step: Merge)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000466" startTime="2026-10-26T00:10:09.5531601+07:00" endTime="2026-10-26T00:10:09.5531601+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4f228bf3-38f0-4436-a2a3-22c8e2999fd5">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Merge&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 193&#xD;
+   at InvokeStub_AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bfe3d287-7d94-4540-9b41-be149dbf0acd" testId="84f1afaf-bddc-fdfe-0109-41f12b06b15c" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Assign&quot;, expected: Assign)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001651" startTime="2026-10-26T00:10:09.5472145+07:00" endTime="2026-10-26T00:10:09.5472145+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bfe3d287-7d94-4540-9b41-be149dbf0acd" />
+    <UnitTestResult executionId="0a1d0884-62b9-4141-92c2-1f0bb77e3ec8" testId="4757a956-8b82-43b2-5335-50f99f640157" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Verify&quot;, expected: Verify)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0005040" startTime="2026-10-26T00:10:09.5438402+07:00" endTime="2026-10-26T00:10:09.5438403+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0a1d0884-62b9-4141-92c2-1f0bb77e3ec8" />
+    <UnitTestResult executionId="01d536e9-1a7d-4beb-add4-84af98c76e29" testId="f9a54f4e-71b6-8ec8-6724-09cbc5c81e82" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Qc, done: Qc, current: Acceptance)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003169" startTime="2026-10-26T00:10:09.5365924+07:00" endTime="2026-10-26T00:10:09.5365925+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="01d536e9-1a7d-4beb-add4-84af98c76e29">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Acceptance&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(WorkAction action, WorkStep done, WorkStep current) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 174&#xD;
+   at InvokeStub_AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e767b314-b09b-4d2a-ae87-0f10775f9b02" testId="c19455fd-0003-174d-ec98-fd3fc992d9d6" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_or_bad_time_remains_unknown(time: &quot;22:00&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0006476" startTime="2026-10-26T00:10:09.5614414+07:00" endTime="2026-10-26T00:10:09.5614415+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e767b314-b09b-4d2a-ae87-0f10775f9b02" />
+    <UnitTestResult executionId="5b7b8187-85c5-482e-bc0d-3946adeeced1" testId="6f63be1b-79b2-0b3a-15bf-07963e12bbbd" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Merge_evidence_overrides_old_error_but_never_proves_acceptance(board: False)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0057216" startTime="2026-10-26T00:10:09.5279767+07:00" endTime="2026-10-26T00:10:09.5279768+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5b7b8187-85c5-482e-bc0d-3946adeeced1" />
+    <UnitTestResult executionId="24661178-40cf-4353-a722-8cf4c9244d98" testId="36392488-1658-75d1-6598-40a1a2673619" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Verify, outcome: Failed, step: Verify)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002707" startTime="2026-10-26T00:10:09.5543574+07:00" endTime="2026-10-26T00:10:09.5543575+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="24661178-40cf-4353-a722-8cf4c9244d98">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Verify&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(WorkAction action, WorkOutcome outcome, WorkStep step) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 207&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9960985b-8522-4eaa-aac2-eddc52f90826" testId="3d9c973b-8611-ecde-2f66-4bf7bcb558df" testName="AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(verifyRecovers: True, expected: Acceptance)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0275680" startTime="2026-10-26T00:10:09.5141578+07:00" endTime="2026-10-26T00:10:09.5141580+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9960985b-8522-4eaa-aac2-eddc52f90826">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Acceptance&#xD;
+Actual:   Code</Message>
+          <StackTrace>   at AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(Boolean verifyRecovers, WorkStep expected) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\W105RuleRegressionTests.cs:line 25&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="164144d9-25f8-4f15-ad46-554d86b391fc" testId="762ca350-529f-fef6-6bdd-20c70d3c6af4" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.New_round_merge_clears_previous_round_failure" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002243" startTime="2026-10-26T00:10:09.5309182+07:00" endTime="2026-10-26T00:10:09.5309183+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="164144d9-25f8-4f15-ad46-554d86b391fc" />
+    <UnitTestResult executionId="a927dfad-e8fc-402e-92b6-2475c60a32dc" testId="b90d8c13-d3b5-cf42-6dda-639c5646d1f9" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Verify | lượt 999999999999 | ĐẠT&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001553" startTime="2026-10-26T00:10:09.5231333+07:00" endTime="2026-10-26T00:10:09.5231334+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a927dfad-e8fc-402e-92b6-2475c60a32dc" />
+    <UnitTestResult executionId="44ac6ffa-c4d6-4b88-bcec-87bbefc26f8d" testId="1e48b3e9-f3aa-df3b-cbf5-6aae92505f18" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Timestamp_order_uses_instant_not_offset_or_source_order" computerName="DESKTOP-PP14EFS" duration="00:00:00.0004802" startTime="2026-10-26T00:10:09.5413865+07:00" endTime="2026-10-26T00:10:09.5413865+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="44ac6ffa-c4d6-4b88-bcec-87bbefc26f8d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Qc&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Timestamp_order_uses_instant_not_offset_or_source_order() in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 243&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7137b7d0-3939-4080-992d-8868314b3d88" testId="1a552cb0-8f36-1860-07f4-a361f800f821" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;CẦN SỬA: lỗi build&quot;, expected: Failed)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002836" startTime="2026-10-26T00:10:09.4711065+07:00" endTime="2026-10-26T00:10:09.4711066+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7137b7d0-3939-4080-992d-8868314b3d88" />
+    <UnitTestResult executionId="14661414-7ec4-4ae1-a38d-61162315bf05" testId="b24dc7dc-c500-7424-3b42-2f5835035712" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Verify | lượt x | ĐẠT&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001941" startTime="2026-10-26T00:10:09.5212010+07:00" endTime="2026-10-26T00:10:09.5212010+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="14661414-7ec4-4ae1-a38d-61162315bf05" />
+    <UnitTestResult executionId="9fd05729-4182-4109-a863-3ceb352b6dad" testId="dbe97d92-8671-afbe-8c21-229f7119e3f8" testName="AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(verifyRecovers: False, expected: Verify)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003684" startTime="2026-10-26T00:10:09.5206694+07:00" endTime="2026-10-26T00:10:09.5206694+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9fd05729-4182-4109-a863-3ceb352b6dad">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Verify&#xD;
+Actual:   Code</Message>
+          <StackTrace>   at AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(Boolean verifyRecovers, WorkStep expected) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\W105RuleRegressionTests.cs:line 25&#xD;
+   at InvokeStub_W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ad79738a-6e2a-4f9a-ac51-627fa47de08c" testId="d4cea665-4399-883d-a364-d80aba37ff24" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Initial_progress_has_nine_steps_and_no_invented_metadata(plan: False, approved: False, current: Received)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0045348" startTime="2026-10-26T00:10:09.5724595+07:00" endTime="2026-10-26T00:10:09.5724596+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ad79738a-6e2a-4f9a-ac51-627fa47de08c" />
+    <UnitTestResult executionId="8401d72c-4395-4d3b-b44f-5f1975741c58" testId="f043ab8e-76bc-c1d5-a4f5-10d46353bf9f" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;chưa rõ&quot;, expected: Unknown)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002084" startTime="2026-10-26T00:10:09.4721286+07:00" endTime="2026-10-26T00:10:09.4721287+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8401d72c-4395-4d3b-b44f-5f1975741c58" />
+    <UnitTestResult executionId="d29997ca-aae5-4754-9985-6b2a5b06ff87" testId="c2255e1f-02b0-6038-ab1c-8dc1fd5f821a" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Unknown_outcome_cannot_advance_gate_and_equal_times_keep_source_order" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003497" startTime="2026-10-26T00:10:09.5836240+07:00" endTime="2026-10-26T00:10:09.5836241+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d29997ca-aae5-4754-9985-6b2a5b06ff87">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Verify&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Unknown_outcome_cannot_advance_gate_and_equal_times_keep_source_order() in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 337&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a73a1ab0-5bc5-4f65-9301-68f93b027bcc" testId="6eb14986-8787-7a00-20af-cec4cd306323" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Empty_input_has_no_events(input: &quot; \r\n&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000061" startTime="2026-10-26T00:10:09.5603861+07:00" endTime="2026-10-26T00:10:09.5603862+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a73a1ab0-5bc5-4f65-9301-68f93b027bcc" />
+    <UnitTestResult executionId="b46c023c-0f3b-497b-a6c6-c191174e1345" testId="ead12f13-622d-45b9-be80-6a1716302182" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Real_numbered_legacy_table_keeps_unknown_event_without_fabricating_time" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003490" startTime="2026-10-26T00:10:09.5798751+07:00" endTime="2026-10-26T00:10:09.5798752+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b46c023c-0f3b-497b-a6c6-c191174e1345" />
+    <UnitTestResult executionId="490405b5-a63f-428b-8a5f-9cca680de910" testId="85f19fc4-802e-5a73-0515-9814b64f5a1c" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;FAILED&quot;, expected: Failed)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0007483" startTime="2026-10-26T00:10:09.4689506+07:00" endTime="2026-10-26T00:10:09.4689507+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="490405b5-a63f-428b-8a5f-9cca680de910" />
+    <UnitTestResult executionId="ab1bf1bb-a2af-4722-88b5-97679954d0a2" testId="7bbc63af-dbb7-8465-9d45-6bf68753107b" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Initial_progress_has_nine_steps_and_no_invented_metadata(plan: True, approved: True, current: Prep)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000405" startTime="2026-10-26T00:10:09.5745248+07:00" endTime="2026-10-26T00:10:09.5745249+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ab1bf1bb-a2af-4722-88b5-97679954d0a2" />
+    <UnitTestResult executionId="a8458077-8814-4b92-a263-3f18c05c00de" testId="6d759923-39c2-63a5-fc2b-74112453a3c1" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;BLOCKED: hết hạn mức&quot;, expected: Blocked)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001687" startTime="2026-10-26T00:10:09.4794639+07:00" endTime="2026-10-26T00:10:09.4794640+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a8458077-8814-4b92-a263-3f18c05c00de" />
+    <UnitTestResult executionId="7f0b997c-065a-4c2b-83a8-74f67e4820e2" testId="38809bed-4376-1aad-2522-39e60fd3f63e" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Prep, step: Prep)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000294" startTime="2026-10-26T00:10:09.5518450+07:00" endTime="2026-10-26T00:10:09.5518450+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7f0b997c-065a-4c2b-83a8-74f67e4820e2" />
+    <UnitTestResult executionId="6b08bca2-3e2d-4b05-8d1c-733595e6b009" testId="ce1f9fb1-e17c-972b-3fcd-ab1d44534aba" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;KHÔNG ĐẠT&quot;, expected: Unknown)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0326055" startTime="2026-10-26T00:10:09.4550732+07:00" endTime="2026-10-26T00:10:09.4551034+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6b08bca2-3e2d-4b05-8d1c-733595e6b009" />
+    <UnitTestResult executionId="a67ef7e6-0783-4b28-8316-b8daaddc21a9" testId="9b4615ca-6436-9fdb-d144-41b9ff26d4df" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Success_after_failure_clears_current_error" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002927" startTime="2026-10-26T00:10:09.5810484+07:00" endTime="2026-10-26T00:10:09.5810485+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a67ef7e6-0783-4b28-8316-b8daaddc21a9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Qc&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Success_after_failure_clears_current_error() in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 219&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="74bcadcb-6203-4b26-bca1-89564b1d888c" testId="27e3c20f-30ed-8311-9bfb-5943efcdfcdd" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Qc&quot;, expected: Qc)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001589" startTime="2026-10-26T00:10:09.5458064+07:00" endTime="2026-10-26T00:10:09.5458065+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="74bcadcb-6203-4b26-bca1-89564b1d888c" />
+    <UnitTestResult executionId="3b9b061a-42dd-4c70-8a54-6f117d168708" testId="b0b3fbb0-25e0-aa01-c0d3-3a21c21451cd" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Empty_input_has_no_events(input: null)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001204" startTime="2026-10-26T00:10:09.5593413+07:00" endTime="2026-10-26T00:10:09.5593414+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3b9b061a-42dd-4c70-8a54-6f117d168708" />
+    <UnitTestResult executionId="906a9405-3aee-4958-8c96-eb6c6d55fd74" testId="dd7e2fe7-7335-714a-1832-fd055ad0e396" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Merge_evidence_overrides_old_error_but_never_proves_acceptance(board: True)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002264" startTime="2026-10-26T00:10:09.5289472+07:00" endTime="2026-10-26T00:10:09.5289473+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="906a9405-3aee-4958-8c96-eb6c6d55fd74" />
+    <UnitTestResult executionId="d73b021f-d4b7-4698-a1aa-1bd83e457264" testId="ab927667-0636-4334-a883-5186d0281a1c" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;PASS: xong&quot;, expected: Passed)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001727" startTime="2026-10-26T00:10:09.4733211+07:00" endTime="2026-10-26T00:10:09.4733212+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d73b021f-d4b7-4698-a1aa-1bd83e457264" />
+    <UnitTestResult executionId="a92a9853-0753-4b03-846c-e24d7bc3160a" testId="ffa2a1dc-f4df-390d-633a-730f27bc60d6" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Qc, outcome: Failed, step: Qc)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002626" startTime="2026-10-26T00:10:09.5555512+07:00" endTime="2026-10-26T00:10:09.5555512+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a92a9853-0753-4b03-846c-e24d7bc3160a">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Qc&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(WorkAction action, WorkOutcome outcome, WorkStep step) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 207&#xD;
+   at InvokeStub_AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="aaa8c193-b5a1-4452-b63b-ad97b045bdb3" testId="1577acbc-4a04-5396-cddb-f771106689c9" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_handles_line_endings_bom_and_numbered_heading(newline: &quot;\r\n&quot;, bom: False)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0004403" startTime="2026-10-26T00:10:09.5672873+07:00" endTime="2026-10-26T00:10:09.5672873+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aaa8c193-b5a1-4452-b63b-ad97b045bdb3" />
+    <UnitTestResult executionId="9bb58105-e6e6-4547-a0ce-27635c659e56" testId="1a5a1747-8761-a7a4-1af6-6646193ab444" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Later_qc_success_does_not_bypass_unresolved_verify_failure" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002962" startTime="2026-10-26T00:10:09.5774803+07:00" endTime="2026-10-26T00:10:09.5774804+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9bb58105-e6e6-4547-a0ce-27635c659e56">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Verify&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Later_qc_success_does_not_bypass_unresolved_verify_failure() in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 311&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="89a482b2-66ca-42ee-ad9c-f2b82b776e61" testId="ed9ac53f-726f-3f87-9d9d-6062444411e7" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_or_bad_time_remains_unknown(time: &quot;&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003053" startTime="2026-10-26T00:10:09.5625103+07:00" endTime="2026-10-26T00:10:09.5625104+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="89a482b2-66ca-42ee-ad9c-f2b82b776e61" />
+    <UnitTestResult executionId="4bdacb1f-6bf2-4976-98ab-090a6d3b6dc5" testId="b7bcef9d-9888-db53-1530-f83963a8849a" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_success_is_waiting_for_code_not_code_completed" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002972" startTime="2026-10-26T00:10:09.5700493+07:00" endTime="2026-10-26T00:10:09.5700493+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4bdacb1f-6bf2-4976-98ab-090a6d3b6dc5">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Code&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_success_is_waiting_for_code_not_code_completed() in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 301&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="99616588-68a0-4132-a627-d5d0cc79b289" testId="a4cf8d7a-dbe9-7f7d-d4b4-86055460a1ce" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Initial_progress_has_nine_steps_and_no_invented_metadata(plan: True, approved: False, current: PlanApproval)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003315" startTime="2026-10-26T00:10:09.5735541+07:00" endTime="2026-10-26T00:10:09.5735541+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="99616588-68a0-4132-a627-d5d0cc79b289" />
+    <UnitTestResult executionId="b67644ee-3931-4668-a774-417508bb80c9" testId="108d3659-e3ae-b8c0-9113-3b0278e8db37" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Hour_only_uses_received_date_in_vietnam" computerName="DESKTOP-PP14EFS" duration="00:00:00.0005474" startTime="2026-10-26T00:10:09.5787690+07:00" endTime="2026-10-26T00:10:09.5787691+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b67644ee-3931-4668-a774-417508bb80c9" />
+    <UnitTestResult executionId="0618568c-a0c4-4764-bc59-a1d3675cf133" testId="74a7a248-3d3e-0f4f-aa4e-2a42ca838681" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Verify | lượt 0 | ĐẠT&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0011733" startTime="2026-10-26T00:10:09.5181341+07:00" endTime="2026-10-26T00:10:09.5181344+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0618568c-a0c4-4764-bc59-a1d3675cf133" />
+    <UnitTestResult executionId="8b546fc1-cc27-4de0-b0c1-0de00d7c2661" testId="f0a6cc17-56a5-e53d-1703-572fa08e0861" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Prep, done: Prep, current: Code)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0031159" startTime="2026-10-26T00:10:09.5347812+07:00" endTime="2026-10-26T00:10:09.5347812+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8b546fc1-cc27-4de0-b0c1-0de00d7c2661" />
+    <UnitTestResult executionId="3dbd7cd3-589e-4ab1-9a59-5a00178370a9" testId="ce928f80-1fcb-4631-9bc4-f92ef1b8efa5" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_metadata_uses_placeholder_and_source_order" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003014" startTime="2026-10-26T00:10:09.5714651+07:00" endTime="2026-10-26T00:10:09.5714651+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3dbd7cd3-589e-4ab1-9a59-5a00178370a9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Qc&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_metadata_uses_placeholder_and_source_order() in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 252&#xD;
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="506ba894-fe81-4562-a91d-6fa5fbafc358" testId="c955012b-629c-30fc-1430-903fbee05151" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Numeric_round_and_task_filter_prevent_old_or_other_failure_winning" computerName="DESKTOP-PP14EFS" duration="00:00:00.0002688" startTime="2026-10-26T00:10:09.5401253+07:00" endTime="2026-10-26T00:10:09.5401254+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="506ba894-fe81-4562-a91d-6fa5fbafc358" />
+    <UnitTestResult executionId="0a6a676a-3b23-4db1-854c-8d07758947aa" testId="4527c44f-12c1-94b5-350d-8b4fea2c8b08" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- thiếu cột&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0004773" startTime="2026-10-26T00:10:09.5192405+07:00" endTime="2026-10-26T00:10:09.5192406+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0a6a676a-3b23-4db1-854c-8d07758947aa" />
+    <UnitTestResult executionId="89c3a503-5b73-4bdb-a48b-377e41bf6a7e" testId="6573b794-5f5c-0c41-b6b0-832f96408965" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Iso_offset_is_preserved" computerName="DESKTOP-PP14EFS" duration="00:00:00.0117132" startTime="2026-10-26T00:10:09.5389395+07:00" endTime="2026-10-26T00:10:09.5389396+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="89c3a503-5b73-4bdb-a48b-377e41bf6a7e" />
+    <UnitTestResult executionId="384c2dc1-4f2c-40da-a0a3-83e45ffedd28" testId="82cabf77-3e97-23bd-3791-a958057507b1" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;PASSED&quot;, expected: Passed)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001631" startTime="2026-10-26T00:10:09.5072357+07:00" endTime="2026-10-26T00:10:09.5072359+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="384c2dc1-4f2c-40da-a0a3-83e45ffedd28" />
+    <UnitTestResult executionId="6f9d69ed-a058-4d43-96c3-8f870829f4b1" testId="9cd40710-9f46-d517-9f4c-eb1bba8cc984" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_or_bad_time_remains_unknown(time: &quot;không phải giờ&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0001618" startTime="2026-10-26T00:10:09.5634865+07:00" endTime="2026-10-26T00:10:09.5634866+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6f9d69ed-a058-4d43-96c3-8f870829f4b1" />
+    <UnitTestResult executionId="1d4b3392-007b-4113-b3bb-8a94407ab8ac" testId="d429befc-9ef5-6320-72ab-ea18bd7d38f7" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_only_reads_journal_and_removes_exact_duplicate" computerName="DESKTOP-PP14EFS" duration="00:00:00.0038766" startTime="2026-10-26T00:10:09.5823790+07:00" endTime="2026-10-26T00:10:09.5823791+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1d4b3392-007b-4113-b3bb-8a94407ab8ac" />
+    <UnitTestResult executionId="617894fc-1911-4d2c-a8d4-f5b7f579dc57" testId="048ac1b7-0250-dac6-450d-053fd2a0af90" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Board_without_merge_does_not_prove_any_gate(status: &quot;\ud83d\udd35 Chờ review&quot;)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0000190" startTime="2026-10-26T00:10:09.5338067+07:00" endTime="2026-10-26T00:10:09.5338068+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="617894fc-1911-4d2c-a8d4-f5b7f579dc57" />
+    <UnitTestResult executionId="7e8bc157-2098-45d4-8cc3-b792f5c7e633" testId="fb21eb80-0695-04c6-a927-72c7615d7729" testName="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Qc, step: Qc)" computerName="DESKTOP-PP14EFS" duration="00:00:00.0003029" startTime="2026-10-26T00:10:09.5497083+07:00" endTime="2026-10-26T00:10:09.5497084+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7e8bc157-2098-45d4-8cc3-b792f5c7e633">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Qc&#xD;
+Actual:   Prep</Message>
+          <StackTrace>   at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step) in D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs:line 193&#xD;
+   at InvokeStub_AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Real_board_status_is_consumable_without_inferring_gate_results" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="ace017a2-d0c0-1588-19f3-107f29cf6009">
+      <Execution id="3626d623-3a68-4b54-9fe1-3143f352ca35" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Real_board_status_is_consumable_without_inferring_gate_results" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Later_qc_success_does_not_bypass_unresolved_verify_failure" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="1a5a1747-8761-a7a4-1af6-6646193ab444">
+      <Execution id="9bb58105-e6e6-4547-a0ce-27635c659e56" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Later_qc_success_does_not_bypass_unresolved_verify_failure" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_handles_line_endings_bom_and_numbered_heading(newline: &quot;\r&quot;, bom: True)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="a4214384-7aec-b435-0f50-bcd6f79e6d2b">
+      <Execution id="6c71c6a3-9049-463f-980b-6159dfcf2501" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Workflow_handles_line_endings_bom_and_numbered_heading" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(verifyRecovers: True, expected: Acceptance)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="3d9c973b-8611-ecde-2f66-4bf7bcb558df">
+      <Execution id="9960985b-8522-4eaa-aac2-eddc52f90826" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.W105RuleRegressionTests" name="Current_step_is_first_unresolved_step_after_qc_recovers" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Qc, outcome: Failed, step: Qc)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="ffa2a1dc-f4df-390d-633a-730f27bc60d6">
+      <Execution id="a92a9853-0753-4b03-846c-e24d7bc3160a" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Assign_summary_cannot_hide_gate_failure" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Timestamp_order_uses_instant_not_offset_or_source_order" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="1e48b3e9-f3aa-df3b-cbf5-6aae92505f18">
+      <Execution id="44ac6ffa-c4d6-4b88-bcec-87bbefc26f8d" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Timestamp_order_uses_instant_not_offset_or_source_order" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Merge, step: Merge)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="f8ffab56-26d1-0dd8-2cde-d3e24c349fb5">
+      <Execution id="4f228bf3-38f0-4436-a2a3-22c8e2999fd5" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Failure_keeps_step_and_error" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;PASSED&quot;, expected: Passed)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="82cabf77-3e97-23bd-3791-a958057507b1">
+      <Execution id="384c2dc1-4f2c-40da-a0a3-83e45ffedd28" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Unknown_outcome_cannot_advance_gate_and_equal_times_keep_source_order" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="c2255e1f-02b0-6038-ab1c-8dc1fd5f821a">
+      <Execution id="d29997ca-aae5-4754-9985-6b2a5b06ff87" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Unknown_outcome_cannot_advance_gate_and_equal_times_keep_source_order" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Assign, step: Code)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="3538199d-bbb8-ed06-8c4d-008715911d27">
+      <Execution id="01d4b3b5-e8b8-4c15-90fd-83cd9dd851a1" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Failure_keeps_step_and_error" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;KHÔNG ĐẠT&quot;, expected: Unknown)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="ce1f9fb1-e17c-972b-3fcd-ab1d44534aba">
+      <Execution id="6b08bca2-3e2d-4b05-8d1c-733595e6b009" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Qc, done: Qc, current: Acceptance)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="f9a54f4e-71b6-8ec8-6724-09cbc5c81e82">
+      <Execution id="01d536e9-1a7d-4beb-add4-84af98c76e29" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Passed_gate_completes_only_evidenced_step" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Verify | lượt x | ĐẠT&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="b24dc7dc-c500-7424-3b42-2f5835035712">
+      <Execution id="14661414-7ec4-4ae1-a38d-61162315bf05" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Malformed_workflow_is_ignored" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- thiếu cột&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="4527c44f-12c1-94b5-350d-8b4fea2c8b08">
+      <Execution id="0a6a676a-3b23-4db1-854c-8d07758947aa" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Malformed_workflow_is_ignored" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Verify, outcome: Failed, step: Verify)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="36392488-1658-75d1-6598-40a1a2673619">
+      <Execution id="24661178-40cf-4353-a722-8cf4c9244d98" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Assign_summary_cannot_hide_gate_failure" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(verifyRecovers: False, expected: Verify)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="dbe97d92-8671-afbe-8c21-229f7119e3f8">
+      <Execution id="9fd05729-4182-4109-a863-3ceb352b6dad" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.W105RuleRegressionTests" name="Current_step_is_first_unresolved_step_after_qc_recovers" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Untrusted_text_remains_data_and_input_is_not_mutated" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="fa74eb62-ef6b-4eb4-c439-226ff0f0f570">
+      <Execution id="d99dc63c-46c4-4e1b-9eee-c57b547b7d65" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Untrusted_text_remains_data_and_input_is_not_mutated" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Board_without_merge_does_not_prove_any_gate(status: &quot;\ud83d\udd34 Cần sửa&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="e6a01743-83b4-9bce-1ab7-803366bbeb2f">
+      <Execution id="4a5053a0-939e-4ee2-916d-e42bfb234f12" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Board_without_merge_does_not_prove_any_gate" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;chưa rõ&quot;, expected: Unknown)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="f043ab8e-76bc-c1d5-a4f5-10d46353bf9f">
+      <Execution id="8401d72c-4395-4d3b-b44f-5f1975741c58" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Verify | lượt 0 | ĐẠT&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="74a7a248-3d3e-0f4f-aa4e-2a42ca838681">
+      <Execution id="0618568c-a0c4-4764-bc59-a1d3675cf133" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Malformed_workflow_is_ignored" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_only_reads_journal_and_removes_exact_duplicate" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="d429befc-9ef5-6320-72ab-ea18bd7d38f7">
+      <Execution id="1d4b3392-007b-4113-b3bb-8a94407ab8ac" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Workflow_only_reads_journal_and_removes_exact_duplicate" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Success_after_failure_clears_current_error" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="9b4615ca-6436-9fdb-d144-41b9ff26d4df">
+      <Execution id="a67ef7e6-0783-4b28-8316-b8daaddc21a9" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Success_after_failure_clears_current_error" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Merge_evidence_overrides_old_error_but_never_proves_acceptance(board: True)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="dd7e2fe7-7335-714a-1832-fd055ad0e396">
+      <Execution id="906a9405-3aee-4958-8c96-eb6c6d55fd74" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Merge_evidence_overrides_old_error_but_never_proves_acceptance" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;PASS: xong&quot;, expected: Passed)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="ab927667-0636-4334-a883-5186d0281a1c">
+      <Execution id="d73b021f-d4b7-4698-a1aa-1bd83e457264" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_or_bad_time_remains_unknown(time: &quot;&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="ed9ac53f-726f-3f87-9d9d-6062444411e7">
+      <Execution id="89a482b2-66ca-42ee-ad9c-f2b82b776e61" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Missing_or_bad_time_remains_unknown" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Initial_progress_has_nine_steps_and_no_invented_metadata(plan: True, approved: False, current: PlanApproval)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="a4cf8d7a-dbe9-7f7d-d4b4-86055460a1ce">
+      <Execution id="99616588-68a0-4132-a627-d5d0cc79b289" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Initial_progress_has_nine_steps_and_no_invented_metadata" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Empty_input_has_no_events(input: null)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="b0b3fbb0-25e0-aa01-c0d3-3a21c21451cd">
+      <Execution id="3b9b061a-42dd-4c70-8a54-6f117d168708" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Empty_input_has_no_events" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Initial_progress_has_nine_steps_and_no_invented_metadata(plan: True, approved: True, current: Prep)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="7bbc63af-dbb7-8465-9d45-6bf68753107b">
+      <Execution id="ab1bf1bb-a2af-4722-88b5-97679954d0a2" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Initial_progress_has_nine_steps_and_no_invented_metadata" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Initial_progress_has_nine_steps_and_no_invented_metadata(plan: False, approved: False, current: Received)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="d4cea665-4399-883d-a364-d80aba37ff24">
+      <Execution id="ad79738a-6e2a-4f9a-ac51-627fa47de08c" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Initial_progress_has_nine_steps_and_no_invented_metadata" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Board_without_merge_does_not_prove_any_gate(status: &quot;\ud83d\udfe1 Đang chạy&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="176c0092-1458-db4b-12ea-250f710ef736">
+      <Execution id="b166d4d6-b0fa-4148-af1b-0879cb62b346" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Board_without_merge_does_not_prove_any_gate" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Hour_only_uses_received_date_in_vietnam" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="108d3659-e3ae-b8c0-9113-3b0278e8db37">
+      <Execution id="b67644ee-3931-4668-a774-417508bb80c9" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Hour_only_uses_received_date_in_vietnam" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Iso_offset_is_preserved" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="6573b794-5f5c-0c41-b6b0-832f96408965">
+      <Execution id="89c3a503-5b73-4bdb-a48b-377e41bf6a7e" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Iso_offset_is_preserved" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;CẦN SỬA: lỗi build&quot;, expected: Failed)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="1a552cb0-8f36-1860-07f4-a361f800f821">
+      <Execution id="7137b7d0-3939-4080-992d-8868314b3d88" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Execute | lượt 2 | ĐẠT&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="7badd63c-0ba2-3563-b475-0f369c64b917">
+      <Execution id="5715c1cc-1b84-4068-9dfa-d4c4b4a20eda" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Malformed_workflow_is_ignored" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;FAILED&quot;, expected: Failed)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="85f19fc4-802e-5a73-0515-9814b64f5a1c">
+      <Execution id="490405b5-a63f-428b-8a5f-9cca680de910" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_or_bad_time_remains_unknown(time: &quot;22:00&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="c19455fd-0003-174d-ec98-fd3fc992d9d6">
+      <Execution id="e767b314-b09b-4d2a-ae87-0f10775f9b02" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Missing_or_bad_time_remains_unknown" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Qc&quot;, expected: Qc)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="27e3c20f-30ed-8311-9bfb-5943efcdfcdd">
+      <Execution id="74bcadcb-6203-4b26-bca1-89564b1d888c" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Recognizes_all_workflow_actions" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_handles_line_endings_bom_and_numbered_heading(newline: &quot;\r\n&quot;, bom: False)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="1577acbc-4a04-5396-cddb-f771106689c9">
+      <Execution id="aaa8c193-b5a1-4452-b63b-ad97b045bdb3" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Workflow_handles_line_endings_bom_and_numbered_heading" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Prep&quot;, expected: Prep)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="9bf06e7f-53c4-1cbb-596c-90462703335c">
+      <Execution id="16381760-11d7-4692-af21-1ceb5eaede10" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Recognizes_all_workflow_actions" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Qc, outcome: Blocked, step: Qc)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="b05133a7-e970-4e8f-1895-1bfeaa921c12">
+      <Execution id="387f2039-c43a-4887-adfa-913cb65a8d43" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Assign_summary_cannot_hide_gate_failure" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;ĐẠT&quot;, expected: Passed)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="e78d4315-1f46-500e-461d-6d0b5c3fca2b">
+      <Execution id="e9a39729-4bf3-4a0f-8630-1ed03d71b252" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_metadata_uses_placeholder_and_source_order" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="ce928f80-1fcb-4631-9bc4-f92ef1b8efa5">
+      <Execution id="3dbd7cd3-589e-4ab1-9a59-5a00178370a9" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Missing_metadata_uses_placeholder_and_source_order" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Empty_input_has_no_events(input: &quot; \r\n&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="6eb14986-8787-7a00-20af-cec4cd306323">
+      <Execution id="a73a1ab0-5bc5-4f65-9301-68f93b027bcc" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Empty_input_has_no_events" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Prep, done: Prep, current: Code)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="f0a6cc17-56a5-e53d-1703-572fa08e0861">
+      <Execution id="8b546fc1-cc27-4de0-b0c1-0de00d7c2661" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Passed_gate_completes_only_evidenced_step" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Verify, step: Verify)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="8443c78f-0760-302d-9550-82d274aaa258">
+      <Execution id="de39114e-88d4-437c-a73a-60891a394a3a" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Failure_keeps_step_and_error" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | ../W1-05 | Verify | lượt 2 | ĐẠT&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="b3a5f48b-5f3d-87c1-bb78-a8b047ab05f6">
+      <Execution id="35449e9a-3542-469a-bf8c-85c7cdf565ae" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Malformed_workflow_is_ignored" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_or_bad_time_remains_unknown(time: &quot;không phải giờ&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="9cd40710-9f46-d517-9f4c-eb1bba8cc984">
+      <Execution id="6f9d69ed-a058-4d43-96c3-8f870829f4b1" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Missing_or_bad_time_remains_unknown" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Verify&quot;, expected: Verify)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="4757a956-8b82-43b2-5335-50f99f640157">
+      <Execution id="0a1d0884-62b9-4141-92c2-1f0bb77e3ec8" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Recognizes_all_workflow_actions" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Empty_input_has_no_events(input: &quot;&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="f36680f4-20b7-608d-8e63-a59928388d03">
+      <Execution id="89e6e1f2-6ce2-4ff1-a198-efe888634fcb" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Empty_input_has_no_events" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Merge&quot;, expected: Merge)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="11975a6c-8ca6-e9ba-ca69-6214f6e42c94">
+      <Execution id="611f3938-8973-4e64-a737-ed5700579da6" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Recognizes_all_workflow_actions" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Verify, done: Verify, current: Qc)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="9461ab44-5a21-da40-6319-d2159cdcdb69">
+      <Execution id="ef891634-194a-4d6e-a09a-e740c00dcdd3" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Passed_gate_completes_only_evidenced_step" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.New_round_merge_clears_previous_round_failure" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="762ca350-529f-fef6-6bdd-20c70d3c6af4">
+      <Execution id="164144d9-25f8-4f15-ad46-554d86b391fc" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="New_round_merge_clears_previous_round_failure" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Qc, step: Qc)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="fb21eb80-0695-04c6-a927-72c7615d7729">
+      <Execution id="7e8bc157-2098-45d4-8cc3-b792f5c7e633" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Failure_keeps_step_and_error" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;LỖI: dừng&quot;, expected: Failed)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="65a0bcc0-8cbb-c3b7-db15-3f4b3583b3a1">
+      <Execution id="19851d74-580a-4037-8e6a-a24524d4fb50" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Malformed_workflow_is_ignored(row: &quot;- 22:00 | W1-05 | Verify | lượt 999999999999 | ĐẠT&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="b90d8c13-d3b5-cf42-6dda-639c5646d1f9">
+      <Execution id="a927dfad-e8fc-402e-92b6-2475c60a32dc" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Malformed_workflow_is_ignored" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Board_without_merge_does_not_prove_any_gate(status: &quot;\ud83d\udd35 Chờ review&quot;)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="048ac1b7-0250-dac6-450d-053fd2a0af90">
+      <Execution id="617894fc-1911-4d2c-a8d4-f5b7f579dc57" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Board_without_merge_does_not_prove_any_gate" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Prep, step: Prep)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="38809bed-4376-1aad-2522-39e60fd3f63e">
+      <Execution id="7f0b997c-065a-4c2b-83a8-74f67e4820e2" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Failure_keeps_step_and_error" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Real_numbered_legacy_table_keeps_unknown_event_without_fabricating_time" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="ead12f13-622d-45b9-be80-6a1716302182">
+      <Execution id="b46c023c-0f3b-497b-a6c6-c191174e1345" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Real_numbered_legacy_table_keeps_unknown_event_without_fabricating_time" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_success_is_waiting_for_code_not_code_completed" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="b7bcef9d-9888-db53-1530-f83963a8849a">
+      <Execution id="4bdacb1f-6bf2-4976-98ab-090a6d3b6dc5" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Assign_success_is_waiting_for_code_not_code_completed" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Workflow_handles_line_endings_bom_and_numbered_heading(newline: &quot;\n&quot;, bom: True)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="cfa9e247-2d07-1567-c989-62abb19d5042">
+      <Execution id="a9945c0e-483f-4a74-9329-f877efdaa8a0" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Workflow_handles_line_endings_bom_and_numbered_heading" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Numeric_round_and_task_filter_prevent_old_or_other_failure_winning" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="c955012b-629c-30fc-1430-903fbee05151">
+      <Execution id="506ba894-fe81-4562-a91d-6fa5fbafc358" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Numeric_round_and_task_filter_prevent_old_or_other_failure_winning" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Merge_evidence_overrides_old_error_but_never_proves_acceptance(board: False)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="6f63be1b-79b2-0b3a-15bf-07963e12bbbd">
+      <Execution id="5b7b8187-85c5-482e-bc0d-3946adeeced1" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Merge_evidence_overrides_old_error_but_never_proves_acceptance" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;FAIL: lỗi&quot;, expected: Failed)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="3537fff9-b2d1-ad83-a268-459e7cb4e592">
+      <Execution id="a694445c-71ba-4bb0-b3f0-e780dc458fcf" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Recognizes_all_workflow_actions(action: &quot;Assign&quot;, expected: Assign)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="84f1afaf-bddc-fdfe-0109-41f12b06b15c">
+      <Execution id="bfe3d287-7d94-4540-9b41-be149dbf0acd" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Recognizes_all_workflow_actions" />
+    </UnitTest>
+    <UnitTest name="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Results_use_explicit_prefix_not_substring(result: &quot;BLOCKED: hết hạn mức&quot;, expected: Blocked)" storage="d:\aiteam-work\aiteam\b-w1-05\hub.tests\bin\debug\net10.0-windows\aiteam.hub.tests.dll" id="6d759923-39c2-63a5-fc2b-74112453a3c1">
+      <Execution id="a8458077-8814-4b92-a263-3f18c05c00de" />
+      <TestMethod codeBase="D:\AITeam-work\AITeam\b-w1-05\hub.tests\bin\Debug\net10.0-windows\AITeam.Hub.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="AITeam.Hub.Tests.AcceptanceW105WorkProgressTests" name="Results_use_explicit_prefix_not_substring" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="3538199d-bbb8-ed06-8c4d-008715911d27" executionId="01d4b3b5-e8b8-4c15-90fd-83cd9dd851a1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a4214384-7aec-b435-0f50-bcd6f79e6d2b" executionId="6c71c6a3-9049-463f-980b-6159dfcf2501" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e78d4315-1f46-500e-461d-6d0b5c3fca2b" executionId="e9a39729-4bf3-4a0f-8630-1ed03d71b252" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fa74eb62-ef6b-4eb4-c439-226ff0f0f570" executionId="d99dc63c-46c4-4e1b-9eee-c57b547b7d65" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7badd63c-0ba2-3563-b475-0f369c64b917" executionId="5715c1cc-1b84-4068-9dfa-d4c4b4a20eda" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9461ab44-5a21-da40-6319-d2159cdcdb69" executionId="ef891634-194a-4d6e-a09a-e740c00dcdd3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3a5f48b-5f3d-87c1-bb78-a8b047ab05f6" executionId="35449e9a-3542-469a-bf8c-85c7cdf565ae" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="11975a6c-8ca6-e9ba-ca69-6214f6e42c94" executionId="611f3938-8973-4e64-a737-ed5700579da6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9bf06e7f-53c4-1cbb-596c-90462703335c" executionId="16381760-11d7-4692-af21-1ceb5eaede10" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8443c78f-0760-302d-9550-82d274aaa258" executionId="de39114e-88d4-437c-a73a-60891a394a3a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cfa9e247-2d07-1567-c989-62abb19d5042" executionId="a9945c0e-483f-4a74-9329-f877efdaa8a0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="65a0bcc0-8cbb-c3b7-db15-3f4b3583b3a1" executionId="19851d74-580a-4037-8e6a-a24524d4fb50" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e6a01743-83b4-9bce-1ab7-803366bbeb2f" executionId="4a5053a0-939e-4ee2-916d-e42bfb234f12" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="176c0092-1458-db4b-12ea-250f710ef736" executionId="b166d4d6-b0fa-4148-af1b-0879cb62b346" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b05133a7-e970-4e8f-1895-1bfeaa921c12" executionId="387f2039-c43a-4887-adfa-913cb65a8d43" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3537fff9-b2d1-ad83-a268-459e7cb4e592" executionId="a694445c-71ba-4bb0-b3f0-e780dc458fcf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f36680f4-20b7-608d-8e63-a59928388d03" executionId="89e6e1f2-6ce2-4ff1-a198-efe888634fcb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ace017a2-d0c0-1588-19f3-107f29cf6009" executionId="3626d623-3a68-4b54-9fe1-3143f352ca35" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f8ffab56-26d1-0dd8-2cde-d3e24c349fb5" executionId="4f228bf3-38f0-4436-a2a3-22c8e2999fd5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="84f1afaf-bddc-fdfe-0109-41f12b06b15c" executionId="bfe3d287-7d94-4540-9b41-be149dbf0acd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4757a956-8b82-43b2-5335-50f99f640157" executionId="0a1d0884-62b9-4141-92c2-1f0bb77e3ec8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f9a54f4e-71b6-8ec8-6724-09cbc5c81e82" executionId="01d536e9-1a7d-4beb-add4-84af98c76e29" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c19455fd-0003-174d-ec98-fd3fc992d9d6" executionId="e767b314-b09b-4d2a-ae87-0f10775f9b02" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6f63be1b-79b2-0b3a-15bf-07963e12bbbd" executionId="5b7b8187-85c5-482e-bc0d-3946adeeced1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="36392488-1658-75d1-6598-40a1a2673619" executionId="24661178-40cf-4353-a722-8cf4c9244d98" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3d9c973b-8611-ecde-2f66-4bf7bcb558df" executionId="9960985b-8522-4eaa-aac2-eddc52f90826" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="762ca350-529f-fef6-6bdd-20c70d3c6af4" executionId="164144d9-25f8-4f15-ad46-554d86b391fc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b90d8c13-d3b5-cf42-6dda-639c5646d1f9" executionId="a927dfad-e8fc-402e-92b6-2475c60a32dc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1e48b3e9-f3aa-df3b-cbf5-6aae92505f18" executionId="44ac6ffa-c4d6-4b88-bcec-87bbefc26f8d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a552cb0-8f36-1860-07f4-a361f800f821" executionId="7137b7d0-3939-4080-992d-8868314b3d88" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b24dc7dc-c500-7424-3b42-2f5835035712" executionId="14661414-7ec4-4ae1-a38d-61162315bf05" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dbe97d92-8671-afbe-8c21-229f7119e3f8" executionId="9fd05729-4182-4109-a863-3ceb352b6dad" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d4cea665-4399-883d-a364-d80aba37ff24" executionId="ad79738a-6e2a-4f9a-ac51-627fa47de08c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f043ab8e-76bc-c1d5-a4f5-10d46353bf9f" executionId="8401d72c-4395-4d3b-b44f-5f1975741c58" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c2255e1f-02b0-6038-ab1c-8dc1fd5f821a" executionId="d29997ca-aae5-4754-9985-6b2a5b06ff87" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6eb14986-8787-7a00-20af-cec4cd306323" executionId="a73a1ab0-5bc5-4f65-9301-68f93b027bcc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ead12f13-622d-45b9-be80-6a1716302182" executionId="b46c023c-0f3b-497b-a6c6-c191174e1345" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="85f19fc4-802e-5a73-0515-9814b64f5a1c" executionId="490405b5-a63f-428b-8a5f-9cca680de910" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7bbc63af-dbb7-8465-9d45-6bf68753107b" executionId="ab1bf1bb-a2af-4722-88b5-97679954d0a2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6d759923-39c2-63a5-fc2b-74112453a3c1" executionId="a8458077-8814-4b92-a263-3f18c05c00de" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="38809bed-4376-1aad-2522-39e60fd3f63e" executionId="7f0b997c-065a-4c2b-83a8-74f67e4820e2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ce1f9fb1-e17c-972b-3fcd-ab1d44534aba" executionId="6b08bca2-3e2d-4b05-8d1c-733595e6b009" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9b4615ca-6436-9fdb-d144-41b9ff26d4df" executionId="a67ef7e6-0783-4b28-8316-b8daaddc21a9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="27e3c20f-30ed-8311-9bfb-5943efcdfcdd" executionId="74bcadcb-6203-4b26-bca1-89564b1d888c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b0b3fbb0-25e0-aa01-c0d3-3a21c21451cd" executionId="3b9b061a-42dd-4c70-8a54-6f117d168708" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dd7e2fe7-7335-714a-1832-fd055ad0e396" executionId="906a9405-3aee-4958-8c96-eb6c6d55fd74" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab927667-0636-4334-a883-5186d0281a1c" executionId="d73b021f-d4b7-4698-a1aa-1bd83e457264" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ffa2a1dc-f4df-390d-633a-730f27bc60d6" executionId="a92a9853-0753-4b03-846c-e24d7bc3160a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1577acbc-4a04-5396-cddb-f771106689c9" executionId="aaa8c193-b5a1-4452-b63b-ad97b045bdb3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a5a1747-8761-a7a4-1af6-6646193ab444" executionId="9bb58105-e6e6-4547-a0ce-27635c659e56" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed9ac53f-726f-3f87-9d9d-6062444411e7" executionId="89a482b2-66ca-42ee-ad9c-f2b82b776e61" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b7bcef9d-9888-db53-1530-f83963a8849a" executionId="4bdacb1f-6bf2-4976-98ab-090a6d3b6dc5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a4cf8d7a-dbe9-7f7d-d4b4-86055460a1ce" executionId="99616588-68a0-4132-a627-d5d0cc79b289" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="108d3659-e3ae-b8c0-9113-3b0278e8db37" executionId="b67644ee-3931-4668-a774-417508bb80c9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="74a7a248-3d3e-0f4f-aa4e-2a42ca838681" executionId="0618568c-a0c4-4764-bc59-a1d3675cf133" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f0a6cc17-56a5-e53d-1703-572fa08e0861" executionId="8b546fc1-cc27-4de0-b0c1-0de00d7c2661" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ce928f80-1fcb-4631-9bc4-f92ef1b8efa5" executionId="3dbd7cd3-589e-4ab1-9a59-5a00178370a9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c955012b-629c-30fc-1430-903fbee05151" executionId="506ba894-fe81-4562-a91d-6fa5fbafc358" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4527c44f-12c1-94b5-350d-8b4fea2c8b08" executionId="0a6a676a-3b23-4db1-854c-8d07758947aa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6573b794-5f5c-0c41-b6b0-832f96408965" executionId="89c3a503-5b73-4bdb-a48b-377e41bf6a7e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="82cabf77-3e97-23bd-3791-a958057507b1" executionId="384c2dc1-4f2c-40da-a0a3-83e45ffedd28" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9cd40710-9f46-d517-9f4c-eb1bba8cc984" executionId="6f9d69ed-a058-4d43-96c3-8f870829f4b1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d429befc-9ef5-6320-72ab-ea18bd7d38f7" executionId="1d4b3392-007b-4113-b3bb-8a94407ab8ac" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="048ac1b7-0250-dac6-450d-053fd2a0af90" executionId="617894fc-1911-4d2c-a8d4-f5b7f579dc57" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fb21eb80-0695-04c6-a927-72c7615d7729" executionId="7e8bc157-2098-45d4-8cc3-b792f5c7e633" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="65" executed="65" passed="48" failed="17" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.26]   Discovering: AITeam.Hub.Tests&#xD;
+[xUnit.net 00:00:00.37]   Discovered:  AITeam.Hub.Tests&#xD;
+[xUnit.net 00:00:00.38]   Starting:    AITeam.Hub.Tests&#xD;
+[xUnit.net 00:00:00.51]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.51]       Expected: Acceptance&#xD;
+[xUnit.net 00:00:00.51]       Actual:   Code&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\W105RuleRegressionTests.cs(25,0): at AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(Boolean verifyRecovers, WorkStep expected)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.52]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.52]       Expected: Verify&#xD;
+[xUnit.net 00:00:00.52]       Actual:   Code&#xD;
+[xUnit.net 00:00:00.52]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.52]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\W105RuleRegressionTests.cs(25,0): at AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(Boolean verifyRecovers, WorkStep expected)&#xD;
+[xUnit.net 00:00:00.52]            at InvokeStub_W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.52]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.53]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.53]       Expected: Acceptance&#xD;
+[xUnit.net 00:00:00.53]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.53]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.53]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(174,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(WorkAction action, WorkStep done, WorkStep current)&#xD;
+[xUnit.net 00:00:00.53]            at InvokeStub_AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.53]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.53]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.53]       Expected: Qc&#xD;
+[xUnit.net 00:00:00.53]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.53]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.53]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(174,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(WorkAction action, WorkStep done, WorkStep current)&#xD;
+[xUnit.net 00:00:00.53]            at InvokeStub_AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.53]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.54]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.54]       Expected: Qc&#xD;
+[xUnit.net 00:00:00.54]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.54]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.54]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(243,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Timestamp_order_uses_instant_not_offset_or_source_order()&#xD;
+[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.54]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.54]       Expected: Code&#xD;
+[xUnit.net 00:00:00.54]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.54]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.54]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(193,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step)&#xD;
+[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.54]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.54]       Expected: Qc&#xD;
+[xUnit.net 00:00:00.54]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.54]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.54]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(193,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step)&#xD;
+[xUnit.net 00:00:00.54]            at InvokeStub_AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.55]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.55]       Expected: Verify&#xD;
+[xUnit.net 00:00:00.55]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.55]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.55]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(193,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step)&#xD;
+[xUnit.net 00:00:00.55]            at InvokeStub_AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.55]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.55]       Expected: Merge&#xD;
+[xUnit.net 00:00:00.55]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.55]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.55]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(193,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(WorkAction action, WorkStep step)&#xD;
+[xUnit.net 00:00:00.55]            at InvokeStub_AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.55]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.55]       Expected: Verify&#xD;
+[xUnit.net 00:00:00.55]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.55]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.55]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(207,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(WorkAction action, WorkOutcome outcome, WorkStep step)&#xD;
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.55]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.55]       Expected: Qc&#xD;
+[xUnit.net 00:00:00.55]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.55]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.55]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(207,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(WorkAction action, WorkOutcome outcome, WorkStep step)&#xD;
+[xUnit.net 00:00:00.55]            at InvokeStub_AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.55]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.55]       Expected: Qc&#xD;
+[xUnit.net 00:00:00.55]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.55]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.55]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(207,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(WorkAction action, WorkOutcome outcome, WorkStep step)&#xD;
+[xUnit.net 00:00:00.55]            at InvokeStub_AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.56]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.56]       Expected: Code&#xD;
+[xUnit.net 00:00:00.56]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.56]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.56]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(301,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_success_is_waiting_for_code_not_code_completed()&#xD;
+[xUnit.net 00:00:00.56]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.56]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.57]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.57]       Expected: Qc&#xD;
+[xUnit.net 00:00:00.57]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.57]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.57]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(252,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_metadata_uses_placeholder_and_source_order()&#xD;
+[xUnit.net 00:00:00.57]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.57]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.57]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.57]       Expected: Verify&#xD;
+[xUnit.net 00:00:00.57]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.57]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.57]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(311,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Later_qc_success_does_not_bypass_unresolved_verify_failure()&#xD;
+[xUnit.net 00:00:00.57]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.57]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.58]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.58]       Expected: Qc&#xD;
+[xUnit.net 00:00:00.58]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.58]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.58]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(219,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Success_after_failure_clears_current_error()&#xD;
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.58]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.58]       Expected: Verify&#xD;
+[xUnit.net 00:00:00.58]       Actual:   Prep&#xD;
+[xUnit.net 00:00:00.58]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.58]         D:\AITeam-work\AITeam\b-w1-05\hub.tests\AcceptanceW105WorkProgressTests.cs(337,0): at AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Unknown_outcome_cannot_advance_gate_and_equal_times_keep_source_order()&#xD;
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)&#xD;
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.58]   Finished:    AITeam.Hub.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5388395+07:00">
+        <Text>[xUnit.net 00:00:00.51]     AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(verifyRecovers: True, expected: Acceptance) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5390851+07:00">
+        <Text>[xUnit.net 00:00:00.52]     AITeam.Hub.Tests.W105RuleRegressionTests.Current_step_is_first_unresolved_step_after_qc_recovers(verifyRecovers: False, expected: Verify) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5411541+07:00">
+        <Text>[xUnit.net 00:00:00.53]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Qc, done: Qc, current: Acceptance) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5412018+07:00">
+        <Text>[xUnit.net 00:00:00.53]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Passed_gate_completes_only_evidenced_step(action: Verify, done: Verify, current: Qc) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5413383+07:00">
+        <Text>[xUnit.net 00:00:00.54]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Timestamp_order_uses_instant_not_offset_or_source_order [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5483804+07:00">
+        <Text>[xUnit.net 00:00:00.54]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Assign, step: Code) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5495420+07:00">
+        <Text>[xUnit.net 00:00:00.54]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Qc, step: Qc) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5507248+07:00">
+        <Text>[xUnit.net 00:00:00.55]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Verify, step: Verify) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5529988+07:00">
+        <Text>[xUnit.net 00:00:00.55]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Failure_keeps_step_and_error(action: Merge, step: Merge) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5542146+07:00">
+        <Text>[xUnit.net 00:00:00.55]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Verify, outcome: Failed, step: Verify) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5553780+07:00">
+        <Text>[xUnit.net 00:00:00.55]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Qc, outcome: Failed, step: Qc) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5566204+07:00">
+        <Text>[xUnit.net 00:00:00.55]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_summary_cannot_hide_gate_failure(action: Qc, outcome: Blocked, step: Qc) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5701703+07:00">
+        <Text>[xUnit.net 00:00:00.56]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Assign_success_is_waiting_for_code_not_code_completed [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5713307+07:00">
+        <Text>[xUnit.net 00:00:00.57]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Missing_metadata_uses_placeholder_and_source_order [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5773335+07:00">
+        <Text>[xUnit.net 00:00:00.57]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Later_qc_success_does_not_bypass_unresolved_verify_failure [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5808812+07:00">
+        <Text>[xUnit.net 00:00:00.58]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Success_after_failure_clears_current_error [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Error" timestamp="2026-10-26T00:10:09.5835109+07:00">
+        <Text>[xUnit.net 00:00:00.58]     AITeam.Hub.Tests.AcceptanceW105WorkProgressTests.Unknown_outcome_cannot_advance_gate_and_equal_times_keep_source_order [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-PP14EFS" outcome="Warning" timestamp="2026-10-26T00:10:09.6229237+07:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
