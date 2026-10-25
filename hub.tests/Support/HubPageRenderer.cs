@@ -71,6 +71,10 @@ public sealed class HubHelpersCleanupRegressionTests
     public async Task Cleanup_continues_after_dispose_error_supports_async_and_preserves_original_exception()
     {
         using var env = new TestEnvironment();
+        var (okAsync, okSync) = (new AsyncProbe(), new SyncProbe());
+        await using (await HubTestHost.StartAsync(env, s => { s.AddSingleton(okAsync); s.AddSingleton<IDisposable>(new ThrowingProbe()); s.AddSingleton(okSync); })) { }
+        Assert.True(okAsync.Disposed && okSync.Disposed);
+
         var (cbAsync, cbSync, cbExpected) = (new AsyncProbe(), new SyncProbe(), new IOException("lỗi callback"));
         var cbEx = await Assert.ThrowsAsync<IOException>(() => HubTestHost.StartAsync(env, s =>
         {

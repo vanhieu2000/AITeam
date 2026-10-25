@@ -57,7 +57,7 @@ public sealed class HubTestHost : IAsyncDisposable
             var address = app.Urls.FirstOrDefault() ?? app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.First();
             handler = new HttpClientHandler { UseCookies = true, CookieContainer = new CookieContainer(), AllowAutoRedirect = false };
             client = new HttpClient(handler, disposeHandler: true) { BaseAddress = new Uri(address), Timeout = TimeSpan.FromSeconds(15) };
-            return new HubTestHost(app, client);
+            return new HubTestHost(app, client, builder.Services.ToArray());
         }
         catch
         {
@@ -88,7 +88,7 @@ public sealed class HubTestHost : IAsyncDisposable
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
         await SafeDisposeAsync(Client);
         try { await _app.StopAsync(); } catch { }
-        await SafeDisposeAsync(_app.Services);
+        await SafeDisposeAsync(_app.Services, _descriptors);
         try { await _app.DisposeAsync(); } catch { }
     }
     internal static async ValueTask SafeDisposeAsync(object? provider, IEnumerable<ServiceDescriptor>? descriptors = null)
@@ -111,6 +111,7 @@ public sealed class HubTestHost : IAsyncDisposable
         }
     }
     private readonly WebApplication _app;
+    private readonly IReadOnlyList<ServiceDescriptor> _descriptors;
     private int _disposed;
-    private HubTestHost(WebApplication app, HttpClient client) { _app = app; Client = client; }
+    private HubTestHost(WebApplication app, HttpClient client, IReadOnlyList<ServiceDescriptor> descriptors) { _app = app; Client = client; _descriptors = descriptors; }
 }
