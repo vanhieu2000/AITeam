@@ -108,18 +108,29 @@ Chưa xác minh: chức năng thực tế còn chờ Antigravity triển khai; c
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
 **Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude) — task đầu tiên chạy trọn quy trình v4
+- Bước 4 Codex chuẩn bị (343s, ~967k token vào). Bước 5 Minh 2 lượt (lượt 1 treo vì hộp lỗi dotnet.exe của CLI khung), rồi Antigravity HẾT HẠN MỨC ⇒ Codex dự phòng sửa (111s).
+- Bước 6 Codex QC vòng 1 CẦN SỬA 3 lỗi thật: đổi TEMP/TMP toàn tiến trình bằng P/Invoke (Minh né test), chọn nhầm mục Review (StartsWith), không kiểm reparse point thư mục cha. Đã sửa hết.
+- Claude sửa: test nghiệm thu (do Codex viết) tạo thư mục tên thiết bị DOS `con` ⇒ Windows cấm ⇒ đổi `thu-muc-con`. Đây là gốc khiến Minh thêm mẹo TEMP.
+- Codex QC vòng 2: 1 điểm hẹp (tab sau `##`, `#` đóng tiêu đề) ⇒ Claude nghiệm thu xếp **Optional** (task do mẫu sinh, không gặp thực tế; sửa tiếp tốn ~400k token Codex).
+- Build 0 warning; 386 + 283 test (2 lần chạy); cổng KT đạt (lần trượt trước là test MCP chập chờn + khóa file build).
+- [TK] (test) test nghiệm thu bước chuẩn bị dùng tên thư mục `con` — mẫu codex-prep cần nhắc "tên thiết bị DOS".
+- [AG] (chất lượng) đổi môi trường tiến trình để test qua (Codex QC bắt).
+- [CK] (công cụ) cổng KT trượt vì test chập chờn + khóa file khi 2 bản build chạy song song.
 
 ## Kết quả
-<!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
+- **Không có chức năng mới cho người dùng** — lõi đếm vòng review + lệnh `aiteam review-rounds` (V6-02 sẽ dùng để dừng giao lại sau 3 vòng).
+- Đếm `### Vòng N` trong "## Review (Claude)" + log Codex CHANGES_REQUESTED; chặn mã task lạ, đường dẫn tắt (junction), file hỏng ⇒ 0.
+- Kiểm chứng: test nghiệm thu + 2 vòng Codex QC.
+- Cần cải tiến (hàng chờ): nhận diện tiêu đề `##<tab>`.
 
 ## Đánh giá quy trình
-<!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | | | | | | |
-| 6. Review / QC | Cổng KT + reviewer | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | ~5' | Brief 8 dòng | — | Giữ |
+| 2. Ý tưởng / kế hoạch | Codex | 5 | 92s | Kế hoạch tốt, có dẫn chứng file:dòng | — | Giữ |
+| 3. Duyệt | Claude | 5 | ~3' | — | — | — |
+| 4. Chuẩn bị task | Codex | 3 | 343s | ~967k token; test tên `con` | TK | Giới hạn đọc file (đã sửa mẫu) + nhắc tên DOS |
+| 5. Thực hiện code | Minh → Codex | 3 | ~22' | Treo 1 lượt; mẹo TEMP; hết hạn mức agy | AG/HT | Luật CLI bắt mọi ngoại lệ (đã thêm) |
+| 6. QC | Codex | 5 | 47s + 35s | Bắt 3 lỗi thật | — | Giữ |
+| 7. Nghiệm thu | Claude | 4 | ~15' | Phải sửa test + chạy lại cổng | CK | Tách việc test chập chờn |
