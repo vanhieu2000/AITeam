@@ -11,7 +11,8 @@ TIẾT KIỆM TOKEN (bắt buộc): CHỈ đọc `AGENTS.md`, `templates/task.md
 3. Test nghiệm thu (xUnit): đủ ca biên / lỗi / bảo mật / dữ liệu cũ trong kế hoạch; bỏ code mới đi thì test phải đỏ; không `return` sớm; chuỗi giống bí mật ghép lúc chạy (`string.Concat("sk-", …)`); không chạy tiến trình thật của agy / codex.
    - Khung của lệnh CLI / tiến trình con (vd. `aiteam <lệnh>`): KHÔNG để `NotImplementedException` văng khỏi `Main` — bắt lại, in `LỖI: chưa làm` ra stderr, trả mã 1. (Lỗi chưa bắt trong tiến trình con ⇒ Windows hiện hộp "dotnet.exe - Application Error" trên máy chủ dự án — 25/10.)
 4. Chạy `{BUILD}` — phải 0 lỗi (test nghiệm thu được phép ĐỎ khi chạy vì thân hàm chưa có; cảnh báo CS9113 tham số chưa dùng trong khung được chấp nhận).
-5. File `.cs` / `.cshtml` / `.ps1` lưu UTF-8 CÓ BOM. Đọc `AGENTS.md` mục "Lỗi hay gặp".
+5. KHÔNG đưa vào task tiêu chí "chụp ảnh / chạy app / đo trình duyệt": lập trình viên không chạy app; Claude kiểm giao diện thật ở bước 7 (nghiệm thu). Giao diện kiểm bằng test dựng trang + test markup.
+6. File `.cs` / `.cshtml` / `.ps1` lưu UTF-8 CÓ BOM. Đọc `AGENTS.md` mục "Lỗi hay gặp".
 6. Cuối cùng trả lời ≤ 10 dòng: file đã tạo, số ca test, điều chưa chắc.
 
 === KẾ HOẠCH ĐÃ DUYỆT CỦA TASK {TASK} ===
