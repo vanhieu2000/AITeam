@@ -63,7 +63,10 @@ param(
     [switch] $Force,
     [string] $Skill = "",
     [AllowEmptyString()][string] $Text = "",
-    [AllowEmptyString()][string] $Source = ""
+    [AllowEmptyString()][string] $Source = "",
+    [string] $Optional = "",
+    [string] $Note = "",
+    [string] $Reject = ""
 )
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
@@ -1863,6 +1866,26 @@ function Invoke-Stop {
     }
 }
 # ===== Review / merge gọn cho Claude (tiết kiệm lượt gọi công cụ và token) =====
+# /// <summary>Adapter chỉ đọc: Resolve-Project/Get-PlanDir, plan đã duyệt và bảng việc,
+# /// gom tất cả task của Request đang chờ nghiệm thu; gọi Get-WorkflowAcceptEvidence/Pack.
+# /// Đếm Added theo cùng seedCommit và bộ loại file của Invoke-Verify; không dùng metrics.linesAdded cũ.
+# /// Không fetch, commit, ghi heartbeat hoặc log khi Command=accept-pack. Request sai báo
+# /// 'Thiếu / sai -Request (vd. R-006)'. Không có task in 'Không có task chờ nghiệm thu.'.</summary>
+function Invoke-AcceptPack {
+    throw [System.NotImplementedException]::new() # TODO(agent)
+}
+
+# /// <summary>Adapter dựng Context từ đúng nhánh/task, phát hiện đã merge từ bảng và ancestry;
+# /// truyền các callback thật cho Invoke-WorkflowAccept; gọi Codex theo template codex-accept.md.
+# /// Ghi envelope Task.accept-N.json liên kết source KT/QC/metrics với task/run/SHA khi tạo bằng chứng,
+# /// không gắn SHA hiện tại cho log cũ. Dùng khóa chung Codex, không giữ khóa repo khi gọi AI.
+# /// Chỉ commit/push ba mục tài liệu rồi gọi Invoke-Merge hiện có, giữ Assert-MergeApproval
+# /// với SHA mới; không tái sử dụng approval SHA trước commit tài liệu. Reject dùng assign -Resume -Feedback.
+# /// Kiểm mọi exit code git, không ghi Merge ĐẠT trước push thành công; lỗi trả qua catch CLI.</summary>
+function Invoke-Accept {
+    throw [System.NotImplementedException]::new() # TODO(agent)
+}
+
 function Invoke-ReviewPack {
     $r = Resolve-Project $Project
     $tf = Find-TaskFile $r $Task
@@ -2288,12 +2311,13 @@ function Invoke-DeputySchedule([bool]$on) {
     $global:LASTEXITCODE = 0
 }
 
-Update-ManagerHeartbeat
+if ($Command -ne 'accept-pack') { Update-ManagerHeartbeat }
 
 try {
 if ($Command -ne "skill-note") {
     . (Join-Path $Root "tools/workflow-common.ps1")
     . (Join-Path $Root "tools/workflow-pipeline.ps1")
+    . (Join-Path $Root "tools/workflow-accept.ps1")
 }
 switch ($Command) {
     "skill-note" { Invoke-SkillNote -Root $Root -Skill $Skill -Text $Text -Source $Source }
@@ -2303,6 +2327,8 @@ switch ($Command) {
     "prep" { Invoke-Prep }
     "pipeline" { Invoke-Pipeline }
     "qc" { Invoke-Qc }
+    "accept-pack" { Invoke-AcceptPack }
+    "accept" { Invoke-Accept }
     "deputy" { Invoke-Deputy }
     "deputy-on" { Invoke-DeputySchedule $true }
     "deputy-off" { Invoke-DeputySchedule $false }
