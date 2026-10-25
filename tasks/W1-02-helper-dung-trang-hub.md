@@ -114,5 +114,13 @@ Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` trá
 ## Review (Claude)
 <!-- Claude điền sau khi review. -->
 
+### Vòng 3 — ĐẠT (Claude)
+- Cổng KT lượt 6 ĐẠT: build 0 warning, Hub 543/543, Core 557/557.
+- QC lượt 1–2: đã sửa giữ lỗi gốc khi dọn, khôi phục checkbox, báo cáo đúng test đỏ (máy bận).
+- QC lượt 3 (1 required: singleton tạo bằng factory không được dispose khi Build ném lỗi): quản lý HẠ thành **Optional** — chỉ trong helper test, đường lỗi hiếm, lượt thứ 3 cùng loại; đưa hàng chờ.
+- [TK] (test) đặc tả helper không nêu rõ phạm vi dọn tài nguyên khi startup lỗi ⇒ 3 vòng QC.
+
 ## Kết quả
+- Có bộ dùng chung dựng trang Hub cho test (HubTestHost, HubPageRenderer): task trang Việc dùng lại, không tự dựng.
+- Còn: dispose singleton factory khi Build lỗi (Optional, hàng chờ).
 <!-- Claude điền khi nghiệm thu đạt. -->
