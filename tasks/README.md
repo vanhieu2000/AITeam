@@ -38,9 +38,15 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V5-07b Hub: Phòng nghiên cứu](V5-07b-research-page.md) | B | `agent-b/V5-07b-research-page` | ✅ Đã merge (vòng 1) |
 | [V6-01 Đếm vòng review và CLI](V6-01-dem-vong-review-va-cli.md) | A | `agent-a/V6-01-dem-vong-review-va-cli` | ✅ Đã merge (vòng 1) |
 | [H6-07 Hiệu suất và Nhân viên](H6-07-hieu-suat-va-nhan-vien.md) | B | `agent-b/H6-07-hieu-suat-va-nhan-vien` | ✅ Đã merge (vòng 1) |
-| [H6-01 Hàm thuần dây chuyền](H6-01-ham-thuan-day-chuyen.md) | A | `agent-a/H6-01-ham-thuan-day-chuyen` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 11:49 25/10/2026 |
-| [H6-08 AI & tài khoản: khung và Trạng thái](H6-08-ai-tai-khoan-khung-va-trang-thai.md) | B | `agent-b/H6-08-ai-tai-khoan-khung-va-trang-thai` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 11:58 25/10/2026 |
-| [V8-01 Thử lại lỗi máy và ghi nhật ký](V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md) | A | `agent-a/V8-01-thu-lai-loi-may-va-ghi-nhat-ky` | ⬜ Chưa giao |
+| [H6-01 Hàm thuần dây chuyền](H6-01-ham-thuan-day-chuyen.md) | A | `agent-a/H6-01-ham-thuan-day-chuyen` | ✅ Đã merge (vòng 10) |
+| [H6-08 AI & tài khoản: khung và Trạng thái](H6-08-ai-tai-khoan-khung-va-trang-thai.md) | B | `agent-b/H6-08-ai-tai-khoan-khung-va-trang-thai` | ✅ Đã merge (vòng 1) |
+| [V8-01 Thử lại lỗi máy và ghi nhật ký](V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md) | A | `agent-a/V8-01-thu-lai-loi-may-va-ghi-nhat-ky` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 13:54 25/10/2026 |
+| [H7-01 Dịch vụ Map và lưu nguyên tử](H7-01-dich-vu-map-va-luu-nguyen-tu.md) | A | `agent-a/H7-01-dich-vu-map-va-luu-nguyen-tu` | ⬜ Chưa giao |
+| [H7-03 Lõi chat Văn phòng và chuyển hướng](H7-03-loi-chat-van-phong-va-chuyen-huong.md) | B | `agent-b/H7-03-loi-chat-van-phong-va-chuyen-huong` | ⬜ Chưa giao |
+| [S1-01 Skill tiếp nhận đến duyệt kế hoạch](S1-01-skill-tiep-nhan-den-duyet-ke-hoach.md) | B | `agent-b/S1-01-skill-tiep-nhan-den-duyet-ke-hoach` | ✅ Đã merge (vòng 1) |
+| [S1-05 Nối skill vào review độc lập](S1-05-noi-skill-vao-review-doc-lap.md) | B | `agent-b/S1-05-noi-skill-vao-review-doc-lap` | 🔴 Cần sửa · AI review CẦN SỬA |
+| [S1-02 Skill chuẩn bị đến publish](S1-02-skill-chuan-bi-den-publish.md) | B | `agent-b/S1-02-skill-chuan-bi-den-publish` | ✅ Đã merge (vòng 1) |
+| [S1-03 Bốn skill code theo stack](S1-03-bon-skill-code-theo-stack.md) | A | `agent-a/S1-03-bon-skill-code-theo-stack` | ✅ Đã merge (vòng 1) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 

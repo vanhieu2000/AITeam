@@ -10,6 +10,7 @@
   .\team.ps1 add-project -Project Ten -New                   Tạo dự án mới (thư mục + git + kho private)
   .\team.ps1 new-task -Project Ten -Task T-003 -Title "..." -Agent B
   .\team.ps1 plan -Request R-006 [-Project Ten] [-Name V6]   Quy trình v4: Codex (CHỈ ĐỌC) đọc plans\R-006\brief.md + repo ⇒ plans\R-006\plan.md
+  .\team.ps1 deputy [-Force] | deputy-on | deputy-off       Codex QUẢN LÝ PHỤ chạy 1 vòng khi Claude vắng > 20 phút (QUAN-LY-PHU.md; không merge) · bật / tắt lịch 30 phút
   .\team.ps1 prep -Request R-006 -Task V6-01 [-NoLaunch]     Quy trình v4: Codex viết file task + khung + test nghiệm thu ⇒ giao Antigravity (Codex QC sau cổng KT)
   .\team.ps1 assign -Project Ten -Task T-003 [-Resume] [-Feedback "..."] [-NoVerify] [-Force]
   .\team.ps1 assign -Project Ten -Task T-003 -Dev codex   Giao cho Codex viết code (mặc định agy; agy hết hạn mức tự chuyển Codex, -Dev agy để tắt)
@@ -290,6 +291,52 @@ function Find-TaskFile($r, [string] $Task) {
     return $found[0]
 }
 
+# Số task 🟡 đang chạy của từng lập trình viên (đọc bảng việc).
+function Get-AgentLoad($r) {
+    $load = @{ A = 0; B = 0 }
+    $board = Join-Path $r.Path "tasks\README.md"
+    if (Test-Path $board) {
+        foreach ($l in [IO.File]::ReadAllLines($board)) {
+            if ($l -match '^\|' -and $l.Contains([string][char]::ConvertFromUtf32(0x1F7E1))) {
+                $c = $l.Split('|')
+                if ($c.Count -ge 3) { $a = $c[2].Trim().ToUpper(); if ($load.ContainsKey($a)) { $load[$a]++ } }
+            }
+        }
+    }
+    $load
+}
+
+# Người gợi ý đang bận hơn người kia ⇒ trả người kia; bằng nhau ⇒ giữ gợi ý. Không phải A / B (vd. C = Codex) ⇒ giữ nguyên.
+function Get-NextJournalRun([string]$repoPath, [string]$taskFileName, [string]$taskId, [string]$event) {
+    try {
+        $taskPath = Join-Path (Join-Path $repoPath "tasks") $taskFileName
+        if (-not (Test-Path $taskPath)) { return 1 }
+        $taskText = [IO.File]::ReadAllText($taskPath)
+        $mReq = [regex]::Match($taskText, '\*\*YÃªu cáº§u:\*\*\s*(R-\d+)')
+        if (-not $mReq.Success) { return 1 }
+        $reqPath = Join-Path (Join-Path $repoPath "requests") "$($mReq.Groups[1].Value).md"
+        if (-not (Test-Path $reqPath)) { return 1 }
+        $reqText = [IO.File]::ReadAllText($reqPath)
+        $pattern = [regex]::Escape("<!-- workflow:${taskId}:${event}:") + "(\d+) -->"
+        $matches = [regex]::Matches($reqText, $pattern)
+        $max = 0
+        foreach ($m in $matches) {
+            $val = [int]$m.Groups[1].Value
+            if ($val -gt $max) { $max = $val }
+        }
+        return ($max + 1)
+    } catch {
+        return 1
+    }
+}
+function Select-FreeAgent($r, [string]$suggested) {
+    if ($suggested -notin @('A', 'B')) { return $suggested }
+    $load = Get-AgentLoad $r
+    $other = if ($suggested -eq 'A') { 'B' } else { 'A' }
+    if ($load[$suggested] -gt $load[$other]) { return $other }
+    $suggested
+}
+
 function Invoke-Assign {
     $cfg = Get-Config
     $r = Resolve-Project $Project
@@ -299,6 +346,35 @@ function Invoke-Assign {
     $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
     if (-not $branch) { throw 'File task thiếu dòng **Nhánh:** `tên-nhánh`' }
+
+    # Chia đều (chủ dự án 25/10): Minh / Lan dùng chung 1 tài khoản Antigravity, cùng code chính ⇒ người được gợi ý đang bận
+    # còn người kia rảnh thì giao người rảnh (ghi lại Agent trong file task + bảng việc trên main). -Resume giữ nguyên người cũ.
+    if (-not $Resume -and $agentId -in @('A', 'B') -and -not (Test-Path (Join-Path $r.Work ("$agentId-$Task".ToLower())))) {
+        $free = Select-FreeAgent $r $agentId
+        if ($free -ne $agentId) {
+            Say "Chia đều việc: Agent $agentId đang bận, Agent $free rảnh ⇒ giao Agent $free." Cyan
+            $text = ([regex]'(\*\*Agent:\*\*\s*)\S+').Replace($text, "`${1}$free", 1)
+            [IO.File]::WriteAllText($taskFile.FullName, $text, (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($taskFile.FullName)))))
+            $board = Join-Path $r.Path "tasks\README.md"
+            if (Test-Path $board) {
+                $bt = [IO.File]::ReadAllText($board)
+                $bl = $bt -split "`r?`n"
+                for ($i = 0; $i -lt $bl.Count; $i++) {
+                    if ($bl[$i] -match '^\|' -and $bl[$i] -match ("(\[|\(|\|\s*)" + [regex]::Escape($Task) + "\b")) {
+                        $cells = $bl[$i].Split('|'); if ($cells.Count -ge 3) { $cells[2] = " $free "; $bl[$i] = $cells -join '|' }; break
+                    }
+                }
+                $nl = if ($bt -match "`r`n") { "`r`n" } else { "`n" }
+                [IO.File]::WriteAllText($board, ($bl -join $nl), (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($board)))))
+            }
+            $eapSw = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+            git -C $r.Path add -- "tasks/$($taskFile.Name)" "tasks/README.md" 2>$null
+            git -C $r.Path commit -q -m "${Task}: chia đều ⇒ Agent $free" -- "tasks/$($taskFile.Name)" "tasks/README.md" 2>&1 | Out-Null
+            git -C $r.Path push -q 2>&1 | Out-Null
+            $ErrorActionPreference = $eapSw
+            $agentId = $free
+        }
+    }
 
     Assert-NotClaimedElsewhere $r $Task
     foreach ($o in (Get-ScopeOverlaps $r $taskFile $text)) {
@@ -377,7 +453,8 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
 "@
     if ($Feedback) { $prompt += "`nYÊU CẦU CỦA QUẢN LÝ: $Feedback`nĐọc kỹ mục 'Review (Claude)' trong file task nếu có." }
 
-    $n = @(Get-ChildItem $r.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'prompt' }).Count + 1
+        $n = @(Get-ChildItem $r.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'prompt' }).Count + 1
+    $assignRun = Get-NextJournalRun $r.Path $taskFile.Name $Task 'Assign'
     $log = Join-Path $r.Logs "$Task-$n.json"
     # PowerShell 5.1 truyền sai tham số có dấu ngoặc kép / xuống dòng → lời giao việc nằm trong file, chỉ truyền 1 câu ngắn.
     $promptFile = Join-Path $r.Logs "$Task-$n.prompt.md"
@@ -851,6 +928,7 @@ function Invoke-Prep {
     $section = "### $Task · $ttl`n" + $m.Groups['body'].Value
     $agentId = [regex]::Match($section, '\*\*Agent:\*\*\s*([ABab])').Groups[1].Value.ToUpper()
     if (-not $agentId) { $agentId = "A" }
+    $agentId = Select-FreeAgent $r $agentId   # chia đều Minh / Lan theo ai đang rảnh (kế hoạch chỉ là gợi ý)
     $budget = [regex]::Match($section, '\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
     $existing = @(Get-ChildItem (Join-Path $r.Path "tasks") -Filter "$Task-*.md" -ErrorAction SilentlyContinue)
     if ($existing.Count -gt 0) { throw "Đã có tasks\$($existing[0].Name) — task này đã được chuẩn bị." }
@@ -876,7 +954,7 @@ function Invoke-Prep {
     [IO.File]::WriteAllText($taskPath, $tt, $Utf8)
 
     $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\codex-prep.md"))
-    $promptText = $tpl.Replace("{TASKFILE}", "tasks/$fileName").Replace("{BUILD}", [string]$r.Info.build).Replace("{TASK}", $Task) + "`n" + $section
+    $promptText = $tpl.Replace("{TASKFILE}", "tasks/$fileName").Replace("{BUILD}", [string]$r.Info.build).Replace("{TASK}", $Task).Replace("{REQUEST}", $Request) + "`n" + $section
     $pf = Join-Path $r.Logs "$Task.prep.prompt.md"
     [IO.File]::WriteAllText($pf, $promptText, $Utf8)
     $out = Join-Path $r.Logs "$Task.prep.json"
@@ -1327,7 +1405,6 @@ function Invoke-Verify {
     if ($r.Info.build) {
         $bCheck = Invoke-WorkflowCheck -Stage 'Build' -Run {
             param($attempt)
-            if ($attempt -gt 1) { dotnet build-server shutdown 2>&1 | Out-Null }
             Invoke-ShellCapture $r.Info.build $work
         }
         $b = [pscustomobject]@{ Code = $bCheck.Code; Output = $bCheck.Output }
@@ -1964,6 +2041,69 @@ function Invoke-Metrics {
     }
 }
 
+# ===== Quản lý phụ tự động (chủ dự án 25/10): Claude vắng (không chạy team.ps1 > 20 phút) ⇒ Codex điều phối 1 vòng theo QUAN-LY-PHU.md.
+# Chốt cuối (nghiệm thu ĐẠT + merge + push main) LUÔN là Claude — Codex chỉ ghi "Đề xuất nghiệm thu".
+$DeputyIdleMinutes = 20
+function Update-ManagerHeartbeat {
+    if ($env:AITEAM_ACTOR -eq "deputy" -or $Command -in @("deputy", "help")) { return }
+    try {
+        $f = Join-Path $Root ".state\claude-heartbeat"
+        New-Item -ItemType Directory -Force (Split-Path $f) | Out-Null
+        [IO.File]::WriteAllText($f, (Get-Date -Format o))
+    } catch { }
+}
+
+function Invoke-Deputy {
+    $hb = Join-Path $Root ".state\claude-heartbeat"
+    $lock = Join-Path $Root ".state\deputy.lock"
+    $idle = if (Test-Path $hb) { ((Get-Date) - (Get-Item $hb).LastWriteTime).TotalMinutes } else { 999 }
+    if ($idle -lt $DeputyIdleMinutes -and -not $Force) { Say "Claude vừa hoạt động $([int]$idle) phút trước ⇒ quản lý phụ nghỉ."; return }
+    if ((Test-Path $lock) -and ((Get-Date) - (Get-Item $lock).LastWriteTime).TotalMinutes -lt 90) { Say "Quản lý phụ đang chạy (khóa $lock)."; return }
+    New-Item -ItemType Directory -Force (Split-Path $lock) | Out-Null
+    [IO.File]::WriteAllText($lock, (Get-Date -Format o))
+    try {
+        $codexCmd = (Get-Command codex.cmd -ErrorAction SilentlyContinue).Source
+        if (-not $codexCmd) { Say "Không thấy codex.cmd ⇒ bỏ qua." Yellow; return }
+        $stamp = Get-Date -Format "yyyyMMdd-HHmm"
+        $pf = Join-Path $Root ".state\deputy-$stamp.prompt.md"
+        $log = Join-Path $Root ".state\deputy-$stamp.log"
+        $deputyText = @"
+Bạn là Codex QUẢN LÝ PHỤ của team AITeam (Claude đang vắng). Thư mục: $Root. Đọc QUAN-LY-PHU.md rồi làm MỘT vòng điều phối:
+- kiểm tra việc đang dở (bảng việc tasks/README.md, logs ở $((Resolve-Project 'AITeam').Logs)), chạy các lệnh .\team.ps1 cần thiết (plan / prep / assign / verify / qc) theo đúng thứ tự ưu tiên trong sổ tay;
+- task nào cổng KT ĐẠT + QC PASS ⇒ viết "Đề xuất nghiệm thu" lên nhánh và thêm vào mục "Chờ Claude chốt".
+TUYỆT ĐỐI KHÔNG: chạy .\team.ps1 merge; push commit code lên main; force-push; xóa nhánh / dữ liệu; tải phần mềm; đưa bí mật vào file.
+Chỉ được commit + push lên main các file: plans/**, requests/**, tasks/README.md, QUAN-LY-PHU.md.
+Không có việc cần làm ⇒ dừng ngay, không đọc thêm. Lệnh chạy lâu (assign / prep) chạy nền bằng Start-Process rồi kết thúc vòng — vòng sau (30 phút) xem tiếp.
+Cuối vòng: cập nhật mục "Việc đang dở" + thêm 1 dòng có giờ vào mục "Nhật ký quản lý phụ" cuối QUAN-LY-PHU.md (tạo mục nếu chưa có), commit + push. Trả lời ≤ 10 dòng.
+"@
+        [IO.File]::WriteAllText($pf, $deputyText, $Utf8)
+        Say "[$(Get-Date -Format HH:mm)] Claude vắng $([int]$idle) phút ⇒ Codex quản lý phụ chạy 1 vòng (log $log)." Cyan
+        $env:AITEAM_ACTOR = "deputy"
+        # Model ghi đè theo lần gọi (KHÔNG sửa ~/.codex/config.toml): model mặc định trong config của máy không dùng được với tài khoản ChatGPT.
+        Start-Process $codexCmd -ArgumentList "exec", "-m", "gpt-6.1-sol", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "`"$Root`"", "-" `
+            -WorkingDirectory $Root -NoNewWindow -Wait -RedirectStandardInput $pf -RedirectStandardOutput $log -RedirectStandardError "$log.err" | Out-Null
+        Get-Content $log -Tail 12 -ErrorAction SilentlyContinue | ForEach-Object { Say "  $_" }
+    }
+    finally { Remove-Item $lock -Force -ErrorAction SilentlyContinue; $env:AITEAM_ACTOR = $null }
+}
+
+# Bật / tắt lịch Windows chạy deputy mỗi 30 phút (chỉ khi chủ dự án đang đăng nhập — cần đăng nhập Antigravity / Codex của user).
+function Invoke-DeputySchedule([bool]$on) {
+    $taskName = "AITeam-QuanLyPhu"
+    if ($on) {
+        # Không lồng dấu " (PowerShell 5.1 làm hỏng tham số có ngoặc kép khi gọi exe) — đường dẫn AITeam không có khoảng trắng.
+        $act = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $(Join-Path $Root 'team.ps1') deputy"
+        schtasks /Create /F /SC MINUTE /MO 30 /TN $taskName /TR $act /IT | Out-Null
+        if ($LASTEXITCODE -eq 0) { Say "Đã bật lịch $taskName (30 phút / lần, khi đang đăng nhập). Tắt: .\team.ps1 deputy-off" Green } else { Say "Không tạo được lịch $taskName (mã $LASTEXITCODE)." Red }
+    } else {
+        schtasks /Delete /F /TN $taskName 2>&1 | Out-Null
+        Say "Đã tắt lịch $taskName." Yellow
+    }
+    $global:LASTEXITCODE = 0
+}
+
+Update-ManagerHeartbeat
+
 try {
 switch ($Command) {
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
@@ -1971,6 +2111,9 @@ switch ($Command) {
     "plan" { Invoke-Plan }
     "prep" { Invoke-Prep }
     "qc" { Invoke-Qc }
+    "deputy" { Invoke-Deputy }
+    "deputy-on" { Invoke-DeputySchedule $true }
+    "deputy-off" { Invoke-DeputySchedule $false }
     "models" { Invoke-Models }
     "install-hooks" { Invoke-InstallHooks }
     "secret-set" { Invoke-SecretSet }

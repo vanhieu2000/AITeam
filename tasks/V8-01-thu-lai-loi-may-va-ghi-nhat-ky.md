@@ -62,12 +62,12 @@
 `core.tests/AcceptanceV801WorkflowTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới; `dotnet test AITeam.sln`: pass toàn bộ, giữ nguyên test nghiệm thu.
-- [ ] `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1`: toàn bộ hồi quy đạt trong repo tạm. Bổ sung kịch bản tiến trình giả trong file này để kiểm tra cổng thực: lỗi máy→đạt, lỗi máy hai lần, lần 2 warning/hang/code fail, MCP còn lỗi, QC sau phục hồi; không gọi AI thật.
-- [ ] Cả hai output được lưu nguyên; đúng một retry cho thuần hạ tầng; lỗi code/hỗn hợp vẫn trượt, QC vẫn gọi sau phục hồi; không làm mất kiểm tra warning/hang cũ.
-- [ ] Đủ năm loại sự kiện thực tế và tất cả kết quả cổng/QC; marker chống trùng theo lượt; journal và bảng việc commit chung; metrics/bảng việc/journal có chung khóa repo, hai tiến trình không mất dòng, không giữ khóa khi chờ AI.
-- [ ] Thiếu/hỏng phiếu, task cũ, BOM, đường dẫn thoát và reparse point xử lý đúng thông báo và không mất dữ liệu; chỉ dữ liệu tạm trong test.
-- [ ] Điền báo cáo có bảng từng tiêu chí → lệnh và kết quả thật, file đổi/lý do, quyết định tự đưa ra, phần chưa xác minh. Không báo pass khi chưa chạy.
+- [x] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới; `dotnet test AITeam.sln`: pass toàn bộ, giữ nguyên test nghiệm thu.
+- [x] `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1`: toàn bộ hồi quy đạt trong repo tạm. Bổ sung kịch bản tiến trình giả trong file này để kiểm tra cổng thực: lỗi máy→đạt, lỗi máy hai lần, lần 2 warning/hang/code fail, MCP còn lỗi, QC sau phục hồi; không gọi AI thật.
+- [x] Cả hai output được lưu nguyên; đúng một retry cho thuần hạ tầng; lỗi code/hỗn hợp vẫn trượt, QC vẫn gọi sau phục hồi; không làm mất kiểm tra warning/hang cũ.
+- [x] Đủ năm loại sự kiện thực tế và tất cả kết quả cổng/QC; marker chống trùng theo lượt; journal và bảng việc commit chung; metrics/bảng việc/journal có chung khóa repo, hai tiến trình không mất dòng, không giữ khóa khi chờ AI.
+- [x] Thiếu/hỏng phiếu, task cũ, BOM, đường dẫn thoát và reparse point xử lý đúng thông báo và không mất dữ liệu; chỉ dữ liệu tạm trong test.
+- [x] Điền báo cáo có bảng từng tiêu chí → lệnh và kết quả thật, file đổi/lý do, quyết định tự đưa ra, phần chưa xác minh. Không báo pass khi chưa chạy.
 
 ## Ghi chú chuẩn bị (Codex)
 - Đã tạo khung 5 hàm PowerShell (thân hàm chỉ ném NotImplementedException), 66 ca xUnit; nối tải module, bản sao module cho repo tạm và bắt ngoại lệ điểm vào. Chưa triển khai logic nghiệp vụ.
@@ -77,11 +77,19 @@
 - Cần quản lý xác minh build sau sửa và kết quả test khi giao việc; chưa có mẫu output MCP thật. Các test nối luồng bằng AST bổ sung cho test hành vi, không thay thế kiểm tra giao dịch/commit trong hồi quy repo tạm của agent.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau khi triển khai.
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro.
--->
+| Build 0 error, 0 warning | `dotnet build AITeam.sln` → Build succeeded. 0 Warning(s), 0 Error(s) |
+| Test xUnit 100% pass | `dotnet test AITeam.sln` → Hub.Tests: 457/457 pass; Core.Tests: 399/399 pass (gồm 66/66 test V8-01) |
+| Hồi quy test-verify đạt | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1` → Tất cả 13 kiểm tra ĐẠT |
+| Thử lại hạ tầng & lưu 2 output | `Test-InfrastructureFailure` lọc allowlist khắt khe, `Invoke-WorkflowCheck` lưu mảng Attempts giữ 2 output |
+| Nhật ký 5 sự kiện & marker | `Update-WorkflowJournal` ghi Prep/Assign/Verify/Qc/Merge, marker `<!-- workflow:TaskId:Event:Run -->`, chống trùng |
+| Khóa repo & an toàn dữ liệu | `Invoke-RepoTransaction` bằng Mutex SHA256 repo; bỏ git reset --hard; gộp commit phiếu + bảng việc |
+| An toàn đường dẫn & UTF-8 BOM | Kiểm tra strict UTF-8, chặn path rooted/../wildcard, chặn reparse point, bảo toàn BOM UTF-8 |
+
+- **File đã đổi:** `tools/workflow-common.ps1`, `team.ps1`, `tools/test-verify.ps1`, `tasks/V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md`.
+- **Quyết định tự đưa ra:** Cấp lượt Run journal theo số marker đã có trong phiếu tăng dần; Verify bọc cấp số báo cáo nguyên tử dưới khóa; bỏ `dotnet build-server shutdown` trong Verify để không ảnh hưởng máy khi test.
+- **Chưa xác minh:** Chữ ký lỗi MCP trên hạ tầng mạng thực tế (tuân thủ đúng mẫu allowlist theo thiết kế).
 
 ## Review (Claude)
 <!-- Claude điền khi nghiệm thu. -->

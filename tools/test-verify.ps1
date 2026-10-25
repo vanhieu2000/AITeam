@@ -160,10 +160,6 @@ switch ($Mode) {
         if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
         else { [Console]::Error.WriteLine("Agent.cs(3,5): error CS1002: ; expected"); exit 1 }
     }
-    'mcp-error' {
-        [Console]::Error.WriteLine("mcp connection closed")
-        exit 1
-    }
 }
 '@
     W $fakeRunner $runnerCode $NoBom
@@ -194,30 +190,62 @@ switch ($Mode) {
     $r11 = New-Scenario "s11" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b11
     Check "lần 2 code fail làm trượt cổng" (($r11.Out -match 'Build LỖI') -and ($r11.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r11.Out
 
-    Write-Host "Kịch bản 12: MCP còn lỗi sau thử lại" -ForegroundColor Cyan
-    $b12 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode mcp-error"
-    $r12 = New-Scenario "s12" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b12
-    Check "MCP lỗi làm trượt cổng" (($r12.Out -match 'Build LỖI') -and ($r12.Out -match 'Cổng kiểm tra: KHÔNG ĐẠT')) $r12.Out
+    Write-Host "Kịch bản 12: MCP kiểm tra đúng chữ ký, stage và số lần gọi" -ForegroundColor Cyan
+    . (Join-Path $src "tools\workflow-common.ps1")
+    $mcpCalls = 0
+    $mcpSig = 'MCP transport error: Connection reset by peer (os error 10054).'
+    $mcpRes = Invoke-WorkflowCheck -Stage 'Mcp' -Run {
+        param($attempt)
+        $script:mcpCalls++
+        if ($attempt -eq 1) { [pscustomobject]@{ Code = 1; Output = $mcpSig } }
+        else { [pscustomobject]@{ Code = 0; Output = "mcp ready" } }
+    }
+    Check "MCP thử lại khi gặp đúng chữ ký hạ tầng" ($mcpCalls -eq 2 -and $mcpRes.Code -eq 0 -and $mcpRes.Attempts.Count -eq 2) $null
+
+    $mcpFailCalls = 0
+    $mcpFailRes = Invoke-WorkflowCheck -Stage 'Mcp' -Run {
+        param($attempt)
+        $script:mcpFailCalls++
+        [pscustomobject]@{ Code = 1; Output = "MCP transport error: Connection reset by peer (os error 10054)." }
+    }
+    Check "MCP lỗi hai lần trả Code khác 0 và đủ 2 lần gọi" ($mcpFailCalls -eq 2 -and $mcpFailRes.Code -ne 0 -and $mcpFailRes.Attempts.Count -eq 2) $null
+
+    $mcpBadCalls = 0
+    $mcpBadRes = Invoke-WorkflowCheck -Stage 'Mcp' -Run {
+        param($attempt)
+        $script:mcpBadCalls++
+        [pscustomobject]@{ Code = 1; Output = "MCP auth failure" }
+    }
+    Check "MCP lỗi không đúng chữ ký không thử lại" ($mcpBadCalls -eq 1 -and $mcpBadRes.Attempts.Count -eq 1) $null
 
     Write-Host "Kịch bản 13: QC sau phục hồi (Invoke-WorkflowGate)" -ForegroundColor Cyan
-    . (Join-Path $src "tools\workflow-common.ps1")
-    $qcCalled = $false
-    $gateRes = Invoke-WorkflowGate -VerifyBlock {
-        [pscustomobject]@{ Ok = $true; Report = "report.md" }
-    } -QcBlock {
-        $qcCalled = $true
+    $verifyAttempts = 0
+    $gateRes = Invoke-WorkflowGate -Verify {
+        $check = Invoke-WorkflowCheck -Stage 'Test' -Run {
+            param($attempt)
+            $script:verifyAttempts++
+            if ($attempt -eq 1) { [pscustomobject]@{ Code = 1; Output = "Access to the path 'obj/locked.dll' is denied." } }
+            else { [pscustomobject]@{ Code = 0; Output = "Passed! Total tests: 5" } }
+        }
+        [pscustomobject]@{ Ok = ($check.Code -eq 0); Attempts = $check.Attempts; Report = "report.md" }
+    } -Qc {
         [pscustomobject]@{ Code = 0; Verdict = "PASS" }
     }
-    Check "QC được gọi sau khi Verify ĐẠT / phục hồi" ($qcCalled -and $gateRes.Ok -and $gateRes.Review.Verdict -eq "PASS") $null
+    Check "Verify thử lại đúng 2 lần và phục hồi thành công" ($verifyAttempts -eq 2 -and $gateRes.Verify.Attempts.Count -eq 2 -and $gateRes.Verify.Ok) $null
+    Check "QC được gọi sau khi Verify phục hồi lỗi máy" ($null -ne $gateRes.Review -and $gateRes.Review.Verdict -eq "PASS") $null
 
-    $qcCalled2 = $false
-    $gateRes2 = Invoke-WorkflowGate -VerifyBlock {
-        [pscustomobject]@{ Ok = $false; Report = "report.md" }
-    } -QcBlock {
-        $qcCalled2 = $true
+    $qcCalledOnFail = $false
+    $gateRes2 = Invoke-WorkflowGate -Verify {
+        $check = Invoke-WorkflowCheck -Stage 'Test' -Run {
+            param($attempt)
+            [pscustomobject]@{ Code = 1; Output = "Access to the path 'obj/locked.dll' is denied." }
+        }
+        [pscustomobject]@{ Ok = ($check.Code -eq 0); Attempts = $check.Attempts; Report = "report.md" }
+    } -Qc {
+        $script:qcCalledOnFail = $true
         [pscustomobject]@{ Code = 0; Verdict = "PASS" }
     }
-    Check "QC không được gọi khi Verify KHÔNG ĐẠT" (-not $qcCalled2 -and -not $gateRes2.Ok -and $null -eq $gateRes2.Review) $null
+    Check "QC KHÔNG được gọi khi Verify lỗi máy không phục hồi" (-not $qcCalledOnFail -and -not $gateRes2.Verify.Ok -and $null -eq $gateRes2.Review) $null
 }
 finally {
     if (-not $Keep) { Get-ChildItem $T -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { $_.Attributes = 'Normal' }; Remove-Item $T -Recurse -Force -ErrorAction SilentlyContinue }

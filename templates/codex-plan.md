@@ -16,7 +16,7 @@ Trả lời bằng DUY NHẤT nội dung file `plan.md` (markdown tiếng Việt
 ## Task
 (mỗi task ≤ 400 dòng code, ≤ 15 phút agent; tách lõi / giao diện; ưu tiên ít task)
 ### {PREFIX}-01 · <tiêu đề ngắn>
-- **Agent:** A | B (theo areas)
+- **Agent:** A | B (chỉ là gợi ý — Minh và Lan đều code chính, khi giao tự chia đều cho người đang rảnh; ưu tiên chia task để 2 người làm song song)
 - **Ngân sách:** ~N dòng
 - **Phạm vi:** `đường/dẫn/1` · `đường/dẫn/2`
 - **Làm:** 3–6 gạch đầu dòng hành vi cụ thể (đầu vào → đầu ra, câu báo lỗi chính xác)

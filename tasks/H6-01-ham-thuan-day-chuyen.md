@@ -62,16 +62,26 @@ Chưa xác minh chuyển đổi brief/plan/quyết định thực tế; phần �
 `hub.tests/AcceptanceH601Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Bảy mốc, tên, owner và bằng chứng đúng XML; null/rỗng không lỗi.
-- [ ] Tiến độ task tách riêng; tổng không hoàn tất khi chưa có task hoặc còn task chưa xong.
-- [ ] Vòng 10 thắng vòng 2; NeedsFix/FAIL mới thắng PASS cũ; Merged cũ không cần log.
-- [ ] Nghiệm thu chỉ theo quyết định cuối đã chốt; kết quả xác định và đầu vào không bị sửa.
-- [ ] `dotnet build AITeam.sln` thành công, 0 warning sau khi hiện thực.
-- [ ] `dotnet test AITeam.sln` pass toàn bộ; không sửa/skip test nghiệm thu.
+- [x] Bảy mốc, tên, owner và bằng chứng đúng XML; null/rỗng không lỗi.
+- [x] Tiến độ task tách riêng; tổng không hoàn tất khi chưa có task hoặc còn task chưa xong.
+- [x] Vòng 10 thắng vòng 2; NeedsFix/FAIL mới thắng PASS cũ; Merged cũ không cần log.
+- [x] Nghiệm thu chỉ theo quyết định cuối đã chốt; kết quả xác định và đầu vào không bị sửa.
+- [x] `dotnet build AITeam.sln` thành công, 0 warning sau khi hiện thực.
+- [x] `dotnet test AITeam.sln` pass toàn bộ; không sửa/skip test nghiệm thu.
 
 ## Báo cáo của agent
-Agent hiện thực điền bảng từng tiêu chí → bằng chứng (lệnh + kết quả thật, số test pass, warning),
-file đã đổi/lý do, quyết định tự đưa ra, điều chưa xác minh. Không ghi pass khi chưa chạy.
+| Tiêu chí | Lệnh đã chạy & Kết quả thật |
+|---|---|
+| Bảy mốc, tên, owner, bằng chứng | dotnet test hub.tests --filter AcceptanceH601Tests → Pass 25/25 |
+| Tách tiến độ task & tổng hợp | AcceptanceH601Tests các test DifferentTaskProgress..., EmptySnapshot... → Pass |
+| Ưu tiên vòng & trạng thái | AcceptanceH601Tests → Pass; sửa Code Done chỉ khi TaskState.Review, PASS cũ không che log mới |
+| Hoàn tác file ngoài phạm vi | Đã git rm hub.tests/H601RegressionTests.cs theo cổng kiểm tra, đảm bảo đúng phạm vi |
+| Build 0 warning | dotnet build AITeam.sln → Build succeeded, 0 Warning(s), 0 Error(s) |
+| Test pass toàn bộ | dotnet test AITeam.sln --blame-hang-timeout 2m → Hub 457/457 pass, Core 283/283 pass, tổng 740 pass |
+
+- **File đã đổi**: hub/Services/WorkflowBuilder.cs (hiện thực WorkflowBuilder.Build, sửa nhánh Code chỉ Done khi TaskState.Review).
+- **Quyết định tự đưa ra**: Hoàn tác file test hồi quy theo yêu cầu của cổng kiểm tra tự động để tuân thủ tuyệt đối phạm vi task.
+- **Điều chưa chắc**: Không có.
 
 ### Chuẩn bị giao việc (Codex, bước 4)
 | Tiêu chí chuẩn bị | Bằng chứng |
@@ -88,9 +98,13 @@ Chưa xác minh: adapter chuyển dữ liệu brief/plan/quyết định thực 
 Chưa chạy toàn bộ test solution ở bước chuẩn bị; agent hiện thực phải chạy theo tiêu chí trên.
 
 ## Review (Claude)
-<!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
-**Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
-**Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Cổng KT ĐẠT (457 + 283 test); hàm thuần dây chuyền 7 bước theo bảng suy trạng thái đã chốt trong plan.
+- Codex QC: 1 điểm — chú thích tiếng Việt không dấu ⇒ Optional (không ảnh hưởng hành vi; sửa ở task sau chạm file).
+
+## Kết quả
+- **Không có chức năng mới hiện ngay** — lõi tính "đang ở bước nào" cho thanh dây chuyền 7 bước (Văn phòng / Yêu cầu / Task dùng ở H6-02, H6-04, H6-06).
+- Kiểm chứng: test nghiệm thu Codex viết + Codex QC.
 
 ## Kết quả
 <!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->

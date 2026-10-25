@@ -8,9 +8,11 @@ function Test-InfrastructureFailure {
     param([ValidateSet('Build', 'Test', 'Mcp')][string]$Stage, [int]$Code, [string]$Output)
     if ($Code -eq 0 -or [string]::IsNullOrEmpty($Output)) { return $false }
 
+    $lines = @($Output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($lines.Count -eq 0) { return $false }
+
     if ($Stage -eq 'Mcp') {
         $mcpTarget = 'MCP transport error: Connection reset by peer (os error 10054).'
-        $lines = @($Output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
         $hasMcp = $false
         foreach ($l in $lines) {
             $trimmed = $l.Trim()
@@ -23,23 +25,40 @@ function Test-InfrastructureFailure {
         return $hasMcp
     }
 
-    if ($Output -match '(?m)^.*:\s*warning\s+(?!NU1900\b)[A-Za-z0-9]+:') { return $false }
-    if ($Output -match 'warning\s+CS\d+') { return $false }
-    if ($Output -match '\bCS\d{4}\b') { return $false }
-    if ($Output -match '(?m)^.*:\s*error\s+(?!MSB3491\b)MSB\d+:') { return $false }
-    if ($Output -match 'Failed!\s+Failed:\s*[1-9]') { return $false }
-    if ($Output -match 'The active test run was aborted') { return $false }
-    if ($Output -match '(?i)blame-hang|hang timeout') { return $false }
-
+    # Build / Test: kiểm tra từng dòng theo allowlist khắt khe
     $hasInfra = $false
-    if ($Output -match 'MSB3491.*?(denied|being used)') { $hasInfra = $true }
-    if ($Output -match "Access to the path '[^']+' is denied\.") { $hasInfra = $true }
-    if ($Output -match "The process cannot access the file '[^']+' because it is being used by another process\.") { $hasInfra = $true }
+    foreach ($l in $lines) {
+        $trimmed = $l.Trim()
 
-    if (-not $hasInfra) { return $false }
-    if ($Output -match 'MSB3491' -and ($Output -notmatch 'MSB3491.*?(denied|being used)')) { return $false }
+        # 1. Warning: chỉ cho phép duy nhất NU1900
+        if ($trimmed -match ':\s*warning\s+(?!NU1900\b)[A-Za-z0-9]+:' -or $trimmed -match 'warning\s+CS\d+' -or $trimmed -match '\bCS\d{4}\b') {
+            return $false
+        }
 
-    return $true
+        # 2. Test fail / hang
+        if ($trimmed -match 'Failed!\s+Failed:\s*[1-9]' -or $trimmed -match 'The active test run was aborted' -or $trimmed -match '(?i)blame-hang|hang timeout') {
+            return $false
+        }
+
+        # 3. Dòng lỗi hạ tầng hợp lệ
+        $isInfra = ($trimmed -match 'MSB3491.*?(denied|being used)') -or
+                   ($trimmed -match "Access to the path '[^']+' is denied\.") -or
+                   ($trimmed -match "The process cannot access the file '[^']+' because it is being used by another process\.")
+        if ($isInfra) {
+            $hasInfra = $true
+            continue
+        }
+
+        # 4. Bất kỳ lỗi code / build / NuGet / MSBuild / runtime khác ngoài danh sách hạ tầng cho phép
+        if ($trimmed -match ':\s*error\s+[A-Za-z0-9]+:' -or $trimmed -match '^\s*error\s+[A-Za-z0-9]+:' -or $trimmed -match '(?i)\berror\s+(NU|MSB|CS|FS|TS)\d+:' -or $trimmed -match '(?i)\b(error|syntaxerror)\b') {
+            return $false
+        }
+        if ($trimmed -match '(?i)\b(exception|failed)\b' -and $trimmed -notmatch '(?i)(0\s+failed|0\s+error)') {
+            return $false
+        }
+    }
+
+    return $hasInfra
 }
 
 # /// <summary>Gọi Run với số lần 1; chỉ lỗi hạ tầng mới gọi lại với số lần 2, không lần 3.
@@ -79,6 +98,7 @@ function Invoke-WorkflowGate {
     return [pscustomobject]@{
         Verify = $vResult
         Review = $reviewResult
+        Ok = [bool]($vResult -and $vResult.Ok)
     }
 }
 
