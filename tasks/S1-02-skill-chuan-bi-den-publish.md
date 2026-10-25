@@ -1,4 +1,4 @@
-﻿# S1-02 · Skill chuẩn bị đến publish
+# S1-02 · Skill chuẩn bị đến publish
 
 - **Agent:** B
 - **Nhánh:** `agent-b/S1-02-skill-chuan-bi-den-publish`
@@ -97,12 +97,12 @@ Chưa xác minh: commit/push và review nghĩa nội dung độc lập; lượt 
 
 
 ## Review (Claude)
-<!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
-**Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
-**Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Codex viết nội dung skill (assign -Dev codex); cổng KT ĐẠT; QC BLOCKED đúng luật (Codex không tự duyệt) ⇒ Claude xem cấu trúc: đủ 7–8 mục bắt buộc, ≤ 150 dòng, có ví dụ tốt/xấu + nguồn.
+- Optional (hàng chờ): bổ sung quy ước THẬT từ code HDVTool / ChinaAndroidToolbox / Hub vào skill code (lần này Codex chưa đọc vì ngoài danh sách file).
 
 ## Kết quả
-<!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
+- Bộ skill S1-02 có trong `skills/`; S1-04 / S1-05 sẽ tự gắn skill vào lời nhắn từng bước.
 
 ## Đánh giá quy trình
 <!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
