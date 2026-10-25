@@ -7,7 +7,7 @@ namespace AITeam.Hub.Pages;
 /// <summary>Khung AI &amp; tài khoản; thao tác dùng endpoint /AiAccounts hiện có.</summary>
 public class AIModel(IAiAccountsService accounts) : PageModel
 {
-    /// <summary>Khóa tab chính xác: status, accounts, providers, vault; giá trị khác về status.</summary>
+    /// <summary>Khóa tab chính xác: status, roles, antigravity, history (theo mockup v6); giá trị khác về status.</summary>
     public string Tab { get; private set; } = "status";
 
     /// <summary>Danh sách từ List ở status; rỗng ở tab khác hoặc khi đọc lỗi.</summary>
@@ -26,9 +26,9 @@ public class AIModel(IAiAccountsService accounts) : PageModel
         Tab = tab switch
         {
             "status" => "status",
-            "accounts" => "accounts",
-            "providers" => "providers",
-            "vault" => "vault",
+            "roles" => "roles",
+            "antigravity" => "antigravity",
+            "history" => "history",
             _ => "status"
         };
 

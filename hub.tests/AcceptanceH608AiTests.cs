@@ -86,9 +86,9 @@ public sealed class AcceptanceH608AiTests : IDisposable
 
     [Theory]
     [InlineData("status", 1)]
-    [InlineData("accounts", 0)]
-    [InlineData("providers", 0)]
-    [InlineData("vault", 0)]
+    [InlineData("roles", 0)]
+    [InlineData("antigravity", 0)]
+    [InlineData("history", 0)]
     public void Allowed_tab_loads_only_its_data(string tab, int lists)
     {
         var (service, spy) = Observe();
@@ -137,9 +137,9 @@ public sealed class AcceptanceH608AiTests : IDisposable
 
     [Theory]
     [InlineData("status", "Trạng thái")]
-    [InlineData("accounts", "Tài khoản")]
-    [InlineData("providers", "Nhà cung cấp")]
-    [InlineData("vault", "Kho bí mật")]
+    [InlineData("roles", "Phân vai")]
+    [InlineData("antigravity", "Đổi tài khoản Antigravity")]
+    [InlineData("history", "Lịch sử nghỉ")]
     public Task Every_tab_renders_real_razor(string tab, string label) => WithHub(Service(), async client =>
     {
         var response = await client.GetAsync("/AI?tab=" + tab);
@@ -148,7 +148,7 @@ public sealed class AcceptanceH608AiTests : IDisposable
         var html = WebUtility.HtmlDecode(raw);
         Assert.Contains("AI & tài khoản", html);
         Assert.Contains("aria-label=\"Các tab AI\"", html);
-        foreach (var key in new[] { "status", "accounts", "providers", "vault" })
+        foreach (var key in new[] { "status", "roles", "antigravity", "history" })
             Assert.Contains("/AI?tab=" + key, html);
         var selected = Regex.Matches(html, "<a\\b[^>]*aria-current=\"page\"[^>]*>.*?</a>", RegexOptions.Singleline);
         Assert.Single(selected.Cast<Match>());
@@ -158,9 +158,9 @@ public sealed class AcceptanceH608AiTests : IDisposable
     });
 
     [Theory]
-    [InlineData("accounts", "/AiAccounts")]
-    [InlineData("providers", "/Providers")]
-    [InlineData("vault", "/Vault")]
+    [InlineData("roles", "/Providers")]
+    [InlineData("antigravity", "/Accounts")]
+    [InlineData("history", "/Providers")]
     public Task Shell_links_to_existing_page(string tab, string target) => WithHub(Service(), async client =>
     {
         var html = await client.GetStringAsync("/AI?tab=" + tab);

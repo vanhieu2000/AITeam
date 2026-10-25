@@ -89,4 +89,12 @@ Kế hoạch chưa nêu đường dẫn mockup. Giả định khung: status (Tr�
 | Phạm vi | Tạo AI.cshtml (khung Razor), AI.cshtml.cs (hợp đồng PageModel, thân OnGet TODO), _AiStatus.cshtml (khung partial), AcceptanceH608AiTests.cs (28 ca); điền file task này. Không thay endpoint cũ hay hợp đồng. |
 | Điều chưa xác minh | Tên/bố cục bốn tab theo mockup chưa được cung cấp; redirect tự động về tab /AI cần thay trang cũ ngoài phạm vi. Đã ghi giả định và giới hạn bên trên. Chưa kiểm tra giao diện thật. |
 ## Review (Claude)
-<!-- Claude điền sau nghiệm thu. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Cổng KT ĐẠT; Codex QC PASS (0 phát hiện); 98/230 dòng; Hub giả 1000×800 không tràn ngang, mọi tab trả 200.
+- Claude sửa: tên + mã tab theo mockup v6 đã duyệt (status · roles "Phân vai" · antigravity "Đổi tài khoản Antigravity" · history "Lịch sử nghỉ"); bước chuẩn bị đoán tên tab vì không đọc mockup.
+- [TK] (tài liệu) mẫu codex-prep không cho Codex đọc brief (có đường dẫn mockup) ⇒ đã thêm.
+
+## Kết quả
+- **Chức năng mới — trang "AI & tài khoản"** (`/AI`): tab Trạng thái dùng lại bảng Tài khoản AI; 3 tab còn lại tạm dẫn sang trang cũ, H6-09 đưa nội dung vào.
+- Kiểm chứng: test nghiệm thu + Codex QC + mở thật 1000px.
+
