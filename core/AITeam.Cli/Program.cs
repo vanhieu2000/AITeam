@@ -17,6 +17,7 @@ try
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
         "review" => await Review(),
+        "review-rounds" => ReviewRounds(),
         "run" => await Run(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         _ => Help(),
@@ -72,6 +73,23 @@ int TaskInfo()
     return 0;
 }
 
+/// <summary>
+/// Lệnh review-rounds --task-file &lt;f&gt; --logs &lt;d&gt; --task &lt;T&gt;.
+/// Thiếu/giá trị trắng của bất kỳ tham số bắt buộc nào (kiểm tra trước mã task):
+/// stderr "LỖI: thiếu tham số bắt buộc (--task-file, --logs, --task).", stdout rỗng, trả 2.
+/// T chỉ gồm [A-Za-z0-9][A-Za-z0-9_-]{0,63}, khớp toàn chuỗi (kể cả từ chối LF cuối):
+/// sai thì stderr "LỖI: mã task không hợp lệ.", stdout rỗng, trả 2 trước khi đọc nguồn.
+/// Đọc UTF-8 có/không BOM. Chỉ file trực tiếp trong logs có tên bắt đầu bằng
+/// T + ".review-" và kết thúc ".json" (so sánh Ordinal); không duyệt thư mục con,
+/// không theo file/thư mục reparse point. Không dùng T làm mẫu wildcard hay ghép lệnh.
+/// Nguồn thiếu, không đọc được, đường dẫn hỏng: riêng nguồn đó đóng góp 0, vẫn đọc nguồn khác.
+/// Gọi ReviewRoundCounter.Count; stdout duy nhất số nguyên thập phân + xuống dòng,
+/// stderr rỗng, trả 0. Không đọc cấu hình, ghi file hoặc gọi agy/codex.
+/// </summary>
+int ReviewRounds()
+{
+    throw new NotImplementedException(); // TODO(agent)
+}
 int Help()
 {
     Console.WriteLine("aiteam providers [--no-check] [--root D:\\AITeam]  Kiểm tra từng provider (cài chưa, đăng nhập chưa) + thứ tự routing");
