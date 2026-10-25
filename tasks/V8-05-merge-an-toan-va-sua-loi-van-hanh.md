@@ -46,10 +46,26 @@
 - `core.tests/AcceptanceV805SafeMergeTests.cs` (Codex viết cùng lượt): clone sạch đỏ ⇒ main local quay về, remote không đổi; xanh ⇒ push; 2 merge song song ⇒ cái sau chờ; xóa file test ⇒ PHẢI SỬA; log "invalid model selection" ⇒ dừng không verify; models bỏ qua "Fetching"; prep MSB3491 lần 1 ⇒ thử lại; chia đều với assign-recent.
 
 ## Tiêu chí hoàn thành
-- [ ] Build 0 warning
+- [x] Build 0 warning
 - [ ] `dotnet test AITeam.sln` pass + `powershell -File tools\test-verify.ps1` ĐẠT
 
 ## Báo cáo của agent
+
+| Tiêu chí | Bằng chứng thật |
+|---|---|
+| 1. Clone trước push, hủy merge đỏ | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceV805SafeMergeTests&FullyQualifiedName!~Merge_checks_local_clone" --blame-hang-timeout 2m -m:1`: 9/9 pass; 4 ca giả lập kiểm thứ tự/reset; 2 ca repo bare bị chặn `sh.exe` Win32 error 5. |
+| 2. Mutex, clone GUID, dọn clone | Cùng lượt 9/9: ca hai tiến trình chờ mutex và nhả khi lỗi; các ca merge kiểm clone đã dọn. |
+| 3. Chặn xóa test | Cùng lượt 9/9: xóa `core.tests/Regression.cs` bị ghi lỗi, file thường không bị chặn. |
+| 4. Model không hợp lệ | Cùng lượt 9/9: trạng thái đúng, nhánh xử lý return trước verify. |
+| 5. Models bỏ stderr tiến độ | Cùng lượt 9/9: còn `model-id`, bỏ dòng Fetching, khôi phục ErrorActionPreference. |
+| 6. Prep retry lỗi máy | Cùng lượt 9/9: MSB3491 gọi build 2 lần, shutdown 1 lần; nhận MSB3027, không nhận lỗi code kèm theo. |
+| 7. Chia đều gần nhất | Cùng lượt 9/9: A/B, giữ đặt chỗ cùng task, không đếm trùng bảng, hết hạn 10 phút. |
+| 8. Shutdown và đợi retry | Cùng lượt 9/9: sau Codex có shutdown, retry build đợi đúng 20 giây (mock thời gian). |
+| Build 0 warning | `dotnet restore AITeam.sln --disable-parallel -v minimal -m:1` đạt; `dotnet build AITeam.sln --no-restore -m:1`: 0 lỗi, 0 warning; hai script parse 0 lỗi, cả 3 file mã giữ/có BOM. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 597 pass/9 fail (Access denied khi ReplaceFile và kiểm lưu); Core có 2 ca Git lỗi quyền, chưa tổng kết; chủ động dừng gần 3 phút, mã 1. |
+| Cổng kiểm tra | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: mã 1; báo `$note` trùng tham số tại Invoke-CodexDevelop (không sửa ngoài mục tiêu), rồi clone repo tạm bị Win32 error 5. |
+| File đổi | `team.ps1`: 8 mục tiêu; `tools/workflow-common.ps1`: nhận MSB3027; `core.tests/AcceptanceV805SafeMergeTests.cs`: 11 ca; file task này: báo cáo. Không sửa test task khác. |
+| Quyết định / chưa chắc | Dùng `rev-list --first-parent origin/main..main` để chỉ xét commit trên main; từ chối main bẩn và pull ff-only trước thao tác có thể reset. Chưa nghiệm thu Git thật/toàn solution; không chạy git trên repo làm việc, chưa có commit được kiểm; hệ thống tự commit/push. |
 
 ## Review (Claude)
 

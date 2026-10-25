@@ -40,8 +40,8 @@ function Test-InfrastructureFailure {
             return $false
         }
 
-        # 3. Lỗi không được phép TRƯỚC KHI chấp nhận chữ ký hạ tầng (CS, MSB khác MSB3491, NU khác NU1900, FS, TS, syntaxerror)
-        if ($trimmed -match '(?i)\berror\s+MSB(?!3491\b)\d+' -or $trimmed -match '(?i)\bMSB(?!3491\b)\d+:' -or
+        # 3. Chặn lỗi code trước khi nhận MSB3491/MSB3027 do hạ tầng.
+        if ($trimmed -match '(?i)\berror\s+MSB(?!(?:3491|3027)\b)\d+' -or $trimmed -match '(?i)\bMSB(?!(?:3491|3027)\b)\d+:' -or
             $trimmed -match '(?i)\berror\s+CS\d+' -or $trimmed -match '(?i)\bCS\d{4}:' -or
             $trimmed -match '(?i)\berror\s+NU(?!1900\b)\d+' -or
             $trimmed -match '(?i)\berror\s+(FS|TS)\d+' -or
@@ -51,7 +51,11 @@ function Test-InfrastructureFailure {
 
         # 4. Kiểm tra chữ ký hạ tầng hợp lệ
         $isInfra = $false
-        if ($trimmed -match 'MSB3491.*?(denied|being used)') {
+        if ($trimmed -match 'MSB3027.*(?:Exceeded retry count|being used|denied)') {
+            if ($trimmed -match '(?i)error.*error|\bexception\b') { return $false }
+            $isInfra = $true
+        }
+        elseif ($trimmed -match 'MSB3491.*?(denied|being used)') {
             # Nếu có MSB3491 nhưng dòng lại chứa thêm từ error thứ 2 hoặc exception/failed
             if ($trimmed -match '(?i)error.*error' -or $trimmed -match '(?i)\b(exception|failed)\b') {
                 return $false
