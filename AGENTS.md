@@ -47,6 +47,7 @@ Chủ dự án: HieuDV.
 ## Lỗi hay gặp (đã xảy ra nhiều lần — bắt buộc tránh)
 - Test chạy tiến trình con (exe / dll của project khác): KHÔNG trỏ `bin\Debug` của project đó — thêm ProjectReference để file được chép kèm, dùng `Path.Combine(AppContext.BaseDirectory, "x.dll")`. (V4-08: clean-clone chạy nhầm bản cũ.)
 - **Giữ nguyên BOM UTF-8** của file đang có BOM khi sửa; script `.ps1` luôn lưu UTF-8 có BOM.
+- PowerShell 5.1: KHÔNG kiểm BOM bằng `$s.StartsWith([char]0xFEFF)` — so theo văn hóa nên luôn True, `Substring(1)` cắt mất ký tự đầu (V8-01 làm mất `#` tiêu đề phiếu). Dùng `$s.Length -gt 0 -and [int]$s[0] -eq 0xFEFF`, hoặc `StartsWith(…, [StringComparison]::Ordinal)`.
 - Chương trình chạy bằng dòng lệnh (`aiteam`, công cụ): `Main` phải bắt MỌI ngoại lệ, in `LỖI: …` ra stderr và trả mã ≠ 0 — lỗi văng ra ngoài làm Windows hiện hộp "dotnet.exe - Application Error" trên máy chủ dự án (R-006, 25/10).
 - Test cần chuỗi GIỐNG khóa bí mật (sk-…, ghp_…, AIza…, password=…): ghép lúc chạy (`string.Concat("sk-", new string('a', 32))`), không ghi thẳng — hook pre-commit sẽ chặn commit.
 - **Web (Hub) — xác nhận HTMX:** `hx-confirm` phải đặt trên phần tử phát request (thường là `<form>`), HTMX 2 bỏ qua `hx-confirm` trên nút submit trong form (V5-05: nút Dừng chạy không hỏi).
