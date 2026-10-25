@@ -43,6 +43,15 @@ Giữ MAUI ổn định qua lifecycle và CLI có mã thoát/lỗi rõ ràng.
    Không trỏ bin/Debug, không chạy agy/codex thật; dùng stub/fixture theo task.
 8. Test các nhánh lỗi; MAUI chỉ kiểm nền tảng có công cụ và báo phần chưa chạy.
 
+## Quy ước của dự án
+- CLI dùng top-level entry point, switch providers/task-info/review/review-rounds/run/mcp. **Hiện trạng:** OutputEncoding, Arg("--root")/FindRoot và chọn command chạy trước try; yêu cầu bắt mọi lỗi chưa bao trọn khởi tạo (`core/AITeam.Cli/Program.cs:9`, `core/AITeam.Cli/Program.cs:13`; R-006: `AGENTS.md:50`).
+- Catch NotImplementedException ghi stderr `LỖI: chưa làm`, trả 1; lỗi cấu hình/file/JSON ghi `LỖI cấu hình:` trả 2; còn lại ghi `LỖI:` trả 1. Giữ phân biệt mã thoát và luồng lỗi (`core/AITeam.Cli/Program.cs:26`).
+- Parser Arg dùng Array.IndexOf, trả null khi thiếu giá trị hoặc giá trị bắt đầu `--`; không nhận tùy chọn sau làm giá trị. Review thiếu tham số trả 2, auto task M trả 4/SKIPPED, không phải thành công 0 (`core/AITeam.Cli/Program.cs:314`, `core.tests/ReviewCliTests.cs:13`).
+- ProcessSpec mang FileName/Arguments/WorkingDirectory/StdinFile/Timeout/Environment; ProcessRunner.RunAsync dùng ArgumentList/UseShellExecute=false, đọc output qua sự kiện, đóng stdin, linked CTS và Kill(entireProcessTree:true). Timeout bắt đầu sau ghi stdin, StringBuilder output chưa giới hạn: đừng coi đã đáp ứng mọi yêu cầu timeout/giới hạn (`core/AITeam.Core/Process/ProcessRunner.cs:7`, `core/AITeam.Core/Process/ProcessRunner.cs:30`, `core/AITeam.Core/Process/ProcessRunner.cs:56`).
+- ReviewCliTests chạy dotnet với aiteam.dll từ AppContext.BaseDirectory, ProcessSpec timeout 30 giây, thư mục GUID tạm; project test tham chiếu CLI trực tiếp (`core.tests/ReviewCliTests.cs:8`, `core.tests/ReviewCliTests.cs:16`, `core.tests/AITeam.Core.Tests.csproj:19`).
+- DevRunnerCliTests.Run_missing_required_args_returns_2 kiểm exit/stderr và thiếu giá trị. Run_unknown_provider_writes_out_json_and_returns_2 kiểm lỗi ở **stdout**, JSON status Config: không chứng minh mọi lỗi ra stderr. Helper RunCli chưa có timeout (`core.tests/DevRunnerCliTests.cs:14`, `core.tests/DevRunnerCliTests.cs:34`, `core.tests/DevRunnerCliTests.cs:45`).
+- Giữ hướng dẫn MAUI phía trên; nguồn dự án đã xác minh là CLI, chưa kiểm workload, binding hoặc runtime MAUI (`core/AITeam.Cli/Program.cs:1`).
+
 ## Checklist bắt buộc
 - [ ] MAUI lifecycle hủy/khôi phục tác vụ, subscription cân đối, resume không đăng ký trùng.
 - [ ] Binding cập nhật viewmodel; sửa collection trên main thread; DI đúng lifetime.
@@ -55,8 +64,8 @@ Giữ MAUI ổn định qua lifecycle và CLI có mã thoát/lỗi rõ ràng.
 - [ ] Giữ BOM UTF-8, bỏ debug/đường dẫn máy mình; không đổi cấu hình máy khi test.
 
 ## Lỗi hay gặp
-- AGENTS.md / R-006: exception thoát Main có thể bật hộp lỗi dotnet.exe trên máy chủ.
-- AGENTS.md / V4-08: bin/Debug có thể cũ; dùng ProjectReference và AppContext.BaseDirectory.
+- `AGENTS.md:50` / R-006: exception thoát Main có thể bật hộp lỗi dotnet.exe trên máy chủ.
+- `AGENTS.md:48` / V4-08: bin/Debug có thể cũ; dùng ProjectReference và AppContext.BaseDirectory.
 - AGENTS.md: không nuốt lỗi đọc rồi ghi đè; thiếu fixture thì báo, không đoán output.
 - Microsoft MAUI: binding thông báo thuộc tính không đồng nghĩa collection an toàn mọi luồng.
 - Microsoft MAUI: route trùng gây ArgumentException; resume cần tránh subscription lặp.

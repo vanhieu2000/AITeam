@@ -87,11 +87,19 @@ Thêm mục `## Quy ước của dự án` vào từng skill. Mỗi quy ước g
 - `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: thành công; Hub 457 pass, core 358 pass; tổng 815 pass, 0 fail, 0 skip.
 - Đã đọc đúng năm file mã liên quan: Office.cshtml, Approvals.cshtml, OfficeService.cs, PageTests.cs và core/AITeam.Cli/Program.cs; chưa xác minh nguồn hai dự án WinForms. Antigravity cần hoàn thành việc đọc nguồn và nội dung skill theo tiêu chí trên.
 ## Báo cáo của agent
-<!-- Antigravity điền sau khi thực hiện; không ghi kết quả dự kiến thành kết quả thật.
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-Ghi số pass/fail/skip, lỗi/warning build; số dòng mỗi skill; nguồn đã đọc của từng dự án (file:dòng); file đã đổi và lý do; nguồn thiếu, quyết định tự đưa ra và việc ngoài phạm vi cần quản lý xử lý.
--->
+| 1. Bốn mục quy ước có nguồn | Kiểm bằng PowerShell ReadAllText/Contains: đủ mục bắt buộc; dẫn lớp/helper/test và file:dòng đã đọc trong cả bốn skill. |
+| 2. Nhóm nguồn WinForms | Đọc HDVTool 9 file, ChinaAndroidToolbox 13 file (danh sách dưới), không vượt 15; không tìm thấy Designer tương ứng của HDVTool, ghi đúng cách dựng bằng code; chưa xác minh Designer round trip. |
+| 3. Hub/CLI | Đọc 9 file Hub và 5 file core dưới đây; phân biệt PageModel/đọc mã Razor với render, khởi tạo CLI trước try, lỗi stdout/stderr và timeout còn thiếu. |
+| 4. Bài học/nguồn | V5-05/H-007/H-008/R-006/V4-08 dẫn AGENTS.md:48/50/52/55/56; R-001 chỉ có brief:6, AGENTS.md không có R-001/V5-07a nên không bịa nguồn; bỏ câu chưa đọc WinForms. |
+| 5. Giới hạn/cấu trúc/BOM | PowerShell ReadAllLines/ReadAllBytes: winforms 97, web 100, app 111, test 108 dòng; đủ frontmatter/mục cũ, BOM cả bốn file; không đổi code/test/cấu hình. |
+| 6. Build | dotnet build AITeam.sln --disable-build-servers -m:1; lần 2 thêm --no-restore: exit 0, 0 lỗi, 4 warning NU1900 (NuGet không truy cập được, cùng loại đã ghi ở bước chuẩn bị); chưa đạt 0 warning tuyệt đối. |
+| 7. Test | dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m: lần cuối exit 0, Hub 457 + core 358 = 815 pass/0 fail/0 skip; lần đầu 1 fail regex Show đã sửa cách diễn đạt tài liệu, không sửa test. |
+| 8. Phạm vi/quyết định/chưa kiểm | Chỉ đổi bốn skills/code-{winforms,web,app,test}/SKILL.md để thêm quy ước/nguồn và mục báo cáo task này; giữ BOM. Không chạy app/UI/MAUI/UiSnapshot; tự ghi khác biệt Show/Visible và giới hạn CLI, không sửa ngoài phạm vi; không chạy git theo chỉ dẫn, hệ thống tự commit/push. |
+| Nguồn HDVTool (đường dẫn tương đối gốc dự án) | src/HDVTool.App/Shell/MainForm.cs:101; src/HDVTool.App/Views/HomeView.cs:28; src/HDVTool.App/Views/SettingsView.cs:23; tests/HDVTool.Core.Tests/UiLayout/{UiThread.cs:7,LayoutChecker.cs:17,ViewLayoutTests.cs:79,VietnameseWordBreakTests.cs:19}; tests/HDVTool.Core.Tests/HDVTool.Core.Tests.csproj:19; tools/UiSnapshot/Program.cs:18. |
+| Nguồn ChinaAndroidToolbox (đường dẫn tương đối gốc dự án) | src/ChinaAndroidToolbox.App/{MainForm.cs:22,MainForm.Designer.cs:309,Views/DashboardView.cs:23,Views/DashboardView.Designer.cs:82,Views/SettingsView.cs:14,Views/SettingsView.Designer.cs:233}; tests/ChinaAndroidToolbox.Tests/{AcceptanceC011Tests.cs:37,ChinaAndroidToolbox.Tests.csproj:4,UiLayout/ViewLayoutTests.cs:37,UiLayout/UiThread.cs:9,UiLayout/LayoutChecker.cs:19,UiLayout/TestUiContext.cs:22}; tools/UiSnapshot/Program.cs:11. |
+| Nguồn AITeam | Hub: hub/Pages/{Office.cshtml:22,Office.cshtml.cs:17,Approvals.cshtml:61,Approvals.cshtml.cs:9,Shared/_OfficeControl.cshtml:19,Shared/_OfficeDesks.cshtml:96}; hub/Services/OfficeService.cs:41; hub.tests/{PageTests.cs:14,AcceptanceV504OfficeTests.cs:151}. Core: core/AITeam.Cli/Program.cs:9; core/AITeam.Core/Process/ProcessRunner.cs:7; core.tests/{ReviewCliTests.cs:13,DevRunnerCliTests.cs:14,AITeam.Core.Tests.csproj:19}. Hướng dẫn: AGENTS.md:47, plans/R-010/brief.md:5 và bốn skill/task được giao. |
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.

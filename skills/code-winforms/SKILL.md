@@ -38,6 +38,19 @@ Tạo Form/UserControl co giãn theo nội dung và DPI, tránh cắt chữ, ch�
 7. Chạy test liên quan; nghiệm thu mới dùng UiSnapshot và Designer lưu/mở lại.
    Build không chứng minh Designer mở được; chưa làm thì ghi chưa kiểm.
 
+## Quy ước của dự án
+- HDVTool dựng bằng code: MainForm.BuildLayout sau AutoScaleMode.Dpi (96 DPI), MinimumSize(1000,640); không tìm thấy Designer tương ứng cho MainForm/HomeView/SettingsView trong cây App, không tự thêm Designer (HDVTool: `src/HDVTool.App/Shell/MainForm.cs:101`).
+- HomeView dùng TableLayoutPanel AutoSize/GrowAndShrink, widget chia cột Percent; vùng gần đây ba cột Percent nhưng hàng vẫn cố định 56: chuỗi dài phải kiểm cả cha (HDVTool: `src/HDVTool.App/Views/HomeView.cs:28`, `src/HDVTool.App/Views/HomeView.cs:76`).
+- SettingsView có FlowLayoutPanel `_pages` dọc không wrap, `_pageHost` Fill/AutoScroll; hàng đường dẫn dùng AutoEllipsis. MainForm.RunOnUi kiểm IsDisposed/InvokeRequired rồi BeginInvoke để cập nhật UI (HDVTool: `src/HDVTool.App/Views/SettingsView.cs:23`, `src/HDVTool.App/Views/SettingsView.cs:122`, `src/HDVTool.App/Shell/MainForm.cs:787`).
+- ChinaAndroidToolbox giữ InitializeComponent trong Designer, hành vi trong constructor; MainForm dùng AutoScaleMode.Font, MinimumSize(1100,700), AttachUi với SynchronizationContext (ChinaAndroidToolbox: `src/ChinaAndroidToolbox.App/MainForm.cs:22`, `src/ChinaAndroidToolbox.App/MainForm.cs:62`, `src/ChinaAndroidToolbox.App/MainForm.Designer.cs:309`).
+- DashboardView.tlpRoot Fill, hai hàng AutoSize, hàng cuối Percent; flpDeviceButtons AutoSize/RightToLeft, không wrap. Constructor gọi UiHelpers.UseVietnameseWrapping cho nhãn dài; chưa đọc thân helper này (ChinaAndroidToolbox: `src/ChinaAndroidToolbox.App/Views/DashboardView.Designer.cs:82`, `src/ChinaAndroidToolbox.App/Views/DashboardView.Designer.cs:169`, `src/ChinaAndroidToolbox.App/Views/DashboardView.cs:35`).
+- SettingsView.tlpAdb AutoSize, cột nhãn 170/cột nhập Percent, hàng AutoSize; constructor gọi wrapping cho kết quả/đường dẫn (ChinaAndroidToolbox: `src/ChinaAndroidToolbox.App/Views/SettingsView.Designer.cs:233`, `src/ChinaAndroidToolbox.App/Views/SettingsView.cs:24`).
+- Hai UiThread.Run(Action, timeoutMs=60000) đặt ThrowException, chạy STA và ném lại lỗi; chỉ HDVTool đặt IsBackground (HDVTool: `tests/HDVTool.Core.Tests/UiLayout/UiThread.cs:7`; ChinaAndroidToolbox: `tests/ChinaAndroidToolbox.Tests/UiLayout/UiThread.cs:9`).
+- Ca thật: HomeView_layout_has_no_issues/SettingsView_layout_has_no_issues, Hint_breaks_text_by_words_not_mid_word; phía China có MainForm_WithAdb_LongDeviceName và AcceptanceC011Tests.Text_too_long_for_fixed_size_label_and_button_is_reported (HDVTool: `tests/HDVTool.Core.Tests/UiLayout/ViewLayoutTests.cs:171`, `tests/HDVTool.Core.Tests/UiLayout/ViewLayoutTests.cs:190`, `tests/HDVTool.Core.Tests/UiLayout/VietnameseWordBreakTests.cs:19`; ChinaAndroidToolbox: `tests/ChinaAndroidToolbox.Tests/UiLayout/ViewLayoutTests.cs:175`, `tests/ChinaAndroidToolbox.Tests/AcceptanceC011Tests.cs:74`).
+- **Hiện trạng khác yêu cầu test nền:** Host gọi Show ngoài màn hình; LayoutChecker.Check bỏ cây không Visible. Assert.Empty trên form ẩn có thể luôn xanh; test mới cần cơ chế kiểm ẩn chứng minh bắt được lỗi chủ động, không sao chép cách hiện form; nguồn HDVTool: `tests/HDVTool.Core.Tests/UiLayout/ViewLayoutTests.cs:79`, `tests/HDVTool.Core.Tests/UiLayout/LayoutChecker.cs:17`; ChinaAndroidToolbox: `tests/ChinaAndroidToolbox.Tests/UiLayout/ViewLayoutTests.cs:37`, `tests/ChinaAndroidToolbox.Tests/UiLayout/LayoutChecker.cs:32`; yêu cầu assert: `AGENTS.md:53`.
+- UiSnapshot là exe nghiệm thu STA có Show/DrawToBitmap, không phải helper test nền: HDVTool nhận outDir/rộng/cao và đặt LastRunVersion tránh chào mừng; China yêu cầu outDir, ghi scroll.txt/clip.txt (HDVTool: `tools/UiSnapshot/Program.cs:18`, `tools/UiSnapshot/Program.cs:78`, `tools/UiSnapshot/Program.cs:106`; ChinaAndroidToolbox: `tools/UiSnapshot/Program.cs:11`, `tools/UiSnapshot/Program.cs:104`).
+- Các ca scale đã đọc là 1/1.25/1.5, chưa chứng minh DPI thật 200% hoặc Designer round trip (HDVTool: `tests/HDVTool.Core.Tests/UiLayout/ViewLayoutTests.cs:167`; ChinaAndroidToolbox: `tests/ChinaAndroidToolbox.Tests/UiLayout/ViewLayoutTests.cs:145`).
+
 ## Checklist bắt buộc
 - [ ] R-001: không cắt chữ/chồng lấn ở DPI 100/125/150/200%, chuỗi dài và MinimumSize.
 - [ ] TableLayoutPanel/FlowLayoutPanel co giãn hết chuỗi cha-con, không ghim tọa độ theo ảnh.
@@ -50,11 +63,11 @@ Tạo Form/UserControl co giãn theo nội dung và DPI, tránh cắt chữ, ch�
 - [ ] Build/test theo task; kiểm lỗi async và dispose nếu thay hành vi tương ứng.
 
 ## Lỗi hay gặp
-- R-001 / plans/R-010/brief.md: AutoSize ở con vẫn bị cha cố định cắt chữ; sửa cả chuỗi.
+- R-001 / `plans/R-010/brief.md:6`: kiểm cắt chữ/chồng lấn, sửa cả chuỗi cha-con; AGENTS.md không ghi mã R-001.
 - AGENTS.md: không dựng app thật trong test; thiếu Desktop/Designer phải báo chưa xác minh.
 - winforms-expert: logic trong InitializeComponent có thể build nhưng Designer không đọc được.
-- AGENTS.md: không test luôn pass, không nuốt ngoại lệ UI hoặc bỏ kiểm khi thiếu control.
-- AGENTS.md: giữ nguyên BOM partial/Designer; chỉ sửa trong phạm vi task.
+- `AGENTS.md:53`: không test luôn pass, không nuốt ngoại lệ UI hoặc bỏ kiểm khi thiếu control.
+- `AGENTS.md:49`: giữ nguyên BOM partial/Designer; chỉ sửa trong phạm vi task.
 
 ## Ví dụ
 Tốt — khởi tạo bố cục; hành vi và test nằm ngoài Designer.
@@ -81,4 +94,4 @@ Controls.Add(caption);
   Rules That Change the Answer, Implement the UI Structure, Validate in Increasing-Cost Order.
 - `plans/R-010/brief.md`, Skill code: R-001, DPI, UiThread/LayoutChecker/UiSnapshot.
 - `AGENTS.md`, Lỗi hay gặp: test UI, BOM, dữ liệu hiển thị và kiểm chứng thật.
-- Chưa đọc code HDVTool/ChinaAndroidToolbox vì ngoài danh sách; không khẳng định helper API.
+- Nguồn HDVTool/ChinaAndroidToolbox và giới hạn kiểm chứng: xem Quy ước của dự án; không chạy test UI/UiSnapshot trong task tài liệu.
