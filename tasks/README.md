@@ -38,7 +38,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V5-07b Hub: Phòng nghiên cứu](V5-07b-research-page.md) | B | `agent-b/V5-07b-research-page` | ✅ Đã merge (vòng 1) |
 | [V6-01 Đếm vòng review và CLI](V6-01-dem-vong-review-va-cli.md) | A | `agent-a/V6-01-dem-vong-review-va-cli` | ✅ Đã merge (vòng 1) |
 | [H6-07 Hiệu suất và Nhân viên](H6-07-hieu-suat-va-nhan-vien.md) | B | `agent-b/H6-07-hieu-suat-va-nhan-vien` | ✅ Đã merge (vòng 1) |
-| [H6-01 Hàm thuần dây chuyền](H6-01-ham-thuan-day-chuyen.md) | A | `agent-a/H6-01-ham-thuan-day-chuyen` | 🔵 Chờ review · cổng KT ĐẠT |
+| [H6-01 Hàm thuần dây chuyền](H6-01-ham-thuan-day-chuyen.md) | A | `agent-a/H6-01-ham-thuan-day-chuyen` | 🔵 Chờ review · cổng KT ĐẠT · AI review CẦN SỬA (Claude xem) |
 | [H6-08 AI & tài khoản: khung và Trạng thái](H6-08-ai-tai-khoan-khung-va-trang-thai.md) | B | `agent-b/H6-08-ai-tai-khoan-khung-va-trang-thai` | ✅ Đã merge (vòng 1) |
 | [V8-01 Thử lại lỗi máy và ghi nhật ký](V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md) | A | `agent-a/V8-01-thu-lai-loi-may-va-ghi-nhat-ky` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 12:01 25/10/2026 |
 
