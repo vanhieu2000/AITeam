@@ -1,4 +1,4 @@
-﻿# S1-03 · Bốn skill code theo stack
+# S1-03 · Bốn skill code theo stack
 
 - **Agent:** A
 - **Nhánh:** `agent-a/S1-03-bon-skill-code-theo-stack`
@@ -64,31 +64,23 @@ Mỗi skill có tám mục cấp 2: Mục tiêu; Đầu vào; Đầu ra (định
 - [ ] Báo cáo có bảng từng tiêu chí → lệnh + kết quả thật, số test/warning; file đổi và lý do; quyết định tự đưa ra; nguồn chưa xác minh.
 
 ## Báo cáo của agent
-### Chuẩn bị bước 4 (Codex)
-| Tiêu chí chuẩn bị | Bằng chứng |
-|---|---|
-| Đặc tả và khung | Task này + bốn SKILL.md có tám mục và TODO(agent); chưa viết nội dung thực hiện. Không có lớp/hàm sản phẩm mới nên không cần khung C#/DI. |
-| Build | Lần 1 `dotnet build AITeam.sln`: mã 1, báo 0 warning/0 error, không có chẩn đoán cụ thể. Lần 2 `dotnet build AITeam.sln -m:1 -nodeReuse:false -v:normal`: thành công, 0 warning, 0 error, 28,35 giây. Không build thêm. |
-| Test nghiệm thu đỏ | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceS103StackSkillsTests --logger 'console;verbosity=quiet'`: 16 fail, 0 pass, 0 skip (khung chưa có nội dung). Chưa chạy toàn bộ suite; không chạy tiến trình agent thật. |
-
-File chuẩn bị: task này (đặc tả); bốn SKILL.md trong Phạm vi (khung); `core.tests/AcceptanceS103StackSkillsTests.cs` (16 ca xUnit kiểm nội dung tài liệu, không phải logic ứng dụng).
-Quyết định: không thêm API giả vào task chỉ có tài liệu; nguồn gốc chưa đọc do giới hạn đầu vào, yêu cầu người thực hiện ghi nguồn thực tế và báo nếu thiếu. Test kiểm hợp đồng văn bản, reviewer vẫn phải đánh giá chất lượng tóm lược và đối chiếu nguồn.
-Điều chưa xác minh: nguồn skill ngoài repo và nội dung MAUI; nội dung hoàn chỉnh do Antigravity thực hiện. Không chạy git theo yêu cầu.
-
-### Thực hiện (Antigravity điền)
-<!-- Antigravity điền sau khi hoàn thiện nội dung. -->
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Nội dung / nguồn / giới hạn dòng | Chưa thực hiện |
-| Build và test | Chưa thực hiện |
-
-File đã đổi và lý do: chưa điền.
-Quyết định tự đưa ra: chưa điền.
-Điều chưa xác minh: bước chuẩn bị chưa đọc skill gốc hoặc tài liệu MAUI; không khẳng định nguồn ngoài có sẵn trên máy agent.
-
+| Bốn skill, tám mục, nguồn/ví dụ/checklist | PowerShell ReadAllLines/regex: WinForms 84, Web 90, App 102, Test 97 dòng; tổng 373, mỗi file 8 mục, không còn chỗ trống, BOM UTF-8 giữ nguyên. |
+| Quy tắc stack, R-001, AGENTS.md và mọi luồng | Đối chiếu Ràng buộc; `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceS103StackSkillsTests --blame-hang-timeout 2m -m:1 -nodeReuse:false`: 16 pass, 0 fail/skip; không sửa test nghiệm thu. |
+| Build | `dotnet build AITeam.sln` thất bại mã 1, 0 warning/0 error không chẩn đoán; lần `--no-restore -m:1 -nodeReuse:false -v:normal` báo 5 NETSDK1004 do thiếu assets; `dotnet build AITeam.sln -m:1 -nodeReuse:false -v:minimal` restore/build thành công, 0 lỗi, 0 warning, 47,77 giây. |
+| Test toàn solution | `dotnet test AITeam.sln --no-restore --blame-hang-timeout 2m -m:1 -nodeReuse:false`: 756 pass (Hub 457, Core 299), 0 fail, 0 skip. |
+| Báo cáo và phạm vi | Chỉ sửa bốn SKILL.md và mục báo cáo task; không sửa code sản phẩm/test/cấu hình; không chạy git theo chỉ dẫn Codex dự phòng. |
+File đổi: `skills/code-{winforms,web,app,test}/SKILL.md` — điền khung, nguồn thực đọc và ví dụ; task này — báo cáo kết quả.
+Quyết định: thêm name/description cho bốn skill; dùng Microsoft Learn cho MAUI; chạy lại build tuần tự sau lỗi/thiếu assets, không đổi cấu hình dự án.
+Nguồn: đã đọc năm skill gốc được chỉ định và bốn mục MAUI; quy ước R-001/Hub lấy từ brief, task và AGENTS.md, không tự nhận đã đọc code dự án ngoài.
+Chưa xác minh: runtime/Designer/ảnh giao diện và code HDVTool/ChinaAndroidToolbox ngoài phạm vi; không chạy app. `quick_validate.py` không chạy được do thiếu Python (mã 9009); đã kiểm cấu trúc/BOM bằng PowerShell và 16 test nghiệm thu.
+Lưu ý kiểm tra: lần test riêng đầu dùng --no-build trả 0 nhưng không in số test, không dùng làm bằng chứng pass; số 16 ở trên là lần chạy sau build thành công.
 ## Review (Claude)
-<!-- Claude điền sau bước thực hiện. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Codex viết nội dung skill (assign -Dev codex); cổng KT ĐẠT; QC BLOCKED đúng luật (Codex không tự duyệt) ⇒ Claude xem cấu trúc: đủ 7–8 mục bắt buộc, ≤ 150 dòng, có ví dụ tốt/xấu + nguồn.
+- Optional (hàng chờ): bổ sung quy ước THẬT từ code HDVTool / ChinaAndroidToolbox / Hub vào skill code (lần này Codex chưa đọc vì ngoài danh sách file).
 
 ## Kết quả
-<!-- Claude điền khi review đạt. -->
+- Bộ skill S1-03 có trong `skills/`; S1-04 / S1-05 sẽ tự gắn skill vào lời nhắn từng bước.
 
