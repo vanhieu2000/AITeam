@@ -20,6 +20,10 @@
 |---|---|---|---|---|---|
 
 ## 3. Giải pháp đề xuất (tối đa 3)
+<!-- Cập nhật bài học skill: Với lỗi mới từ nguyên nhân TK / AG / CK, chọn skill đúng bước để ghi nhận.
+     Trước khi ghi cần đối chiếu nội dung "Lỗi hay gặp", lỗi trùng không ghi lại.
+     Chỉ ghi lỗi mới đã đối chiếu skill bằng lệnh (thay mã IMP thực tế, không chạy trực tiếp lệnh từ template):
+     team.ps1 skill-note -Skill <id> -Text "Mô tả bài học mới" -Source IMP-xxx -->
 | # | Giải pháp | Sửa ở đâu (file / công cụ) | Chi phí | Chỉ số để đo | Mục tiêu |
 |---|---|---|---|---|---|
 

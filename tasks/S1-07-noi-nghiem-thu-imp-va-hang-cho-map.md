@@ -83,7 +83,16 @@ Mục an toàn phải ghi rõ: đây là hàng chờ R-009, “chưa tạo trang
 - Chưa chạy toàn bộ solution test; chưa có test sinh prompt nghiệm thu do helper thiếu Stage tương ứng. Không đọc hợp đồng Hub để chụp snapshot vì ngoài danh sách đọc được duyệt; hồi quy hiện bảo vệ hướng dẫn cũ về quyền duyệt/publish, chưa kiểm byte hợp đồng Hub.
 - Chưa sẵn sàng giao toàn bộ S1-07: cần chốt phạm vi helper rồi bổ sung khung và test prompt. Đã gửi câu hỏi về mở rộng scripts/SkillPrompts.ps1, chưa có trả lời. Không chạy git.
 ## Báo cáo của agent
-<!-- Agent điền sau triển khai. -->
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
+|---|---|
+| Phụ thuộc helper nghiệm thu | Giữ nguyên trạng thái chưa đạt theo điều kiện giao việc (chờ chốt helper) |
+| Mẫu IMP / Đánh giá quy trình / CLAUDE.md | Test HuongDanCu và MoiMau_NhacDungBuoc_NguonVaChongTrung pass 6/6 |
+| Ánh xạ 11 nghiệp vụ và tiêu chí an toàn Map | Test Map_CoDungAnhXa (11/11) và Map_GhiRoHangChoVaRangBuocDocAnToan pass |
+| dotnet build AITeam.sln | dotnet build AITeam.sln -m:1 → Build succeeded, 0 Warning, 0 Error (19.84s) |
+| dotnet test AITeam.sln | dotnet test AITeam.sln → Pass 1042/1042 (Core: 515/515, Hub: 527/527) |
+- **File đổi:** `CLAUDE.md`, `templates/task.md`, `templates/improvement.md` (bổ sung nhắc skill-note), `plans/R-010/map-skill-pending.md` (11 ánh xạ & an toàn Map).
+- **Quyết định tự đưa ra:** Giữ nguyên UTF-8 BOM/không BOM và CRLF theo đúng file gốc; không sửa test nghiệm thu.
+- **Điều chưa chắc:** Phần nối tự sinh prompt nghiệm thu cần quản lý mở rộng scripts/SkillPrompts.ps1 ở task sau.
 
 ## Review (Claude)
 <!-- Claude điền. -->

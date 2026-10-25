@@ -87,6 +87,10 @@ File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa x�
 
 ## Đánh giá quy trình
 <!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
+<!-- Bài học kinh nghiệm: Với lỗi mới phát hiện (nguyên nhân TK / AG / CK), chọn skill đúng bước để cập nhật.
+     Đối chiếu mục Lỗi hay gặp của skill, lỗi trùng không ghi lại.
+     Chỉ ghi lỗi mới đã đối chiếu skill bằng lệnh (thay mã task thực tế, không chạy trực tiếp lệnh từ template):
+     team.ps1 skill-note -Skill code-test -Text "Mô tả bài học mới" -Source S1-07 -->
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
 | 1. Tiếp nhận & quản lý | Claude | | | | | |
