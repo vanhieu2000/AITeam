@@ -61,8 +61,7 @@ public static class WorkProgressParser
     {
         if (string.IsNullOrWhiteSpace(markdown)) return Array.Empty<WorkProgressEvent>();
 
-        var clean = markdown.TrimStart('\uFEFF');
-        var lines = clean.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var lines = markdown.TrimStart('\uFEFF').Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
         var events = new List<WorkProgressEvent>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var inJournal = false;
@@ -131,26 +130,15 @@ public static class WorkProgressParser
         bool planExists = false, bool planApproved = false, string? boardStatus = null)
     {
         var allSteps = Enum.GetValues<WorkStep>();
-        var done = new Dictionary<WorkStep, bool>();
-        var timeText = new Dictionary<WorkStep, string>();
-        var actorText = new Dictionary<WorkStep, string>();
-        foreach (var s in allSteps)
-        {
-            done[s] = false;
-            timeText[s] = MissingMeta;
-            actorText[s] = MissingMeta;
-        }
+        var done = allSteps.ToDictionary(s => s, _ => false);
+        var errors = allSteps.ToDictionary(s => s, _ => (string?)null);
+        var timeText = allSteps.ToDictionary(s => s, _ => MissingMeta);
+        var actorText = allSteps.ToDictionary(s => s, _ => MissingMeta);
 
-        if (planExists || planApproved)
-        {
-            done[WorkStep.Received] = true;
-            done[WorkStep.Plan] = true;
-        }
+        if (planExists || planApproved) { done[WorkStep.Received] = true; done[WorkStep.Plan] = true; }
         if (planApproved) done[WorkStep.PlanApproval] = true;
 
-        var currentStep = planApproved ? WorkStep.Prep : planExists ? WorkStep.PlanApproval : WorkStep.Received;
-        WorkStep? failedStep = null;
-        string? latestError = null;
+        var progressStep = planApproved ? WorkStep.Prep : planExists ? WorkStep.PlanApproval : WorkStep.Received;
         var isMerged = false;
 
         if (events != null && !string.IsNullOrWhiteSpace(taskId))
@@ -182,53 +170,49 @@ public static class WorkProgressParser
                     {
                         SetMeta(WorkStep.Merge, ev, timeText, actorText);
                         done[WorkStep.Merge] = true;
-                        failedStep = null;
-                        latestError = null;
+                        foreach (var s in allSteps) errors[s] = null;
                         isMerged = true;
-                        currentStep = WorkStep.Merge;
+                        progressStep = WorkStep.Merge;
                         continue;
                     }
 
-                    if (failedStep != null)
-                    {
-                        if (step != failedStep.Value) continue;
-                        if (ev.Outcome is WorkOutcome.Failed or WorkOutcome.Blocked)
-                        {
-                            SetMeta(step, ev, timeText, actorText);
-                            latestError = ev.Text;
-                            continue;
-                        }
-                        failedStep = null;
-                        latestError = null;
-                    }
-
-                    SetMeta(step, ev, timeText, actorText);
                     if (ev.Outcome is WorkOutcome.Failed or WorkOutcome.Blocked)
                     {
-                        failedStep = step;
-                        latestError = ev.Text;
-                        currentStep = step;
+                        SetMeta(step, ev, timeText, actorText);
+                        errors[step] = ev.Text;
                         done[step] = false;
                         if (step == WorkStep.Merge) isMerged = false;
+                        if (progressStep > step) progressStep = step;
+                        continue;
                     }
-                    else if (ev.Outcome == WorkOutcome.Passed)
+
+                    if (ev.Outcome == WorkOutcome.Passed)
                     {
+                        var hadErrorOnStep = errors[step] != null;
+                        errors[step] = null;
+                        if (allSteps.Any(s => s < step && errors[s] != null))
+                        {
+                            if (hadErrorOnStep) SetMeta(step, ev, timeText, actorText);
+                            continue;
+                        }
+
+                        SetMeta(step, ev, timeText, actorText);
                         switch (ev.Action)
                         {
                             case WorkAction.Prep:
                                 done[WorkStep.Prep] = true;
-                                if (currentStep <= WorkStep.Code) currentStep = WorkStep.Code;
+                                if (progressStep <= WorkStep.Code) progressStep = WorkStep.Code;
                                 break;
                             case WorkAction.Assign:
-                                if (currentStep <= WorkStep.Code) currentStep = WorkStep.Code;
+                                if (progressStep <= WorkStep.Code) progressStep = WorkStep.Code;
                                 break;
                             case WorkAction.Verify:
                                 done[WorkStep.Verify] = true;
-                                if (currentStep <= WorkStep.Qc) currentStep = WorkStep.Qc;
+                                if (progressStep <= WorkStep.Qc) progressStep = WorkStep.Qc;
                                 break;
                             case WorkAction.Qc:
                                 done[WorkStep.Qc] = true;
-                                if (currentStep <= WorkStep.Acceptance) currentStep = WorkStep.Acceptance;
+                                if (progressStep <= WorkStep.Acceptance) progressStep = WorkStep.Acceptance;
                                 break;
                         }
                     }
@@ -239,15 +223,19 @@ public static class WorkProgressParser
         if (!string.IsNullOrEmpty(boardStatus) && boardStatus.Contains("✅", StringComparison.Ordinal))
         {
             done[WorkStep.Merge] = true;
-            failedStep = null;
-            latestError = null;
+            foreach (var s in allSteps) errors[s] = null;
             isMerged = true;
-            currentStep = WorkStep.Merge;
+            progressStep = WorkStep.Merge;
         }
+
+        var hasFailure = allSteps.Any(s => errors[s] != null);
+        var firstFailed = hasFailure ? allSteps.First(s => errors[s] != null) : default;
+        var currentStep = hasFailure ? firstFailed : progressStep;
+        var latestError = hasFailure ? errors[firstFailed] : null;
 
         var stepList = allSteps.Select(s =>
         {
-            var state = failedStep == s ? WorkStepState.Failed
+            var state = errors[s] != null ? WorkStepState.Failed
                 : done[s] ? WorkStepState.Done
                 : currentStep == s ? WorkStepState.Current
                 : WorkStepState.Waiting;
@@ -289,13 +277,9 @@ public static class WorkProgressParser
 
     private static WorkOutcome ParseOutcome(string text)
     {
-        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT"))
-            return WorkOutcome.Passed;
-        if (HasPrefix(text, "CẦN SỬA") || HasPrefix(text, "FAILED") || HasPrefix(text, "FAIL") || HasPrefix(text, "LỖI"))
-            return WorkOutcome.Failed;
-        if (HasPrefix(text, "BLOCKED"))
-            return WorkOutcome.Blocked;
-        return WorkOutcome.Unknown;
+        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT")) return WorkOutcome.Passed;
+        if (HasPrefix(text, "CẦN SỬA") || HasPrefix(text, "FAILED") || HasPrefix(text, "FAIL") || HasPrefix(text, "LỖI")) return WorkOutcome.Failed;
+        return HasPrefix(text, "BLOCKED") ? WorkOutcome.Blocked : WorkOutcome.Unknown;
     }
 
     private static bool HasPrefix(string text, string prefix) =>
@@ -313,8 +297,7 @@ public static class WorkProgressParser
             var d = receivedAt.Value.ToOffset(VnOffset);
             return new DateTimeOffset(d.Year, d.Month, d.Day, hm.Hour, hm.Minute, 0, VnOffset);
         }
-        if (IsoTimeRegex.IsMatch(raw) && DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var iso))
-            return iso;
-        return null;
+        return IsoTimeRegex.IsMatch(raw) && DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var iso)
+            ? iso : null;
     }
 }

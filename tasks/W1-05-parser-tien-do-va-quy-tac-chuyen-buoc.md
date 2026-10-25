@@ -97,7 +97,7 @@ không phải hợp đồng tính tiến độ; dùng model riêng trong file đ
 - [x] Lượt 10 sau 2; lỗi rồi thành công, QC BLOCKED, Assign che lỗi, Merge sau lỗi cũ đều đúng.
 - [x] Dữ liệu độc hại chỉ là chuỗi, hàm thuần không đổi đầu vào; thiếu giờ/người hiện đúng câu đã quy định.
 - [x] `dotnet build AITeam.sln` thành công, 0 warning mới.
-- [x] `dotnet test AITeam.sln` thành công; nghiệm thu giữ nguyên và có bằng chứng số pass/fail/skip.
+- [ ] `dotnet test AITeam.sln` thành công; nghiệm thu giữ nguyên và có bằng chứng số pass/fail/skip.
 - [x] Báo cáo từng tiêu chí → lệnh/kết quả thật, file/lý do, quyết định tự đưa ra và điều chưa xác minh.
 
 ## Báo cáo của agent
@@ -106,13 +106,13 @@ Antigravity điền sau khi triển khai:
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
 | Parse dữ liệu thật và biến thể | ĐẠT — `dotnet test hub.tests/AITeam.Hub.Tests.csproj --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m`: Passed 63, Failed 0, Skipped 0 |
-| Quy tắc chín bước, lỗi và chuyển lượt | ĐẠT — `AcceptanceW105WorkProgressTests` (63/63 pass): 9 bước, lượt 10>2, lỗi/BLOCKED/Assign/Merge/✅ đúng quy tắc |
+| Quy tắc chín bước, lỗi và chuyển lượt | ĐẠT — `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter "FullyQualifiedName~W105WorkProgress" --blame-hang-timeout 2m`: Passed 64, Failed 0, Skipped 0 (gồm 63 ca nghiệm thu + 1 ca hồi quy `Qc_failed_then_verify_failed_then_qc_passed_keeps_verify_failed_and_error`) |
 | Thuần, an toàn dữ liệu và tương thích | ĐẠT — `Untrusted_text_remains_data_and_input_is_not_mutated` pass; không đổi đầu vào, giữ UTF-8 BOM (+231 dòng) |
-| Build/test toàn solution | `dotnet build AITeam.sln`: 0 warning, 0 error. `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: Hub.Tests 590/590 pass (63/63 W1-05 pass); Core.Tests 518/519 pass — BỊ CHẶN bởi 1 test ngoài phạm vi: `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung` trên `CLAUDE.md` |
+| Build/test toàn solution | `dotnet build AITeam.sln --no-restore`: 0 warning, 0 error. `AITeam.Hub.Tests`: 591/591 pass (0 fail, 0 skip); `AITeam.Core.Tests`: 518/519 pass, 1 fail (`AcceptanceV801WorkflowTests.KhoaChanTienTrinhKhacVaTimeout` đỏ do máy quá tải khi chạy toàn cục; quản lý đã chạy lại riêng: PASS — không tự đánh dấu vượt tiêu chí test toàn solution) |
 
-File đã đổi và lý do: `hub/Services/WorkProgressParser.cs` (triển khai `Parse`, `Calculate` và các hàm phụ nội bộ theo đặc tả W1-05); `tasks/W1-05-parser-tien-do-va-quy-tac-chuyen-buoc.md` (điền báo cáo).  
-Quyết định tự đưa ra: Với bảng nhật ký cũ có cột Ghi chú khác rỗng thì gộp `Sự kiện (Ghi chú)` vào `Text`; khi có cổng lỗi đang hiệu lực trong lượt mới nhất thì chỉ sự kiện `Passed` cùng bước đó hoặc `Merge` `Passed` (hay `boardStatus` có `✅`) mới gỡ trạng thái lỗi.  
-Điều chưa xác minh: BỊ CHẶN Ở CỔNG KIỂM TRA — `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung("CLAUDE.md")` trong `AITeam.Core.Tests` báo lệch dòng hướng dẫn cũ trong `CLAUDE.md` trên `main`, nhưng `AGENTS.md` và phạm vi W1-05 cấm sửa `CLAUDE.md` / `core.tests`. Chưa có log workflow thực thi thật trong phiếu R-011 gốc.
+File đã đổi và lý do: `hub/Services/WorkProgressParser.cs` (triển khai `Parse`, `Calculate` và theo dõi lỗi còn hiệu lực theo từng bước); `hub.tests/W105WorkProgressExtraTests.cs` (thêm test hồi quy `Qc Failed → Verify Failed → Qc Passed`); `tasks/W1-05-parser-tien-do-va-quy-tac-chuyen-buoc.md` (cập nhật báo cáo).  
+Quyết định tự đưa ra: Theo dõi lỗi đang hiệu lực theo từng bước (`errors[step]`); chỉ `Passed` cùng bước mới xóa lỗi của bước đó, và chỉ `Merge` `Passed` mới hơn hoặc `boardStatus` chứa `✅` mới xóa toàn bộ lỗi; `CurrentStep`/`LatestError` lấy theo cổng lỗi sớm nhất chưa được gỡ.  
+Điều chưa xác minh: Chưa có dòng nhật ký workflow thực thi thật trong phiếu R-011 gốc (mới kiểm trên biến thể chèn vào bản sao phiếu thật theo brief); test `KhoaChanTienTrinhKhacVaTimeout` (V8-01) trong `AITeam.Core.Tests` đỏ khi máy quá tải (quản lý chạy riêng đã PASS).
 
 ### Kiểm tra chuẩn bị (Codex)
 - Đã tạo khung hai hàm, chỉ throw NotImplementedException; chưa viết phần thân sản phẩm.
