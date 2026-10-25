@@ -1,4 +1,4 @@
-﻿# H7-07 · Giao diện Map
+# H7-07 · Giao diện Map
 
 - **Agent:** B
 - **Nhánh:** `agent-b/H7-07-giao-dien-map`
@@ -71,14 +71,14 @@ Hoàn thiện khung `MapModel.OnGet()` và `OnPost()`, dựng Razor và CSS cụ
 `hub.tests/AcceptanceH707MapTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] GET Razor thật trả 200; đủ 11 nghiệp vụ đúng nhãn/thứ tự, mỗi dòng đủ sáu tác nhân, có ghi chú và giải thích quyền hạn.
-- [ ] Thiếu cấu hình và cấu hình cũ nạp mặc định v4, không ghi file; dữ liệu đã lưu được nạp lại đúng.
-- [ ] POST có antiforgery; lưu/tải lại đủ dòng, ghi chú rỗng và 500 ký tự, giữ khóa cấu hình khác và cập nhật revision.
-- [ ] Chặn dữ liệu giả mạo/thiếu/trùng/thừa/hoa thường sai/quá dài/revision rỗng trước lời gọi lưu; CSRF trả 400; XSS chỉ là văn bản.
-- [ ] Lỗi đọc không cho lưu; lỗi ghi và xung đột giữ form/revision, không lộ thông tin nhạy cảm, không báo thành công.
-- [ ] CSS cục bộ, đủ nhãn truy cập, nội dung dài xuống dòng; kiểm bằng test dựng trang và markup.
-- [ ] `dotnet build AITeam.sln` 0 lỗi, 0 warning sau triển khai.
-- [ ] `dotnet test AITeam.sln` pass hết, bao gồm toàn bộ test nghiệm thu không sửa.
+- [x] GET Razor thật trả 200; đủ 11 nghiệp vụ đúng nhãn/thứ tự, mỗi dòng đủ sáu tác nhân, có ghi chú và giải thích quyền hạn.
+- [x] Thiếu cấu hình và cấu hình cũ nạp mặc định v4, không ghi file; dữ liệu đã lưu được nạp lại đúng.
+- [x] POST có antiforgery; lưu/tải lại đủ dòng, ghi chú rỗng và 500 ký tự, giữ khóa cấu hình khác và cập nhật revision.
+- [x] Chặn dữ liệu giả mạo/thiếu/trùng/thừa/hoa thường sai/quá dài/revision rỗng trước lời gọi lưu; CSRF trả 400; XSS chỉ là văn bản.
+- [x] Lỗi đọc không cho lưu; lỗi ghi và xung đột giữ form/revision, không lộ thông tin nhạy cảm, không báo thành công.
+- [x] CSS cục bộ, đủ nhãn truy cập, nội dung dài xuống dòng; kiểm bằng test dựng trang và markup.
+- [x] `dotnet build AITeam.sln` 0 lỗi, 0 warning sau triển khai.
+- [x] `dotnet test AITeam.sln` pass hết, bao gồm toàn bộ test nghiệm thu không sửa.
 
 ## Ghi nhận chuẩn bị bước 4 (Codex)
 - Đã chuẩn bị đặc tả, khung PageModel/Razor và 27 ca nghiệm thu; chưa viết thân handler. CSS chỉ có chú thích TODO.
@@ -88,13 +88,23 @@ Hoàn thiện khung `MapModel.OnGet()` và `OnPost()`, dựng Razor và CSS cụ
 - Chỉ đọc 5 file mã liên quan ngoài phạm vi; không chạy git, không chạy app để kiểm giao diện. Test có host Razor nội bộ theo mẫu H6-08, dùng dịch vụ H7-01 trên thư mục tạm.
 - Chưa xác minh trực quan 1280×800/1000px; Claude kiểm ở bước 7. Không có mockup/fixture thật riêng trong brief.
 ## Báo cáo của agent
-<!-- Agent điền bảng từng tiêu chí → lệnh/kết quả thật (số pass, warning); file đã đổi và lý do; quyết định tự đưa ra; điều chưa xác minh. Không yêu cầu ảnh. -->
+| Tiêu chí | Bằng chứng |
+| --- | --- |
+| Dựng trang GET & POST Map hợp lệ, antiforgery, đủ 11 vai/6 actor | AcceptanceH707MapTests: 27/27 pass |
+| Chặn dòng thừa (Roles[12], roles case-insensitive, overflow index), XSS, lỗi đọc/ghi | Form key validation chặn Roles[12]/roles/ROLES và TryParse chống overflow, Writes = 0 |
+| Bảo toàn ký tự xuống dòng đầu trong textarea Note | Thêm LF đệm ngay sau mở textarea (@Html.Raw("\n")), 1-2 LF đầu giữ nguyên |
+| Build & Test toàn bộ giải pháp | dotnet build: 0 lỗi, 0 warning; dotnet test: 886/886 pass (527 Hub + 359 Core) |
 
+- **File đã đổi:** hub/Pages/Map.cshtml (LF đệm sau textarea), hub/Pages/Map.cshtml.cs (chặn dòng thừa Roles[12], OrdinalIgnoreCase, int.TryParse), tasks/H7-07-giao-dien-map.md (báo cáo).
+- **Quyết định tự đưa ra:** Dùng RegexOptions.IgnoreCase và StringComparison.OrdinalIgnoreCase cho tiền tố Roles; dùng int.TryParse chặn số vượt Int32; không commit file test mới vào hub.tests để tuân thủ phạm vi task.
+- **Chưa chắc:** Kiểm tra giao diện trực quan 1280x800/1000px trên trình duyệt thật (bàn giao Claude nghiệm thu ở bước 7).
 ## Review (Claude)
-<!-- Claude điền khi review. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Lan 2 vòng (sửa 2 điểm QC: textarea xuống dòng đầu, …); cổng KT ĐẠT; Codex QC PASS 0 phát hiện.
+- Claude mở Hub giả 1000×800: `/Map` 11 nghiệp vụ, mỗi dòng chọn 6 tác nhân, không tràn ngang.
 
 ## Kết quả
-<!-- Claude điền khi đạt. -->
+- **Chức năng mới — trang Map** (`/Map`): gán thủ công tác nhân + ghi chú quyền hạn cho 11 nghiệp vụ từ tiếp nhận tới publish git; lưu team.json (workflow.roles).
 
 ## Đánh giá quy trình
 <!-- Claude điền sau nghiệm thu. -->
