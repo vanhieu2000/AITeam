@@ -64,6 +64,9 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $Utf8 = New-Object Text.UTF8Encoding $false
+. (Join-Path $Root "tools/workflow-common.ps1")
+# TODO(agent) V8-01: nối Invoke-WorkflowCheck tại Prep/Verify; Invoke-WorkflowGate tại Assign;
+# khóa chung Set-BoardStatus/Save-RunMetrics và ghi Prep/Assign/Verify/Qc/Merge cùng cập nhật bảng việc.
 
 # ───────────────────────── Cấu hình ─────────────────────────
 
@@ -1881,6 +1884,7 @@ function Invoke-Metrics {
     }
 }
 
+try {
 switch ($Command) {
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
     "ask" { Invoke-Ask }
@@ -1913,4 +1917,9 @@ switch ($Command) {
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub }
     default { Get-Help $PSCommandPath -Detailed | Out-String | Write-Host }
+}
+} catch {
+    $message = if ($_.Exception -is [System.NotImplementedException]) { 'chưa làm' } else { $_.Exception.Message }
+    [Console]::Error.WriteLine("LỖI: $message")
+    exit 1
 }

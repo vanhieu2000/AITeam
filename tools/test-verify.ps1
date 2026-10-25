@@ -26,6 +26,7 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
     New-Item -ItemType Directory -Force $root, (Join-Path $root "tools") | Out-Null
     Copy-Item $(if ($TeamPs1) { $TeamPs1 } else { Join-Path $src "team.ps1" }) (Join-Path $root "team.ps1")
     Copy-Item (Join-Path $src "tools\secret-scan.ps1") (Join-Path $root "tools")
+    Copy-Item (Join-Path $src "tools\workflow-common.ps1") (Join-Path $root "tools")
     $cfg = Get-Content (Join-Path $src "team.json") -Raw -Encoding UTF8 | ConvertFrom-Json
     $cfg.projectsRoot = $S; $cfg.workRoot = $work
     W (Join-Path $root "team.json") ($cfg | ConvertTo-Json -Depth 10) $NoBom
