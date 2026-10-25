@@ -1,3 +1,4 @@
+﻿using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -242,60 +243,139 @@ public sealed class TeamConfigService : ITeamConfigService
         return GetProjects().FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>
+    /// H7-01: giữ hành vi Settings và .bak; ghi team.json phải dùng chung khóa theo đường dẫn chuẩn hóa
+    /// với WorkflowRolesService, đọc lại trong khóa, giữ workflow.roles/khóa lạ/BOM, thay file nguyên tử.
+    /// JSON hỏng không coi là rỗng; lỗi ghi giữ file cũ và dọn tạm; không theo reparse point.
+    /// Không đổi ITeamConfigService hoặc cách tách đường dẫn vào team.local.json.
+    /// </summary>
     public void SaveSettings(TeamSettings settings)
     {
-        // 1. Cập nhật team.json (giữ nguyên các khóa khác kể cả _ghichu; KHÔNG ghi projectsRoot / workRoot vào đây)
-        JsonObject teamNode;
-        if (File.Exists(_paths.TeamJson))
+        // 1. Cập nhật team.json trong khóa chung với WorkflowRolesService
+        lock (TeamFileLock.GetLock(_paths.TeamJson))
         {
-            teamNode = JsonNode.Parse(File.ReadAllText(_paths.TeamJson)) as JsonObject ?? new JsonObject();
-        }
-        else
-        {
-            teamNode = new JsonObject();
-        }
+            if (TeamFileLock.HasReparsePoint(_paths.TeamJson))
+                throw new IOException("Không lưu được cấu hình.");
 
-        if (teamNode["github"] is not JsonObject githubObj)
-        {
-            githubObj = new JsonObject();
-            teamNode["github"] = githubObj;
-        }
-        githubObj["owner"] = settings.GitHubOwner;
+            string bakPath = _paths.TeamJson + ".bak";
+            if (TeamFileLock.HasReparsePoint(bakPath))
+                throw new IOException("Không lưu được cấu hình.");
 
-        if (teamNode["agy"] is not JsonObject agyObj)
-        {
-            agyObj = new JsonObject();
-            teamNode["agy"] = agyObj;
-        }
-        agyObj["model"] = settings.DefaultModel;
+            bool fileExists = File.Exists(_paths.TeamJson);
+            bool hasBom = false;
+            JsonObject teamNode;
 
-        var accArr = new JsonArray();
-        foreach (var acc in settings.AgyAccounts)
-        {
-            accArr.Add(acc);
-        }
-        agyObj["accounts"] = accArr;
-
-        var devArr = new JsonArray();
-        foreach (var dev in settings.Developers)
-        {
-            devArr.Add(new JsonObject
+            if (fileExists)
             {
-                ["id"] = dev.Id,
-                ["name"] = dev.Name,
-                ["focus"] = dev.Focus
-            });
-        }
-        teamNode["developers"] = devArr;
+                byte[] bytes;
+                try
+                {
+                    bytes = File.ReadAllBytes(_paths.TeamJson);
+                }
+                catch (Exception ex)
+                {
+                    throw new IOException("Không đọc được cấu hình.", ex);
+                }
 
-        if (teamNode["review"] is not JsonObject reviewObj)
-        {
-            reviewObj = new JsonObject();
-            teamNode["review"] = reviewObj;
-        }
-        reviewObj["maxRounds"] = settings.MaxReviewRounds;
+                hasBom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+                ReadOnlySpan<byte> jsonSpan = hasBom ? bytes.AsSpan(3) : bytes.AsSpan();
 
-        WriteWithBackup(_paths.TeamJson, teamNode);
+                try
+                {
+                    teamNode = JsonNode.Parse(jsonSpan) as JsonObject ?? throw new IOException("Không đọc được cấu hình.");
+                }
+                catch (Exception ex) when (ex is not IOException)
+                {
+                    throw new IOException("Không đọc được cấu hình.", ex);
+                }
+            }
+            else
+            {
+                teamNode = new JsonObject();
+            }
+
+            if (teamNode["github"] is not JsonObject githubObj)
+            {
+                githubObj = new JsonObject();
+                teamNode["github"] = githubObj;
+            }
+            githubObj["owner"] = settings.GitHubOwner;
+
+            if (teamNode["agy"] is not JsonObject agyObj)
+            {
+                agyObj = new JsonObject();
+                teamNode["agy"] = agyObj;
+            }
+            agyObj["model"] = settings.DefaultModel;
+
+            var accArr = new JsonArray();
+            foreach (var acc in settings.AgyAccounts)
+            {
+                accArr.Add(acc);
+            }
+            agyObj["accounts"] = accArr;
+
+            var devArr = new JsonArray();
+            foreach (var dev in settings.Developers)
+            {
+                devArr.Add(new JsonObject
+                {
+                    ["id"] = dev.Id,
+                    ["name"] = dev.Name,
+                    ["focus"] = dev.Focus
+                });
+            }
+            teamNode["developers"] = devArr;
+
+            if (teamNode["review"] is not JsonObject reviewObj)
+            {
+                reviewObj = new JsonObject();
+                teamNode["review"] = reviewObj;
+            }
+            reviewObj["maxRounds"] = settings.MaxReviewRounds;
+
+            string dir = Path.GetDirectoryName(_paths.TeamJson)!;
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            if (fileExists)
+            {
+                File.Copy(_paths.TeamJson, bakPath, overwrite: true);
+            }
+
+            string tempFile = Path.Combine(dir, $"team.json.tmp.{Guid.NewGuid():N}");
+            try
+            {
+                string json = teamNode.ToJsonString(JsonOptions);
+                var encoding = new UTF8Encoding(hasBom);
+
+                using (var fs = new FileStream(tempFile, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    using (var writer = new StreamWriter(fs, encoding, bufferSize: 1024, leaveOpen: true))
+                    {
+                        writer.Write(json);
+                        writer.Flush();
+                    }
+                    fs.Flush(true);
+                }
+
+                if (fileExists)
+                {
+                    File.Replace(tempFile, _paths.TeamJson, null);
+                }
+                else
+                {
+                    File.Move(tempFile, _paths.TeamJson);
+                }
+            }
+            catch (Exception)
+            {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                throw;
+            }
+        }
 
         // 2. Cập nhật team.local.json (chứa đường dẫn riêng: projectsRoot, workRoot, agyExe)
         JsonObject localNode;
@@ -366,6 +446,12 @@ public sealed class TeamConfigService : ITeamConfigService
 
     private static void WriteWithBackup(string path, JsonNode node)
     {
+        if (TeamFileLock.HasReparsePoint(path))
+            throw new IOException("Không lưu được cấu hình.");
+
+        string bakPath = path + ".bak";
+        if (TeamFileLock.HasReparsePoint(bakPath))
+            throw new IOException("Không lưu được cấu hình.");
         var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
         {
@@ -374,7 +460,7 @@ public sealed class TeamConfigService : ITeamConfigService
 
         if (File.Exists(path))
         {
-            File.Copy(path, path + ".bak", overwrite: true);
+            File.Copy(path, bakPath, overwrite: true);
         }
 
         string json = node.ToJsonString(JsonOptions);
