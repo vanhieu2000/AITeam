@@ -164,7 +164,15 @@ Chưa xác minh: toàn solution chưa đạt (Hub lỗi quyền File.Replace/th�
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
 **Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
 
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code — Antigravity hết hạn mức 119h)
+- Cổng KT lượt 3 ĐẠT (V8-04 chạy lại test V6-01 chập chờn ⇒ cảnh báo, không chặn). Test nghiệm thu AcceptanceV803AcceptTests đạt.
+- Phạm vi đạt: `accept-pack` (gói nghiệm thu ≤40 dòng, không cắt lỗi), envelope `<task>.accept-<run>.json`, `accept` 1 lệnh giữ Assert-MergeApproval, test-verify trong cổng KT.
+- CHƯA có (bổ sung quản lý ghi ngoài mục V8-03 nên prep không đọc): clone sạch trước push, khóa merge, chặn xóa test, dừng khi model sai, lệnh models, prep thử lại lỗi máy, chia đều khi prep song song ⇒ tách V8-05.
+- [TK] (phạm vi) bổ sung kế hoạch phải ghi VÀO mục task, không ghi cuối file.
+
 ## Kết quả
+- Có `team.ps1 accept-pack -Request R-xxx`: gói gọn kết quả cổng KT / QC / số đo mọi task chờ nghiệm thu để Claude duyệt nhanh, tốn ít token.
+- Kiểm chứng: test nghiệm thu V8-03 + toàn bộ test.
 <!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
 
 ## Đánh giá quy trình
