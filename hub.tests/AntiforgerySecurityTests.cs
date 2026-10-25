@@ -80,6 +80,7 @@ public sealed class AntiforgerySecurityTests : IDisposable
     [InlineData("/Providers")]
     [InlineData("/Overview")]
     [InlineData("/AiAccounts")]
+    [InlineData("/Research")]
     public async Task Pages_render_successfully_with_fake_services(string path)
     {
         var options = new WebApplicationOptions

@@ -1,0 +1,113 @@
+﻿@page "/Research"
+@model AITeam.Hub.Pages.ResearchModel
+@using AITeam.Core.Accounts
+@{
+    ViewData["Title"] = "Phòng nghiên cứu";
+    var hasRequests = Model.Requests.Count > 0;
+}
+
+<h2 style="margin:0 0 8px 0">Phòng nghiên cứu</h2>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="panel" style="border-color:#dc2626;background:#fef2f2;color:#b91c1c;margin-bottom:10px">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Notice))
+{
+    <div class="panel" style="background:#ecfdf5;color:#047857;border-color:#10b981;margin-bottom:10px">@Model.Notice</div>
+}
+
+<div class="panel muted" style="font-size:12px;margin-bottom:12px">
+    Câu hỏi đi ra AI bên ngoài: chỉ gửi những gì anh gõ (và nội dung phiếu nếu tích). Bí mật được che tự động, tối đa 8.000 ký tự. Câu trả lời là dữ liệu tham khảo, Claude kiểm chứng trước khi dùng.
+</div>
+
+<div class="panel" style="margin-bottom:14px">
+    <h3 style="margin:0 0 8px 0">Hỏi</h3>
+    <form method="post" asp-page-handler="Ask" style="display:flex;flex-direction:column;gap:10px;margin:0">
+        <div>
+            <select class="inp" name="r" disabled="@(!hasRequests)" onchange="location='/Research?r='+encodeURIComponent(this.value)" style="width:100%;max-width:100%">
+                @foreach (var req in Model.Requests)
+                {
+                    <option value="@req.Id" selected="@(Model.Current?.Id == req.Id)">@req.Id · @req.Title</option>
+                }
+            </select>
+        </div>
+        <textarea class="inp" name="question" rows="4" maxlength="2000" required placeholder="Câu hỏi cho AI" style="width:100%;max-width:100%">@Model.AskedQuestion</textarea>
+        <div class="row" style="gap:14px;flex-wrap:wrap">
+            @foreach (var opt in Model.Options)
+            {
+                var isDisabled = opt.Mode == AiMode.Disabled;
+                var pillClass = opt.CanAsk ? "ok" : "n";
+                var pillText = opt.CanAsk ? "Tự động" : (isDisabled ? "Tắt" : "Thủ công");
+                <label style="display:inline-flex;align-items:center;gap:6px">
+                    <input type="checkbox" name="ai" value="@opt.Ai" checked="@opt.CanAsk" disabled="@isDisabled" />
+                    <span>@opt.Name</span>
+                    <span class="pill @pillClass">@pillText</span>
+                </label>
+            }
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:6px">
+            <input type="checkbox" name="includeRequestText" value="true" />
+            <span>Kèm nội dung phiếu (lời chủ dự án)</span>
+        </label>
+        <div>
+            <button type="submit" class="btn pri" disabled="@(!hasRequests)">Hỏi</button>
+        </div>
+    </form>
+</div>
+
+@if (Model.Asked != null)
+{
+    <div class="panel" style="margin-bottom:14px">
+        <div class="row" style="justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+            <h3 style="margin:0">Lời nhắn đã gửi (@Model.Asked.QuestionId)</h3>
+            <button type="button" class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('research-prompt').innerText)">Copy lời nhắn</button>
+        </div>
+        <pre id="research-prompt" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;margin:0 0 8px 0">@Model.Asked.Prompt</pre>
+        @if (Model.Asked.Redacted > 0)
+        {
+            <div class="muted" style="font-size:12px;margin-bottom:8px">Đã che @Model.Asked.Redacted chỗ giống bí mật.</div>
+        }
+        <div style="display:flex;flex-direction:column;gap:10px">
+            @foreach (var oc in Model.Asked.Outcomes)
+            {
+                var opt = Model.Options.FirstOrDefault(o => o.Ai == oc.Ai);
+                var name = opt?.Name ?? AiCatalog.Find(oc.Ai)?.Name ?? oc.Ai;
+                var url = opt?.OfficialUrl ?? AiCatalog.Find(oc.Ai)?.OfficialUrl ?? "#";
+                var pillClass = oc.Kind == "started" ? "run" : (oc.Kind == "manual" ? "n" : "err");
+                var pillText = oc.Kind == "started" ? "Đang hỏi…" : (oc.Kind == "manual" ? "Thủ công" : oc.Text);
+                <div style="background:var(--s2);padding:10px;border-radius:8px">
+                    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+                        <b>@name</b>
+                        <span class="pill @pillClass">@pillText</span>
+                        @if (oc.Kind == "manual")
+                        {
+                            <a class="btn sm" href="@url" target="_blank" rel="noopener noreferrer">Mở @name ↗</a>
+                        }
+                    </div>
+                    @if (oc.Kind == "manual")
+                    {
+                        <form method="post" asp-page-handler="SaveManual" style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+                            <input type="hidden" name="r" value="@Model.Current?.Id" />
+                            <input type="hidden" name="questionId" value="@Model.Asked.QuestionId" />
+                            <input type="hidden" name="ai" value="@oc.Ai" />
+                            <input type="hidden" name="question" value="@Model.AskedQuestion" />
+                            <textarea class="inp" name="answer" maxlength="20000" rows="5" required placeholder="Dán câu trả lời" style="width:100%;max-width:100%"></textarea>
+                            <input class="inp" name="sources" placeholder="Nguồn (URL), nếu có" style="width:100%;max-width:100%" />
+                            <div>
+                                <button type="submit" class="btn sm">Lưu câu trả lời</button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (Model.Current != null)
+{
+    <div hx-get="/Research?handler=Results&r=@Model.Current.Id" hx-trigger="every 5s" hx-swap="innerHTML">
+        <partial name="_ResearchResults" model="Model" />
+    </div>
+}

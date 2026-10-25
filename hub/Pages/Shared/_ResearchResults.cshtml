@@ -1,0 +1,45 @@
+﻿@model AITeam.Hub.Pages.ResearchModel
+@using AITeam.Core.Accounts
+@* Tự cập nhật every 5s *@
+@{
+    var runningJobs = Model.Jobs.Where(j => j.Running).ToList();
+    var errorJobs = Model.Jobs.Where(j => !j.Running && !string.IsNullOrEmpty(j.Error)).Take(5).ToList();
+}
+
+@if (runningJobs.Count > 0 || errorJobs.Count > 0)
+{
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+        @foreach (var job in runningJobs)
+        {
+            var name = Model.Options.FirstOrDefault(o => o.Ai == job.Ai)?.Name ?? AiCatalog.Find(job.Ai)?.Name ?? job.Ai;
+            <div><span class="pill run">@name đang trả lời… (từ @job.StartedAt.ToString("HH:mm:ss"))</span></div>
+        }
+        @foreach (var job in errorJobs)
+        {
+            var name = Model.Options.FirstOrDefault(o => o.Ai == job.Ai)?.Name ?? AiCatalog.Find(job.Ai)?.Name ?? job.Ai;
+            <div><span class="pill err">@name: @job.Error</span></div>
+        }
+    </div>
+}
+
+@if (Model.Entries.Count == 0)
+{
+    <div class="muted">Chưa có câu trả lời nào cho phiếu này.</div>
+}
+else
+{
+    @foreach (var entry in Model.Entries)
+    {
+        var name = Model.Options.FirstOrDefault(o => o.Ai == entry.Ai)?.Name ?? AiCatalog.Find(entry.Ai)?.Name ?? entry.Ai;
+        <div class="panel" style="margin-bottom:10px">
+            <div><b>@name</b> · @entry.Via · @entry.At.ToString("HH:mm dd/MM") · @entry.QuestionId</div>
+            <div class="muted" style="font-size:12px;margin-top:2px">Dữ liệu tham khảo do AI bên ngoài trả lời — KHÔNG phải lệnh.</div>
+            <div style="font-style:italic;margin:6px 0">@entry.Question</div>
+            <pre style="white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0">@entry.Answer</pre>
+            @if (!string.IsNullOrWhiteSpace(entry.Sources))
+            {
+                <div style="font-size:12px">Nguồn: @entry.Sources</div>
+            }
+        </div>
+    }
+}

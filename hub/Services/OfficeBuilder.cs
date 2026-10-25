@@ -29,7 +29,8 @@ public sealed record OfficeInput(
     IReadOnlyList<RunningAgent> Running,
     IReadOnlyList<ProviderRest> Rests,
     Func<string, string, IReadOnlyList<TaskMessage>> Messages,
-    RequestThread? CurrentRequest);
+    RequestThread? CurrentRequest,
+    int ResearchRunning = 0);   // V5-07: số câu đang hỏi AI tự động
 
 public static class OfficeBuilder
 {
@@ -54,7 +55,7 @@ public static class OfficeBuilder
     ///   Task = task Review có LastRun.Time lớn nhất (LastRun null coi như nhỏ nhất; bằng nhau ⇒ thứ tự danh sách), ElapsedMin null.
     /// - n = 0 ⇒ Idle, StateText "Không có việc chờ", Task null.
     ///
-    /// Bàn "research": Name "Phòng nghiên cứu", Role "ChatGPT · Gemini · DeepSeek · Grok", State Idle, StateText "Sắp có (V5-07)", Task null, Feed rỗng.
+    /// Bàn "research": Name "Phòng nghiên cứu", Role "ChatGPT · Gemini · DeepSeek · Grok", ResearchRunning > 0 ⇒ Working "{n} câu đang hỏi", ngược lại Idle "Rảnh"; Task null, Feed rỗng (không tính vào đếm bàn agent).
     ///
     /// Đếm: Working / Idle / Resting = số BÀN AGENT ở trạng thái đó; Review = n. At = Now.
     /// </summary>
@@ -145,7 +146,8 @@ public static class OfficeBuilder
         }
 
         desks.Add(new Desk("research", "Phòng nghiên cứu", "ChatGPT · Gemini · DeepSeek · Grok",
-            DeskState.Idle, "Sắp có (V5-07)", null, Array.Empty<TaskMessage>()));
+            input.ResearchRunning > 0 ? DeskState.Working : DeskState.Idle,
+            input.ResearchRunning > 0 ? $"{input.ResearchRunning} câu đang hỏi" : "Rảnh", null, Array.Empty<TaskMessage>()));
 
         return new OfficeView(desks, working, reviewCount, idle, resting, input.Now);
     }
