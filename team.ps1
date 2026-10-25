@@ -358,6 +358,7 @@ function Invoke-Assign {
         $free = Select-FreeAgent $r $agentId
         if ($free -ne $agentId) {
             Say "Chia đều việc: Agent $agentId đang bận, Agent $free rảnh ⇒ giao Agent $free." Cyan
+            Invoke-RepoTransaction -RepoPath $r.Path -Action {
             $text = ([regex]'(\*\*Agent:\*\*\s*)\S+').Replace($text, "`${1}$free", 1)
             [IO.File]::WriteAllText($taskFile.FullName, $text, (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($taskFile.FullName)))))
             $board = Join-Path $r.Path "tasks\README.md"
@@ -377,6 +378,8 @@ function Invoke-Assign {
             git -C $r.Path commit -q -m "${Task}: chia đều ⇒ Agent $free" -- "tasks/$($taskFile.Name)" "tasks/README.md" 2>&1 | Out-Null
             git -C $r.Path push -q 2>&1 | Out-Null
             $ErrorActionPreference = $eapSw
+            }
+            $text = [IO.File]::ReadAllText($taskFile.FullName)
             $agentId = $free
         }
     }
@@ -459,7 +462,6 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     if ($Feedback) { $prompt += "`nYÊU CẦU CỦA QUẢN LÝ: $Feedback`nĐọc kỹ mục 'Review (Claude)' trong file task nếu có." }
 
         $n = @(Get-ChildItem $r.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'prompt' }).Count + 1
-    $assignRun = Get-NextJournalRun $r.Path $taskFile.Name $Task 'Assign'
     $log = Join-Path $r.Logs "$Task-$n.json"
     # PowerShell 5.1 truyền sai tham số có dấu ngoặc kép / xuống dòng → lời giao việc nằm trong file, chỉ truyền 1 câu ngắn.
     $promptFile = Join-Path $r.Logs "$Task-$n.prompt.md"
@@ -518,13 +520,13 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         $cx = Invoke-CodexDevelop $r $Task $work $branch $prompt $log $maxMin
         if (-not $cx.Ok) {
             Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
-            Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Run = $assignRun; Result = 'LỖI' }
+            Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
             return
         }
-    } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Run = $assignRun; Result = 'LỖI' }; return }
+    } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }; return }
     if ($NoVerify) {
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
-        Set-BoardStatus $r $Task "🔵 Chờ review" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Run = $assignRun; Result = 'XONG' }
+        Set-BoardStatus $r $Task "🔵 Chờ review" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'XONG' }
         return
     }
     $gate = Invoke-WorkflowGate -Verify { Invoke-Verify } -Qc {
@@ -539,8 +541,10 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
             3 { 'BLOCKED' }
             default { 'LỖI' }
         }
+        Invoke-RepoTransaction -RepoPath $r.Path -Action {
         $qcRun = Get-NextJournalRun $r.Path $taskFile.Name $Task 'Qc'
         Update-WorkflowJournal -RepoPath $r.Path -TaskFile $taskFile.Name -TaskId $Task -Event 'Qc' -Run $qcRun -Result $qcRes
+        }
     }
     # Tự giao lại tối đa 1 lần / lệnh assign (R-004: cờ chưa từng được bật ⇒ V4-11 bị giao lại ~28 lần khi lỗi mạng NU1900).
     $script:AssignRuns = [int]$script:AssignRuns + 1
@@ -549,7 +553,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         # Lỗi cơ học (chưa commit / build / test / BOM...) → trả agent sửa luôn 1 lần, không tốn lượt review của Claude.
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $true)
         Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi." Yellow
-        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $taskFile.Name -TaskId $Task -Event 'Assign' -Run $assignRun -Result 'KHÔNG ĐẠT'
+        Set-BoardStatus $r $Task '🔴 Cần sửa · tự giao lại' -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'KHÔNG ĐẠT' }
         $script:Resume = $true
         $script:Feedback = "Cổng kiểm tra tự động KHÔNG ĐẠT. Sửa hết các mục sau, chạy lại build + test, cập nhật báo cáo, commit và push:`n- " + ($v.Fails -join "`n- ")
         Invoke-Assign
@@ -565,7 +569,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
                 if (-not $script:ReviewRetried -and $rv.Json -and $rv.Json.feedback) {
                     $script:ReviewRetried = $true; $script:VerifyRetried = $false
                     Say "AI review CẦN SỬA → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi của reviewer." Yellow
-                    Update-WorkflowJournal -RepoPath $r.Path -TaskFile $taskFile.Name -TaskId $Task -Event 'Assign' -Run $assignRun -Result 'KHÔNG ĐẠT'
+                    Set-BoardStatus $r $Task '🔴 Cần sửa · tự giao lại' -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'KHÔNG ĐẠT' }
                     $script:Resume = $true
                     $script:Feedback = "Reviewer AI (provider khác) yêu cầu sửa. Sửa đúng các mục Blocker / Required dưới đây, không làm thêm; chạy lại build + test, cập nhật báo cáo, commit và push:`n" + $rv.Json.feedback
                     Invoke-Assign
@@ -577,7 +581,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         }
     }
     $assignResult = if ($v.Ok) { 'ĐẠT' } else { 'KHÔNG ĐẠT' }
-    Set-BoardStatus $r $Task $(if ($boardText) { $boardText } elseif ($v.Ok) { "🔵 Chờ review · cổng KT ĐẠT" } else { "🔴 Cần sửa · cổng KT KHÔNG ĐẠT" }) -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Run = $assignRun; Result = $assignResult }
+    Set-BoardStatus $r $Task $(if ($boardText) { $boardText } elseif ($v.Ok) { "🔵 Chờ review · cổng KT ĐẠT" } else { "🔴 Cần sửa · cổng KT KHÔNG ĐẠT" }) -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = $assignResult }
 }
 
 # R-004: task khác đang chạy (🟡 trên bảng việc) có Phạm vi trùng ⇒ dễ xung đột merge. Bỏ qua thư mục test chung (tests/, core.tests/…).
@@ -884,17 +888,20 @@ function Invoke-Qc {
     if (-not $rv) { Say "Review AI bỏ qua (task không bật Review AI?)." Yellow; return }
     $text = @{ 0 = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS"; 1 = "🔴 Cần sửa · AI review CẦN SỬA"; 3 = "🔵 Chờ review · AI review BLOCKED (Claude review)" }[[int]$rv.Code]
     Say "QC: mã $($rv.Code) · $($rv.Out)" Cyan
-    $qcRun = Get-NextJournalRun $ctx.R.Path $ctx.TaskFile.Name $Task 'Qc'
     $qcRes = switch ($rv.Code) {
         0 { 'PASS' }
         1 { 'CẦN SỬA' }
         3 { 'BLOCKED' }
         default { 'LỖI' }
     }
-    if ($text) {
-        Set-BoardStatus $ctx.R $Task $text -Journal @{ TaskFile = $ctx.TaskFile.Name; Event = 'Qc'; Run = $qcRun; Result = $qcRes }
-    } else {
-        Update-WorkflowJournal -RepoPath $ctx.R.Path -TaskFile $ctx.TaskFile.Name -TaskId $Task -Event 'Qc' -Run $qcRun -Result $qcRes
+    Invoke-RepoTransaction -RepoPath $ctx.R.Path -Action {
+        $qcRun = Get-NextJournalRun $ctx.R.Path $ctx.TaskFile.Name $Task 'Qc'
+        if ($text) {
+            Set-BoardStatus $ctx.R $Task $text -Journal @{ TaskFile = $ctx.TaskFile.Name; Event = 'Qc'; Run = $qcRun; Result = $qcRes }
+        } else {
+            Update-WorkflowJournal -RepoPath $ctx.R.Path -TaskFile $ctx.TaskFile.Name -TaskId $Task -Event 'Qc' -Run $qcRun -Result $qcRes
+            Set-BoardStatus $ctx.R $Task '🔴 Lỗi QC'
+        }
     }
 }
 
@@ -1008,6 +1015,15 @@ function Invoke-Prep {
         [IO.File]::WriteAllText($prepLog, $logContent, $Utf8)
     }
     if ($bc -ne 0) {
+        Invoke-RepoTransaction -RepoPath $r.Path -Action {
+            $pendingTask = Join-Path $r.Path "tasks/$fileName"
+            $copiedTask = -not (Test-Path -LiteralPath $pendingTask)
+            if ($copiedTask) { Copy-Item (Join-Path $work "tasks/$fileName") $pendingTask }
+            try {
+            $prepRun = Get-NextJournalRun $r.Path $fileName $Task 'Prep'
+            Update-WorkflowJournal -RepoPath $r.Path -TaskFile $fileName -TaskId $Task -Event 'Prep' -Run $prepRun -Result 'KHÔNG ĐẠT'
+            } finally { if ($copiedTask) { Remove-Item -LiteralPath $pendingTask } }
+        }
         Say "Build khung $Task LỖI ⇒ KHÔNG giao. Worktree giữ ở $work." Red
         $bo | Select-String -Pattern ' error ' | Select-Object -First 10 | ForEach-Object { Say "  $_" }
         $ErrorActionPreference = $eap; return
@@ -1024,7 +1040,8 @@ function Invoke-Prep {
     Invoke-RepoTransaction -RepoPath $r.Path -Action {
         git -C $r.Path pull -q --ff-only 2>$null
         Copy-Item (Join-Path $work "tasks\$fileName") (Join-Path $r.Path "tasks\$fileName") -Force
-        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $fileName -TaskId $Task -Event 'Prep' -Run 1 -Result 'ĐẠT'
+        $prepRun = Get-NextJournalRun $r.Path $fileName $Task 'Prep'
+        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $fileName -TaskId $Task -Event 'Prep' -Run $prepRun -Result 'ĐẠT'
         $board = Join-Path $r.Path "tasks\README.md"
         if (Test-Path $board) {
             $bt = [IO.File]::ReadAllText($board)
@@ -1546,14 +1563,19 @@ function Get-BoardClaim($r, [string]$taskId) {
 }
 
 # Đổi ô cuối (trạng thái) của dòng task trên bảng việc, commit riêng file bảng việc và push lên main.
-# Khi có $Journal: ghi nhật ký phiếu trước, gom commit bảng việc + file requests/ bị sửa trong cùng khóa repo.
+# Khi có $Journal: cấp lượt và ghi nhật ký trước; chỉ commit bảng việc + phiếu của task trong cùng khóa repo.
 function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journal = $null) {
     Invoke-RepoTransaction -RepoPath $r.Path -Action {
-        $ErrorActionPreference = "Continue"
+        $ErrorActionPreference = "Stop"
+        $journalTask = if ($Journal) { $Journal.TaskFile } else { (Find-TaskFile $r $taskId).Name }
+        $reqText = [IO.File]::ReadAllText((Join-Path $r.Path "tasks/$journalTask"), (New-Object Text.UTF8Encoding($false, $true)))
+        $reqMatch = [regex]::Match($reqText, '\*\*Yêu cầu:\*\*\s*(R-\d+)')
+        $reqRel = if ($reqMatch.Success) { "requests/$($reqMatch.Groups[1].Value).md" } else { $null }
         if ($Journal) {
-            $jRun = if ($Journal.ContainsKey('Run')) { [int]$Journal.Run } else { 1 }
+            $jRun = if ($Journal.ContainsKey('Run')) { [int]$Journal.Run } else { Get-NextJournalRun $r.Path $Journal.TaskFile $taskId $Journal.Event }
             Update-WorkflowJournal -RepoPath $r.Path -TaskFile $Journal.TaskFile -TaskId $taskId -Event $Journal.Event -Run $jRun -Result $Journal.Result
         }
+        $ErrorActionPreference = "Continue"
         $boardRel = "tasks/README.md"
         $board = Join-Path $r.Path $boardRel
         if (-not (Test-Path $board)) { return }
@@ -1578,7 +1600,7 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
                 $bom = Test-HasBom ([IO.File]::ReadAllBytes($board))
                 [IO.File]::WriteAllText($board, ($lines -join $nl), (New-Object Text.UTF8Encoding $bom))
             }
-            $reqModified = @(git -C $r.Path status --porcelain requests 2>$null | ForEach-Object { ($_ -replace '^..\s*', '').Trim() } | Where-Object { $_ })
+            $reqModified = if ($reqRel -and (git -C $r.Path status --porcelain -- $reqRel 2>$null)) { @($reqRel) } else { @() }
             $commitFiles = @()
             if ($boardChanged -or (git -C $r.Path status --porcelain -- $boardRel 2>$null)) { $commitFiles += $boardRel }
             if ($reqModified) { $commitFiles += $reqModified }
@@ -1861,8 +1883,11 @@ function Invoke-Merge {
             throw "Merge xung đột ở: $($conflicts -join ', ') — xử lý tay (git merge --abort để hủy)."
         }
     }
-    Set-BoardStatus $r $tf.BaseName "✅ Đã merge (vòng $round)" -Journal @{ TaskFile = $tf.Name; Event = 'Merge'; Run = $round; Result = 'ĐẠT' }
-    Update-WorkflowJournal -RepoPath $r.Path -TaskFile $tf.Name -TaskId $Task -Event 'Merge' -Run $round -Result 'ĐẠT'
+    $mergeTaskId = Get-TaskId $tf
+    Invoke-RepoTransaction -RepoPath $r.Path -Action {
+        Update-WorkflowJournal -RepoPath $r.Path -TaskFile $tf.Name -TaskId $mergeTaskId -Event 'Merge' -Run $round -Result 'ĐẠT'
+        Set-BoardStatus $r $mergeTaskId "✅ Đã merge (vòng $round)"
+    }
     Say "Đã merge + push main." Green
     if ($approval) {
         # Quyết định chủ dự án bấm trên Hub chỉ nằm trên máy này ⇒ đưa lên git để máy kia cũng thấy.

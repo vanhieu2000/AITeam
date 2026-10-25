@@ -77,6 +77,9 @@ function Test-InfrastructureFailure {
             continue
         }
 
+        # Tổng kết MSBuild không phải chẩn đoán lỗi; vẫn phải có chữ ký hạ tầng.
+        if ($trimmed -match '^(?i)(?:\d+\s+(?:Error|Warning)\(s\)|Build FAILED\.?)$') { continue }
+
         # 5. Dòng không khớp hạ tầng: nếu có error, failed (khác 0 failed/0 error) hoặc exception -> return $false
         if ($trimmed -match ':\s*error\s+' -or $trimmed -match '^\s*error\s+' -or ($trimmed -match '(?i)\berror\b' -and $trimmed -notmatch '(?i)\b0\s+error\b')) {
             return $false

@@ -141,7 +141,7 @@ $count++
 [IO.File]::WriteAllText($stateFile, "$count")
 switch ($Mode) {
     'retry-pass' {
-        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); Write-Output "Build FAILED.`n    0 Warning(s)`n    1 Error(s)"; exit 1 }
         else { Write-Output "Build succeeded."; exit 0 }
     }
     'double-infra' {
@@ -149,15 +149,15 @@ switch ($Mode) {
         exit 1
     }
     'retry-warning' {
-        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); Write-Output "Build FAILED.`n    0 Warning(s)`n    1 Error(s)"; exit 1 }
         else { Write-Output "Agent.cs(3,5): warning CS0168: unused"; exit 0 }
     }
     'retry-hang' {
-        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); Write-Output "Build FAILED.`n    0 Warning(s)`n    1 Error(s)"; exit 1 }
         else { [Console]::Error.WriteLine("The active test run was aborted"); exit 1 }
     }
     'retry-code' {
-        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); exit 1 }
+        if ($count -eq 1) { [Console]::Error.WriteLine("Access to the path 'obj/locked.dll' is denied."); Write-Output "Build FAILED.`n    0 Warning(s)`n    1 Error(s)"; exit 1 }
         else { [Console]::Error.WriteLine("Agent.cs(3,5): error CS1002: ; expected"); exit 1 }
     }
 }
@@ -168,6 +168,7 @@ switch ($Mode) {
     $b7 = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fakeRunner`" -Mode retry-pass"
     $r7 = New-Scenario "s7" { param($wt) W (Join-Path $wt "src\Agent.cs") "// Khung agent điền — có chữ Việt`r`nclass Agent { int x; }`r`n" $Bom } -build $b7
     Check "thử lại lỗi máy thành công" ($r7.Out -match 'Cổng kiểm tra: ĐẠT') $r7.Out
+    Check "MSBuild có tổng kết vẫn thử lại đúng hai lần" (([IO.File]::ReadAllText((Join-Path $T "state-retry-pass.txt"))) -eq '2') $r7.Out
     Check "báo cáo có ghi chú build ok" ($r7.Out -match 'Build: OK') $r7.Out
 
     Write-Host "Kịch bản 8: tiến trình giả lỗi máy hai lần liên tiếp" -ForegroundColor Cyan
@@ -260,6 +261,48 @@ switch ($Mode) {
     Check "Chữ ký hạ tầng thuần túy 1 được chấp nhận" (Test-InfrastructureFailure -Stage Build -Code 1 -Output $pure1) $null
     Check "Chữ ký hạ tầng thuần túy 2 được chấp nhận" (Test-InfrastructureFailure -Stage Test -Code 1 -Output $pure2) $null
     Check "Chữ ký hạ tầng thuần túy 3 được chấp nhận" (Test-InfrastructureFailure -Stage Build -Code 1 -Output $pure3) $null
+    $summaryOutput = $pure3 + "`r`nBuild FAILED`r`n    0 Warning(s)`r`n    1 Error(s)"
+    Check 'Tổng kết MSBuild không chặn lỗi khóa file' (Test-InfrastructureFailure Build 1 $summaryOutput) $null
+    Check 'Tổng kết MSBuild không che lỗi code' (-not (Test-InfrastructureFailure Build 1 ($summaryOutput + "`r`nx.cs: error CS1002: ; expected"))) $null
+    Write-Host "Kịch bản 15: chỉ commit phiếu của task, giữ phiếu khác đang sửa" -ForegroundColor Cyan
+    & {
+        foreach ($fnName in 'Set-BoardStatus', 'Test-HasBom', 'Find-TaskFile', 'Get-NextJournalRun') {
+            $fnNode = $ast.Find({ $args[0] -is [Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq $fnName }, $true)
+            . ([scriptblock]::Create($fnNode.Extent.Text))
+        }
+        $repoCase = Join-Path $T 'journal-scope'
+        W (Join-Path $repoCase 'tasks/X-01-demo.md') '- **Yêu cầu:** R-008' $Bom
+        W (Join-Path $repoCase 'tasks/README.md') '| [X-01](X-01-demo.md) | A | Chờ |' $Bom
+        W (Join-Path $repoCase 'requests/R-008.md') "## Nhật ký`r`n" $Bom
+        W (Join-Path $repoCase 'requests/R-009.md') 'Phiếu khác đang sửa dở' $Bom
+        $otherBefore = [IO.File]::ReadAllText((Join-Path $repoCase 'requests/R-009.md'))
+        $script:stagedFiles = @(); $script:committedFiles = @()
+        function Say { }
+        function git {
+            $global:LASTEXITCODE = 0
+            $verb = $args[2]
+            switch ($verb) {
+                'rev-parse' { 'main' }
+                status {
+                    if ($args -contains 'requests/R-008.md') { ' M requests/R-008.md' }
+                    if ($args -contains 'requests') { ' M requests/R-008.md'; ' M requests/R-009.md' }
+                }
+                add { $script:stagedFiles += @($args[3..($args.Count-1)] | ForEach-Object { $_ } | Where-Object { $_ -ne '--' }) }
+                commit {
+                    $sep = [array]::IndexOf($args, '--')
+                    $firstFile = if ($sep -ge 0) { $sep + 1 } else { 6 }
+                    $script:committedFiles += @($args[$firstFile..($args.Count-1)] | ForEach-Object { $_ })
+                }
+            }
+        }
+        Set-BoardStatus ([pscustomobject]@{Path=$repoCase}) X-01 'ĐẠT' -Journal @{TaskFile='X-01-demo.md';Event='Assign';Result='ĐẠT'}
+        Check 'stage đúng bảng việc và phiếu R-008' (($script:stagedFiles -join ',') -eq 'tasks/README.md,requests/R-008.md') $script:stagedFiles
+        Check 'commit đúng bảng việc và phiếu R-008' (($script:committedFiles -join ',') -eq 'tasks/README.md,requests/R-008.md') $script:committedFiles
+        Check 'giữ nguyên phiếu R-009 đang sửa' ([IO.File]::ReadAllText((Join-Path $repoCase 'requests/R-009.md')) -ceq $otherBefore) $null
+        Set-BoardStatus ([pscustomobject]@{Path=$repoCase}) X-01 'ĐẠT' -Journal @{TaskFile='X-01-demo.md';Event='Assign';Result='ĐẠT'}
+        $journalText = [IO.File]::ReadAllText((Join-Path $repoCase 'requests/R-008.md'))
+        Check 'cấp lượt mới trong giao dịch khi gọi lần hai' ($journalText.Contains('workflow:X-01:Assign:1') -and $journalText.Contains('workflow:X-01:Assign:2')) $journalText
+    }
 }
 finally {
     if (-not $Keep) { Get-ChildItem $T -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { $_.Attributes = 'Normal' }; Remove-Item $T -Recurse -Force -ErrorAction SilentlyContinue }

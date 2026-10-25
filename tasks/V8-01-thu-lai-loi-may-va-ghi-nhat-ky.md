@@ -77,20 +77,19 @@
 - Cần quản lý xác minh build sau sửa và kết quả test khi giao việc; chưa có mẫu output MCP thật. Các test nối luồng bằng AST bổ sung cho test hành vi, không thay thế kiểm tra giao dịch/commit trong hồi quy repo tạm của agent.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
+| Tiêu chí | Bằng chứng vòng 4 |
 |---|---|
-| Build 0 error, 0 warning | `dotnet build AITeam.sln` → Build succeeded. 0 Warning(s), 0 Error(s) |
-| Test xUnit 100% pass | `dotnet test AITeam.sln` → 925/925 pass (Hub: 500/500, Core: 425/425 gồm 66/66 test V8-01) |
-| Hồi quy test-verify đạt | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1` → Tất cả 14/14 kiểm tra ĐẠT |
-| Thử lại hạ tầng & lưu 2 output | `Test-InfrastructureFailure` chặn lỗi lạ/CS cùng dòng; `Invoke-WorkflowCheck` lưu mảng Attempts 2 output |
-| Nhật ký 5 sự kiện & marker | `Update-WorkflowJournal` đủ 5 sự kiện Prep/Assign/Verify/Qc/Merge, marker chống trùng theo lượt |
-| Khóa repo & commit chung | `Invoke-RepoTransaction` khóa Mutex SHA256 repo; `Set-BoardStatus` commit chung bảng việc + request; bỏ reset --hard |
-| Cấp lượt nguyên tử & trượt cổng | Cấp `$n` verify nguyên tử dưới khóa; lỗi ghi nhật ký làm trượt cổng đổi tiêu đề KHÔNG ĐẠT và ném exception |
-| An toàn đường dẫn & UTF-8 BOM | Kiểm tra strict UTF-8, chặn rooted/../reparse point, mọi file .ps1/.cs/.md bảo toàn BOM UTF-8 |
-
-- **File đã đổi:** `tools/workflow-common.ps1`, `team.ps1`, `tools/test-verify.ps1`, `tasks/V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md`.
-- **Quyết định tự đưa ra:** Cấp lượt Run journal theo số marker đã có trong phiếu tăng dần (`Get-NextJournalRun`); Verify bọc cấp số báo cáo nguyên tử dưới khóa; bỏ `git reset --hard` chuyển sang `pull --rebase origin main` an toàn không mất dữ liệu.
-- **Chưa xác minh:** Chữ ký lỗi MCP trên hạ tầng mạng thực tế (tuân thủ đúng mẫu allowlist theo thiết kế).
+| Build | `dotnet build AITeam.sln` thất bại 0 warning/0 error; chạy lại `--no-restore -m:1 -nr:false -p:UseSharedCompilation=false -v:normal`: đạt, 0 warning/0 error. |
+| Test toàn bộ, giữ nghiệm thu | `dotnet test AITeam.sln --no-restore --blame-hang-timeout 2m` chưa trả kết quả; lượt `--no-build -m:1 -nr:false`: Hub 493 pass/7 fail (Access denied), Core gặp lỗi CLI quá hạn; đã dừng, không báo pass. |
+| Hồi quy đầy đủ | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1`: bị chặn tại clone repo tạm, Git signal pipe Win32 error 5; hai kiểm tra tĩnh đầu đạt. |
+| 1: Tổng kết MSBuild, output/retry | Bổ sung tổng kết thật vào runner và ca hỗn hợp; kiểm riêng bằng PowerShell: 4/4 đạt, giữ output và đúng hai lần. |
+| 2: Cấp lượt nguyên tử | Mọi caller `Get-NextJournalRun` cấp lượt cùng khóa với ghi journal; hồi quy gọi Assign liên tiếp đạt (lượt 1, 2). |
+| 3: Merge một marker, đúng task | Chuẩn hóa `Get-TaskId`, ghi Merge một lần rồi cập nhật bảng việc cùng giao dịch; AST hợp đồng nối luồng: 10/10 đạt. |
+| 4: Chỉ commit phiếu liên quan | Git giả trong ca 15: stage/commit đúng README + R-008, giữ nguyên R-009 đang sửa: 3/3 đạt. |
+| 5: Prep lỗi cũng ghi, đúng lượt | Cả nhánh build lỗi/đạt cấp lượt và ghi trong giao dịch; task tạm được thu hồi trong finally khi build lỗi. |
+| 6: Chia đều agent có khóa | Khóa bao trọn cập nhật task, đọc-sửa-ghi bảng việc và stage/commit; không bao thời gian AI/build/QC. |
+| An toàn/BOM/báo cáo | Parser 0 lỗi, BOM EF-BB-BF ở 3/3 script; không sửa test nghiệm thu; báo cáo cập nhật theo kết quả thật. |
+- File đổi: `team.ps1` (giao dịch/lượt/phiếu), `tools/workflow-common.ps1` (summary), `tools/test-verify.ps1` (hồi quy), file task (báo cáo). Quyết định: thu hồi task tạm của Prep lỗi để vẫn chuẩn bị lại được; hệ thống tự commit/push, không chạy git trực tiếp. Lượt riêng `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceV801WorkflowTests --blame-hang-timeout 2m -m:1 -nr:false` đã ngắt sau hơn 3 phút; ghi nhận 1 ca lỗi `KhoaChanTienTrinhKhacVaTimeout` (tiến trình con chưa lấy được khóa), chưa có tổng kết. Chưa xác minh: toàn bộ hồi quy/nghiệm thu, MCP thật.
 
 ## Review (Claude)
 <!-- Claude điền khi nghiệm thu. -->
