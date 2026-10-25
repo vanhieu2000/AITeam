@@ -44,6 +44,16 @@ Razor Pages/HTMX là luồng chính; API/Blazor chỉ áp dụng khi dự án d�
    State riêng ở OnParametersSet; có trạng thái tải/rỗng/lỗi và @key cho danh sách.
    Await async, hủy CTS/gỡ subscription lúc dispose; không .Result/.Wait() chặn UI.
 
+## Quy ước của dự án
+- OfficeModel inject IOfficeService/ICommandService; OnGet nạp dữ liệu và hiện lỗi, OnGetDesks trả `_OfficeDesks`; trang `/` tự gọi handler mỗi 10 giây, không đọc file trong Razor (`hub/Pages/Office.cshtml.cs:17`, `hub/Pages/Office.cshtml.cs:44`, `hub/Pages/Office.cshtml.cs:84`, `hub/Pages/Office.cshtml:22`).
+- OfficeService.Get tổng hợp staff/board/running/rests rồi OfficeBuilder.Build; ParseStaff đọc tên/role/provider. Hiện có catch rỗng khi đọc từng nguồn; không lấy làm mẫu đọc rồi ghi lại (`hub/Services/OfficeService.cs:41`, `hub/Services/OfficeService.cs:88`, `hub/Services/OfficeService.cs:96`; yêu cầu: `AGENTS.md:57`).
+- OnPostCommand chỉ nhận tên HubCommand hợp lệ, tách target rồi gọi dịch vụ. Self tạo ViewDataDictionary với ModelState và Model=this, nhưng không sao chép toàn bộ ViewData trang; nếu cần dữ liệu ngữ cảnh phải giữ thêm (`hub/Pages/Office.cshtml.cs:97`, `hub/Pages/Office.cshtml.cs:158`).
+- Form `_OfficeControl` dùng asp-page-handler/hx-post, target `#office-control`, swap outerHTML, hx-confirm trên form; form Dừng trong `_OfficeDesks` cũng vậy. Giữ antiforgery của POST Form TagHelper; token sinh ra cần kiểm bằng render (`hub/Pages/Shared/_OfficeControl.cshtml:19`, `hub/Pages/Shared/_OfficeDesks.cshtml:96`).
+- ApprovalsModel có ValidateAntiForgeryToken, OnPostDecide whitelist approve/reject rồi RedirectToPage (PRG); form Decide có AntiForgeryToken rõ ràng. Form này không có hx-confirm/HTMX, không dùng làm bằng chứng xác nhận HTMX (`hub/Pages/Approvals.cshtml.cs:9`, `hub/Pages/Approvals.cshtml.cs:41`, `hub/Pages/Approvals.cshtml:61`).
+- d.Name/t.Title/m.Text và Model.Message qua biểu thức Razor encode; màu/trạng thái dùng switch cố định. Không suy ra MarkdownRenderer.Render an toàn khi chưa đọc helper (`hub/Pages/Shared/_OfficeDesks.cshtml:10`, `hub/Pages/Shared/_OfficeDesks.cshtml:43`, `hub/Pages/Shared/_OfficeDesks.cshtml:75`, `hub/Pages/Approvals.cshtml:13`, `hub/Pages/Approvals.cshtml:54`).
+- Selector khớp thẻ thật: bàn dùng span.pill; tab Approvals dùng span.tab, script tìm id tab. Không lấy `.seg a` làm mô tả trang này (`hub/Pages/Shared/_OfficeDesks.cshtml:47`, `hub/Pages/Approvals.cshtml:29`, `hub/Pages/Approvals.cshtml:124`; bài học H-008: `AGENTS.md:56`).
+- PageTests.Index_running_agents_handler_returns_partial dựng PageModel với fake, assert PartialViewResult/Model; AcceptanceV504OfficeTests.Desks_handler_returns_partial tương tự, còn Razor_markup_follows_layout đọc file nguồn. Hai file không gọi hạ tầng render, chưa chứng minh token/HTML render thật (`hub.tests/PageTests.cs:14`, `hub.tests/PageTests.cs:33`, `hub.tests/AcceptanceV504OfficeTests.cs:169`, `hub.tests/AcceptanceV504OfficeTests.cs:177`).
+
 ## Checklist bắt buộc
 - [ ] Razor Pages/HTMX giữ antiforgery và kiểm quyền; hx-confirm trên form phát request.
 - [ ] Không đưa query/form/file qua Html.Raw vào script; chỉ số/danh sách cho phép.
@@ -56,9 +66,9 @@ Razor Pages/HTMX là luồng chính; API/Blazor chỉ áp dụng khi dự án d�
 - [ ] Giữ BOM UTF-8 cshtml/cs đang có BOM, không debug hoặc đường dẫn máy mình.
 
 ## Lỗi hay gặp
-- AGENTS.md / V5-05: hx-confirm trên nút không xác nhận request form HTMX 2.
-- AGENTS.md / H-007: query qua Html.Raw vào script tạo XSS; whitelist/parse trước dùng.
-- AGENTS.md / H-008: ghi cứng Agent hoặc CSS sai thẻ khiến dữ liệu/bố cục sai.
+- `AGENTS.md:52` / V5-05: hx-confirm trên nút không xác nhận request form HTMX 2.
+- `AGENTS.md:55` / H-007: query qua Html.Raw vào script tạo XSS; whitelist/parse trước dùng.
+- `AGENTS.md:56` / H-008: ghi cứng Agent hoặc CSS sai thẻ khiến dữ liệu/bố cục sai.
 - AGENTS.md: chuỗi C# chứa span bị encode thành chữ; viết span trong Razor.
 - plans/R-010/brief.md: partial thiếu ViewData, test chỉ đọc nguồn không chứng minh render.
 

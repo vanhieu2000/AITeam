@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using AITeam.Core.Providers;
 using AITeam.Core.Routing;
+using AITeam.Core.Skills;
 
 namespace AITeam.Core.Review;
 
@@ -15,7 +16,11 @@ public sealed record ReviewRunInput(
     string LogDir,
     /// <summary>Provider đã viết code (vd. "agy") — reviewer phải khác (cấm tự duyệt).</summary>
     string DeveloperProviderId,
-    TimeSpan Timeout);
+    TimeSpan Timeout,
+    /// <summary>Gốc AITeam tùy chọn; null giữ lời gọi cũ, không dò thư mục máy thật.</summary>
+    string? Root = null,
+    /// <summary>Hồ sơ tùy chọn; không tự đọc USERPROFILE.</summary>
+    string? Profile = null);
 
 /// <summary>ExitCode: 0 PASS · 1 CHANGES_REQUESTED · 2 lỗi đầu vào / cấu hình · 3 BLOCKED. Notes: lý do bỏ qua reviewer, lần thử lại.</summary>
 public sealed record ReviewRunOutcome(int ExitCode, string Summary, IReadOnlyList<string> Notes, ReviewResult? Result);
@@ -84,7 +89,7 @@ public sealed class ReviewRunner
             : null;
 
         var service = new ReviewService();
-        var pack = service.BuildPack(new ReviewPackInput(taskText, diffText, verifyText, null));
+        var pack = BuildReviewPack(input, taskText, diffText, verifyText);
         var notes = new List<string>();
         ReviewResult? result = null;
 
@@ -194,6 +199,27 @@ public sealed class ReviewRunner
         return JsonSerializer.Serialize(payload, JsonOpts);
     }
 
+    /// <summary>
+    /// Dựng pack bằng ReviewService rồi nối SkillPromptBuilder.BuildReviewInstructions khi Root có giá trị.
+    /// Root null/rỗng: pack giống hệt lời gọi cũ. Chỉ đổi Prompt; giữ DiffHash và DiffTruncated.
+    /// Thiếu skill/dự án không lỗi, không suy stack từ diff. JSON hỏng không bị nuốt;
+    /// RunAsync trả "BLOCKED: lỗi khi review — {loại lỗi}: {thông báo}" như hiện tại.
+    /// </summary>
+    public static ReviewPack BuildReviewPack(ReviewRunInput input, string taskText, string diffText, string? verifyText)
+    {
+        var service = new ReviewService();
+        var basePack = service.BuildPack(new ReviewPackInput(taskText, diffText, verifyText, null));
+
+        if (string.IsNullOrWhiteSpace(input.Root))
+            return basePack;
+
+        var instructions = SkillPromptBuilder.BuildReviewInstructions(input.Root, input.WorkDir, input.TaskFile, input.Profile);
+        if (string.IsNullOrWhiteSpace(instructions))
+            return basePack;
+
+        var prompt = basePack.Prompt.TrimEnd() + "\n\n" + instructions.Trim() + "\n";
+        return new ReviewPack(prompt, basePack.DiffHash, basePack.DiffTruncated);
+    }
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 
     private sealed class StateRecordingProvider(IAgentProvider inner, ProviderStateStore state, Func<DateTime> now) : IAgentProvider

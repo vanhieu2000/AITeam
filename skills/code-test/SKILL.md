@@ -43,6 +43,17 @@ Giữ nguyên test nghiệm thu do quản lý viết; chỉ thêm ca trong tiêu
 9. Test liên quan dùng --no-build sau build tương ứng, filter lớp, --blame-hang-timeout 2m.
    Cuối task chạy build/test solution; lệnh quá 3 phút phải dừng và điều tra.
 
+## Quy ước của dự án
+- Hub: PageTests inject FakeTeamConfigService/FakeTaskBoardService/FakeAgentRunService, gọi OnGet/handler trực tiếp, assert PartialViewResult.ViewName/Model; đây là test PageModel, không render Razor (`hub.tests/PageTests.cs:14`, `hub.tests/PageTests.cs:33`).
+- AcceptanceV504OfficeTests.Page_loads_view_or_reports_error dùng FakeOffice kiểm dữ liệu/lỗi; Desks_handler_returns_partial kiểm tên partial và model. Razor_markup_follows_layout chỉ File.ReadAllText + Contains/DoesNotContain; chưa chứng minh HTML/token render thật (`hub.tests/AcceptanceV504OfficeTests.cs:151`, `hub.tests/AcceptanceV504OfficeTests.cs:169`, `hub.tests/AcceptanceV504OfficeTests.cs:177`).
+- Kiểm render cần hạ tầng thực thi Razor rồi assert HTML/token/encode; hai file trên không gọi helper render. Dữ liệu đĩa phải dùng thư mục tạm + new HubPaths(tmpRoot,tmpProfile); không suy ra PageTests đã dùng HubPaths (`AGENTS.md:76`, `hub.tests/PageTests.cs:14`).
+- HDVTool: ViewLayoutTests.HomeView_layout_has_no_issues/SettingsView_layout_has_no_issues dùng UiThread.Run, scale 1/1.25/1.5 và LayoutChecker.Check; VietnameseWordBreakTests.Hint_breaks_text_by_words_not_mid_word dùng chuỗi dài/nhiều chiều rộng (HDVTool: `tests/HDVTool.Core.Tests/UiLayout/ViewLayoutTests.cs:157`, `tests/HDVTool.Core.Tests/UiLayout/ViewLayoutTests.cs:190`, `tests/HDVTool.Core.Tests/UiLayout/VietnameseWordBreakTests.cs:11`).
+- ChinaAndroidToolbox: ViewLayoutTests.MainForm_WithAdb_LongDeviceName/View_Dashboard/View_Settings dùng tên dài; TestUiContext.Create dùng thư mục tạm, ToolboxPaths và FakeProcessRunner; AcceptanceC011Tests kiểm lỗi chồng/tràn/cắt chữ cùng ca flow dài hợp lệ (ChinaAndroidToolbox: `tests/ChinaAndroidToolbox.Tests/UiLayout/ViewLayoutTests.cs:175`, `tests/ChinaAndroidToolbox.Tests/UiLayout/ViewLayoutTests.cs:231`, `tests/ChinaAndroidToolbox.Tests/UiLayout/ViewLayoutTests.cs:297`, `tests/ChinaAndroidToolbox.Tests/UiLayout/TestUiContext.cs:22`, `tests/ChinaAndroidToolbox.Tests/AcceptanceC011Tests.cs:37`).
+- Hai UiThread.Run đặt ThrowException, STA, timeout 60 giây và ném lại lỗi; nhưng Host hiện gọi Show ngoài màn hình. Không sao chép cho test nền dựng ẩn. Hai LayoutChecker bỏ Visible=false: cần chứng minh ca cố tình sai bị phát hiện trước khi tin Assert.Empty (HDVTool: `tests/HDVTool.Core.Tests/UiLayout/UiThread.cs:7`, `tests/HDVTool.Core.Tests/UiLayout/ViewLayoutTests.cs:79`, `tests/HDVTool.Core.Tests/UiLayout/LayoutChecker.cs:17`; ChinaAndroidToolbox: `tests/ChinaAndroidToolbox.Tests/UiLayout/UiThread.cs:9`, `tests/ChinaAndroidToolbox.Tests/UiLayout/ViewLayoutTests.cs:37`, `tests/ChinaAndroidToolbox.Tests/UiLayout/LayoutChecker.cs:32`; yêu cầu: `AGENTS.md:53`).
+- UiSnapshot là exe nghiệm thu có Show/DrawToBitmap; không chạy trong test nền hoặc nhận là bằng chứng test ẩn (HDVTool: `tools/UiSnapshot/Program.cs:83`; ChinaAndroidToolbox: `tools/UiSnapshot/Program.cs:40`).
+- CLI: ReviewCliTests.Missing_args_returns_2_and_auto_medium_task_returns_4_with_skip_json gọi ProcessRunner timeout 30 giây, kiểm 2/4 và JSON SKIPPED; DevRunnerCliTests kiểm thiếu tham số/unknown provider, helper đọc stdout/stderr đồng thời nhưng chưa có timeout (`core.tests/ReviewCliTests.cs:13`, `core.tests/DevRunnerCliTests.cs:14`, `core.tests/DevRunnerCliTests.cs:34`).
+- Wiring thật: core.tests có ProjectReference tới CLI, lấy Path.Combine(AppContext.BaseDirectory,"aiteam.dll"); không thay bằng bin/Debug. Dữ liệu CLI ghi trong thư mục GUID tạm (`core.tests/AITeam.Core.Tests.csproj:19`, `core.tests/ReviewCliTests.cs:8`, `core.tests/ReviewCliTests.cs:16`).
+
 ## Checklist bắt buộc
 - [ ] Assert thật, bỏ code mới thì test đỏ; không return sớm/Assert.True(true)/nuốt ngoại lệ.
 - [ ] Chuẩn hóa đường dẫn ngoài trước ghi; chặn .. và đường dẫn tuyệt đối.
@@ -58,10 +69,10 @@ Giữ nguyên test nghiệm thu do quản lý viết; chỉ thêm ca trong tiêu
 - [ ] Báo lệnh, số pass/fail/skip, warning thật; chưa chạy thì ghi chưa chạy.
 
 ## Lỗi hay gặp
-- AGENTS.md: return sớm hoặc bắt lỗi bỏ qua luôn xanh, không bảo vệ hành vi mới.
-- AGENTS.md: khóa ghi thẳng bị hook chặn; ghép lúc chạy, không tắt kiểm tra bí mật.
-- AGENTS.md / V4-08: child DLL từ bin/Debug có thể cũ hoặc mất khi clone sạch.
-- AGENTS.md: StartsWith sai khi lệnh có tiền tố; assert Contains nội dung có ý nghĩa.
+- `AGENTS.md:53`: return sớm hoặc bắt lỗi bỏ qua luôn xanh, không bảo vệ hành vi mới.
+- `AGENTS.md:51`: khóa ghi thẳng bị hook chặn; ghép lúc chạy, không tắt kiểm tra bí mật.
+- `AGENTS.md:48` / V4-08: child DLL từ bin/Debug có thể cũ hoặc mất khi clone sạch.
+- `AGENTS.md:54`: StartsWith sai khi lệnh có tiền tố; assert Contains nội dung có ý nghĩa.
 - AGENTS.md: nuốt lỗi đọc rồi ghi lại có thể phá dữ liệu; assert báo lỗi, giữ dữ liệu cũ.
 - scaffold-dotnet-test-project: CI không khám phá là lỗi wiring, không tạo project trùng.
 
