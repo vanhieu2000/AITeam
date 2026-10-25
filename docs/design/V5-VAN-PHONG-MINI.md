@@ -131,7 +131,7 @@ Mỗi task: nhánh riêng, khung + test nghiệm thu trước, cổng KT, review
    | AI | Connector | Chính thức? | Ghi chú |
    |---|---|---|---|
    | ChatGPT | Codex CLI `codex exec --sandbox read-only` (tài khoản ChatGPT) | Có | Đã có, hạn mức nhỏ |
-   | Gemini | Gemini CLI 0.65.0 `gemini -p … -o json --approval-mode plan` (tài khoản Google) | Có | Đã cài 25/10; chờ chủ dự án đăng nhập 1 lần (`gemini`) |
+   | Gemini | **Antigravity `agy --sandbox`** (model Gemini, tài khoản Antigravity đã đăng nhập) | Có | 25/10 09:50: Gemini CLI báo IneligibleTierError "no longer supported for Gemini Code Assist for individuals… migrate to Antigravity" ⇒ chủ dự án chọn hỏi qua agy (dùng chung hạn mức Antigravity với Minh / Lan). Chạy thật 09:56: ~40 giây |
    | Claude | Claude Code CLI | Có | Chưa cài; dùng chung hạn mức với phiên quản lý ⇒ tắt mặc định |
    | DeepSeek · Grok | **BrowserConnector** (Playwright .NET, Apache-2.0) điều khiển trình duyệt RIÊNG của AITeam | Không (tự động hóa web) | Mặc định TẮT; chủ dự án bật từng cái sau khi đọc cảnh báo điều khoản; tự đăng nhập trong cửa sổ đó; AITeam KHÔNG đọc / xuất cookie, KHÔNG vượt CAPTCHA / MFA (gặp ⇒ `LoginRequired`, hiện cửa sổ cho người làm); hồ sơ `%LOCALAPPDATA%\AITeam\profiles\<provider>\default` (ACL user hiện tại, không sao lưu); giới hạn 1 câu hỏi / 60 giây; lỗi / đổi giao diện ⇒ tự chuyển `ManualOnly` (Copy + dán) |
    Manual handoff vẫn có cho MỌI AI làm đường dự phòng.

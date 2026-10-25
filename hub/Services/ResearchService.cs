@@ -233,7 +233,7 @@ public sealed class ResearchService : IResearchService
     /// Connector thật:
     ///   "chatgpt" ⇒ ProviderSettings.Load(AITeamRoot), provider id "codex" (không có ⇒ null) ⇒ new ProviderResearchConnector("chatgpt", "codex CLI (tài khoản ChatGPT)",
     ///     settings.Create(cfg, new ProcessRunner()), TimeSpan.FromMinutes(10), r => new ProviderStateStore(AITeamRoot).Record(r, DateTime.Now));
-    ///   "gemini" ⇒ exe = CliProbes.FindOnPath("gemini", PATH) (null ⇒ null) ⇒ new GeminiResearchConnector(exe, new ProcessRunner(), TimeSpan.FromMinutes(5));
+    ///   "gemini" ⇒ provider "agy" (Antigravity, model Gemini) qua ProviderResearchConnector, 10 phút (Gemini CLI không còn nhận tài khoản cá nhân miễn phí — 25/10/2026);
     ///   khác ⇒ null. Lỗi đọc cấu hình ⇒ null.
     /// </summary>
     public static Func<string, IResearchConnector?> DefaultConnectors(HubPaths paths) => ai =>
@@ -252,8 +252,14 @@ public sealed class ResearchService : IResearchService
             }
             if (key == "gemini")
             {
-                var exe = CliProbes.FindOnPath("gemini", Environment.GetEnvironmentVariable("PATH"));
-                return exe == null ? null : new GeminiResearchConnector(exe, new ProcessRunner(), TimeSpan.FromMinutes(5));
+                // Gemini CLI không còn nhận tài khoản cá nhân miễn phí (IneligibleTierError, 25/10/2026) ⇒ hỏi qua agy (model Gemini), chế độ --sandbox.
+                var settings = ProviderSettings.Load(paths.AITeamRoot);
+                var cfg = settings.Providers.FirstOrDefault(p => string.Equals(p.Id, "agy", StringComparison.OrdinalIgnoreCase));
+                if (cfg == null) return null;
+                return new ProviderResearchConnector("gemini", "Antigravity (agy · model Gemini)",
+                    settings.Create(cfg, new ProcessRunner()), TimeSpan.FromMinutes(10),
+                    r => new ProviderStateStore(paths.AITeamRoot).Record(r, DateTime.Now),
+                    "Antigravity", "đăng nhập lại ở trang Tài khoản Antigravity");
             }
             return null;
         }
