@@ -56,8 +56,10 @@ public static class SkillPromptBuilder
         if (File.Exists(projectsFile) && !HasReparsePoint(projectsFile))
         {
             var content = File.ReadAllText(projectsFile);
-            var doc = JsonSerializer.Deserialize<ProjectsDoc>(content, JsonOpts);
-            var projects = doc?.Projects;
+            // projects.json THẬT là mảng ở gốc ([{name, path, workDir, stack}, …]); vẫn nhận dạng cũ {"projects": [...]} (Claude sửa 25/10).
+            var projects = content.TrimStart('﻿', ' ', '\r', '\n', '\t').StartsWith('[')
+                ? JsonSerializer.Deserialize<List<ProjectItem>>(content, JsonOpts)
+                : JsonSerializer.Deserialize<ProjectsDoc>(content, JsonOpts)?.Projects;
             if (projects != null && projects.Count > 0)
             {
                 var projWork = FindProject(workDir, projects);
