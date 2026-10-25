@@ -92,6 +92,51 @@ function Test-InfrastructureFailure {
     return $hasInfra
 }
 
+# Tách tên phương thức, bỏ tham số và tên không an toàn trước khi dùng bộ lọc.
+function Get-FailedTestNames {
+    param([string]$Output)
+    $pattern = '(?m)^\s*(?:Failed\s+(?<name>.+?)\s+\[[^\]\r\n]+\]|(?:\[xUnit\.net[^\]\r\n]*\]\s+)?(?<name>.+?)\s+\[FAIL\])\s*\r?$'
+    @([regex]::Matches($Output, $pattern) | ForEach-Object {
+        $name = ($_.Groups['name'].Value -split '\(', 2)[0].Trim()
+        if ($name -cmatch '^[A-Za-z0-9_.]+$') { $name }
+    } | Select-Object -Unique)
+}
+
+# Chỉ chạy lại từng test đỏ một lần; giữ lỗi gốc nếu không nhận diện an toàn được.
+function Invoke-FailedTestRetry {
+    param([int]$Code, [string]$Output, [string]$TestCommand, [scriptblock]$Run)
+    $result = [pscustomobject]@{ Code = $Code; Output = $Output; Warnings = @(); Attempts = @() }
+    if ($Code -eq 0 -or $Output -match '(?i)\berror\s+(?:[A-Za-z]+\d+\s*:|:)|Build FAILED|test run was aborted|blame-hang|hang timeout') { return $result }
+    if ($TestCommand -notmatch '^\s*dotnet\s+test\b(?<target>\s+(?:"[^"]+"|(?!-)\S+))?') { return $result }
+    $prefix = 'dotnet test' + $Matches['target']
+    $names = @(Get-FailedTestNames $Output)
+    if ($names.Count -eq 0 -or $names.Count -gt 10) { return $result }
+    $pattern = '(?m)^\s*(?:Failed\s+(?<name>.+?)\s+\[[^\]\r\n]+\]|(?:\[xUnit\.net[^\]\r\n]*\]\s+)?(?<name>.+?)\s+\[FAIL\])\s*\r?$'
+    $rawNames = @([regex]::Matches($Output, $pattern) | ForEach-Object { ($_.Groups['name'].Value -split '\(', 2)[0].Trim() } | Select-Object -Unique)
+    if ($rawNames.Count -gt 10) { return $result }
+    $unsafe = @($rawNames | Where-Object {
+        $_ -cnotmatch '^[A-Za-z0-9_.]+$'
+    })
+    $remaining = @(); $logs = @(); $warnings = @(); $attempts = @()
+    foreach ($name in $names) {
+        $retry = & $Run "$prefix --no-build --filter `"FullyQualifiedName~$name`" --blame-hang-timeout 2m --blame-hang-dump-type none"
+        $attempts += [pscustomobject]@{ Number = 2; Code = $retry.Code; Output = "${name}:`r`n$($retry.Output)" }
+        $logs += $retry.Output
+        if ($retry.Code -eq 0 -and $retry.Output -match 'Passed!\s+.*Passed:\s*[1-9]\d*') {
+            $warnings += "Test chập chờn: $name"
+        } else { $remaining += $name }
+    }
+    $result.Attempts = $attempts
+    $result.Warnings = $warnings
+    if ($remaining.Count -eq 0 -and $unsafe.Count -eq 0) {
+        $result.Code = 0
+        $result.Output = $logs -join "`r`n"
+    } else {
+        $result.Output += "`r`nTest vẫn đỏ: " + ($remaining -join ', ') + "`r`n" + ($logs -join "`r`n")
+    }
+    return $result
+}
+
 # /// <summary>Gọi Run với số lần 1; chỉ lỗi hạ tầng mới gọi lại với số lần 2, không lần 3.
 # /// Run trả {Code,Output}; trả {Code,Output,Attempts}, Output cuối giữ nguyên,
 # /// Attempts là mảng {Number,Code,Output} giữ nguyên cả stdout/stderr đã hợp nhất.
