@@ -3,9 +3,14 @@
 # Dựng thư mục tạm có: bản sao team.ps1 + team.json/projects.json giả, remote git trần, repo dự án "Demo",
 # worktree agent với commit khung "Test nghiệm thu … (Claude)" + commit của agent; rồi chạy verify và kiểm kết quả.
 # Không đụng repo / cấu hình thật. Không cần mạng.
-param([switch]$Keep, [string]$TeamPs1 = "")   # -TeamPs1: thử với bản team.ps1 khác (vd. bản cũ) để chắc test bắt được lỗi
+param([switch]$Keep, [string]$TeamPs1 = "", [switch]$PipelineOnly)   # -TeamPs1: thử với bản team.ps1 khác (vd. bản cũ) để chắc test bắt được lỗi
 $ErrorActionPreference = "Stop"
 $src = Split-Path $PSScriptRoot -Parent
+# Nghiệm thu V8-02 chạy xUnit đã build; không gọi agent/Codex thật hoặc lệnh git khi dùng -PipelineOnly.
+if ($PipelineOnly) {
+    & dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV802PipelineTests --blame-hang-timeout 2m
+    exit $LASTEXITCODE
+}
 $T = Join-Path $env:TEMP ("aiteam-verify-test-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
 $Bom = New-Object Text.UTF8Encoding $true
 $NoBom = New-Object Text.UTF8Encoding $false
@@ -27,6 +32,7 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
     Copy-Item $(if ($TeamPs1) { $TeamPs1 } else { Join-Path $src "team.ps1" }) (Join-Path $root "team.ps1")
     Copy-Item (Join-Path $src "tools\secret-scan.ps1") (Join-Path $root "tools")
     Copy-Item (Join-Path $src "tools\workflow-common.ps1") (Join-Path $root "tools")
+    Copy-Item (Join-Path $src "tools\workflow-pipeline.ps1") (Join-Path $root "tools")
     # team.ps1 dot-source scripts/SkillPrompts.ps1 + SkillNotes.ps1 (S1-04/S1-06) — thiếu ⇒ mọi kịch bản hỏng (Claude sửa 25/10).
     Copy-Item (Join-Path $src "scripts") (Join-Path $root "scripts") -Recurse
     $cfg = Get-Content (Join-Path $src "team.json") -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -307,10 +313,127 @@ switch ($Mode) {
         $journalText = [IO.File]::ReadAllText((Join-Path $repoCase 'requests/R-008.md'))
         Check 'cấp lượt mới trong giao dịch khi gọi lần hai' ($journalText.Contains('workflow:X-01:Assign:1') -and $journalText.Contains('workflow:X-01:Assign:2')) $journalText
     }
+    Write-Host "Kịch bản 16: adapter pipeline đọc bảng origin/main thật, fetch lỗi thì dừng (V8-02)" -ForegroundColor Cyan
+    & {
+        $fnNode = $ast.Find({ $args[0] -is [Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq 'Invoke-Pipeline' }, $true)
+        . ([scriptblock]::Create($fnNode.Extent.Text))
+        $pc = Join-Path $T 'pipeline-adapter'; $bare = Join-Path $pc 'origin.git'; $repoA = Join-Path $pc 'repo'
+        G init -q --bare $bare | Out-Null
+        G clone -q $bare $repoA | Out-Null
+        G -C $repoA config user.email t@t.local | Out-Null; G -C $repoA config user.name Test | Out-Null
+        W (Join-Path $repoA 'tasks/README.md') "| [X-01 Một](X-01-mot.md) | A | ``b`` | ✅ Đã merge |`r`n" $Bom
+        G -C $repoA add -A | Out-Null; G -C $repoA commit -q -m init | Out-Null; G -C $repoA push -q origin HEAD:main | Out-Null
+        W (Join-Path $repoA 'tasks/README.md') 'Bảng local khác' $Bom
+        $Project = 'Demo'; $Request = 'R-008'; $Task = ''
+        function Resolve-Project { [pscustomobject]@{ Path = $repoA; Logs = (Join-Path $pc 'logs'); Info = [pscustomobject]@{ name = 'Demo' } } }
+        function Get-PlanDir { $pc }
+        function Say { param($m) $script:pipeSaid += @($m) }
+        function Invoke-WorkflowPipeline { param($PlanPath, $ProjectKey, $RequestId, $ReadBoard, $TaskExists, $StartTask)
+            $script:pipeBoard = (@(& $ReadBoard) -join "`n"); [pscustomobject]@{ Id = 'X-01'; Status = 'WAITING' } }
+        $script:pipeBoard = $null; $script:pipeSaid = @()
+        Invoke-Pipeline
+        Check 'adapter đọc bảng origin/main (✅ Đã merge), không đọc bảng local' ($script:pipeBoard.Contains('✅ Đã merge') -and -not $script:pipeBoard.Contains('Bảng local')) $script:pipeBoard
+        Check 'CLI in đúng một dòng MÃ: trạng thái mỗi task' (($script:pipeSaid -join '|') -eq 'X-01: WAITING') $script:pipeSaid
+        G -C $repoA remote set-url origin (Join-Path $pc 'khong-co.git') | Out-Null
+        $caught = $null; try { Invoke-Pipeline } catch { $caught = $_.Exception.Message }
+        Check 'fetch lỗi thì dừng pipeline, không dùng bảng local' ([string]$caught -match 'fetch') $caught
+    }
+    Write-Host "Kịch bản 17: prep dở đi tiếp, không gọi lại Codex tạo khung (V8-02)" -ForegroundColor Cyan
+    & {
+        foreach ($fnName in 'Invoke-Prep', 'ConvertTo-AsciiSlug') {
+            $fnNode = $ast.Find({ $args[0] -is [Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq $fnName }, $true)
+            . ([scriptblock]::Create($fnNode.Extent.Text))
+        }
+        $pc = Join-Path $T 'prep-resume'; $repoP = Join-Path $pc 'repo'; $workRoot = Join-Path $pc 'work'
+        W (Join-Path $pc 'plans/plan.md') "## Task`r`n### X-02 · Việc dở`r`n- **Agent:** A`r`n" $Bom
+        $skeleton = Join-Path $workRoot 'prep-x-02/tasks/X-02-viec-do.md'
+        W $skeleton '# X-02 khung giữ lại' $Bom
+        New-Item -ItemType Directory -Force (Join-Path $repoP 'tasks') | Out-Null
+        $Project = 'Demo'; $Request = 'R-008'; $Task = 'X-02'; $NoLaunch = $true
+        function Resolve-Project { [pscustomobject]@{ Path = $repoP; Work = $workRoot; Logs = (Join-Path $pc 'logs'); Info = [pscustomobject]@{ name = 'Demo'; build = 'build'; stack = '' } } }
+        function Get-PlanDir { Join-Path $pc 'plans' }
+        function Select-FreeAgent { 'A' }
+        function Say { }
+        function git { $global:LASTEXITCODE = 0 }
+        $script:codexCalls = 0; $script:buildCalls = 0
+        function Get-AITeamExe { $script:codexCalls++ }
+        function Invoke-WorkflowCodexLock { $script:codexCalls++ }
+        function Invoke-WorkflowCheck { $script:buildCalls++; [pscustomobject]@{ Code = 0; Output = ''; Attempts = @(1) } }
+        function Invoke-RepoTransaction { }
+        Invoke-Prep
+        Check 'prep dở không gọi lại Codex tạo khung' ($script:codexCalls -eq 0) $script:codexCalls
+        Check 'prep dở đi tiếp từ build' ($script:buildCalls -eq 1) $script:buildCalls
+        Check 'giữ nguyên khung đã có trong worktree prep' ([IO.File]::ReadAllText($skeleton) -eq '# X-02 khung giữ lại') $null
+    }
+    Write-Host "Kịch bản 18: worker treo quá hạn bị dừng cả cây, báo ERROR (V8-02)" -ForegroundColor Cyan
+    & {
+        . (Join-Path $src 'tools\workflow-pipeline.ps1')
+        $WorkflowPipelineTaskTimeoutSeconds = 2
+        $pc = Join-Path $T 'pipeline-timeout'
+        W (Join-Path $pc 'plan.md') "## Task`r`n### X-03 · Treo`r`n- **Phụ thuộc:** —`r`n## Quyết định của quản lý`r`n- ĐÃ DUYỆT`r`n" $Bom
+        $script:hungPid = 0
+        $sw = [Diagnostics.Stopwatch]::StartNew()
+        $rowsT = @(Invoke-WorkflowPipeline -PlanPath (Join-Path $pc 'plan.md') -ProjectKey $pc -RequestId 'R-998' -ReadBoard { '' } -TaskExists { param($id) $false } -StartTask {
+            param($item)
+            $p = Start-Process powershell.exe -ArgumentList '-NoProfile', '-Command', 'Start-Sleep -Seconds 120' -WindowStyle Hidden -PassThru
+            $script:hungPid = $p.Id; $p
+        })
+        $sw.Stop()
+        Check 'worker treo quá hạn ⇒ ERROR' ((($rowsT | ForEach-Object { "$($_.Id)=$($_.Status)" }) -join ',') -eq 'X-03=ERROR') $rowsT
+        Check 'không chờ vô hạn, không để child mồ côi' ($sw.Elapsed.TotalSeconds -lt 30 -and $script:hungPid -gt 0 -and -not (Get-Process -Id $script:hungPid -ErrorAction SilentlyContinue)) $sw.Elapsed
+    }
+    Write-Host "Kịch bản 19: adapter worker dừng khi agent lỗi/quota hoặc prep chưa đạt (V8-02)" -ForegroundColor Cyan
+    & {
+        $fnNode = $ast.Find({ $args[0] -is [Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq 'Invoke-Pipeline' }, $true)
+        foreach ($modeCase in @('PASS','ERROR','QUOTA','PREP_FAILED')) {
+            $pc = Join-Path $T "worker-$modeCase"
+            New-Item -ItemType Directory -Force (Join-Path $pc 'tasks') | Out-Null
+            $workerScript = @'
+param($Mode)
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
+$Task = 'X-04'; $Project = 'Demo'; $Request = 'R-008'
+function Resolve-Project { @{ Path=$PSScriptRoot; Info=@{ name='Demo' } } }
+function Say($message) { Write-Output $message }
+function Set-BoardStatus { }
+function Invoke-Prep {
+    if ($Mode -ne 'PREP_FAILED') {
+        [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'tasks/X-04-task.md'),'khung')
+        @{ Ok=$true }
+    }
+}
+function Invoke-Assign { @{ Ok=($Mode -eq 'PASS'); Quota=($Mode -eq 'QUOTA') } }
+function Invoke-Verify {
+    [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'verify.called'),'đã gọi')
+    @{ Ok=$true }
+}
+function Get-TaskContext { @{ R=@{}; TaskFile=@{Name='X-04-task.md'}; Work=$PSScriptRoot } }
+function Invoke-AutoReview { @{ Code=0; Json=@{} } }
+'@
+            $workerScript += "`r`n. '" + (Join-Path $src 'tools/workflow-pipeline.ps1').Replace("'","''") + "'`r`n" + $fnNode.Extent.Text + "`r`nInvoke-Pipeline"
+            W (Join-Path $pc 'worker.ps1') $workerScript $Bom
+            $psi = New-Object Diagnostics.ProcessStartInfo
+            $psi.FileName='powershell.exe'; $psi.Arguments='-NoProfile -ExecutionPolicy Bypass -File "' + (Join-Path $pc 'worker.ps1') + '" -Mode ' + $modeCase
+            $psi.UseShellExecute=$false; $psi.CreateNoWindow=$true
+            $psi.RedirectStandardOutput=$true; $psi.RedirectStandardError=$true
+            $psi.StandardOutputEncoding=[Text.Encoding]::UTF8; $psi.StandardErrorEncoding=[Text.Encoding]::UTF8
+            $child=[Diagnostics.Process]::Start($psi)
+            try {
+                $stdout=$child.StandardOutput.ReadToEndAsync(); $stderr=$child.StandardError.ReadToEndAsync()
+                if (-not $child.WaitForExit(20000)) { $child.Kill(); throw 'Worker nghiệm thu quá hạn.' }
+                $actual=$stdout.Result; $errOutput=$stderr.Result
+                $expected=if ($modeCase -eq 'PREP_FAILED') { 'ERROR' } else { $modeCase }
+                Check "worker $modeCase trả đúng trạng thái" ($actual.Contains("X-04: $expected") -and $child.ExitCode -eq $(if ($expected -eq 'ERROR') { 1 } else { 0 })) "$actual`n$errOutput"
+                Check "worker $modeCase chỉ verify sau agent đạt" ((Test-Path (Join-Path $pc 'verify.called')) -eq ($modeCase -eq 'PASS')) $actual
+            } finally { $child.Dispose() }
+        }
+    }
 }
 finally {
     if (-not $Keep) { Get-ChildItem $T -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { $_.Attributes = 'Normal' }; Remove-Item $T -Recurse -Force -ErrorAction SilentlyContinue }
     else { Write-Host "Giữ thư mục tạm: $T" }
 }
+& dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV802PipelineTests --blame-hang-timeout 2m
+if ($LASTEXITCODE -ne 0) { $script:failed++ }
 if ($script:failed -gt 0) { Write-Host "$($script:failed) kiểm tra HỎNG" -ForegroundColor Red; exit 1 }
 Write-Host "Tất cả kiểm tra ĐẠT" -ForegroundColor Green
