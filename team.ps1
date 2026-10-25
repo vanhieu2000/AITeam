@@ -60,13 +60,17 @@ param(
     [string] $Model = "",
     [switch] $NoVerify,
     [switch] $NoReview,
-    [switch] $Force
+    [switch] $Force,
+    [string] $Skill = "",
+    [AllowEmptyString()][string] $Text = "",
+    [AllowEmptyString()][string] $Source = ""
 )
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $Utf8 = New-Object Text.UTF8Encoding $false
 . (Join-Path $Root "tools/workflow-common.ps1")
 . (Join-Path $Root "scripts/SkillPrompts.ps1")
+. (Join-Path $Root "scripts/SkillNotes.ps1")
 # Khóa chung Set-BoardStatus/Save-RunMetrics và ghi Prep/Assign/Verify/Qc/Merge cùng cập nhật bảng việc.
 
 function Get-NextJournalRun([string]$repoPath, [string]$taskFileName, [string]$taskId, [string]$event) {
@@ -2191,6 +2195,7 @@ Update-ManagerHeartbeat
 
 try {
 switch ($Command) {
+    "skill-note" { Invoke-SkillNote -Root $Root -Skill $Skill -Text $Text -Source $Source }
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
     "ask" { Invoke-Ask }
     "plan" { Invoke-Plan }
