@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using AITeam.Core.Tests.Support;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -8,7 +8,8 @@ namespace AITeam.Core.Tests;
 /// <summary>Chạy hàm điều phối thật qua AST, thay mọi ranh giới git/AI bằng hàm giả trong tiến trình PowerShell cô lập.</summary>
 public sealed class AcceptanceS104SkillPromptsTests : IDisposable
 {
-    private readonly string tmp = Path.Combine(Path.GetTempPath(), "s104-" + Guid.NewGuid().ToString("N"));
+    private readonly TempRepo sandbox = new(false);
+    private string tmp => sandbox.Root;
     private readonly string root;
     private static readonly string[] Ids = ["03-research", "04-ke-hoach", "06-chuan-bi-task", "07-code", "10-nghiem-thu", "code-test", "code-winforms", "code-web", "code-app"];
     private const string Permission = "Được phép đọc các skill được liệt kê dù danh sách file cũ bị giới hạn.";
@@ -143,18 +144,10 @@ public sealed class AcceptanceS104SkillPromptsTests : IDisposable
         File.WriteAllText(input, JsonSerializer.Serialize(new { root, tmp, source = Source(), operation, mode, stack }));
         var script = Path.Combine(tmp, "harness.ps1");
         File.WriteAllText(script, Harness, new UTF8Encoding(true));
-        using var process = new System.Diagnostics.Process { StartInfo = new ProcessStartInfo("powershell.exe")
-            { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true,
-              StandardOutputEncoding = new UTF8Encoding(false), StandardErrorEncoding = new UTF8Encoding(false) } };
-        foreach (var arg in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script, input }) process.StartInfo.ArgumentList.Add(arg);
-        process.Start();
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-        var exited = process.WaitForExit(30_000);
-        if (!exited) process.Kill(true);
-        Assert.True(exited, "PowerShell vượt 30 giây.");
-        Assert.True(process.ExitCode == 0, output.GetAwaiter().GetResult() + error.GetAwaiter().GetResult());
-        return JsonSerializer.Deserialize<Capture>(output.GetAwaiter().GetResult())!;
+        var result = TestShell.Run(tmp, "powershell.exe", 30,
+            "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script, input).GetAwaiter().GetResult();
+        Assert.True(result.Code == 0, result.Output + result.Error);
+        return JsonSerializer.Deserialize<Capture>(result.Output)!;
     }
 
     private sealed record Capture(string Prompt, string? Again, bool ReadOnly, string WorkDir, int Calls, string? Error);
@@ -168,6 +161,7 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
 $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 . (Join-Path $x.source 'scripts/SkillPrompts.ps1')
+. (Join-Path $x.source 'tools/workflow-pipeline.ps1')
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
@@ -250,6 +244,6 @@ if($null -eq $script:captured) { [Console]::Error.WriteLine('Provider chưa nh�
     {
         var link = Path.GetDirectoryName(Skill("07-code"))!;
         if (Directory.Exists(link) && File.GetAttributes(link).HasFlag(FileAttributes.ReparsePoint)) Directory.Delete(link);
-        Directory.Delete(tmp, true);
+        sandbox.Dispose();
     }
 }
