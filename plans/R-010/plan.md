@@ -107,4 +107,15 @@ S1-01…03 do Codex soạn trực tiếp, chỉ đổi `skills/**`, không giao 
 ## Quyết định của quản lý (Claude, 25/10 12:40)
 - ĐÃ DUYỆT 7 task. Ưu tiên cao nhất (chủ dự án: skill + hệ thống chạy trước, sửa giao diện sau).
 - S1-01, S1-02, S1-03 (nội dung skill): CODEX viết (assign -Dev codex) — test nghiệm thu chỉ kiểm cấu trúc (đủ file, đủ mục bắt buộc, ≤ 150 dòng, có nguồn), không kiểm văn phong.
+- S1-08 (thêm 25/10 13:30): Codex bổ sung quy ước thật vào skill code — ĐÃ DUYỆT.
 - S1-04, S1-06 sửa team.ps1 ⇒ chạy SAU V8-01 (đang code), tuần tự. S1-05 (core) chạy song song được. S1-07 cuối cùng.
+
+### S1-08 · Bổ sung quy ước thật vào 4 skill code
+- **Agent:** C (Codex viết, assign -Dev codex)
+- **Ngân sách:** ~200 dòng
+- **Phạm vi:** `skills/code-winforms/SKILL.md` · `skills/code-web/SKILL.md` · `skills/code-app/SKILL.md` · `skills/code-test/SKILL.md`
+- **Làm:**
+  - Đọc code THẬT (chỉ đọc, tối đa ~15 file mỗi dự án): HDVTool + ChinaAndroidToolbox (WinForms: form chính, 2 UserControl tiêu biểu, helper UiThread / LayoutChecker / UiSnapshot, 2 test giao diện), AITeam Hub (Razor Pages + HTMX: Office, Approvals, 1 dịch vụ, test dựng trang), AITeam core CLI.
+  - Thêm mục "Quy ước của dự án" vào từng skill code: tên helper / lớp thật, cách test thật, lỗi đã gặp (task / IMP) — ghi `file:dòng`. Giữ ≤ 150 dòng / skill; bỏ câu "chưa đọc code HDVTool".
+- **Test nghiệm thu:** không cần test mới (chỉ tài liệu); cổng KT build + test hiện có.
+- **Phụ thuộc:** —
