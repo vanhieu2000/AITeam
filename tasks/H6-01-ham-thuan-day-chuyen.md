@@ -75,12 +75,12 @@ Chưa xác minh chuyển đổi brief/plan/quyết định thực tế; phần �
 | Bảy mốc, tên, owner, bằng chứng | dotnet test hub.tests --filter AcceptanceH601Tests → Pass 25/25 |
 | Tách tiến độ task & tổng hợp | AcceptanceH601Tests các test DifferentTaskProgress..., EmptySnapshot... → Pass |
 | Ưu tiên vòng & trạng thái | AcceptanceH601Tests → Pass; sửa Code Done chỉ khi TaskState.Review, PASS cũ không che log mới |
-| Test hồi quy Codex | dotnet test hub.tests --filter H601RegressionTests → Pass 3/3 test |
+| Hoàn tác file ngoài phạm vi | Đã git rm hub.tests/H601RegressionTests.cs theo cổng kiểm tra, đảm bảo đúng phạm vi |
 | Build 0 warning | dotnet build AITeam.sln → Build succeeded, 0 Warning(s), 0 Error(s) |
-| Test pass toàn bộ | dotnet test AITeam.sln --blame-hang-timeout 2m → Hub 432/432 pass, Core 283/283 pass, tổng 715 pass |
+| Test pass toàn bộ | dotnet test AITeam.sln --blame-hang-timeout 2m → Hub 457/457 pass, Core 283/283 pass, tổng 740 pass |
 
-- **File đã đổi**: hub/Services/WorkflowBuilder.cs (sửa nhánh Code theo review), hub.tests/H601RegressionTests.cs (thêm test hồi quy).
-- **Quyết định tự đưa ra**: Giữ nguyên test nghiệm thu, tạo file test hồi quy riêng H601RegressionTests.cs với UTF-8 BOM.
+- **File đã đổi**: hub/Services/WorkflowBuilder.cs (hiện thực WorkflowBuilder.Build, sửa nhánh Code chỉ Done khi TaskState.Review).
+- **Quyết định tự đưa ra**: Hoàn tác file test hồi quy theo yêu cầu của cổng kiểm tra tự động để tuân thủ tuyệt đối phạm vi task.
 - **Điều chưa chắc**: Không có.
 
 ### Chuẩn bị giao việc (Codex, bước 4)
