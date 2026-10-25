@@ -287,6 +287,30 @@ function Find-TaskFile($r, [string] $Task) {
     return $found[0]
 }
 
+# Số task 🟡 đang chạy của từng lập trình viên (đọc bảng việc).
+function Get-AgentLoad($r) {
+    $load = @{ A = 0; B = 0 }
+    $board = Join-Path $r.Path "tasks\README.md"
+    if (Test-Path $board) {
+        foreach ($l in [IO.File]::ReadAllLines($board)) {
+            if ($l -match '^\|' -and $l.Contains([string][char]::ConvertFromUtf32(0x1F7E1))) {
+                $c = $l.Split('|')
+                if ($c.Count -ge 3) { $a = $c[2].Trim().ToUpper(); if ($load.ContainsKey($a)) { $load[$a]++ } }
+            }
+        }
+    }
+    $load
+}
+
+# Người gợi ý đang bận hơn người kia ⇒ trả người kia; bằng nhau ⇒ giữ gợi ý. Không phải A / B (vd. C = Codex) ⇒ giữ nguyên.
+function Select-FreeAgent($r, [string]$suggested) {
+    if ($suggested -notin @('A', 'B')) { return $suggested }
+    $load = Get-AgentLoad $r
+    $other = if ($suggested -eq 'A') { 'B' } else { 'A' }
+    if ($load[$suggested] -gt $load[$other]) { return $other }
+    $suggested
+}
+
 function Invoke-Assign {
     $cfg = Get-Config
     $r = Resolve-Project $Project
@@ -296,6 +320,35 @@ function Invoke-Assign {
     $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
     if (-not $branch) { throw 'File task thiếu dòng **Nhánh:** `tên-nhánh`' }
+
+    # Chia đều (chủ dự án 25/10): Minh / Lan dùng chung 1 tài khoản Antigravity, cùng code chính ⇒ người được gợi ý đang bận
+    # còn người kia rảnh thì giao người rảnh (ghi lại Agent trong file task + bảng việc trên main). -Resume giữ nguyên người cũ.
+    if (-not $Resume -and $agentId -in @('A', 'B') -and -not (Test-Path (Join-Path $r.Work ("$agentId-$Task".ToLower())))) {
+        $free = Select-FreeAgent $r $agentId
+        if ($free -ne $agentId) {
+            Say "Chia đều việc: Agent $agentId đang bận, Agent $free rảnh ⇒ giao Agent $free." Cyan
+            $text = ([regex]'(\*\*Agent:\*\*\s*)\S+').Replace($text, "`${1}$free", 1)
+            [IO.File]::WriteAllText($taskFile.FullName, $text, (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($taskFile.FullName)))))
+            $board = Join-Path $r.Path "tasks\README.md"
+            if (Test-Path $board) {
+                $bt = [IO.File]::ReadAllText($board)
+                $bl = $bt -split "`r?`n"
+                for ($i = 0; $i -lt $bl.Count; $i++) {
+                    if ($bl[$i] -match '^\|' -and $bl[$i] -match ("(\[|\(|\|\s*)" + [regex]::Escape($Task) + "\b")) {
+                        $cells = $bl[$i].Split('|'); if ($cells.Count -ge 3) { $cells[2] = " $free "; $bl[$i] = $cells -join '|' }; break
+                    }
+                }
+                $nl = if ($bt -match "`r`n") { "`r`n" } else { "`n" }
+                [IO.File]::WriteAllText($board, ($bl -join $nl), (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($board)))))
+            }
+            $eapSw = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+            git -C $r.Path add -- "tasks/$($taskFile.Name)" "tasks/README.md" 2>$null
+            git -C $r.Path commit -q -m "${Task}: chia đều ⇒ Agent $free" -- "tasks/$($taskFile.Name)" "tasks/README.md" 2>&1 | Out-Null
+            git -C $r.Path push -q 2>&1 | Out-Null
+            $ErrorActionPreference = $eapSw
+            $agentId = $free
+        }
+    }
 
     Assert-NotClaimedElsewhere $r $Task
     foreach ($o in (Get-ScopeOverlaps $r $taskFile $text)) {
@@ -822,6 +875,7 @@ function Invoke-Prep {
     $section = "### $Task · $ttl`n" + $m.Groups['body'].Value
     $agentId = [regex]::Match($section, '\*\*Agent:\*\*\s*([ABab])').Groups[1].Value.ToUpper()
     if (-not $agentId) { $agentId = "A" }
+    $agentId = Select-FreeAgent $r $agentId   # chia đều Minh / Lan theo ai đang rảnh (kế hoạch chỉ là gợi ý)
     $budget = [regex]::Match($section, '\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
     $existing = @(Get-ChildItem (Join-Path $r.Path "tasks") -Filter "$Task-*.md" -ErrorAction SilentlyContinue)
     if ($existing.Count -gt 0) { throw "Đã có tasks\$($existing[0].Name) — task này đã được chuẩn bị." }
