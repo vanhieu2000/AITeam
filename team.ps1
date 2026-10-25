@@ -2153,7 +2153,7 @@ Bạn là Codex QUẢN LÝ PHỤ của team AITeam (Claude đang vắng). Thư m
 - kiểm tra việc đang dở (bảng việc tasks/README.md, logs ở $((Resolve-Project 'AITeam').Logs)), chạy các lệnh .\team.ps1 cần thiết (plan / prep / assign / verify / qc) theo đúng thứ tự ưu tiên trong sổ tay;
 - task nào cổng KT ĐẠT + QC PASS ⇒ viết "Đề xuất nghiệm thu" lên nhánh và thêm vào mục "Chờ Claude chốt".
 TUYỆT ĐỐI KHÔNG: chạy .\team.ps1 merge; push commit code lên main; force-push; xóa nhánh / dữ liệu; tải phần mềm; đưa bí mật vào file.
-Chỉ được commit + push lên main các file: plans/**, requests/**, tasks/README.md, QUAN-LY-PHU.md.
+Bạn tự commit + push lên main CHỈ các file: plans/**, requests/**, tasks/README.md, QUAN-LY-PHU.md. Commit do CHÍNH team.ps1 tự làm khi chạy plan / prep / assign / verify / qc (bảng việc, metrics/runs/**, nhật ký phiếu, file task mới) là ĐƯỢC PHÉP — cứ chạy các lệnh đó.
 Không có việc cần làm ⇒ dừng ngay, không đọc thêm. Lệnh chạy lâu (assign / prep) chạy nền bằng Start-Process rồi kết thúc vòng — vòng sau (30 phút) xem tiếp.
 Cuối vòng: cập nhật mục "Việc đang dở" + thêm 1 dòng có giờ vào mục "Nhật ký quản lý phụ" cuối QUAN-LY-PHU.md (tạo mục nếu chưa có), commit + push. Trả lời ≤ 10 dòng.
 "@

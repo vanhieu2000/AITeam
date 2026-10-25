@@ -34,6 +34,7 @@ Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ
 4. **R-009 Hub v6.1:** H7-01 đã merge; H7-07 cổng KT ĐẠT (`H7-07-verify-6.md`: build 0 warning, 527 Hub + 425 Core pass) và QC PASS (`H7-07.review-4.json`: 0 phát hiện). Trong vòng này phiên Claude khác đã nghiệm thu rồi merge (`26dc880`, bảng `f954fbf`); không sửa chồng hay đưa task đã merge vào chờ chốt. Trình duyệt của phiên quản lý phụ không khả dụng (inventory rỗng), chưa tự xác minh UI; báo cáo Claude trên nhánh ghi đã xem 1000×800. H7-03 chưa giao; giữ ưu tiên skill + hệ thống.
 5. **R-007:** phần còn lại bỏ, thay bằng R-009.
 ## Luật bắt buộc
+- Commit do chính `team.ps1` tự làm khi chạy plan / prep / assign / verify / qc (bảng việc, `metrics/runs/**`, nhật ký phiếu, file task mới) là ĐƯỢC PHÉP. Chỉ cấm: `team.ps1 merge`, tự đẩy code lên main, force-push, xóa nhánh / dữ liệu.
 - Không force-push main; repo private; không đưa bí mật vào file / log / prompt.
 - Giữ BOM UTF-8 cho `.ps1` / `.cs`; sửa `team.ps1` ⇒ chạy `powershell -File tools\test-verify.ps1` trước khi commit.
 - Task cùng sửa `team.ps1` chạy tuần tự. Tối đa 2 lượt Antigravity + 1 Codex cùng lúc (hạn mức Codex nhỏ).
