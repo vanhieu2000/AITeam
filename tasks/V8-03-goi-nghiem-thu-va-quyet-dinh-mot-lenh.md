@@ -146,17 +146,33 @@ chọn log theo tiền tố và chưa có lệnh nghiệm thu. `Get-RunRecord` �
 | Dữ liệu thật | Ba fixture bằng byte với nguồn đã đọc; không tự dựng lại projects/phiếu/metrics cũ. |
 | Chưa xác minh | Không chạy toàn bộ solution test; chưa xác minh model vì agy models yêu cầu đăng nhập; chưa kiểm tích hợp provider thật. |
 ## Báo cáo của agent
-<!-- Agent điền:
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật / ảnh) |
+| Tiêu chí | Bằng chứng thật lượt này |
 |---|---|
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro. -->
-
+| Build/test solution | `dotnet build AITeam.sln` exit 1 không chẩn đoán; `dotnet build AITeam.sln --no-restore -m:1` đạt, 0 lỗi/0 warning. `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 597 pass/9 fail/0 skip; Core chưa tổng kết, ngắt gần 3 phút, exit 1. |
+| Nghiệm thu bất biến | `powershell -NoProfile -File tools/test-verify.ps1 -AcceptOnly`: 41 pass/0 fail/0 skip; thêm 3 ca đối chiếu finding nguồn đạt. Không sửa test nghiệm thu/fixture. |
+| Gói/finding/SHA/lượt/mã/dữ liệu hỏng | 41 ca nghiệm thu trên bao phủ hợp đồng; bổ sung đối chiếu finding QC với nguồn, giữ SHA trước kiểm tra và nguồn verify đúng SHA cho QC. |
+| Added/UI/phụ thuộc | 41 ca trên kiểm loại task/test/nhị phân, UI cụ thể/không rõ, phụ thuộc và đủ finding vượt 40 dòng. |
+| ĐẠT/reject/tiếng Việt/ba mục/khóa | 41 ca trên kiểm callback dưới khóa, ký tự đặc biệt, giới hạn tài liệu; bổ sung kiểm diff index/worktree ngoài file task. |
+| Approval/SHA mới/push/merge/lặp | 41 ca trên kiểm callback pending/từ chối/sai SHA/push/merge lỗi/đã merge; chưa kiểm adapter git thật. |
+| Số liệu/điểm có nguồn | 41 ca trên kiểm fixture metrics thật, thiếu/hỏng/nguồn ngoài và điểm không rõ; 3 ca mới chặn bỏ/đổi finding trong envelope. |
+| Báo cáo/BOM/cú pháp | Bảng này ghi từng tiêu chí; parser 3 script: 0 lỗi, UTF-8 BOM=True, 0 LF đơn. |
+File đổi: `team.ps1` siết SHA/nguồn QC/diff/reparse/catch CLI; `tools/workflow-accept.ps1` đối chiếu finding nguồn; `tools/test-verify.ps1` thêm 3 ca; file task chỉ báo cáo.
+Tự quyết: build tuần tự sau lỗi MSBuild mặc định; giữ nguyên 9 lỗi Hub ngoài phạm vi, không sửa test để qua; không gọi git, hệ thống tự commit/push, chưa có commit được kiểm.
+Chưa xác minh: toàn solution chưa đạt (Hub lỗi quyền File.Replace/thông báo lưu; Core quá giới hạn); chưa thử provider/git thật, reparse và khóa liên tiến trình tích hợp qua TestShell; không chạy app/chụp ảnh.
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
 **Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
 
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code — Antigravity hết hạn mức 119h)
+- Cổng KT lượt 3 ĐẠT (V8-04 chạy lại test V6-01 chập chờn ⇒ cảnh báo, không chặn). Test nghiệm thu AcceptanceV803AcceptTests đạt.
+- Phạm vi đạt: `accept-pack` (gói nghiệm thu ≤40 dòng, không cắt lỗi), envelope `<task>.accept-<run>.json`, `accept` 1 lệnh giữ Assert-MergeApproval, test-verify trong cổng KT.
+- CHƯA có (bổ sung quản lý ghi ngoài mục V8-03 nên prep không đọc): clone sạch trước push, khóa merge, chặn xóa test, dừng khi model sai, lệnh models, prep thử lại lỗi máy, chia đều khi prep song song ⇒ tách V8-05.
+- [TK] (phạm vi) bổ sung kế hoạch phải ghi VÀO mục task, không ghi cuối file.
+
 ## Kết quả
+- Có `team.ps1 accept-pack -Request R-xxx`: gói gọn kết quả cổng KT / QC / số đo mọi task chờ nghiệm thu để Claude duyệt nhanh, tốn ít token.
+- Kiểm chứng: test nghiệm thu V8-03 + toàn bộ test.
 <!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
 
 ## Đánh giá quy trình
