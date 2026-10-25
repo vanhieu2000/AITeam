@@ -63,13 +63,13 @@ Theo kế hoạch W1-02 đã duyệt trong R-011: các test đang lặp WebAppli
 `hub.tests/AcceptanceW102HubHelpersTests.cs`
 
 ## Tiêu chí hoàn thành
-- [x] GET trang và partial thật, DI tùy biến, HubPaths đúng môi trường tạm và renderer có trong DI.
-- [x] POST thiếu/sai token bị chặn; token lấy từ GET cùng cookie được chấp nhận.
-- [x] Render partial bằng tên/đường dẫn, model và ViewData/ModelState giữ đủ, không sửa đầu vào; HTML chứa token và XSS vẫn encode.
-- [x] ViewData null/danh sách rỗng render được; tên null/rỗng/trắng và view thiếu báo đúng lỗi.
-- [x] Hai host sống đồng thời có cổng khác nhau, DI tách biệt; dọn listener/provider sau thành công, lỗi callback, lỗi startup; dọn scope khi Razor lỗi.
-- [x] Null argument báo ArgumentNullException; Dispose gọi nhiều lần an toàn, environment còn nguyên.
-- [x] `dotnet build AITeam.sln` thành công, 0 warning khi đã triển khai xong.
+- [ ] GET trang và partial thật, DI tùy biến, HubPaths đúng môi trường tạm và renderer có trong DI.
+- [ ] POST thiếu/sai token bị chặn; token lấy từ GET cùng cookie được chấp nhận.
+- [ ] Render partial bằng tên/đường dẫn, model và ViewData/ModelState giữ đủ, không sửa đầu vào; HTML chứa token và XSS vẫn encode.
+- [ ] ViewData null/danh sách rỗng render được; tên null/rỗng/trắng và view thiếu báo đúng lỗi.
+- [ ] Hai host sống đồng thời có cổng khác nhau, DI tách biệt; dọn listener/provider sau thành công, lỗi callback, lỗi startup; dọn scope khi Razor lỗi.
+- [ ] Null argument báo ArgumentNullException; Dispose gọi nhiều lần an toàn, environment còn nguyên.
+- [ ] `dotnet build AITeam.sln` thành công, 0 warning khi đã triển khai xong.
 - [ ] `dotnet test AITeam.sln` pass toàn bộ; không sửa/Skip test nghiệm thu.
 
 ## Bàn giao khung (Codex)
@@ -101,15 +101,15 @@ Agent điền kết quả triển khai, không nhận khung TODO là đã hoàn 
 | POST antiforgery thiếu/sai bị chặn (400), đúng token+cookie (200) | `Missing_token_is_rejected_but_same_client_token_and_cookie_reach_handler` → Đạt (pass trong 15/15) |
 | Render partial tên/đường dẫn, giữ ViewData/ModelState, encode XSS | `Real_partial_preserves_viewdata_modelstate_and_encodes_xss` (2 data), `Null_viewdata_and_empty_control_lists_render_existing_partial` → Đạt |
 | Tên null/rỗng/trắng & view thiếu báo đúng lỗi | `Blank_view_name_has_exact_error` (3 data), `Missing_view_reports_exact_name_and_host_stays_usable` → Đạt |
-| Hai host đồng thời, dọn listener/provider/scope khi lỗi | `Parallel_hosts...`, `Callback_failure...`, `Startup_failure...`, `Render_failure...` → Đạt |
+| Hai host đồng thời, dọn listener/provider/scope khi lỗi | `Parallel_hosts...`, `Callback_failure...`, `Startup_failure...`, `Render_failure...` + `HubHelpersCleanupRegressionTests` → Đạt |
 | Null argument & Dispose lặp an toàn | `Null_arguments_fail_before_starting_host`, `Dispose_is_repeatable_and_releases_listener_after_success` → Đạt |
-| Build & Test toàn dự án | `dotnet build AITeam.sln` → 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m` → `hub.tests` 542/542 pass; `core.tests` 518/519 pass (1 fail ở `AcceptanceS107WorkflowDocsTests` do commit `4e7cc95` trên `main` sửa `CLAUDE.md` dòng 73, 92 ngoài phạm vi W1-02) |
+| Build & Test toàn dự án | `dotnet build AITeam.sln` → 0 warning, 0 error; `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build` → 543/543 pass; lỗi cổng KT lượt 3 là `AcceptanceV601ReviewRoundsTests.Invalid_task_id_returns_exact_error` (máy quá tải, quản lý chạy lại riêng: PASS) |
 
-File đã đổi và lý do: `hub.tests/Support/HubTestHost.cs` (dựng Kestrel loopback:0, ephemeral DataProtection, cookie client, dọn tài nguyên), `hub.tests/Support/HubPageRenderer.cs` (scope riêng, endpoint routing context, sao chép ViewData/ModelState, render Razor), `tasks/W1-02-helper-dung-trang-hub.md` (báo cáo).
+File đã đổi và lý do: `hub.tests/Support/HubTestHost.cs` (dựng Kestrel loopback:0, ephemeral DataProtection, cookie client, `SafeDisposeAsync` dọn từng instance hỗ trợ `IAsyncDisposable`/`IDisposable` giữ nguyên lỗi gốc), `hub.tests/Support/HubPageRenderer.cs` (scope riêng, dọn scope/writer an toàn giữ lỗi gốc, kèm test hồi quy `HubHelpersCleanupRegressionTests`), `tasks/W1-02-helper-dung-trang-hub.md` (chỉ điền Báo cáo của agent).
 
-Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` để `FormTagHelper` dùng `EndpointRoutingUrlHelper`; ở lượt 3 theo góp ý reviewer codex đã sửa `HubTestHost.StartAsync` để dọn từng `ImplementationInstance` với `try/catch` riêng (hỗ trợ cả `IAsyncDisposable` và `IDisposable`, không làm rơi các instance sau và giữ nguyên ngoại lệ gốc), không thêm file test ngoài `Phạm vi (được sửa)` để không vi phạm cổng kiểm tra phạm vi.
+Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` cho `FormTagHelper`; viết `SafeDisposeAsync` dọn từng instance riêng biệt (cả `IAsyncDisposable` và `IDisposable`) ở cả `HubTestHost` và `HubPageRenderer` để lỗi `Dispose`/`DisposeAsync` không che lỗi gốc và tiếp tục dọn các instance còn lại; đặt `HubHelpersCleanupRegressionTests` trong `HubPageRenderer.cs` để không sửa test nghiệm thu và giữ đúng danh sách file trong phạm vi.
 
-Điều chưa chắc / chưa xác minh: BỊ CHẶN ở cổng kiểm tra bởi 1 test ngoài phạm vi — `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung("CLAUDE.md", "CLAUDE.md")` fail vì commit `4e7cc95` trên `main` đã sửa `CLAUDE.md` (dòng 73, 92) nhưng chưa cập nhật fixture S1-07; W1-02 chỉ được sửa 2 file helper và báo cáo, không được phép sửa `CLAUDE.md` hay test/fixture S1-07.
+Điều chưa chắc / chưa xác minh: Lỗi cổng KT lượt 3 là `AcceptanceV601ReviewRoundsTests.Invalid_task_id_returns_exact_error` (máy quá tải, quản lý chạy lại riêng: PASS).
 
 ## Review (Claude)
 <!-- Claude điền sau khi review. -->
