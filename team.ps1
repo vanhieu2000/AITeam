@@ -833,6 +833,10 @@ function Invoke-Prep {
 
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     git -C $r.Path fetch -q origin 2>$null
+    # Lần trước Codex đã viết xong nhưng dừng ở build / commit (vd. khóa file) ⇒ đi tiếp từ build, KHÔNG chạy lại Codex (~500k token).
+    $resumePrep = (Test-Path (Join-Path $work "tasks\$fileName"))
+    if ($resumePrep) { Say "Đã có worktree chuẩn bị $work ⇒ bỏ qua bước Codex, đi tiếp từ build." Yellow }
+    else {
     git -C $r.Path worktree add -q -b $branch $work origin/main 2>&1 | ForEach-Object { Say "  $_" }
     if (-not (Test-Path $work)) { $ErrorActionPreference = $eap; throw "Không tạo được worktree $work" }
     $taskPath = Join-Path $work "tasks\$fileName"
@@ -856,6 +860,7 @@ function Invoke-Prep {
         Say "Codex không chuẩn bị được $Task (mã $code$(if ($j) { ': ' + $j.summary })). Worktree giữ ở $work, nhánh $branch — Claude làm tiếp (quy trình v3)." Yellow
         $ErrorActionPreference = $eap; return
     }
+    }
     # Codex hay ghi UTF-8 không BOM ⇒ trả BOM cho file mã (quy ước dự án, PowerShell 5.1).
     foreach ($f in @(git -C $work status --porcelain -uall 2>$null | ForEach-Object { $_.Substring(3).Trim('"') } | Where-Object { $_ -match '\.(cs|cshtml|ps1)$' })) {
         $p = Join-Path $work $f
@@ -863,6 +868,11 @@ function Invoke-Prep {
     }
     Push-Location $work
     $bo = cmd /c "$($r.Info.build) 2>&1"; $bc = $LASTEXITCODE; $global:LASTEXITCODE = 0
+    if ($bc -ne 0 -and ("$bo" -match 'MSB3491|being used by another process|Access to the path .* is denied')) {
+        Say "Build lỗi do khóa file (lỗi máy) ⇒ tắt build server, build lại 1 lần." Yellow
+        dotnet build-server shutdown 2>&1 | Out-Null
+        $bo = cmd /c "$($r.Info.build) 2>&1"; $bc = $LASTEXITCODE; $global:LASTEXITCODE = 0
+    }
     Pop-Location
     if ($bc -ne 0) {
         Say "Build khung $Task LỖI ⇒ KHÔNG giao. Worktree giữ ở $work." Red
