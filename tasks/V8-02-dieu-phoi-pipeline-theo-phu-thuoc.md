@@ -81,20 +81,19 @@ Làm đúng V8-02 trong kế hoạch R-008 đã duyệt. V8-01 đã cung cấp k
 - [ ] Bổ sung test adapter CLI cho fetch lỗi/bảng local khác origin, tiếp tục prep dở và timeout child; test lõi hiện có không thay cho kiểm tra các adapter thật. Không đổi test nghiệm thu để hợp thức hóa adapter sai.
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng lượt Codex sửa theo cổng KT (25/10) |
+| Tiêu chí | Bằng chứng lượt sửa harness Codex (25/10) |
 |---|---|
-| Build; không TODO | `dotnet build AITeam.sln`: mã 1, tổng kết 0 warning/0 error, không chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore --disable-build-servers -m:1 -v:minimal`: mã 0, 0 warning/0 error, 28,72 giây; không tái hiện MSB3491. Script pipeline không có TODO/NotImplementedException. |
-| Test solution/nghiệm thu bất biến | `dotnet test AITeam.sln --no-build --no-restore --disable-build-servers -m:1 --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: Hub 518 pass/9 fail/0 skip; Core lỗi tài liệu CLAUDE.md và thiếu Invoke-WorkflowCodexLock trong hồi quy S104; dừng bằng Ctrl+C ở mốc 3 phút, mã 1, chưa có tổng kết Core. |
-| test-verify/PipelineOnly | `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1 -PipelineOnly`: đã thấy 12 ca fail, gồm worker timeout 40 giây; dừng ở mốc 3 phút, mã 1, không có tổng số pass. Không chạy hồi quy đầy đủ vì script gọi git, trái chỉ dẫn Codex dự phòng. |
-| Plan/đồ thị/đường dẫn/dữ liệu cũ | Chưa có tổng kết hành vi mới do dừng nghiệm thu; Parser.ParseFile cho team.ps1, workflow-pipeline.ps1, test-verify.ps1: mỗi file 0 lỗi cú pháp, cả ba giữ BOM. |
-| Đồng thời/task cũ/phụ thuộc origin | Chưa xác minh đầy đủ lượt này; ca hai pipeline cùng phiếu fail tại kiểm ExitCode, chưa đủ bằng chứng kết luận lõi sai. |
-| Khóa pipeline/Codex | Hai ca khóa fail tại kiểm tiến trình; worker khóa prep/QC timeout 40 giây; chưa xác minh nguyên nhân timeout, không coi PASS. |
-| Bộ đếm/không fallback/prep dở | 8 biến thể bộ đếm fail; helper Stage chờ Start-Fake rồi kiểm ExitCode mà không giữ Handle trước khi chờ (AcceptanceV802PipelineTests.cs:343–345), có thể ném lỗi trước Agent. |
-| Adapter bổ sung/timeout child | Chưa bổ sung/chưa xác minh đủ vì phát hiện lỗi harness; không sửa test nghiệm thu hoặc mở rộng phạm vi. |
-File đổi: chỉ file task này để cập nhật báo cáo; giữ BOM UTF-8/CRLF; không đổi mã sản phẩm vì lỗi build MSB3491 không tái hiện khi chạy build đơn luồng, không tắt build server toàn máy.
-Bằng chứng độc lập: Start-Process powershell.exe -PassThru với redirect, lệnh exit 7, WaitForExit(10000): không giữ Handle ⇒ ExitCode null=True; giữ Handle trước chờ ⇒ ExitCode=7 (mã kiểm tra 0, đã dọn file tạm).
-Test nghiệm thu nguyên SHA256 F2A3434A055BE853DDD90E514CF4193BB04ACB96FA9E29C271CB2DF976ADE3FE; cần Claude sửa helper giữ Handle, không proxy Start-Process/nhận diện harness trong sản phẩm.
-Quyết định: tuân AGENTS.md “Test sai thì ghi vào báo cáo và dừng”; lỗi Access denied tại File.Replace trong test Hub nằm ngoài phạm vi; không có MCP aiteam_post_message trong phiên này; chưa đạt toàn bộ task; không chạy git, hệ thống tự commit/push theo chỉ dẫn ưu tiên, chưa có commit được kiểm; chưa chạy app/chụp ảnh, chưa xác minh clean-clone/cổng KT.
+| Build/không TODO | dotnet build AITeam.sln --no-restore -m:1 -v:minimal: 0 lỗi/0 warning; build Core sau sửa harness: 0 lỗi/0 warning. Một lần build khi test giữ DLL bị MSB3027 (10 warning/2 error), đã chạy lại đạt sau khi test kết thúc. |
+| Test solution/nghiệm thu | dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m: Hub 518 pass/9 fail/0 skip (File.Replace Access denied); Core chưa có tổng kết, đã dừng lượt dài. Nghiệm thu đang xác minh theo nhóm, chưa có bằng chứng 38/38. |
+| test-verify/PipelineOnly | powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1 -PipelineOnly: dừng ở giới hạn 3 phút, chưa tổng kết; không chạy bản đầy đủ vì có git. |
+| Plan/đồ thị/đường dẫn/giữ byte | Nhóm test cấu trúc đang chạy lại trên bản build cuối; không sửa fixture hoặc parser sản phẩm. |
+| Đồng thời/task cũ/phụ thuộc origin | Assert giữ nguyên; fake child có điểm hẹn hữu hạn 20 giây trước đo chồng thời gian, tránh phụ thuộc tốc độ khởi động PowerShell; chạy lại đang chờ kết quả. |
+| Khóa pipeline/Codex | Worker khóa prep/QC, thu hồi abandoned mutex, nhả sau exception và chống pipeline trùng đã thấy pass; đang gom kết quả trên build cuối. |
+| Bộ đếm/không fallback/prep dở | Gốc lỗi harness: Stage nhận ExitCode rỗng dù stdout bình thường/stderr rỗng; giữ Handle trước chờ. Fake $action bị tham số khóa $Action che gây đệ quy: dùng $script:fakeAction. Timeout harness dùng chuẩn TestShell 60 giây cho tối đa tám child; không đổi assert. |
+| Adapter/S1-04 | ProviderGiaNhanPromptThat_MoiNhanh(prep,codex) đã pass: harness AST thiếu import khóa, đã nạp module thật; sản phẩm vẫn có Add-SkillPrompt -Stage prep. Adapter fetch/local-origin đã thấy pass. |
+File đổi: AcceptanceV802PipelineTests.cs (TempRepo(false)/TestShell.PowerShell, quản lý child), AcceptanceS104SkillPromptsTests.cs (TempRepo(false)/TestShell.Run + nạp khóa), file task này; giữ BOM, không đổi code sản phẩm/fixture/assert.
+Quyết định theo chỉ dẫn quản lý mới: sửa harness đã chứng minh sai; không chạy git/commit/push (hệ thống làm), chưa có commit được kiểm; không chạy app/chụp ảnh.
+Chưa xác minh: full solution pass, toàn bộ hồi quy test-verify, clean-clone/cổng KT; không nhận lỗi Hub ngoài phạm vi là đã sửa.
 
 ## Ghi nhận bước chuẩn bị (Codex)
 - Khung sản phẩm chỉ throw NotImplementedException; wiring import/lệnh/catch có sẵn, không viết thân nghiệp vụ.

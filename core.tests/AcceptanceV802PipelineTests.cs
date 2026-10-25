@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using AITeam.Core.Tests.Support;
 using System.Text;
 
 namespace AITeam.Core.Tests;
@@ -100,6 +100,7 @@ public sealed class AcceptanceV802PipelineTests
     [Fact]
     public Task Hai_task_chay_chong_task_thu_ba_cho_va_moi_task_mot_ket_qua() => Check("""
         Independent-Plan
+        $pipelineArgs.StartTask = { param($item) Start-Fake $item.Id 1400 0 -Together }
         $rows = @(Invoke-WorkflowPipeline @pipelineArgs)
         Need ($rows.Count -eq 3) 'Phải có đúng một kết quả mỗi task'
         Need (($rows.Id -join ',') -eq 'V8-01,V8-02,V8-03') 'Sai thứ tự/kết quả bị lẫn log'
@@ -237,6 +238,7 @@ public sealed class AcceptanceV802PipelineTests
         [IO.File]::WriteAllText($driver,$driverText,(New-Object Text.UTF8Encoding $true))
         $one = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$driver+'"')) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $caseRoot 'one.out') -RedirectStandardError (Join-Path $caseRoot 'one.err')
         $two = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$driver+'"')) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $caseRoot 'two.out') -RedirectStandardError (Join-Path $caseRoot 'two.err')
+        $null = $one.Handle; $null = $two.Handle
         $one.WaitForExit(); $two.WaitForExit()
         Need ($one.ExitCode -eq 0 -and $two.ExitCode -eq 0) 'Pipeline trùng lỗi'
         Need (@(Get-ChildItem $trace -Filter '*.event').Count -eq 3) 'Pipeline cùng phiếu đã chạy trùng'
@@ -289,42 +291,22 @@ public sealed class AcceptanceV802PipelineTests
 
     private static async Task Check(string body)
     {
-        var root = Path.Combine(Path.GetTempPath(), "aiteam-v802-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(root);
-        try
-        {
-            File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "V802", "plan.md"), Path.Combine(root, "plan.md"));
-            File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "V802", "board.md"), Path.Combine(root, "board.md"));
-            File.Copy(Path.Combine(AppContext.BaseDirectory, "V802Runtime", "workflow-pipeline.ps1"), Path.Combine(root, "module.ps1"));
-            File.Copy(Path.Combine(AppContext.BaseDirectory, "S1-06Runtime", "team.ps1"), Path.Combine(root, "team-source.ps1"));
-            File.WriteAllText(Path.Combine(root, "fake.ps1"), Fake, new UTF8Encoding(true));
-            File.WriteAllText(Path.Combine(root, "test.ps1"), Harness + "\r\n# NOI_DUNG_CA_TEST\r\n" + body, new UTF8Encoding(true));
-            var start = new ProcessStartInfo("powershell.exe")
-            {
-                UseShellExecute = false, CreateNoWindow = true,
-                RedirectStandardOutput = true, RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
-            };
-            foreach (var arg in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", Path.Combine(root, "test.ps1") }) start.ArgumentList.Add(arg);
-            using var process = System.Diagnostics.Process.Start(start)!;
-            var output = process.StandardOutput.ReadToEndAsync();
-            var error = process.StandardError.ReadToEndAsync();
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(40));
-            try { await process.WaitForExitAsync(timeout.Token); }
-            catch (OperationCanceledException) { process.Kill(true); await process.WaitForExitAsync(); throw; }
-            Assert.True(process.ExitCode == 0, $"PowerShell mã {process.ExitCode}\n{await output}\n{await error}");
-        }
-        finally
-        {
-            foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)) File.SetAttributes(file, FileAttributes.Normal);
-            Directory.Delete(root, true);
-        }
+        using var repo = new TempRepo(false);
+        var root = repo.Root;
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "V802", "plan.md"), Path.Combine(root, "plan.md"));
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "V802", "board.md"), Path.Combine(root, "board.md"));
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "V802Runtime", "workflow-pipeline.ps1"), Path.Combine(root, "module.ps1"));
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "S1-06Runtime", "team.ps1"), Path.Combine(root, "team-source.ps1"));
+        File.WriteAllText(Path.Combine(root, "fake.ps1"), Fake, new UTF8Encoding(true));
+        // Dùng timeout chuẩn 60 giây: ca mixed khởi chạy tối đa tám PowerShell con.
+        var result = await TestShell.PowerShell(root, Harness + "\r\n# NOI_DUNG_CA_TEST\r\n" + body);
+        Assert.True(result.Code == 0, $"PowerShell mã {result.Code}\n{result.Output}\n{result.Error}");
     }
 
     private const string Harness = """
         $ErrorActionPreference = 'Stop'
         [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
-        $caseRoot = $PSScriptRoot
+        $caseRoot = (Get-Location).Path
         $plan = Join-Path $caseRoot 'plan.md'; $boardFile = Join-Path $caseRoot 'board.md'
         $trace = Join-Path $caseRoot 'trace'; [IO.Directory]::CreateDirectory($trace) | Out-Null
         . (Join-Path $caseRoot 'module.ps1')
@@ -336,11 +318,15 @@ public sealed class AcceptanceV802PipelineTests
         }
         function Save-Plan($text) { [IO.File]::WriteAllText($plan,$text,(New-Object Text.UTF8Encoding $true)) }
         function Independent-Plan { Save-Plan ([regex]::Replace([IO.File]::ReadAllText($plan),'(?m)(\*\*Phụ thuộc:\*\*)[^\r\n]*','$1 —')) }
-        function Start-Fake($name,[int]$delay=900,[int]$code=0,[switch]$Locked,[switch]$Worker) {
+        function Start-Fake($name,[int]$delay=900,[int]$code=0,[switch]$Locked,[switch]$Worker,[switch]$Together) {
             $arguments = @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+(Join-Path $caseRoot 'fake.ps1')+'"'),'-Name',$name,'-Delay',$delay,'-Code',$code)
             if ($Locked) { $arguments += '-Locked' }
             if ($Worker) { $arguments += '-Worker' }
-            Start-Process powershell.exe -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $trace "$name.out") -RedirectStandardError (Join-Path $trace "$name.err")
+            if ($Together) { $arguments += '-Together' }
+            $p = Start-Process powershell.exe -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $trace "$name.out") -RedirectStandardError (Join-Path $trace "$name.err")
+            # Giữ handle trước khi child thoát để đọc ExitCode trên PowerShell 5.1.
+            $null = $p.Handle
+            $p
         }
         function Stage($name,$number) { $p = Start-Fake "$name$number" 20 0; $p.WaitForExit(); Need ($p.ExitCode -eq 0) 'Tiến trình giai đoạn giả lỗi'; $p.Dispose() }
         function Interval($name) { @([long][IO.File]::ReadAllText((Join-Path $trace "$name.start")),[long][IO.File]::ReadAllText((Join-Path $trace "$name.end"))) }
@@ -353,11 +339,21 @@ public sealed class AcceptanceV802PipelineTests
         """;
 
     private const string Fake = """
-        param([string]$Name,[int]$Delay,[int]$Code,[switch]$Locked,[switch]$Worker)
+        param([string]$Name,[int]$Delay,[int]$Code,[switch]$Locked,[switch]$Worker,[switch]$Together)
         $ErrorActionPreference = 'Stop'
         [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
         . (Join-Path $PSScriptRoot 'module.ps1')
-        $action = {
+        # Hẹn hai child trước khi đo: tốc độ khởi động PowerShell không quyết định khoảng chồng.
+        if ($Together) {
+            $trace = Join-Path $PSScriptRoot 'trace'
+            [IO.File]::WriteAllText((Join-Path $trace "$Name.ready"),'sẵn sàng')
+            $wait = [Diagnostics.Stopwatch]::StartNew()
+            while (@(Get-ChildItem $trace -Filter '*.ready').Count -lt 2) {
+                if ($wait.Elapsed.TotalSeconds -gt 20) { throw 'Không có hai child đồng thời.' }
+                Start-Sleep -Milliseconds 20
+            }
+        }
+        $script:fakeAction = {
             $trace = Join-Path $PSScriptRoot 'trace'
             [IO.File]::WriteAllText((Join-Path $trace "$Name.start"),[string][DateTime]::UtcNow.Ticks)
             [IO.File]::WriteAllText((Join-Path $trace "$Name-$PID.event"),'đã gọi tiến trình giả')
@@ -369,11 +365,11 @@ public sealed class AcceptanceV802PipelineTests
         if ($Worker) {
             $workerName = $Name
             $result = Invoke-WorkflowPipelineTask -TaskId $workerName -Prep {
-                $Name = "$workerName-prep"; & $action | Out-Null; @{Ok=$true}
+                $Name = "$workerName-prep"; & $script:fakeAction | Out-Null; @{Ok=$true}
             } -Agent { @{Ok=$true;Quota=$false} } -Verify { @{Ok=$true} } -Qc {
-                $Name = "$workerName-qc"; & $action | Out-Null; @{Verdict='PASS'}
+                $Name = "$workerName-qc"; & $script:fakeAction | Out-Null; @{Verdict='PASS'}
             }
             if ($result.Status -ne 'PASS') { exit 1 }
-        } elseif ($Locked) { Invoke-WorkflowCodexLock -Action $action } else { & $action }
+        } elseif ($Locked) { Invoke-WorkflowCodexLock -Action $script:fakeAction } else { & $script:fakeAction }
         """;
 }
