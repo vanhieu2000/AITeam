@@ -1,6 +1,6 @@
 ﻿# H7-01 · Dịch vụ Map và lưu nguyên tử
 
-- **Agent:** A
+- **Agent:** B
 - **Nhánh:** `agent-a/H7-01-dich-vu-map-va-luu-nguyen-tu`
 - **Ưu tiên:** trung bình
 - **Ngân sách:** ~300 dòng
