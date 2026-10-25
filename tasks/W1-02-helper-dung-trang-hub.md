@@ -70,7 +70,7 @@ Theo kế hoạch W1-02 đã duyệt trong R-011: các test đang lặp WebAppli
 - [x] Hai host sống đồng thời có cổng khác nhau, DI tách biệt; dọn listener/provider sau thành công, lỗi callback, lỗi startup; dọn scope khi Razor lỗi.
 - [x] Null argument báo ArgumentNullException; Dispose gọi nhiều lần an toàn, environment còn nguyên.
 - [x] `dotnet build AITeam.sln` thành công, 0 warning khi đã triển khai xong.
-- [x] `dotnet test AITeam.sln` pass toàn bộ; không sửa/Skip test nghiệm thu.
+- [ ] `dotnet test AITeam.sln` pass toàn bộ; không sửa/Skip test nghiệm thu.
 
 ## Bàn giao khung (Codex)
 - Hai helper chỉ có chữ ký/XML và `throw new NotImplementedException(); // TODO(agent)`; phần thân do Antigravity điền.
@@ -103,13 +103,13 @@ Agent điền kết quả triển khai, không nhận khung TODO là đã hoàn 
 | Tên null/rỗng/trắng & view thiếu báo đúng lỗi | `Blank_view_name_has_exact_error` (3 data), `Missing_view_reports_exact_name_and_host_stays_usable` → Đạt |
 | Hai host đồng thời, dọn listener/provider/scope khi lỗi | `Parallel_hosts...`, `Callback_failure...`, `Startup_failure...`, `Render_failure...` → Đạt |
 | Null argument & Dispose lặp an toàn | `Null_arguments_fail_before_starting_host`, `Dispose_is_repeatable_and_releases_listener_after_success` → Đạt |
-| Build & Test toàn dự án | `dotnet build AITeam.sln` → 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m` → `hub.tests` 542/542 pass; `core.tests` 518/519 pass (1 fail có sẵn ở `AcceptanceS107WorkflowDocsTests` ngoài phạm vi) |
+| Build & Test toàn dự án | `dotnet build AITeam.sln` → 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m` → `hub.tests` 542/542 pass; `core.tests` 518/519 pass (1 fail ở `AcceptanceS107WorkflowDocsTests` do commit `4e7cc95` trên `main` sửa `CLAUDE.md` dòng 73, 92 ngoài phạm vi W1-02) |
 
 File đã đổi và lý do: `hub.tests/Support/HubTestHost.cs` (dựng Kestrel loopback:0, ephemeral DataProtection, cookie client, dọn tài nguyên), `hub.tests/Support/HubPageRenderer.cs` (scope riêng, endpoint routing context, sao chép ViewData/ModelState, render Razor), `tasks/W1-02-helper-dung-trang-hub.md` (báo cáo).
 
 Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` để `FormTagHelper` dùng `EndpointRoutingUrlHelper`.
 
-Điều chưa chắc / chưa xác minh: Test `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung("CLAUDE.md")` trong `core.tests` đang fail sẵn trên nhánh gốc (ngoài phạm vi W1-02).
+Điều chưa chắc / chưa xác minh: BỊ CHẶN ở cổng kiểm tra bởi 1 test ngoài phạm vi — `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung("CLAUDE.md", "CLAUDE.md")` fail vì commit `4e7cc95` trên `main` đã sửa `CLAUDE.md` (dòng 73, 92) nhưng chưa cập nhật fixture S1-07; W1-02 chỉ được sửa 2 file helper và báo cáo, không được phép sửa `CLAUDE.md` hay test/fixture S1-07.
 
 ## Review (Claude)
 <!-- Claude điền sau khi review. -->
