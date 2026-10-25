@@ -8,6 +8,7 @@ builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
 
 builder.Services.AddSingleton(HubPaths.Detect());
 builder.Services.AddSingleton<IWorkflowRolesService, WorkflowRolesService>();
+builder.Services.AddSingleton<IWorkProgressService, WorkProgressService>();
 builder.Services.AddRazorPages();
 builder.Services.AddAntiforgery();
 
