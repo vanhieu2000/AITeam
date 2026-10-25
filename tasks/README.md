@@ -52,7 +52,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [S1-04 Nối skill vào plan, prep và giao code](S1-04-noi-skill-vao-plan-prep-va-giao-code.md) | A | `agent-a/S1-04-noi-skill-vao-plan-prep-va-giao-code` | ✅ Đã merge (vòng 1) |
 | [S1-06 Lệnh ghi bài học có commit](S1-06-lenh-ghi-bai-hoc-co-commit.md) | B | `agent-b/S1-06-lenh-ghi-bai-hoc-co-commit` | ✅ Đã merge (vòng 1) |
 | [S1-07 Nối nghiệm thu, IMP và hàng chờ Map](S1-07-noi-nghiem-thu-imp-va-hang-cho-map.md) | A | `agent-a/S1-07-noi-nghiem-thu-imp-va-hang-cho-map` | ✅ Đã merge (vòng 1) |
-| [V8-02 Điều phối pipeline theo phụ thuộc](V8-02-dieu-phoi-pipeline-theo-phu-thuoc.md) | A | `agent-a/V8-02-dieu-phoi-pipeline-theo-phu-thuoc` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 20:19 25/10/2026 |
+| [V8-02 Điều phối pipeline theo phụ thuộc](V8-02-dieu-phoi-pipeline-theo-phu-thuoc.md) | A | `agent-a/V8-02-dieu-phoi-pipeline-theo-phu-thuoc` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 20:23 25/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
