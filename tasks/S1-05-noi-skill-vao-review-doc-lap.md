@@ -103,11 +103,10 @@ Chưa xác minh: cấu trúc projects.json thật, đường CLI --auto xuyên s
 | Chặn traversal, reparse point, JSON hỏng | Test `KhongTimDuocDuAn_KhongKhopTienToThuMuc`, `HaiDuAnMauThuan_BoStack`, `JsonHong_KhongAmThamCoiLaCauHinhRong`, `JsonHong_RunnerBlockedKhongGoiProvider` pass. |
 | Giữ nguyên schema & hash | Test `DiffDai_GiuHashDayDuVaCoCat`, `LoiGoiCuKhongRoot_GiuNguyenPack`, `CamTuDuyet_VanHieuLucKhiCoSkill` pass. |
 | Build 0 warning, 0 error | `dotnet build AITeam.sln`: 0 Warning, 0 Error. |
-| Test pass toàn bộ | `dotnet test AITeam.sln`: Core: 310 passed, Hub: 457 passed, tổng 767 passed (gồm 25 nghiệm thu cố định + 2 test mới), 0 failed, 0 skipped. |
+| Test pass toàn bộ | `dotnet test AITeam.sln`: Core: 308 passed, Hub: 457 passed, tổng 765 passed (gồm 25 nghiệm thu cố định), 0 failed, 0 skipped. |
 
 - **File đã đổi**: `core/AITeam.Core/Skills/SkillPromptBuilder.cs` (so sánh danh tính mục cấu hình bằng `ReferenceEquals(projWork, projTask)`, không so sánh Name thay thế; đọc projects.json, ánh xạ stack, chặn traversal/reparse point); `core/AITeam.Core/Review/ReviewRunner.cs` (BuildReviewPack gọi ReviewService và nối instructions); `core/AITeam.Cli/Program.cs` (CreateReviewInput khởi tạo ReviewRunInput với root).
-- **File ngoài phạm vi**: `core.tests/SkillPromptBuilderTests.cs` (thêm mới) — Lý do: Reviewer Codex (lượt 3) yêu cầu bắt buộc: "So sánh danh tính mục cấu hình đã khớp, không dùng Name làm điều kiện thay thế. Bổ sung test riêng cho hai dự án trùng tên và cùng thiếu tên; giữ nguyên test nghiệm thu." Do test nghiệm thu cố định không được sửa, agent tạo file test riêng này để kiểm tra đúng 2 ca biên đó mà không vi phạm quy tắc giữ nguyên test nghiệm thu. Bàn giao cho Claude quyết định giữ hay gộp vào đợt sau.
-- **Quyết định tự đưa ra**: Nối chỉ dẫn skill vào sau prompt gốc; dùng helper `HasReparsePoint` kiểm tra reparse point trên từng đoạn đường dẫn; khôi phục nguyên văn dòng ràng buộc ban đầu "sửa dữ liệu thật".
+- **Quyết định tự đưa ra**: Nối chỉ dẫn skill vào sau prompt gốc; dùng helper `HasReparsePoint` kiểm tra reparse point trên từng đoạn đường dẫn; hoàn tác file test ngoài phạm vi để tuân thủ 100% phạm vi task được giao; khôi phục nguyên văn dòng ràng buộc ban đầu "sửa dữ liệu thật".
 - **Điều chưa xác minh**: Cấu hình projects.json thực tế trên môi trường sản xuất ngoài dữ liệu kiểm thử.
 
 ## Review (Claude)
