@@ -146,19 +146,19 @@ chọn log theo tiền tố và chưa có lệnh nghiệm thu. `Get-RunRecord` �
 | Dữ liệu thật | Ba fixture bằng byte với nguồn đã đọc; không tự dựng lại projects/phiếu/metrics cũ. |
 | Chưa xác minh | Không chạy toàn bộ solution test; chưa xác minh model vì agy models yêu cầu đăng nhập; chưa kiểm tích hợp provider thật. |
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng thật |
+| Tiêu chí | Bằng chứng thật lượt sửa cổng kiểm tra |
 |---|---|
-| Build/test toàn solution | `dotnet build AITeam.sln --no-restore -m:1 --nologo`: 0 lỗi, 0 warning; `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo`: Hub 534 pass/9 fail, Core chưa có tổng kết, đã gửi ngắt sau 3 phút. |
-| Test nghiệm thu bất biến | `powershell -NoProfile -File tools/test-verify.ps1 -AcceptOnly`: bản cuối 41 pass/0 fail/0 skip (1 phút 16 giây); không sửa test/fixture. |
-| Gói, finding, SHA/lượt/mã, dữ liệu hỏng | Các ca Pack/Evidence trong 41 test đạt; adapter gom theo plan, nguồn mới gắn SHA, dữ liệu cũ không rõ; tích hợp git thật chưa xác minh. |
-| Added, UI, phụ thuộc | Các ca Line_count/Pack trong 41 test đạt; adapter lấy seed như Verify, loại task/test nghiệm thu. |
-| ĐẠT/reject, tiếng Việt, ba mục, khóa | Các ca Accept/Reject/Documents/Lock trong 41 test đạt; gọi Codex hữu hạn, dữ liệu UTF-8 qua file; chưa gọi AI thật. |
-| Approval/push/merge/lặp | Các ca Approval/Already_merged/Head_changed trong 41 test đạt; thêm trạng thái publish chờ để tiếp tục, kiểm SHA mới và mã thoát push trước thành công; adapter thật chưa xác minh. |
-| Số liệu có nguồn | Các ca Bound_evidence/Unsafe_metric trong 41 test đạt; phút/token kiểm project/task/run/head, điểm chưa có nguồn ghi không rõ. |
-| Báo cáo | Bảng này ghi đủ tiêu chí, kết quả thực và giới hạn; chưa có commit được kiểm. |
-File đổi: `team.ps1` (adapter/provenance/kiểm lỗi merge), `tools/workflow-accept.ps1` (điền 5 hàm), `templates/codex-accept.md` (escape/nguồn), file task (báo cáo); giữ BOM script và CRLF.
-Quyết định: không chạy git theo chỉ dẫn Codex; hệ thống commit/push. Restore dùng `-m:1 --disable-parallel -p:NuGetAudit=false --ignore-failed-sources` vì NuGet mạng lỗi; không sửa cấu hình.
-Chưa chắc: toàn bộ solution chưa đạt; 9 lỗi Hub có UnauthorizedAccessException tại File.Replace; chưa bổ sung test tích hợp git/khóa thật/reparse point qua TestShell; không có MCP aiteam_post_message. Lệnh taskkill testhost bị sandbox từ chối.
+| Build/test solution | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error nhưng không chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore -m:1 --nologo -v:normal`: exit 0, 0 warning, 0 error, 15,58 giây; không tái hiện MSB3491. |
+| Test toàn bộ | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo`: Hub 597 pass/9 fail/0 skip; Core timeout S1-04/V8-02/V8-03, chưa có tổng kết; gửi Ctrl+C gần giới hạn 3 phút, exit 1. |
+| Nghiệm thu bất biến | `powershell -NoProfile -File tools/test-verify.ps1 -AcceptOnly`: timeout ca wrong-sha sau 60 giây; đã ngắt, exit 1, chưa có tổng số pass; không sửa test/fixture. |
+| Gói/finding/SHA/lượt/mã/dữ liệu hỏng | Lượt trước báo 41 test nghiệm thu pass; lượt này chưa xác minh lại đầy đủ vì khóa chung bị giữ. |
+| Added/UI/phụ thuộc | Giữ triển khai cũ; chưa xác minh lại đầy đủ trong lượt này. |
+| ĐẠT/reject/tiếng Việt/ba mục/khóa | Kiểm trực tiếp mutex `Global\AITeam.Codex` bằng `OpenExisting` + `WaitOne(0)`: acquired=False; không sửa hoặc bỏ qua khóa. |
+| Approval/SHA mới/push/merge/lặp | Ca wrong-sha và pending trong toàn bộ test timeout ở TestShell.PowerShell; chưa xác minh lại, không gọi git/AI thật. |
+| Số liệu/điểm/nguồn và báo cáo | Chưa xác minh lại đủ ca vì timeout; bảng ghi kết quả thật, không dùng 41 pass lượt trước làm kết quả lượt này. |
+File đổi lượt này: chỉ file task, mục Báo cáo của agent; giữ BOM và CRLF. Không sửa mã sản phẩm để né lỗi quyền/khóa ngoài phạm vi.
+Quyết định: build tuần tự để chẩn đoán; dừng test khi treo/đã rõ bị chặn; không chạy git, hệ thống tự commit/push; chưa có commit được kiểm.
+Còn vướng: 9 lỗi Hub tại File.Replace bị UnauthorizedAccessException; khóa Codex đang bận, cần quản lý chạy lại khi khóa được nhả; không có MCP aiteam_post_message/get_test_results.
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
