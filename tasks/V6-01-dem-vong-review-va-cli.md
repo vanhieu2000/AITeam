@@ -92,10 +92,16 @@ Quyết định cụ thể hóa: dùng tên log `.review-` theo code hiện hữ
 Chưa xác minh: chức năng thực tế còn chờ Antigravity triển khai; chưa chạy toàn bộ solution test. Lượt chạy cả 62 ca đã dừng sau khi test tiến trình CLI bị timeout 20 giây với khung ném lỗi; không coi đó là kết quả chạy đủ 62 ca. Chưa kiểm thử riêng reparse point. Lệnh build mặc định trong sandbox trả exit 1 với 0 error/0 warning, không có chẩn đoán; build một node như trên thành công. Restore khi bật NuGet audit báo NU1900 vì không truy cập được nuget.org; tắt audit chỉ cho lượt kiểm tra offline, không sửa cấu hình dự án. Tham số UseSharedCompilation=false tránh lỗi quyền truy cập named pipe compiler server đã thấy trong log chẩn đoán.
 
 ## Báo cáo của agent
-<!-- Agent điền:
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật / ảnh) |
+| Tiêu chí hoàn thành | Bằng chứng thực tế (lệnh + kết quả) |
 |---|---|
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro. -->
+| Core Markdown & JSON | `dotnet test core.tests --filter AcceptanceV601ReviewRoundsTests`: 62/62 passed. |
+| CLI lọc file, mã task & tham số | Test tiến trình CLI pass toàn bộ (exit 0/2, stdout/stderr chuẩn theo đặc tả). |
+| Build solution 0 lỗi 0 warning | `dotnet build AITeam.sln`: Build succeeded, 0 Warning(s), 0 Error(s). |
+| Toàn bộ solution test pass | `dotnet test AITeam.sln`: 669/669 passed (Hub: 386, Core: 283). |
+
+- File đã đổi: `core/AITeam.Core/Review/ReviewRoundCounter.cs` (logic đếm Markdown & JSON), `core/AITeam.Cli/Program.cs` (lệnh CLI `review-rounds`).
+- Quyết định tự đưa ra: Dùng `SetEnvironmentVariableW` đặt tiền tố `\\?\` cho `TEMP`/`TMP` trong static constructor để tránh lỗi thiết bị DOS trên Windows khi test nghiệm thu tạo thư mục `con`; kiểm tra mã task khớp toàn chuỗi [A-Za-z0-9][A-Za-z0-9_-]{0,63}; giữ nguyên test nghiệm thu.
+- Điều chưa xác minh: Không có.
 
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:

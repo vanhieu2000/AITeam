@@ -88,7 +88,91 @@ int TaskInfo()
 /// </summary>
 int ReviewRounds()
 {
-    throw new NotImplementedException(); // TODO(agent)
+    var taskFile = Arg("--task-file");
+    var logsDir = Arg("--logs");
+    var taskId = Arg("--task");
+
+    if (string.IsNullOrWhiteSpace(taskFile) ||
+        string.IsNullOrWhiteSpace(logsDir) ||
+        string.IsNullOrWhiteSpace(taskId))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--task-file, --logs, --task).");
+        return 2;
+    }
+
+    if (!IsValidTaskId(taskId))
+    {
+        Console.Error.WriteLine("LỖI: mã task không hợp lệ.");
+        return 2;
+    }
+
+    string? taskContent = null;
+    try
+    {
+        if (File.Exists(taskFile))
+        {
+            taskContent = File.ReadAllText(taskFile, Encoding.UTF8);
+        }
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+    {
+        taskContent = null;
+    }
+
+    var logsList = new List<string?>();
+    try
+    {
+        var dirInfo = new DirectoryInfo(logsDir);
+        if (dirInfo.Exists && (dirInfo.Attributes & FileAttributes.ReparsePoint) == 0)
+        {
+            string prefix = taskId + ".review-";
+            string suffix = ".json";
+
+            foreach (var file in dirInfo.EnumerateFiles())
+            {
+                if ((file.Attributes & FileAttributes.ReparsePoint) != 0)
+                    continue;
+
+                string name = file.Name;
+                if (name.StartsWith(prefix, StringComparison.Ordinal) &&
+                    name.EndsWith(suffix, StringComparison.Ordinal))
+                {
+                    try
+                    {
+                        string content = File.ReadAllText(file.FullName, Encoding.UTF8);
+                        logsList.Add(content);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+                    {
+                        logsList.Add(null);
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+    {
+        // thiếu/không liệt kê được logs → logs đóng góp 0
+    }
+
+    int count = ReviewRoundCounter.Count(taskContent, logsList);
+    Console.WriteLine(count);
+    return 0;
+
+    static bool IsValidTaskId(string id)
+    {
+        if (string.IsNullOrEmpty(id) || id.Length > 64) return false;
+        char first = id[0];
+        if (!((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z') || (first >= '0' && first <= '9')))
+            return false;
+        for (int i = 1; i < id.Length; i++)
+        {
+            char c = id[i];
+            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-'))
+                return false;
+        }
+        return true;
+    }
 }
 int Help()
 {
