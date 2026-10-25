@@ -130,7 +130,14 @@ Chưa xác minh toàn solution xanh: 7 lỗi quyền File.Replace ở cấu hìn
 ## Review (Claude)
 <!-- Claude điền sau cổng kiểm tra. -->
 
+### Vòng 3 — ĐẠT (Claude)
+- Cổng KT lượt 7: toàn bộ test đạt (V8-04 chạy lại 2 test chập chờn S1-04/V8-02); mục 'ngoài phạm vi' `hub.tests/W106WorkProgressReviewTests.cs` là test quản lý yêu cầu thêm ⇒ CHẤP NHẬN.
+- QC lượt 1–2 (4 required) đã sửa: reparse + UTF-8/JSON/1MB cho projects.json/team.json/team.local.json trước dịch vụ cấu hình; plans là file ⇒ IOException; snapshot sao chép Areas. Claude kiểm dòng 72–81, 200 + 47/47 test W1-06.
+- QC lượt 3 không chạy được (Codex hết hạn mức tới 04:14) ⇒ quản lý nghiệm thu trực tiếp.
+
 ## Kết quả
+- Có dịch vụ gom yêu cầu + task + bước hiện tại theo dự án cho trang Việc (`hub/Services/WorkProgressService.cs`), chỉ đọc, chặn liên kết / cấu hình hỏng.
+- Kiểm chứng: test nghiệm thu + test bổ sung W1-06, toàn bộ test.
 <!-- Claude điền khi review đạt. -->
 
 ## Đánh giá quy trình
