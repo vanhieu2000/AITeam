@@ -43,8 +43,9 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V8-01 Thử lại lỗi máy và ghi nhật ký](V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md) | A | `agent-a/V8-01-thu-lai-loi-may-va-ghi-nhat-ky` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 12:29 25/10/2026 |
 | [H7-01 Dịch vụ Map và lưu nguyên tử](H7-01-dich-vu-map-va-luu-nguyen-tu.md) | A | `agent-a/H7-01-dich-vu-map-va-luu-nguyen-tu` | ⬜ Chưa giao |
 | [H7-03 Lõi chat Văn phòng và chuyển hướng](H7-03-loi-chat-van-phong-va-chuyen-huong.md) | B | `agent-b/H7-03-loi-chat-van-phong-va-chuyen-huong` | ⬜ Chưa giao |
-| [S1-01 Skill tiếp nhận đến duyệt kế hoạch](S1-01-skill-tiep-nhan-den-duyet-ke-hoach.md) | B | `agent-b/S1-01-skill-tiep-nhan-den-duyet-ke-hoach` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 12:43 25/10/2026 |
-| [S1-05 Nối skill vào review độc lập](S1-05-noi-skill-vao-review-doc-lap.md) | B | `agent-b/S1-05-noi-skill-vao-review-doc-lap` | ⬜ Chưa giao |
+| [S1-01 Skill tiếp nhận đến duyệt kế hoạch](S1-01-skill-tiep-nhan-den-duyet-ke-hoach.md) | B | `agent-b/S1-01-skill-tiep-nhan-den-duyet-ke-hoach` | 🔵 Chờ review · cổng KT ĐẠT · AI review BLOCKED (Claude review) |
+| [S1-05 Nối skill vào review độc lập](S1-05-noi-skill-vao-review-doc-lap.md) | B | `agent-b/S1-05-noi-skill-vao-review-doc-lap` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 13:01 25/10/2026 |
+| [S1-02 Skill chuẩn bị đến publish](S1-02-skill-chuan-bi-den-publish.md) | B | `agent-b/S1-02-skill-chuan-bi-den-publish` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 12:55 25/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 

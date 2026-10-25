@@ -10,6 +10,7 @@
   .\team.ps1 add-project -Project Ten -New                   Tạo dự án mới (thư mục + git + kho private)
   .\team.ps1 new-task -Project Ten -Task T-003 -Title "..." -Agent B
   .\team.ps1 plan -Request R-006 [-Project Ten] [-Name V6]   Quy trình v4: Codex (CHỈ ĐỌC) đọc plans\R-006\brief.md + repo ⇒ plans\R-006\plan.md
+  .\team.ps1 deputy [-Force] | deputy-on | deputy-off       Codex QUẢN LÝ PHỤ chạy 1 vòng khi Claude vắng > 20 phút (QUAN-LY-PHU.md; không merge) · bật / tắt lịch 30 phút
   .\team.ps1 prep -Request R-006 -Task V6-01 [-NoLaunch]     Quy trình v4: Codex viết file task + khung + test nghiệm thu ⇒ giao Antigravity (Codex QC sau cổng KT)
   .\team.ps1 assign -Project Ten -Task T-003 [-Resume] [-Feedback "..."] [-NoVerify] [-Force]
   .\team.ps1 assign -Project Ten -Task T-003 -Dev codex   Giao cho Codex viết code (mặc định agy; agy hết hạn mức tự chuyển Codex, -Dev agy để tắt)
@@ -1935,12 +1936,78 @@ function Invoke-Metrics {
     }
 }
 
+# ===== Quản lý phụ tự động (chủ dự án 25/10): Claude vắng (không chạy team.ps1 > 20 phút) ⇒ Codex điều phối 1 vòng theo QUAN-LY-PHU.md.
+# Chốt cuối (nghiệm thu ĐẠT + merge + push main) LUÔN là Claude — Codex chỉ ghi "Đề xuất nghiệm thu".
+$DeputyIdleMinutes = 20
+function Update-ManagerHeartbeat {
+    if ($env:AITEAM_ACTOR -eq "deputy" -or $Command -in @("deputy", "help")) { return }
+    try {
+        $f = Join-Path $Root ".state\claude-heartbeat"
+        New-Item -ItemType Directory -Force (Split-Path $f) | Out-Null
+        [IO.File]::WriteAllText($f, (Get-Date -Format o))
+    } catch { }
+}
+
+function Invoke-Deputy {
+    $hb = Join-Path $Root ".state\claude-heartbeat"
+    $lock = Join-Path $Root ".state\deputy.lock"
+    $idle = if (Test-Path $hb) { ((Get-Date) - (Get-Item $hb).LastWriteTime).TotalMinutes } else { 999 }
+    if ($idle -lt $DeputyIdleMinutes -and -not $Force) { Say "Claude vừa hoạt động $([int]$idle) phút trước ⇒ quản lý phụ nghỉ."; return }
+    if ((Test-Path $lock) -and ((Get-Date) - (Get-Item $lock).LastWriteTime).TotalMinutes -lt 90) { Say "Quản lý phụ đang chạy (khóa $lock)."; return }
+    New-Item -ItemType Directory -Force (Split-Path $lock) | Out-Null
+    [IO.File]::WriteAllText($lock, (Get-Date -Format o))
+    try {
+        $codexCmd = (Get-Command codex.cmd -ErrorAction SilentlyContinue).Source
+        if (-not $codexCmd) { Say "Không thấy codex.cmd ⇒ bỏ qua." Yellow; return }
+        $stamp = Get-Date -Format "yyyyMMdd-HHmm"
+        $pf = Join-Path $Root ".state\deputy-$stamp.prompt.md"
+        $log = Join-Path $Root ".state\deputy-$stamp.log"
+        $deputyText = @"
+Bạn là Codex QUẢN LÝ PHỤ của team AITeam (Claude đang vắng). Thư mục: $Root. Đọc QUAN-LY-PHU.md rồi làm MỘT vòng điều phối:
+- kiểm tra việc đang dở (bảng việc tasks/README.md, logs ở $((Resolve-Project 'AITeam').Logs)), chạy các lệnh .\team.ps1 cần thiết (plan / prep / assign / verify / qc) theo đúng thứ tự ưu tiên trong sổ tay;
+- task nào cổng KT ĐẠT + QC PASS ⇒ viết "Đề xuất nghiệm thu" lên nhánh và thêm vào mục "Chờ Claude chốt".
+TUYỆT ĐỐI KHÔNG: chạy .\team.ps1 merge; push commit code lên main; force-push; xóa nhánh / dữ liệu; tải phần mềm; đưa bí mật vào file.
+Chỉ được commit + push lên main các file: plans/**, requests/**, tasks/README.md, QUAN-LY-PHU.md.
+Không có việc cần làm ⇒ dừng ngay, không đọc thêm. Lệnh chạy lâu (assign / prep) chạy nền bằng Start-Process rồi kết thúc vòng — vòng sau (30 phút) xem tiếp.
+Cuối vòng: cập nhật mục "Việc đang dở" + thêm 1 dòng có giờ vào mục "Nhật ký quản lý phụ" cuối QUAN-LY-PHU.md (tạo mục nếu chưa có), commit + push. Trả lời ≤ 10 dòng.
+"@
+        [IO.File]::WriteAllText($pf, $deputyText, $Utf8)
+        Say "[$(Get-Date -Format HH:mm)] Claude vắng $([int]$idle) phút ⇒ Codex quản lý phụ chạy 1 vòng (log $log)." Cyan
+        $env:AITEAM_ACTOR = "deputy"
+        # Model ghi đè theo lần gọi (KHÔNG sửa ~/.codex/config.toml): model mặc định trong config của máy không dùng được với tài khoản ChatGPT.
+        Start-Process $codexCmd -ArgumentList "exec", "-m", "gpt-6.1-sol", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "`"$Root`"", "-" `
+            -WorkingDirectory $Root -NoNewWindow -Wait -RedirectStandardInput $pf -RedirectStandardOutput $log -RedirectStandardError "$log.err" | Out-Null
+        Get-Content $log -Tail 12 -ErrorAction SilentlyContinue | ForEach-Object { Say "  $_" }
+    }
+    finally { Remove-Item $lock -Force -ErrorAction SilentlyContinue; $env:AITEAM_ACTOR = $null }
+}
+
+# Bật / tắt lịch Windows chạy deputy mỗi 30 phút (chỉ khi chủ dự án đang đăng nhập — cần đăng nhập Antigravity / Codex của user).
+function Invoke-DeputySchedule([bool]$on) {
+    $taskName = "AITeam-QuanLyPhu"
+    if ($on) {
+        # Không lồng dấu " (PowerShell 5.1 làm hỏng tham số có ngoặc kép khi gọi exe) — đường dẫn AITeam không có khoảng trắng.
+        $act = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $(Join-Path $Root 'team.ps1') deputy"
+        schtasks /Create /F /SC MINUTE /MO 30 /TN $taskName /TR $act /IT | Out-Null
+        if ($LASTEXITCODE -eq 0) { Say "Đã bật lịch $taskName (30 phút / lần, khi đang đăng nhập). Tắt: .\team.ps1 deputy-off" Green } else { Say "Không tạo được lịch $taskName (mã $LASTEXITCODE)." Red }
+    } else {
+        schtasks /Delete /F /TN $taskName 2>&1 | Out-Null
+        Say "Đã tắt lịch $taskName." Yellow
+    }
+    $global:LASTEXITCODE = 0
+}
+
+Update-ManagerHeartbeat
+
 switch ($Command) {
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
     "ask" { Invoke-Ask }
     "plan" { Invoke-Plan }
     "prep" { Invoke-Prep }
     "qc" { Invoke-Qc }
+    "deputy" { Invoke-Deputy }
+    "deputy-on" { Invoke-DeputySchedule $true }
+    "deputy-off" { Invoke-DeputySchedule $false }
     "models" { Invoke-Models }
     "install-hooks" { Invoke-InstallHooks }
     "secret-set" { Invoke-SecretSet }
