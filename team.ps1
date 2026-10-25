@@ -567,6 +567,18 @@ function Test-AgentTouchedMain($r, [string]$work, [string]$mainBefore) {
 function Set-McpConfig($r, [string]$work, $taskFile, [string]$agentId) {
     $exe = Get-AITeamExe
     if (-not $exe) { Say "Không build được aiteam.exe ⇒ agent chạy không có MCP (không báo tiến độ lên Văn phòng)." Yellow; return $false }
+    # Máy chủ MCP chạy suốt phiên agent ⇒ nếu chạy thẳng từ bin\Release thì KHÓA file, không build lại aiteam được
+    # (25/10: QC V8-01 kẹt vì MCP của H7-01). Chép bin ra bản riêng theo thời điểm build, MCP chạy từ bản chép.
+    try {
+        $binDir = Split-Path $exe
+        $stampBin = (Get-Item $exe).LastWriteTimeUtc.ToString("yyyyMMddHHmmss")
+        $shadow = Join-Path $Root ".state\aiteam-mcp\$stampBin"
+        if (-not (Test-Path (Join-Path $shadow "aiteam.exe"))) {
+            New-Item -ItemType Directory -Force $shadow | Out-Null
+            Copy-Item (Join-Path $binDir "*") $shadow -Recurse -Force -ErrorAction Stop
+        }
+        $exe = Join-Path $shadow "aiteam.exe"
+    } catch { Say "Không chép được aiteam cho MCP ($($_.Exception.Message)) ⇒ dùng bản gốc." Yellow }
     $taskInWork = Join-Path (Join-Path $work "tasks") $taskFile.Name
     $cfg = [ordered]@{ mcpServers = [ordered]@{ aiteam = [ordered]@{
         command = $exe
