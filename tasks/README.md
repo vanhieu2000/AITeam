@@ -46,7 +46,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [S1-01 Skill tiếp nhận đến duyệt kế hoạch](S1-01-skill-tiep-nhan-den-duyet-ke-hoach.md) | B | `agent-b/S1-01-skill-tiep-nhan-den-duyet-ke-hoach` | ✅ Đã merge (vòng 1) |
 | [S1-05 Nối skill vào review độc lập](S1-05-noi-skill-vao-review-doc-lap.md) | B | `agent-b/S1-05-noi-skill-vao-review-doc-lap` | 🔴 Cần sửa · cổng KT KHÔNG ĐẠT |
 | [S1-02 Skill chuẩn bị đến publish](S1-02-skill-chuan-bi-den-publish.md) | B | `agent-b/S1-02-skill-chuan-bi-den-publish` | ✅ Đã merge (vòng 1) |
-| [S1-03 Bốn skill code theo stack](S1-03-bon-skill-code-theo-stack.md) | A | `agent-a/S1-03-bon-skill-code-theo-stack` | 🔵 Chờ review · cổng KT ĐẠT · AI review BLOCKED (Claude review) |
+| [S1-03 Bốn skill code theo stack](S1-03-bon-skill-code-theo-stack.md) | A | `agent-a/S1-03-bon-skill-code-theo-stack` | ✅ Đã merge (vòng 1) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
