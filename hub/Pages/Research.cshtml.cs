@@ -93,7 +93,7 @@ public class ResearchModel : PageModel
         try
         {
             var entry = _research.SaveManual(r, questionId, ai, question, answer, sources);
-            var aiName = AITeam.Core.Accounts.AiCatalog.Find(entry.Ai)?.Name ?? entry.Ai;
+            var aiName = AITeam.Core.Research.ResearchAis.NameOf(entry.Ai);
             Notice = $"Đã lưu câu trả lời {aiName}.";
         }
         catch (ArgumentException ex)

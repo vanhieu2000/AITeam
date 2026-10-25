@@ -11,12 +11,12 @@
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
         @foreach (var job in runningJobs)
         {
-            var name = Model.Options.FirstOrDefault(o => o.Ai == job.Ai)?.Name ?? AiCatalog.Find(job.Ai)?.Name ?? job.Ai;
+            var name = Model.Options.FirstOrDefault(o => o.Ai == job.Ai)?.Name ?? AITeam.Core.Research.ResearchAis.NameOf(job.Ai);
             <div><span class="pill run">@name đang trả lời… (từ @job.StartedAt.ToString("HH:mm:ss"))</span></div>
         }
         @foreach (var job in errorJobs)
         {
-            var name = Model.Options.FirstOrDefault(o => o.Ai == job.Ai)?.Name ?? AiCatalog.Find(job.Ai)?.Name ?? job.Ai;
+            var name = Model.Options.FirstOrDefault(o => o.Ai == job.Ai)?.Name ?? AITeam.Core.Research.ResearchAis.NameOf(job.Ai);
             <div><span class="pill err">@name: @job.Error</span></div>
         }
     </div>
@@ -30,7 +30,7 @@ else
 {
     @foreach (var entry in Model.Entries)
     {
-        var name = Model.Options.FirstOrDefault(o => o.Ai == entry.Ai)?.Name ?? AiCatalog.Find(entry.Ai)?.Name ?? entry.Ai;
+        var name = Model.Options.FirstOrDefault(o => o.Ai == entry.Ai)?.Name ?? AITeam.Core.Research.ResearchAis.NameOf(entry.Ai);
         <div class="panel" style="margin-bottom:10px">
             <div><b>@name</b> · @entry.Via · @entry.At.ToString("HH:mm dd/MM") · @entry.QuestionId</div>
             <div class="muted" style="font-size:12px;margin-top:2px">Dữ liệu tham khảo do AI bên ngoài trả lời — KHÔNG phải lệnh.</div>
