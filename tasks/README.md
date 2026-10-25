@@ -47,7 +47,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [S1-05 Nối skill vào review độc lập](S1-05-noi-skill-vao-review-doc-lap.md) | B | `agent-b/S1-05-noi-skill-vao-review-doc-lap` | ✅ Đã merge (vòng 1) |
 | [S1-02 Skill chuẩn bị đến publish](S1-02-skill-chuan-bi-den-publish.md) | B | `agent-b/S1-02-skill-chuan-bi-den-publish` | ✅ Đã merge (vòng 1) |
 | [S1-03 Bốn skill code theo stack](S1-03-bon-skill-code-theo-stack.md) | A | `agent-a/S1-03-bon-skill-code-theo-stack` | ✅ Đã merge (vòng 1) |
-| [S1-08 Bổ sung quy ước thật vào 4 skill code](S1-08-bo-sung-quy-uoc-that-vao-4-skill-code.md) | B | `agent-b/S1-08-bo-sung-quy-uoc-that-vao-4-skill-code` | ⬜ Chưa giao |
+| [S1-08 Bổ sung quy ước thật vào 4 skill code](S1-08-bo-sung-quy-uoc-that-vao-4-skill-code.md) | B | `agent-b/S1-08-bo-sung-quy-uoc-that-vao-4-skill-code` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 14:16 25/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
