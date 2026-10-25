@@ -40,23 +40,82 @@ public class ResearchModel : PageModel
 
     /// <summary>Nạp Requests (GetAll), Current theo r, Options, Jobs / Entries của Current. Lỗi ⇒ Error (danh sách rỗng).</summary>
     public void OnGet(string? r)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        try
+        {
+            Requests = _requests.GetAll();
+            Current = (!string.IsNullOrEmpty(r) ? Requests.FirstOrDefault(x => string.Equals(x.Id, r, StringComparison.OrdinalIgnoreCase)) : null)
+                ?? Requests.FirstOrDefault();
+            Options = _research.Options();
+            Jobs = Current != null ? _research.Jobs(Current.Id) : Array.Empty<ResearchJob>();
+            Entries = Current != null ? _research.Entries(Current.Id) : Array.Empty<ResearchEntry>();
+        }
+        catch (Exception ex)
+        {
+            Current = null;
+            Requests = Array.Empty<RequestThread>();
+            Options = Array.Empty<ResearchAiOption>();
+            Jobs = Array.Empty<ResearchJob>();
+            Entries = Array.Empty<ResearchEntry>();
+            Error ??= "Không đọc được dữ liệu phòng nghiên cứu: " + ex.Message;
+        }
+    }
 
     /// <summary>
     /// POST ?handler=Ask (antiforgery): _research.Ask(r, question, ai, includeRequestText) ⇒ Asked, AskedQuestion = question;
     /// ArgumentException ⇒ Error = ex.Message. Luôn nạp lại như OnGet(r) (KHÔNG ghi đè Error đã có) rồi trả Page().
     /// </summary>
     public IActionResult OnPostAsk(string? r, string? question, string[]? ai, bool includeRequestText)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        try
+        {
+            Asked = _research.Ask(r, question, ai, includeRequestText);
+            AskedQuestion = question;
+        }
+        catch (ArgumentException ex)
+        {
+            Error = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Error = "Không đọc được dữ liệu phòng nghiên cứu: " + ex.Message;
+        }
+        OnGet(r);
+        return Page();
+    }
 
     /// <summary>
     /// POST ?handler=SaveManual (antiforgery): _research.SaveManual(r, questionId, ai, question, answer, sources) ⇒ Notice "Đã lưu câu trả lời {AiName}.";
     /// ArgumentException ⇒ Error = ex.Message. Luôn nạp lại như OnGet(r) rồi trả Page().
     /// </summary>
     public IActionResult OnPostSaveManual(string? r, string? questionId, string? ai, string? question, string? answer, string? sources)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        try
+        {
+            var entry = _research.SaveManual(r, questionId, ai, question, answer, sources);
+            var aiName = AITeam.Core.Accounts.AiCatalog.Find(entry.Ai)?.Name ?? entry.Ai;
+            Notice = $"Đã lưu câu trả lời {aiName}.";
+        }
+        catch (ArgumentException ex)
+        {
+            Error = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Error = "Không đọc được dữ liệu phòng nghiên cứu: " + ex.Message;
+        }
+        OnGet(r);
+        return Page();
+    }
 
     /// <summary>HTMX GET ?handler=Results&amp;r=… mỗi 5 giây: nạp như OnGet(r) rồi PartialViewResult "_ResearchResults" (model = trang này, dựng tay ViewDataDictionary như OfficeModel).</summary>
     public IActionResult OnGetResults(string? r)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        OnGet(r);
+        return new PartialViewResult
+        {
+            ViewName = "_ResearchResults",
+            ViewData = new ViewDataDictionary<ResearchModel>(new EmptyModelMetadataProvider(), ModelState) { Model = this },
+        };
+    }
 }

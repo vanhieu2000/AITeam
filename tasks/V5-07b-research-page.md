@@ -1,4 +1,4 @@
-# V5-07b · Hub: Phòng nghiên cứu — hỏi ChatGPT / Gemini ngay trên web, câu trả lời tự về
+﻿# V5-07b · Hub: Phòng nghiên cứu — hỏi ChatGPT / Gemini ngay trên web, câu trả lời tự về
 
 - **Agent:** B
 - **Nhánh:** `agent-b/V5-07b-research-page`
@@ -66,16 +66,18 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C4 + G2; mockup `docs/des
 - `hub.tests/AcceptanceV507ResearchPageTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm mọi ca nghiệm thu V5-07b).
-- [ ] Đúng Bố cục (Claude chạy Hub thật kiểm tra khi review).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm mọi ca nghiệm thu V5-07b).
+- [x] Đúng Bố cục (Claude chạy Hub thật kiểm tra khi review).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
+| `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết | `dotnet build AITeam.sln`: `Build succeeded. 0 Warning(s), 0 Error(s)`. `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m`: `AITeam.Hub.Tests`: Passed 384/384 (17/17 ca `AcceptanceV507ResearchPageTests`), `AITeam.Core.Tests`: Passed 218/218 (tổng 602 pass, 0 fail). |
+| Đúng Bố cục | Đã viết `Research.cshtml` và `Shared/_ResearchResults.cshtml` đúng bố cục, không dùng `Html.Raw`, có `overflow-wrap:anywhere`, pass `Razor_markup_follows_layout` và `Page_renders_and_post_needs_antiforgery`. |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `ResearchService` (`Options`, `Ask`, `SaveManual`, `Jobs`, `Entries`, `RunningCount`, `DefaultConnectors`), `ResearchModel` (`OnGet`, `OnPostAsk`, `OnPostSaveManual`, `OnGetResults`), giao diện `Research.cshtml` và `Shared/_ResearchResults.cshtml`, thêm test phụ `ResearchPageExtraTests.cs`.
+- **File đã đổi:** `hub/Services/ResearchService.cs`, `hub/Pages/Research.cshtml.cs`, `hub/Pages/Research.cshtml`, `hub/Pages/Shared/_ResearchResults.cshtml`, `hub.tests/ResearchPageExtraTests.cs`, `tasks/V5-07b-research-page.md`.
+- **Điều chưa chắc:** Không có (giao diện thực tế chờ Claude chạy Hub thật kiểm tra khi review).
 
 ## Review (Claude)
 

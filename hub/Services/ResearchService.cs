@@ -52,6 +52,8 @@ public sealed class ResearchService : IResearchService
     private readonly Func<string, IResearchConnector?> _connectorFor;
     private readonly Func<DateTime> _now;
     private readonly Action<Func<Task>> _runInBackground;
+    private readonly object _lock = new();
+    private readonly List<ResearchJob> _jobs = new();
 
     /// <param name="connectorFor">ai ⇒ connector tự động (null ⇒ không có). null ⇒ DefaultConnectors(paths).</param>
     /// <param name="runInBackground">chạy việc nền; null ⇒ f => _ = Task.Run(f). Test truyền hàm chạy đồng bộ.</param>
@@ -70,7 +72,17 @@ public sealed class ResearchService : IResearchService
     /// Mỗi ai trong Ais: dòng AiAccountView tương ứng (không có ⇒ bỏ qua); CanAsk = Mode Automatic &amp;&amp; _connectorFor(ai) != null.
     /// </summary>
     public IReadOnlyList<ResearchAiOption> Options()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var map = _accounts.List().ToDictionary(v => v.Service.Id, StringComparer.OrdinalIgnoreCase);
+        var result = new List<ResearchAiOption>(Ais.Length);
+        foreach (var ai in Ais)
+        {
+            if (!map.TryGetValue(ai, out var v)) continue;
+            var canAsk = v.Mode == AiMode.Automatic && _connectorFor(ai) != null;
+            result.Add(new ResearchAiOption(ai, v.Service.Name, v.Mode, v.Status, v.StatusText, canAsk, v.Service.OfficialUrl));
+        }
+        return result;
+    }
 
     /// <summary>
     /// 1. Phiếu: _requests.Get(requestId) null ⇒ ArgumentException("Phiếu không hợp lệ.").
@@ -89,7 +101,91 @@ public sealed class ResearchService : IResearchService
     /// Trả ResearchAskResult(qid, prompt, redacted, outcomes).
     /// </summary>
     public ResearchAskResult Ask(string? requestId, string? question, IReadOnlyList<string>? ais, bool includeRequestText)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var req = string.IsNullOrEmpty(requestId) ? null : _requests.Get(requestId);
+        if (req == null) throw new ArgumentException("Phiếu không hợp lệ.");
+
+        var picked = Ais.Where(a => ais != null && ais.Any(x => string.Equals(x, a, StringComparison.OrdinalIgnoreCase))).ToList();
+        if (picked.Count == 0) throw new ArgumentException("Chọn ít nhất 1 AI.");
+
+        var (prompt, redacted) = ResearchPrompt.Build(req.Id, req.Title, question ?? "", includeRequestText ? req.Verbatim : null);
+        var now = _now();
+        var qid = ResearchStore.NewQuestionId(now);
+        var opts = Options().ToDictionary(o => o.Ai, StringComparer.OrdinalIgnoreCase);
+        var outcomes = new List<ResearchAiOutcome>(picked.Count);
+        var qTrim = question!.Trim();
+
+        foreach (var ai in picked)
+        {
+            if (!opts.TryGetValue(ai, out var opt) || opt.Mode == AiMode.Disabled)
+            {
+                outcomes.Add(new ResearchAiOutcome(ai, "skipped", "Đang tắt — bật ở trang Tài khoản AI"));
+                continue;
+            }
+            if (!opt.CanAsk)
+            {
+                outcomes.Add(new ResearchAiOutcome(ai, "manual", "Copy lời nhắn, dán câu trả lời"));
+                continue;
+            }
+
+            var conn = _connectorFor(ai);
+            if (conn == null)
+            {
+                outcomes.Add(new ResearchAiOutcome(ai, "manual", "Copy lời nhắn, dán câu trả lời"));
+                continue;
+            }
+
+            ResearchJob? startedJob = null;
+            lock (_lock)
+            {
+                if (_jobs.Any(j => j.Ai == ai && j.Running))
+                {
+                    outcomes.Add(new ResearchAiOutcome(ai, "skipped", "Đang hỏi câu trước"));
+                    continue;
+                }
+                var last = _jobs.Where(j => j.Ai == ai).OrderByDescending(j => j.StartedAt).FirstOrDefault();
+                if (last != null && now - last.StartedAt < MinInterval)
+                {
+                    var n = Math.Max(1, (int)Math.Ceiling((MinInterval - (now - last.StartedAt)).TotalSeconds));
+                    outcomes.Add(new ResearchAiOutcome(ai, "skipped", $"Đợi {n} giây nữa"));
+                    continue;
+                }
+                startedJob = new ResearchJob(req.Id, qid, ai, now, true, null, null);
+                _jobs.Add(startedJob);
+                outcomes.Add(new ResearchAiOutcome(ai, "started", "Đang hỏi…"));
+            }
+
+            var jobRef = startedJob;
+            _runInBackground(async () =>
+            {
+                ResearchJob finished;
+                try
+                {
+                    var ans = await conn.AskAsync(prompt, CancellationToken.None);
+                    if (ans.Ok)
+                    {
+                        var entry = _store.Save(req.Id, qid, ai, conn.Via, qTrim, ans.Text, null, _now());
+                        finished = jobRef with { Running = false, FilePath = entry.FilePath, Error = null };
+                    }
+                    else
+                    {
+                        finished = jobRef with { Running = false, Error = string.IsNullOrEmpty(ans.Error) ? "Lỗi không xác định" : ans.Error };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    finished = jobRef with { Running = false, Error = "Lỗi: " + ex.Message };
+                }
+                lock (_lock)
+                {
+                    var idx = _jobs.IndexOf(jobRef);
+                    if (idx >= 0) _jobs[idx] = finished;
+                }
+            });
+        }
+
+        return new ResearchAskResult(qid, prompt, redacted, outcomes);
+    }
 
     /// <summary>
     /// Phiếu không có ⇒ ArgumentException("Phiếu không hợp lệ."); ai không thuộc Ais ⇒ ArgumentException("AI không hợp lệ.");
@@ -98,16 +194,40 @@ public sealed class ResearchService : IResearchService
     /// Lưu: _store.Save(req.Id, questionId, ai.ToLower(), "Thủ công (dán từ web)", question, answer, sources, now()).
     /// </summary>
     public ResearchEntry SaveManual(string? requestId, string? questionId, string? ai, string? question, string? answer, string? sources)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        var req = string.IsNullOrEmpty(requestId) ? null : _requests.Get(requestId);
+        if (req == null) throw new ArgumentException("Phiếu không hợp lệ.");
+
+        var aiKey = (ai ?? "").Trim().ToLowerInvariant();
+        if (!Ais.Contains(aiKey)) throw new ArgumentException("AI không hợp lệ.");
+
+        var ansTrim = (answer ?? "").Trim();
+        if (ansTrim.Length == 0) throw new ArgumentException("Cần nội dung câu trả lời.");
+        if (ansTrim.Length > ResearchStore.MaxAnswer) throw new ArgumentException("Câu trả lời quá dài (tối đa 20000 ký tự).");
+        if (string.IsNullOrWhiteSpace(question)) throw new ArgumentException("Cần nội dung câu hỏi.");
+
+        return _store.Save(req.Id, questionId ?? "", aiKey, "Thủ công (dán từ web)", question, answer!, sources, _now());
+    }
 
     public IReadOnlyList<ResearchJob> Jobs(string? requestId)
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        if (string.IsNullOrEmpty(requestId)) return Array.Empty<ResearchJob>();
+        lock (_lock)
+        {
+            return _jobs
+                .Where(j => string.Equals(j.RequestId, requestId, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(j => j.StartedAt)
+                .ToList();
+        }
+    }
 
     public IReadOnlyList<ResearchEntry> Entries(string? requestId)
-        => throw new NotImplementedException(); // TODO(agent)
+        => _store.List(requestId ?? "");
 
     public int RunningCount()
-        => throw new NotImplementedException(); // TODO(agent)
+    {
+        lock (_lock) return _jobs.Count(j => j.Running);
+    }
 
     /// <summary>
     /// Connector thật:
@@ -116,6 +236,30 @@ public sealed class ResearchService : IResearchService
     ///   "gemini" ⇒ exe = CliProbes.FindOnPath("gemini", PATH) (null ⇒ null) ⇒ new GeminiResearchConnector(exe, new ProcessRunner(), TimeSpan.FromMinutes(5));
     ///   khác ⇒ null. Lỗi đọc cấu hình ⇒ null.
     /// </summary>
-    public static Func<string, IResearchConnector?> DefaultConnectors(HubPaths paths)
-        => throw new NotImplementedException(); // TODO(agent)
+    public static Func<string, IResearchConnector?> DefaultConnectors(HubPaths paths) => ai =>
+    {
+        try
+        {
+            var key = (ai ?? "").ToLowerInvariant();
+            if (key == "chatgpt")
+            {
+                var settings = ProviderSettings.Load(paths.AITeamRoot);
+                var cfg = settings.Providers.FirstOrDefault(p => string.Equals(p.Id, "codex", StringComparison.OrdinalIgnoreCase));
+                if (cfg == null) return null;
+                return new ProviderResearchConnector("chatgpt", "codex CLI (tài khoản ChatGPT)",
+                    settings.Create(cfg, new ProcessRunner()), TimeSpan.FromMinutes(10),
+                    r => new ProviderStateStore(paths.AITeamRoot).Record(r, DateTime.Now));
+            }
+            if (key == "gemini")
+            {
+                var exe = CliProbes.FindOnPath("gemini", Environment.GetEnvironmentVariable("PATH"));
+                return exe == null ? null : new GeminiResearchConnector(exe, new ProcessRunner(), TimeSpan.FromMinutes(5));
+            }
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    };
 }
