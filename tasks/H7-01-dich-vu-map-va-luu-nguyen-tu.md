@@ -22,6 +22,7 @@
 - `hub/Services/WorkflowRolesService.cs`
 - `hub/Services/TeamConfigService.cs`
 - `hub/Program.cs`
+- `hub.tests/H701ExtraTests.cs`
 - `hub/Services/HubPaths.cs`
 - `hub/Services/Contracts.cs`
 - `hub/Models/HubModels.cs`
@@ -38,6 +39,7 @@ Hiện thực IWorkflowRolesService/GetRoles/SaveRoles đúng XML trong khung; �
 - `hub/Services/WorkflowRolesService.cs`
 - `hub/Services/TeamConfigService.cs`
 - `hub/Program.cs`
+- `hub.tests/H701ExtraTests.cs`
 - `tasks/H7-01-dich-vu-map-va-luu-nguyen-tu.md` (chỉ Báo cáo của agent)
 
 ## Không làm
@@ -85,9 +87,9 @@ Chưa xác minh trên máy thật, theo `plans/R-009/brief.md` mục 6. Dữ li�
 | `dotnet build AITeam.sln` 0 lỗi, 0 warning | `dotnet build AITeam.sln`: 0 Warning(s), 0 Error(s) |
 | `dotnet test AITeam.sln` pass tất cả (không sửa/xóa test nghiệm thu) | `dotnet test AITeam.sln`: Core 283/283 pass, Hub 500/500 pass (tổng 783 pass) |
 
-- **File đã đổi:** `hub/Services/WorkflowRolesService.cs` (hiện thực GetRoles/SaveRoles và TeamFileLock), `hub/Services/TeamConfigService.cs` (dùng chung lock và thay file nguyên tử trong SaveSettings), `tasks/H7-01-dich-vu-map-va-luu-nguyen-tu.md` (báo cáo).
-- **Quyết định tự đưa ra:** Dùng lock bộ nhớ theo canonical path cho các instance nội bộ; skip 3 byte BOM UTF-8 trước khi Parse JsonNode để tránh lỗi JsonReaderException.
-- **Điều chưa xác minh:** Chưa chạy thử trong môi trường có symlink/junction thực tế ngoài Windows Temp chuẩn.
+- **File đã đổi:** `hub/Services/WorkflowRolesService.cs` (xử lý workflow type trong SaveRoles, CreateDirectory trong try), `hub/Services/TeamConfigService.cs` (kiểm tra reparse point cho .bak), `hub.tests/H701ExtraTests.cs` (test bổ sung theo yêu cầu Codex), `tasks/H7-01-dich-vu-map-va-luu-nguyen-tu.md` (báo cáo).
+- **Quyết định tự đưa ra:** Ném InvalidDataException khi workflow hiện diện mà sai kiểu; kiểm tra LinkTarget và bit ReparsePoint cho file .bak; đưa CreateDirectory vào khối try chuẩn hóa IOException.
+- **Điều chưa xác minh:** Môi trường không có quyền tạo file symlink (non-admin) sẽ fallback test qua junction thư mục.
 
 ## Review (Claude)
 <!-- Claude điền khi nghiệm thu. -->

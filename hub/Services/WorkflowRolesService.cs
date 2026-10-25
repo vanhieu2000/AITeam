@@ -57,7 +57,7 @@ internal static class TeamFileLock
         {
             var fullPath = Path.GetFullPath(path);
             var fi = new FileInfo(fullPath);
-            if (fi.Exists && (fi.Attributes & FileAttributes.ReparsePoint) != 0)
+            if (fi.LinkTarget != null || (fi.Exists && (fi.Attributes & FileAttributes.ReparsePoint) != 0))
             {
                 return true;
             }
@@ -66,7 +66,7 @@ internal static class TeamFileLock
             while (!string.IsNullOrEmpty(dir))
             {
                 var di = new DirectoryInfo(dir);
-                if (di.Exists && (di.Attributes & FileAttributes.ReparsePoint) != 0)
+                if (di.LinkTarget != null || (di.Exists && (di.Attributes & FileAttributes.ReparsePoint) != 0))
                 {
                     return true;
                 }
@@ -292,8 +292,11 @@ public sealed class WorkflowRolesService(HubPaths paths) : IWorkflowRolesService
             }
 
             JsonObject workflowObj;
-            if (rootObj.TryGetPropertyValue("workflow", out var wfNode) && wfNode is JsonObject wfObj)
+            if (rootObj.ContainsKey("workflow"))
             {
+                var wfNode = rootObj["workflow"];
+                if (wfNode is not JsonObject wfObj)
+                    throw new InvalidDataException("Phân vai không hợp lệ.");
                 workflowObj = wfObj;
             }
             else
@@ -315,14 +318,14 @@ public sealed class WorkflowRolesService(HubPaths paths) : IWorkflowRolesService
             workflowObj["roles"] = rolesArr;
 
             string dir = Path.GetDirectoryName(paths.TeamJson)!;
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-            string tempFile = Path.Combine(dir, $"team.json.tmp.{Guid.NewGuid():N}");
+            string tempFile = Path.Combine(string.IsNullOrEmpty(dir) ? "." : dir, $"team.json.tmp.{Guid.NewGuid():N}");
             byte[] writtenBytes;
 
             try
             {
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
                 string json = rootObj.ToJsonString(JsonOptions);
                 var encoding = new UTF8Encoding(hasBom);
 

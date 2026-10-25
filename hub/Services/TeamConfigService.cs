@@ -257,6 +257,10 @@ public sealed class TeamConfigService : ITeamConfigService
             if (TeamFileLock.HasReparsePoint(_paths.TeamJson))
                 throw new IOException("Không lưu được cấu hình.");
 
+            string bakPath = _paths.TeamJson + ".bak";
+            if (TeamFileLock.HasReparsePoint(bakPath))
+                throw new IOException("Không lưu được cấu hình.");
+
             bool fileExists = File.Exists(_paths.TeamJson);
             bool hasBom = false;
             JsonObject teamNode;
@@ -338,7 +342,7 @@ public sealed class TeamConfigService : ITeamConfigService
 
             if (fileExists)
             {
-                File.Copy(_paths.TeamJson, _paths.TeamJson + ".bak", overwrite: true);
+                File.Copy(_paths.TeamJson, bakPath, overwrite: true);
             }
 
             string tempFile = Path.Combine(dir, $"team.json.tmp.{Guid.NewGuid():N}");
@@ -442,6 +446,12 @@ public sealed class TeamConfigService : ITeamConfigService
 
     private static void WriteWithBackup(string path, JsonNode node)
     {
+        if (TeamFileLock.HasReparsePoint(path))
+            throw new IOException("Không lưu được cấu hình.");
+
+        string bakPath = path + ".bak";
+        if (TeamFileLock.HasReparsePoint(bakPath))
+            throw new IOException("Không lưu được cấu hình.");
         var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
         {
@@ -450,7 +460,7 @@ public sealed class TeamConfigService : ITeamConfigService
 
         if (File.Exists(path))
         {
-            File.Copy(path, path + ".bak", overwrite: true);
+            File.Copy(path, bakPath, overwrite: true);
         }
 
         string json = node.ToJsonString(JsonOptions);
