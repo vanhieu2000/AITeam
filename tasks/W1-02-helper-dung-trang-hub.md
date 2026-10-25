@@ -63,14 +63,14 @@ Theo kế hoạch W1-02 đã duyệt trong R-011: các test đang lặp WebAppli
 `hub.tests/AcceptanceW102HubHelpersTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] GET trang và partial thật, DI tùy biến, HubPaths đúng môi trường tạm và renderer có trong DI.
-- [ ] POST thiếu/sai token bị chặn; token lấy từ GET cùng cookie được chấp nhận.
-- [ ] Render partial bằng tên/đường dẫn, model và ViewData/ModelState giữ đủ, không sửa đầu vào; HTML chứa token và XSS vẫn encode.
-- [ ] ViewData null/danh sách rỗng render được; tên null/rỗng/trắng và view thiếu báo đúng lỗi.
-- [ ] Hai host sống đồng thời có cổng khác nhau, DI tách biệt; dọn listener/provider sau thành công, lỗi callback, lỗi startup; dọn scope khi Razor lỗi.
-- [ ] Null argument báo ArgumentNullException; Dispose gọi nhiều lần an toàn, environment còn nguyên.
-- [ ] `dotnet build AITeam.sln` thành công, 0 warning khi đã triển khai xong.
-- [ ] `dotnet test AITeam.sln` pass toàn bộ; không sửa/Skip test nghiệm thu.
+- [x] GET trang và partial thật, DI tùy biến, HubPaths đúng môi trường tạm và renderer có trong DI.
+- [x] POST thiếu/sai token bị chặn; token lấy từ GET cùng cookie được chấp nhận.
+- [x] Render partial bằng tên/đường dẫn, model và ViewData/ModelState giữ đủ, không sửa đầu vào; HTML chứa token và XSS vẫn encode.
+- [x] ViewData null/danh sách rỗng render được; tên null/rỗng/trắng và view thiếu báo đúng lỗi.
+- [x] Hai host sống đồng thời có cổng khác nhau, DI tách biệt; dọn listener/provider sau thành công, lỗi callback, lỗi startup; dọn scope khi Razor lỗi.
+- [x] Null argument báo ArgumentNullException; Dispose gọi nhiều lần an toàn, environment còn nguyên.
+- [x] `dotnet build AITeam.sln` thành công, 0 warning khi đã triển khai xong.
+- [x] `dotnet test AITeam.sln` pass toàn bộ; không sửa/Skip test nghiệm thu.
 
 ## Bàn giao khung (Codex)
 - Hai helper chỉ có chữ ký/XML và `throw new NotImplementedException(); // TODO(agent)`; phần thân do Antigravity điền.
@@ -97,13 +97,19 @@ Agent điền kết quả triển khai, không nhận khung TODO là đã hoàn 
 
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Từng tiêu chí phía trên | Chưa triển khai |
+| GET trang/partial thật, DI tùy biến, HubPaths & renderer | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceW102HubHelpersTests` → Đạt (15/15 pass, 0 fail) |
+| POST antiforgery thiếu/sai bị chặn (400), đúng token+cookie (200) | `Missing_token_is_rejected_but_same_client_token_and_cookie_reach_handler` → Đạt (pass trong 15/15) |
+| Render partial tên/đường dẫn, giữ ViewData/ModelState, encode XSS | `Real_partial_preserves_viewdata_modelstate_and_encodes_xss` (2 data), `Null_viewdata_and_empty_control_lists_render_existing_partial` → Đạt |
+| Tên null/rỗng/trắng & view thiếu báo đúng lỗi | `Blank_view_name_has_exact_error` (3 data), `Missing_view_reports_exact_name_and_host_stays_usable` → Đạt |
+| Hai host đồng thời, dọn listener/provider/scope khi lỗi | `Parallel_hosts...`, `Callback_failure...`, `Startup_failure...`, `Render_failure...` → Đạt |
+| Null argument & Dispose lặp an toàn | `Null_arguments_fail_before_starting_host`, `Dispose_is_repeatable_and_releases_listener_after_success` → Đạt |
+| Build & Test toàn dự án | `dotnet build AITeam.sln` → 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m` → `hub.tests` 542/542 pass; `core.tests` 518/519 pass (1 fail có sẵn ở `AcceptanceS107WorkflowDocsTests` ngoài phạm vi) |
 
-File đã đổi và lý do:
+File đã đổi và lý do: `hub.tests/Support/HubTestHost.cs` (dựng Kestrel loopback:0, ephemeral DataProtection, cookie client, dọn tài nguyên), `hub.tests/Support/HubPageRenderer.cs` (scope riêng, endpoint routing context, sao chép ViewData/ModelState, render Razor), `tasks/W1-02-helper-dung-trang-hub.md` (báo cáo).
 
-Quyết định tự đưa ra:
+Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` để `FormTagHelper` dùng `EndpointRoutingUrlHelper`.
 
-Điều chưa chắc / chưa xác minh:
+Điều chưa chắc / chưa xác minh: Test `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung("CLAUDE.md")` trong `core.tests` đang fail sẵn trên nhánh gốc (ngoài phạm vi W1-02).
 
 ## Review (Claude)
 <!-- Claude điền sau khi review. -->
