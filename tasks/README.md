@@ -36,7 +36,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V5-06 Tài khoản AI](V5-06-ai-accounts.md) | A | `agent-a/V5-06-ai-accounts` | ✅ Đã merge (vòng 1) |
 | [V5-07a Phòng nghiên cứu (lõi)](V5-07a-research-core.md) | A | `agent-a/V5-07a-research-core` | ✅ Đã merge (vòng 1) |
 | [V5-07b Hub: Phòng nghiên cứu](V5-07b-research-page.md) | B | `agent-b/V5-07b-research-page` | ✅ Đã merge (vòng 1) |
-| [V6-01 Đếm vòng review và CLI](V6-01-dem-vong-review-va-cli.md) | A | `agent-a/V6-01-dem-vong-review-va-cli` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 10:48 25/10/2026 |
+| [V6-01 Đếm vòng review và CLI](V6-01-dem-vong-review-va-cli.md) | A | `agent-a/V6-01-dem-vong-review-va-cli` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 10:59 25/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 

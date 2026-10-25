@@ -761,6 +761,17 @@ function ConvertTo-AsciiSlug([string]$text) {
     if (-not $s) { "task" } else { $s }
 }
 
+# Bước 6 chạy riêng (vd. cổng KT trượt vì test chập chờn ⇒ assign không gọi QC): Codex review nhánh task, ghi bảng việc theo kết luận.
+function Invoke-Qc {
+    $ctx = Get-TaskContext
+    if (-not (Test-Path $ctx.Work)) { throw "Chưa có thư mục làm việc $($ctx.Work)" }
+    $rv = Invoke-AutoReview $ctx.R $ctx.TaskFile.Name $ctx.Work "agy"
+    if (-not $rv) { Say "Review AI bỏ qua (task không bật Review AI?)." Yellow; return }
+    $text = @{ 0 = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS"; 1 = "🔴 Cần sửa · AI review CẦN SỬA"; 3 = "🔵 Chờ review · AI review BLOCKED (Claude review)" }[[int]$rv.Code]
+    if ($text) { Set-BoardStatus $ctx.R $Task $text }
+    Say "QC: mã $($rv.Code) · $($rv.Out)" Cyan
+}
+
 # Bước 2: plans/R-xxx/brief.md (Claude viết, ≤ 20 dòng) ⇒ Codex đọc repo CHỈ ĐỌC ⇒ plans/R-xxx/plan.md. -Name = tiền tố mã task (vd. V6).
 function Invoke-Plan {
     $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
@@ -1861,6 +1872,7 @@ switch ($Command) {
     "ask" { Invoke-Ask }
     "plan" { Invoke-Plan }
     "prep" { Invoke-Prep }
+    "qc" { Invoke-Qc }
     "models" { Invoke-Models }
     "install-hooks" { Invoke-InstallHooks }
     "secret-set" { Invoke-SecretSet }
