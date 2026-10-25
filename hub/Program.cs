@@ -1,4 +1,4 @@
-using AITeam.Hub.Models;
+﻿using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 
 // AITeam Hub — thiết kế: ../docs/HUB-DESIGN.md. Chỉ nghe 127.0.0.1.
@@ -7,6 +7,7 @@ var port = Environment.GetEnvironmentVariable("HUB_PORT") ?? "5057";
 builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
 
 builder.Services.AddSingleton(HubPaths.Detect());
+builder.Services.AddSingleton<IWorkflowRolesService, WorkflowRolesService>();
 builder.Services.AddRazorPages();
 builder.Services.AddAntiforgery();
 
