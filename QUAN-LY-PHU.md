@@ -26,10 +26,10 @@ Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ
 Đề xuất nghiệm thu (việc của bạn): cổng KT ĐẠT + QC PASS ⇒ ghi vào file task TRÊN NHÁNH (worktree `D:\AITeam-work\AITeam\<a|b>-<mã>`) mục "### Đề xuất nghiệm thu (Codex quản lý phụ)": đã kiểm gì, phát hiện còn mở, đề xuất ĐẠT / CẦN SỬA; + "## Kết quả" nháp; commit + push NHÁNH; thêm 1 dòng vào mục "Chờ Claude chốt" cuối file này. Claude đọc rồi tự ghi "### Vòng N — ĐẠT" và merge. Task có giao diện: chạy Hub chế độ giả (`$env:HUB_FAKE=1; $env:HUB_PORT=5058; dotnet run --project hub`), xem 1000px không tràn ngang, ghi vào đề xuất.
 
 ## Việc đang dở (ưu tiên theo chủ dự án: SKILL + HỆ THỐNG trước, sửa giao diện sau)
-1. **R-010 bộ skill:** S1-01/02/03/05/08 đã merge theo bảng việc. S1-04 đã prep, nhánh `agent-a/S1-04-noi-skill-vao-plan-prep-va-giao-code`, worktree `D:\AITeam-work\AITeam\a-s1-04`; lượt 1 hết 25 phút lúc 16:46, helper còn thay đổi chưa commit, chưa có cổng KT/QC cho lượt này. Không coi status SUCCESS của agy là hoàn thành.
-   - Chưa giao lại: `assign` gọi `Save-RunMetrics`, tự commit `metrics/runs/**` rồi push main (team.ps1:1699–1701), ngoài danh sách chủ dự án cho phép trong vòng điều phối. `prep` cũng tự commit file task lên main (team.ps1:1060–1062). Cần luồng chạy không push các file này trước khi tiếp tục; không sửa team.ps1 trong vòng này.
+1. **R-010 bộ skill:** S1-01/02/03/05/08 đã merge. S1-04 trên nhánh `agent-a/S1-04-noi-skill-vao-plan-prep-va-giao-code`, worktree `D:\AITeam-work\AITeam\a-s1-04`: cổng KT lượt 2 ĐẠT lúc 17:01 (build 0 warning, 527 Hub + 446 Core pass), QC lượt 1 CẦN SỬA lúc 17:03 (bỏ proxy ConvertTo-Json che cmdlet chuẩn). Lượt code 3 bắt đầu 17:03, còn chạy lúc kiểm tra 17:15 (PowerShell PID 18340, agy PID 35696); worktree có xung đột AA ở file task và thay đổi chưa commit, để luồng đang chạy xử lý, không giao trùng hoặc can thiệp.
+   - Đã xác nhận commit tự động của team.ps1 được chủ dự án cho phép; giới hạn cũ về metrics/file task không còn là trở ngại. Vòng sau kiểm tra kết quả lượt 3, cổng KT và QC mới; chỉ đề xuất nghiệm thu khi cả hai ĐẠT/PASS trên bản sửa mới.
    - S1-06 chờ S1-04 được Claude chốt/merge; S1-07 chờ S1-04 + S1-06. Không giao song song task sửa team.ps1.
-2. **R-008 hệ thống tự vận hành:** V8-01 đã merge vòng 1. Tiếp theo V8-02 → V8-03 theo plan đã duyệt; cùng vướng giới hạn commit tự động của prep/assign, ưu tiên sau bộ skill.
+2. **R-008 hệ thống tự vận hành:** V8-01 đã merge vòng 1. Tiếp theo V8-02 → V8-03 theo plan đã duyệt; giữ sau bộ skill, tránh chạy song song phạm vi team.ps1 với S1-04 đang sửa.
 3. **R-006:** V6-02 giao sau R-008.
 4. **R-009 Hub v6.1:** H7-01 đã merge; H7-07 cổng KT ĐẠT (`H7-07-verify-6.md`: build 0 warning, 527 Hub + 425 Core pass) và QC PASS (`H7-07.review-4.json`: 0 phát hiện). Trong vòng này phiên Claude khác đã nghiệm thu rồi merge (`26dc880`, bảng `f954fbf`); không sửa chồng hay đưa task đã merge vào chờ chốt. Trình duyệt của phiên quản lý phụ không khả dụng (inventory rỗng), chưa tự xác minh UI; báo cáo Claude trên nhánh ghi đã xem 1000×800. H7-03 chưa giao; giữ ưu tiên skill + hệ thống.
 5. **R-007:** phần còn lại bỏ, thay bằng R-009.
@@ -46,3 +46,5 @@ Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ
 
 ## Nhật ký quản lý phụ
 - 16:52 25/10/2026: Một vòng điều phối: đối chiếu bảng việc/log/worktree; H7-07 được phiên Claude khác chốt và merge trong lúc kiểm tra; S1-04 hết thời gian, chưa commit helper. Không chạy lại prep/assign vì tự commit/push ngoài danh sách cho phép; không có đề xuất mới chờ Claude. Không chạy build/test mới; dùng kết quả cổng KT và QC có sẵn.
+
+- 17:16 25/10/2026: Một vòng điều phối: đã đồng bộ main, đối chiếu bảng việc/log/tiến trình/worktree; S1-04 cổng KT lượt 2 ĐẠT nhưng QC CẦN SỬA, lượt code 3 đang chạy nên không gọi lệnh giao trùng. Chưa có đề xuất nghiệm thu mới; cập nhật bảng việc và nhật ký R-010; không chạy build/test mới, không merge.
