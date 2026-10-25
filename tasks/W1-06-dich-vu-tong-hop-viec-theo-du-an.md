@@ -79,12 +79,12 @@ R-009 thật đã có H7-07 Merge, không được ghi cứng mọi task R-009 c
 `hub.tests/AcceptanceW106WorkProgressServiceTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Hai API triển khai đúng XML, DI phân giải được; không đổi hợp đồng ngoài phạm vi.
-- [ ] Bản sao R-010/R-009/R-008 nối đúng S1-07/H7-07/V8-02; R-009 nhận H7-07 Merge và dữ liệu chưa có task/nhiều task/task cũ được giữ đúng.
-- [ ] Repo khác/rỗng không đọc nhầm AITeam; mất log không lỗi, nguồn hỏng báo đúng câu và tên nguồn an toàn.
-- [ ] Chặn ID sai, traversal, reparse và quá giới hạn; không rò bí mật/đường dẫn trong exception.
-- [ ] Tên người từ cấu hình, không bịa giờ; đồng thời/đọc lại không đổi byte và không cache cũ.
-- [ ] `dotnet build AITeam.sln` đạt 0 lỗi, 0 warning khi đã triển khai (CS9113 chỉ được chấp nhận ở khung prep).
+- [x] Hai API triển khai đúng XML, DI phân giải được; không đổi hợp đồng ngoài phạm vi.
+- [x] Bản sao R-010/R-009/R-008 nối đúng S1-07/H7-07/V8-02; R-009 nhận H7-07 Merge và dữ liệu chưa có task/nhiều task/task cũ được giữ đúng.
+- [x] Repo khác/rỗng không đọc nhầm AITeam; mất log không lỗi, nguồn hỏng báo đúng câu và tên nguồn an toàn.
+- [x] Chặn ID sai, traversal, reparse và quá giới hạn; không rò bí mật/đường dẫn trong exception.
+- [x] Tên người từ cấu hình, không bịa giờ; đồng thời/đọc lại không đổi byte và không cache cũ.
+- [x] `dotnet build AITeam.sln` đạt 0 lỗi, 0 warning khi đã triển khai (CS9113 chỉ được chấp nhận ở khung prep).
 - [ ] `dotnet test AITeam.sln` pass hết; riêng 35 ca nghiệm thu chạy bằng `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceW106WorkProgressServiceTests --blame-hang-timeout 2m`.
 
 ## Kiểm tra chuẩn bị (Codex)
@@ -113,8 +113,19 @@ File đã tạo: WorkProgressService.cs, AcceptanceW106WorkProgressServiceTests.
 - `RealFile.Copy` chưa có trong Support tại worktree này; fixture được chép nguyên byte khi prep và hạ tầng Fixtures sẵn có chép ra output, test chỉ đọc bản sao output.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau triển khai: bảng từng tiêu chí → lệnh và số pass/fail/skip/warning thật; file đã đổi/lý do; quyết định tự đưa ra; điều chưa xác minh. -->
-
+A: `dotnet build AITeam.sln --no-restore -m:1 -v:normal`; B: `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceW106WorkProgressServiceTests --blame-hang-timeout 2m`; T: `dotnet test AITeam.sln --no-build -m:1 --blame-hang-timeout 2m`.
+| Tiêu chí | Bằng chứng kiểm lại ngày 26/10/2026 |
+|---|---|
+| Hai API, DI, giữ hợp đồng | A mã 0; B: 35/35 pass, 0 fail, 0 skip; không sửa code/hợp đồng ở lượt trả về này. |
+| Nối mẫu thật, yêu cầu rỗng/nhiều task/task cũ | B: 35/35 pass. |
+| Repo khác/rỗng, log thiếu/nguồn hỏng | B: 35/35 pass. |
+| ID, traversal, reparse, giới hạn, lỗi an toàn | B: 35/35 pass. |
+| Tên cấu hình, giờ thiếu, đồng thời/đọc lại | B: 35/35 pass; WorkProgressService.cs: 262 dòng, BOM=True, CRLF=True qua kiểm byte/regex. |
+| Build solution | Lệnh mặc định mã 1, 0 warning/0 error nhưng không thành công; A thành công 6,69 giây, 0 warning, 0 error; không tái hiện MSB3491 ở lượt tuần tự. |
+| Test solution | T: Hub 632 pass/9 fail/0 skip; Core có lỗi KhoaChanTienTrinhKhacVaTimeout (tiến trình con không lấy được khóa), chưa có tổng kết; đã ngắt khi gần 3 phút, mã 1, testhost đã kết thúc. Chưa đạt. |
+File đổi lượt này: task này (báo cáo thật); xóa core.tests/TestResults/a8237234-c849-49ac-aa89-894393e0ee4a/Sequence_9b385c509ead4fe4bfedeeb7331dac81.xml là XML sinh tự động cổng kiểm tra nêu; giữ triển khai WorkProgressService.cs từ lượt trước, không đổi Program/test/fixture.
+Tự quyết: build tuần tự để chẩn đoán lỗi mặc định; thử lại 97 test cấu hình/phân vai/Map với TEMP/TMP trong workspace: 88 pass/9 fail, vẫn lỗi quyền File.Replace; đã dọn thư mục tạm, không sửa code ngoài phạm vi.
+Chưa xác minh: toàn solution pass và commit được kiểm; hệ thống tự commit/push theo chỉ dẫn, không chạy git; không có công cụ MCP aiteam_post_message/aiteam_get_test_results; không chạy app/chụp ảnh.
 ## Review (Claude)
 <!-- Claude điền sau cổng kiểm tra. -->
 
