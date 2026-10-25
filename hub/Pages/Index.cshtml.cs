@@ -55,10 +55,44 @@ public partial class IndexModel : PageModel
     public int TotalHealthCount => HealthItems.Count;
     public bool HasHealthError => HealthItems.Any(h => h.Level == HealthLevel.Error);
 
+    /// <summary>Chỉ "staff" chọn Nhân viên; null, rỗng hoặc tab lạ về "overview".</summary>
+    [BindProperty(SupportsGet = true)]
+    public string Tab { get; set; } = "overview";
+
+    /// <summary>Mô hình Team hiện có, nạp khi chọn staff, kể cả trường hợp không có dịch vụ.</summary>
+    public TeamModel? StaffView { get; private set; }
+
+    /// <summary>
+    /// Chuẩn hóa Tab; nạp StaffView bằng TeamModel và ITeamInsightsService hiện có, không tính lại số liệu.
+    /// Dịch vụ null: dùng dữ liệu rỗng, không lỗi. Dịch vụ lỗi: hiển thị
+    /// "Không đọc được dữ liệu đánh giá: " + ex.Message, không ném lỗi khỏi trang.
+    /// Không đổi Range, Insights, Chart, TaskRows hoặc các handler hiện có.
+    /// </summary>
+    private void LoadPerformanceStaff()
+    {
+        Tab = Tab == "staff" ? "staff" : "overview";
+        StaffView = null;
+        if (Tab != "staff")
+            return;
+
+        StaffView = new TeamModel(_insights ?? new EmptyPerformanceInsights());
+        StaffView.OnGet();
+    }
+
+    private sealed class EmptyPerformanceInsights : ITeamInsightsService
+    {
+        public TeamInsights Get() => new(
+            Array.Empty<TaskInsight>(), Array.Empty<StaffScore>(), Array.Empty<StageAverage>(),
+            Array.Empty<TeamIssue>(), Array.Empty<Improvement>(), new OverviewKpis(null, null, 0));
+
+        public TaskInsight? GetTask(string project, string taskId) => null;
+    }
+
     public void OnGet()
     {
         LoadData();
         LoadV3();
+        LoadPerformanceStaff();
     }
 
     public IActionResult OnGetRunningAgents()

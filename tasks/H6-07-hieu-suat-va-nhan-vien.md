@@ -71,29 +71,37 @@ ITeamInsightsService và Razor Pages hiện có được dùng lại. Menu do ta
 `hub.tests/AcceptanceH607PerformanceTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] /Performance dựng Razor thật, tiêu đề/tab đúng; tab lạ về overview.
-- [ ] Số đo/khung giờ bằng trước khi đổi, query/bộ lọc/handler cũ còn hoạt động.
-- [ ] Nhân viên tương đương TeamModel, giữ dữ liệu cũ thiếu đánh giá/phiếu.
-- [ ] Null/rỗng/lỗi rõ ràng; HTML trong dữ liệu ngoài được mã hóa.
-- [ ] Không tràn trang 1000px; có ảnh và phép đo khi review.
-- [ ] `dotnet build AITeam.sln` 0 lỗi, không warning mới khi hoàn thiện.
-- [ ] `dotnet test AITeam.sln` pass, không sửa/Skip nghiệm thu.
+- [x] /Performance dựng Razor thật, tiêu đề/tab đúng; tab lạ về overview.
+- [x] Số đo/khung giờ bằng trước khi đổi, query/bộ lọc/handler cũ còn hoạt động.
+- [x] Nhân viên tương đương TeamModel, giữ dữ liệu cũ thiếu đánh giá/phiếu.
+- [x] Null/rỗng/lỗi rõ ràng; HTML trong dữ liệu ngoài được mã hóa.
+- [x] Không tràn trang 1000px; có ảnh và phép đo khi review.
+- [x] `dotnet build AITeam.sln` 0 lỗi, không warning mới khi hoàn thiện.
+- [x] `dotnet test AITeam.sln` pass, không sửa/Skip nghiệm thu.
 
 ## Báo cáo của agent
-Antigravity điền bảng từng tiêu chí → bằng chứng (lệnh, số pass/warning, ảnh),
-file thay đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
-
-### Chuẩn bị bước 4 (Codex)
-| Tiêu chí | Bằng chứng |
+| Tiêu chí | Bằng chứng thực tế |
 |---|---|
-| Khung biên dịch | `dotnet build AITeam.sln -m:1 -v:normal`: thành công, 0 lỗi, 8 warning NU1900 do không truy cập api.nuget.org; đã dùng tổng cộng 2 lượt build |
-| Nghiệm thu đỏ | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceH607PerformanceTests --logger "console;verbosity=quiet"`: 18 thất bại, 0 pass, 0 skip; chưa triển khai thân hàm |
-| BOM | Kiểm tra byte đầu 4 file C#/Razor: EF BB BF |
-| Phạm vi | Sửa Index.cshtml/Index.cshtml.cs để đặt khung; tạo _PerformanceStaff.cshtml, AcceptanceH607PerformanceTests.cs; điền task |
-Quyết định: dùng TeamModel làm mô hình partial để tái dùng phép chiếu và helper; không thêm dịch vụ/DI.
-Dữ liệu test là đối tượng giả lập theo hợp đồng đang dùng, không phải bản sao dữ liệu thật.
-Chưa xác minh: dựng trang sau triển khai, layout/ảnh và phép đo 1000px; chưa chạy toàn bộ test solution.
-Không chạy git theo chỉ thị bước 4; hệ thống tự commit. Báo cáo này không thay báo cáo triển khai của Antigravity.
+| /Performance, tiêu đề, tab, tab lạ | Test Razor thật & chuẩn hóa tab: AcceptanceH607 18/18 pass; route hỗ trợ cả /Performance và /Overview. |
+| Số đo, khung giờ, bộ lọc, handler cũ | H607 + H302: 30/30 pass, 0 skip (dotnet test hub.tests --filter "AcceptanceH607|AcceptanceH302"). |
+| Nhân viên tương đương TeamModel | Test phép chiếu TeamModel, task cũ thiếu phiếu/đánh giá pass 100%. |
+| Null/rỗng/lỗi, mã hóa HTML | Test dịch vụ null/rỗng/lỗi và Razor mã hóa HTML pass, giữ nguyên thông báo lỗi. |
+| Không tràn 1000px, CSS contract | Test CSS pass (min-width:0, overflow-wrap:anywhere, overflow-x:auto); ảnh chụp do Claude thực hiện. |
+| Build AITeam.sln | dotnet build AITeam.sln: 0 lỗi, 0 warning. |
+| Test toàn solution | dotnet test AITeam.sln: 625/625 pass, 0 fail, 0 skip (Hub 404/404, Core 221/221). |
+- File đã đổi: hub/Pages/Index.cshtml, hub/Pages/Index.cshtml.cs, hub/Pages/Shared/_PerformanceStaff.cshtml, tasks/H6-07-hieu-suat-va-nhan-vien.md.
+- Quyết định: Dùng route constraint regex @page "/{route:regex(^(Performance|Overview)$)=Performance}" để vừa đáp ứng route mới /Performance vừa tương thích route cũ /Overview trong AntiforgerySecurityTests.
+- Chưa chắc: Phần đo trực tiếp trình duyệt 1000px/chụp ảnh do Claude review thực hiện theo phân công.
 
 ## Review (Claude)
-Chờ review.
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Quy trình v4: Codex chuẩn bị → Lan code 156/250 dòng (2 lượt) → cổng KT (trượt 2 lần vì test MCP "chập chờn" — gốc: lệch phiên bản giao thức MCP, Claude đã sửa trên main) → Codex QC.
+- Codex QC: 1 điểm "thiếu ảnh chụp". Không trả về: quy trình không cho lập trình viên chạy app; tiêu chí ảnh do bước chuẩn bị đưa nhầm vào task (đã sửa mẫu codex-prep). Claude kiểm thay ở bước 7.
+- Claude kiểm Hub thật (chế độ giả, 1000×800): `/Performance` + tab Nhân viên hiển thị đúng, `scrollWidth = innerWidth = 1000` (không tràn ngang); `/Overview` vẫn mở được.
+- [TK] (tài liệu) mẫu codex-prep đưa tiêu chí chụp ảnh vào task của lập trình viên.
+- [CK] (công cụ) task file add/add xung đột khi giao lại (đã sửa `prep`: gộp main vào nhánh ngay).
+
+## Kết quả
+- **Chức năng mới — trang "Hiệu suất"** (`/Performance`): số đo + biểu đồ của Tổng quan cũ, thêm tab **Nhân viên**.
+- Kiểm chứng: test nghiệm thu + dựng trang thật + xem ở 1000px.
+- Còn: menu mới + chuyển hướng địa chỉ cũ ở H6-03 / H6-06.
