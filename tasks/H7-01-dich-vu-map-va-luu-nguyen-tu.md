@@ -1,4 +1,4 @@
-﻿# H7-01 · Dịch vụ Map và lưu nguyên tử
+# H7-01 · Dịch vụ Map và lưu nguyên tử
 
 - **Agent:** B
 - **Nhánh:** `agent-a/H7-01-dich-vu-map-va-luu-nguyen-tu`
@@ -90,10 +90,13 @@ Chưa xác minh trên máy thật, theo `plans/R-009/brief.md` mục 6. Dữ li�
 - **Điều chưa xác minh:** Môi trường không có quyền tạo file symlink (non-admin) sẽ fallback test qua junction thư mục.
 
 ## Review (Claude)
-<!-- Claude điền khi nghiệm thu. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Lan 2 lượt (chia đều: kế hoạch gợi ý Minh, Minh bận ⇒ Lan); cổng KT ĐẠT (500 + 359 test).
+- Codex QC: 1 điểm hẹp (team.json trùng khóa JSON ⇒ ngoại lệ chưa chuẩn hóa) ⇒ Optional (file do công cụ ghi, khả năng thấp).
 
 ## Kết quả
-<!-- Claude điền sau review đạt. -->
+- Dịch vụ Map: đọc / lưu nguyên tử bảng 'nghiệp vụ → tác nhân' trong team.json mục workflow.roles; trang Map (H7-07) và team.ps1 (H7-02) sẽ dùng.
+
 ## Kiểm tra khung (Codex — bước 4)
 - Đã tạo hợp đồng + khung WorkflowRolesService (hai thân hàm chỉ ném NotImplementedException), test nghiệm thu; thêm DI và mô tả phối hợp ghi Settings, chưa hiện thực logic sản phẩm.
 - File đã đổi: WorkflowRolesService.cs (hợp đồng/khung), TeamConfigService.cs (XML yêu cầu), Program.cs (DI), AcceptanceH701WorkflowRolesTests.cs (test), file task này (đặc tả).
