@@ -44,6 +44,8 @@ Sự kiện cần ghi:
 
 - 2026-10-25 17:28:42 +07:00 | S1-04 | Verify | lượt 3 | ĐẠT <!-- workflow:S1-04:Verify:3 -->
 - 2026-10-25 17:32:10 +07:00 | S1-04 | Merge | lượt 1 | ĐẠT <!-- workflow:S1-04:Merge:1 -->
+- 2026-10-25 17:45:27 +07:00 | S1-06 | Prep | lượt 1 | ĐẠT <!-- workflow:S1-06:Prep:1 -->
+- 18:16 25/10/2026: Codex quản lý phụ kiểm tra: S1-04 đã merge; S1-06 Antigravity hết hạn mức, Codex lượt 2 đang chạy (PID 42808), chưa có cổng KT/QC. Không giao trùng; vòng sau kiểm tra tiếp.
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-010`, rồi điền:
 
