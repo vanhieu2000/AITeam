@@ -23,6 +23,11 @@ try
         _ => Help(),
     };
 }
+catch (NotImplementedException)
+{
+    Console.Error.WriteLine("LỖI: chưa làm");
+    return 1;
+}
 catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException or System.Text.Json.JsonException)
 {
     Console.Error.WriteLine($"LỖI cấu hình: {ex.Message}");
@@ -256,7 +261,7 @@ async Task<int> Review()
     var router = new ProviderRouter(settings, state);
     var proc = new ProcessRunner();
     var runner = new ReviewRunner(settings, router, state, c => settings.Create(c, proc), () => DateTime.Now);
-    var input = new ReviewRunInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, TimeSpan.FromMinutes(timeoutMin));
+    var input = CreateReviewInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, timeoutMin, root);
     var outcome = await runner.RunAsync(input, CancellationToken.None);
 
     Console.WriteLine(outcome.Summary);
@@ -319,4 +324,15 @@ static string FindRoot()
     var dir = new DirectoryInfo(AppContext.BaseDirectory);
     while (dir != null && !File.Exists(Path.Combine(dir.FullName, "team.json"))) dir = dir.Parent;
     return dir?.FullName ?? Directory.GetCurrentDirectory();
+}
+
+/// <summary>
+/// Tạo đầu vào với Root lấy từ --root/FindRoot, cho review trực tiếp lẫn --auto.
+/// Giữ nguyên đường dẫn, developer; Timeout theo phút; không dò stack tại CLI.
+/// Khung chưa làm được Main bắt: stderr "LỖI: chưa làm", mã 1.
+/// </summary>
+static ReviewRunInput CreateReviewInput(string taskFile, string diffFile, string? verifyFile,
+    string workDir, string logDir, string dev, int timeoutMin, string root)
+{
+    throw new NotImplementedException(); // TODO(agent)
 }
