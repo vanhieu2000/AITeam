@@ -94,4 +94,14 @@ ITeamInsightsService và Razor Pages hiện có được dùng lại. Menu do ta
 - Chưa chắc: Phần đo trực tiếp trình duyệt 1000px/chụp ảnh do Claude review thực hiện theo phân công.
 
 ## Review (Claude)
-Chờ review.
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Quy trình v4: Codex chuẩn bị → Lan code 156/250 dòng (2 lượt) → cổng KT (trượt 2 lần vì test MCP "chập chờn" — gốc: lệch phiên bản giao thức MCP, Claude đã sửa trên main) → Codex QC.
+- Codex QC: 1 điểm "thiếu ảnh chụp". Không trả về: quy trình không cho lập trình viên chạy app; tiêu chí ảnh do bước chuẩn bị đưa nhầm vào task (đã sửa mẫu codex-prep). Claude kiểm thay ở bước 7.
+- Claude kiểm Hub thật (chế độ giả, 1000×800): `/Performance` + tab Nhân viên hiển thị đúng, `scrollWidth = innerWidth = 1000` (không tràn ngang); `/Overview` vẫn mở được.
+- [TK] (tài liệu) mẫu codex-prep đưa tiêu chí chụp ảnh vào task của lập trình viên.
+- [CK] (công cụ) task file add/add xung đột khi giao lại (đã sửa `prep`: gộp main vào nhánh ngay).
+
+## Kết quả
+- **Chức năng mới — trang "Hiệu suất"** (`/Performance`): số đo + biểu đồ của Tổng quan cũ, thêm tab **Nhân viên**.
+- Kiểm chứng: test nghiệm thu + dựng trang thật + xem ở 1000px.
+- Còn: menu mới + chuyển hướng địa chỉ cũ ở H6-03 / H6-06.
