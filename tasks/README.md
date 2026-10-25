@@ -49,7 +49,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [S1-03 Bốn skill code theo stack](S1-03-bon-skill-code-theo-stack.md) | A | `agent-a/S1-03-bon-skill-code-theo-stack` | ✅ Đã merge (vòng 1) |
 | [S1-08 Bổ sung quy ước thật vào 4 skill code](S1-08-bo-sung-quy-uoc-that-vao-4-skill-code.md) | B | `agent-b/S1-08-bo-sung-quy-uoc-that-vao-4-skill-code` | ✅ Đã merge (vòng 1) |
 | [H7-07 Giao diện Map](H7-07-giao-dien-map.md) | B | `agent-b/H7-07-giao-dien-map` | ✅ Đã merge (vòng 1) |
-| [S1-04 Nối skill vào plan, prep và giao code](S1-04-noi-skill-vao-plan-prep-va-giao-code.md) | A | `agent-a/S1-04-noi-skill-vao-plan-prep-va-giao-code` | 🔵 Chờ review · cổng KT ĐẠT · AI review CẦN SỬA (Claude xem) |
+| [S1-04 Nối skill vào plan, prep và giao code](S1-04-noi-skill-vao-plan-prep-va-giao-code.md) | A | `agent-a/S1-04-noi-skill-vao-plan-prep-va-giao-code` | ✅ Đã merge (vòng 1) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
