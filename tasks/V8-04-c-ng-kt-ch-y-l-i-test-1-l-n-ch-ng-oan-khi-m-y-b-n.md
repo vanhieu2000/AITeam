@@ -1,4 +1,4 @@
-﻿# V8-04 · Cổng KT chạy lại test đỏ 1 lần (chống đỏ oan khi máy bận)
+# V8-04 · Cổng KT chạy lại test đỏ 1 lần (chống đỏ oan khi máy bận)
 
 - **Agent:** A
 - **Nhánh:** `agent-a/V8-04-c-ng-kt-ch-y-l-i-test-1-l-n-ch-ng-oan-khi-m-y-b-n`
@@ -61,8 +61,14 @@ Tự quyết: lượt chạy lại phải có số test pass >0; tên không an 
 Chưa xác minh: toàn bộ solution/cổng KT xanh trong môi trường không bị sandbox; không chạy app/chụp ảnh. Không chạy git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code)
+- Cổng KT lượt 1 ĐẠT: build 0 warning, Hub + Core 571/571 (gồm AcceptanceV804FlakyRetryTests).
+- Đọc diff: Get-FailedTestNames chỉ nhận tên [A-Za-z0-9_.]; chạy lại từng test đúng 1 lần; >10 test / lỗi build / treo ⇒ giữ KHÔNG ĐẠT; áp dụng cho verify và clone sạch của merge; cảnh báo 'Test chập chờn: <tên>'.
+
 
 ## Kết quả
+- Cổng KT và merge không còn chặn oan khi máy bận: test đỏ được chạy lại riêng 1 lần, đạt thì ghi cảnh báo 'Test chập chờn'.
+- Kiểm chứng: test nghiệm thu V8-04 + toàn bộ test.
 
 ## Đánh giá quy trình
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
