@@ -97,16 +97,30 @@ Agent điền kết quả triển khai, không nhận khung TODO là đã hoàn 
 
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Từng tiêu chí phía trên | Chưa triển khai |
+| GET trang/partial thật, DI tùy biến, HubPaths & renderer | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceW102HubHelpersTests` → Đạt (15/15 pass, 0 fail) |
+| POST antiforgery thiếu/sai bị chặn (400), đúng token+cookie (200) | `Missing_token_is_rejected_but_same_client_token_and_cookie_reach_handler` → Đạt (pass trong 15/15) |
+| Render partial tên/đường dẫn, giữ ViewData/ModelState, encode XSS | `Real_partial_preserves_viewdata_modelstate_and_encodes_xss` (2 data), `Null_viewdata_and_empty_control_lists_render_existing_partial` → Đạt |
+| Tên null/rỗng/trắng & view thiếu báo đúng lỗi | `Blank_view_name_has_exact_error` (3 data), `Missing_view_reports_exact_name_and_host_stays_usable` → Đạt |
+| Hai host đồng thời, dọn listener/provider/scope khi lỗi | `Parallel_hosts...`, `Callback_failure...`, `Startup_failure...`, `Render_failure...` + `HubHelpersCleanupRegressionTests` → Đạt |
+| Null argument & Dispose lặp an toàn | `Null_arguments_fail_before_starting_host`, `Dispose_is_repeatable_and_releases_listener_after_success` → Đạt |
+| Build & Test toàn dự án | `dotnet build AITeam.sln` → 0 warning, 0 error; `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build` → 543/543 pass; lỗi cổng KT lượt 3 là `AcceptanceV601ReviewRoundsTests.Invalid_task_id_returns_exact_error` (máy quá tải, quản lý chạy lại riêng: PASS) |
 
-File đã đổi và lý do:
+File đã đổi và lý do: `hub.tests/Support/HubTestHost.cs` (dựng Kestrel loopback:0, ephemeral DataProtection, cookie client, `SafeDisposeAsync` dọn từng instance hỗ trợ `IAsyncDisposable`/`IDisposable` giữ nguyên lỗi gốc), `hub.tests/Support/HubPageRenderer.cs` (scope riêng, dọn scope/writer an toàn giữ lỗi gốc, kèm test hồi quy `HubHelpersCleanupRegressionTests`), `tasks/W1-02-helper-dung-trang-hub.md` (chỉ điền Báo cáo của agent).
 
-Quyết định tự đưa ra:
+Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` cho `FormTagHelper`; viết `SafeDisposeAsync` dọn từng instance riêng biệt (cả `IAsyncDisposable` và `IDisposable`) ở cả `HubTestHost` và `HubPageRenderer` để lỗi `Dispose`/`DisposeAsync` không che lỗi gốc và tiếp tục dọn các instance còn lại; đặt `HubHelpersCleanupRegressionTests` trong `HubPageRenderer.cs` để không sửa test nghiệm thu và giữ đúng danh sách file trong phạm vi.
 
-Điều chưa chắc / chưa xác minh:
+Điều chưa chắc / chưa xác minh: lỗi cổng KT lượt 3 là `AcceptanceV601ReviewRoundsTests.Invalid_task_id_returns_exact_error` (máy quá tải, quản lý chạy lại riêng: PASS); lượt 5 gặp MSB3491 lock tạm ở bin/obj, đã chạy lại build/test sạch ở lượt 6.
 
 ## Review (Claude)
 <!-- Claude điền sau khi review. -->
 
+### Vòng 3 — ĐẠT (Claude)
+- Cổng KT lượt 6 ĐẠT: build 0 warning, Hub 543/543, Core 557/557.
+- QC lượt 1–2: đã sửa giữ lỗi gốc khi dọn, khôi phục checkbox, báo cáo đúng test đỏ (máy bận).
+- QC lượt 3 (1 required: singleton tạo bằng factory không được dispose khi Build ném lỗi): quản lý HẠ thành **Optional** — chỉ trong helper test, đường lỗi hiếm, lượt thứ 3 cùng loại; đưa hàng chờ.
+- [TK] (test) đặc tả helper không nêu rõ phạm vi dọn tài nguyên khi startup lỗi ⇒ 3 vòng QC.
+
 ## Kết quả
+- Có bộ dùng chung dựng trang Hub cho test (HubTestHost, HubPageRenderer): task trang Việc dùng lại, không tự dựng.
+- Còn: dispose singleton factory khi Build lỗi (Optional, hàng chờ).
 <!-- Claude điền khi nghiệm thu đạt. -->
