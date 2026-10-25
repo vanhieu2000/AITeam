@@ -50,7 +50,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [S1-08 Bổ sung quy ước thật vào 4 skill code](S1-08-bo-sung-quy-uoc-that-vao-4-skill-code.md) | B | `agent-b/S1-08-bo-sung-quy-uoc-that-vao-4-skill-code` | ✅ Đã merge (vòng 1) |
 | [H7-07 Giao diện Map](H7-07-giao-dien-map.md) | B | `agent-b/H7-07-giao-dien-map` | ✅ Đã merge (vòng 1) |
 | [S1-04 Nối skill vào plan, prep và giao code](S1-04-noi-skill-vao-plan-prep-va-giao-code.md) | A | `agent-a/S1-04-noi-skill-vao-plan-prep-va-giao-code` | ✅ Đã merge (vòng 1) |
-| [S1-06 Lệnh ghi bài học có commit](S1-06-lenh-ghi-bai-hoc-co-commit.md) | B | `agent-b/S1-06-lenh-ghi-bai-hoc-co-commit` | ⬜ Chưa giao |
+| [S1-06 Lệnh ghi bài học có commit](S1-06-lenh-ghi-bai-hoc-co-commit.md) | B | `agent-b/S1-06-lenh-ghi-bai-hoc-co-commit` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 18:22 25/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
