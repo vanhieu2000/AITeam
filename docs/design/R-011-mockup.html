@@ -1,0 +1,101 @@
+﻿<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Việc · AITeam Hub — R-011</title>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--s2:#f1f3f6;--line:#e3e6eb;--line-2:#d5dae1;--text:#14171c;--muted:#6b7280;--faint:#9aa1ab;--accent:#2563eb;--accent-soft:#e8effd;--run:#b45309;--run-soft:#fdf3e1;--ok:#15803d;--ok-soft:#e5f4ea;--err:#b91c1c;--err-soft:#fbe9e9;--r:8px;--font:"Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 var(--font);color:var(--text);background:var(--bg)}
+button,select{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--accent)}button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.app{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:100vh}nav{background:var(--surface);border-right:1px solid var(--line);padding:18px 10px;display:flex;flex-direction:column;gap:4px}
+.brand{font-size:16px;font-weight:700;padding:0 9px 25px;display:flex;align-items:center;gap:9px}.brand i{width:22px;height:22px;background:var(--accent);border-radius:5px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px;border-radius:6px;color:var(--text);text-decoration:none;font-size:13px}.nav.on{background:var(--accent-soft);color:var(--accent);font-weight:600}.ico{width:17px;text-align:center}.nav small{margin-left:auto}.navfoot{margin-top:auto;padding:30px 9px 0;color:var(--muted);font-size:12px}
+main{min-width:0;padding:20px 22px}.top{display:flex;align-items:center;gap:14px;margin-bottom:18px}h1{font-size:21px;margin:0}.project,select{background:var(--surface);border:1px solid var(--line-2);border-radius:6px;padding:6px 10px;font-size:13px}.filters{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.notice{font-size:12px;color:var(--muted);margin:0 0 16px;display:flex;gap:8px;align-items:center}.mock{font-size:10px;letter-spacing:.06em;background:var(--run-soft);color:var(--run);border-radius:4px;padding:3px 6px;font-weight:700}
+.workspace{display:grid;grid-template-columns:minmax(0,38fr) minmax(0,62fr);gap:18px;align-items:start}.listhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}h2{font-size:14px;margin:0}small,.muted{color:var(--muted)}.listhead h2{font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden;min-width:0}.card.selected{border-color:#a5bdf5}.request{width:100%;text-align:left;border:0;background:transparent;padding:13px 14px 7px;display:block}.request:hover{background:var(--s2)}.request strong{display:block;font-size:13px;font-weight:600;margin:5px 0;overflow-wrap:anywhere;line-height:1.5}.code{font:12px Consolas,monospace;color:var(--muted)}.request .code{color:var(--accent);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 14px 12px}.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;max-width:100%}.ok{color:var(--ok);background:var(--ok-soft)}.run{color:var(--run);background:var(--run-soft)}.rev{color:var(--accent);background:var(--accent-soft)}.err{color:var(--err);background:var(--err-soft)}.n{color:var(--muted);background:var(--s2)}
+details{border-top:1px solid var(--line)}summary{font-size:12px;padding:7px 14px;color:var(--muted);cursor:pointer}.tasks{padding:0 6px 6px}.task{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:7px;width:100%;padding:8px;border:0;border-radius:5px;background:transparent;text-align:left;font-size:12px}.task:hover{background:var(--s2)}.task.active{background:var(--accent-soft);box-shadow:inset 3px 0 var(--accent)}.task .person{color:var(--muted);overflow-wrap:anywhere}.task.active .code{color:var(--accent);font-weight:700}
+.detail{min-width:0}.detailhead{display:flex;align-items:start;gap:10px;margin-bottom:14px}.detailhead h2{font-size:18px;line-height:1.4}.eyebrow{font-size:12px;color:var(--muted);margin-bottom:5px}.detailhead .pill{margin-left:auto;flex-shrink:0}.description{font-size:12px;color:var(--muted);margin:6px 0 0}.panel{padding:16px;margin-bottom:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}.sectiontitle{font-size:12px;font-weight:600;margin:0 0 14px}
+.steps{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));row-gap:16px;padding:0;margin:0;list-style:none}.step{position:relative;text-align:center;font-size:10px;color:var(--muted);padding:0 2px;min-width:0}.step:before{content:"";position:absolute;top:14px;left:-50%;right:50%;height:2px;background:var(--line);z-index:0}.step:first-child:before{display:none}.circle{position:relative;display:grid;place-items:center;width:29px;height:29px;border:1px solid var(--line-2);border-radius:50%;background:var(--s2);margin:0 auto 7px;font-size:12px;font-weight:600;z-index:1}.step.done{color:var(--ok)}.done .circle{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}.done:before{background:var(--ok)}.step.current{color:var(--accent);font-weight:700}.current .circle{border:2px solid var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px #e8effd}.step.failed{color:var(--err)}.failed .circle{background:var(--err-soft);border-color:var(--err)}.here{display:block;font-size:9px;line-height:1.3;margin-top:6px;color:var(--accent)}.legend{display:flex;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);margin-top:16px;padding-top:10px;font-size:10px;color:var(--muted)}
+.currentcard{border-left:3px solid var(--accent)}.currenttitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.currenttitle h3{font-size:15px;margin:0}.metadata{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin:0;font-size:12px}.metadata dt{color:var(--muted);margin-bottom:3px}.metadata dd{margin:0;overflow-wrap:anywhere;font-weight:500}.errorcard{background:var(--err-soft);border-color:#efcaca}.errorcard h3{font-size:13px;color:var(--err);margin:0 0 7px}.errorcard p{font-size:12px;margin:0 0 8px;line-height:1.6}.errorcard a{font-size:12px;font-weight:600;color:var(--err)}
+.timeline{padding:0;margin:0;list-style:none}.timeline li{position:relative;margin-left:4px;padding:0 0 12px 15px;border-left:1px solid var(--line);font-size:12px;overflow-wrap:anywhere}.timeline li:before{content:"";position:absolute;left:-4px;top:5px;width:7px;height:7px;background:var(--line-2);border-radius:50%}.timeline li:first-child:before{background:var(--accent)}.timeline li:last-child{padding-bottom:0;border-color:transparent}.timeline time{color:var(--muted);font-variant-numeric:tabular-nums}.source{font-size:10px;color:var(--muted);margin:12px 0 0;overflow-wrap:anywhere}.emptyhint{font-size:11px;color:var(--muted);margin:18px 0 0}#report{font-size:12px}#report summary{padding-left:0;color:var(--err)}#report p{margin-top:8px}[hidden]{display:none!important}
+@media(max-width:1100px){.app{grid-template-columns:170px minmax(0,1fr)}main{padding:18px 16px}.workspace{gap:12px}.panel{padding:13px}.steps{grid-template-columns:repeat(5,minmax(0,1fr))}.step:nth-child(6):before{display:none}.task{gap:4px;grid-template-columns:48px minmax(0,1fr) auto}.pill{font-size:10px;padding:2px 6px}.filters{gap:5px}}
+@media(max-width:760px){.app{grid-template-columns:1fr}nav{display:none}.workspace{grid-template-columns:1fr}.top{flex-wrap:wrap}.filters{margin-left:0}.steps{grid-template-columns:repeat(5,minmax(0,1fr))}.step:nth-child(6):before{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav aria-label="Điều hướng Hub">
+<div class="brand"><i aria-hidden="true"></i>AITeam Hub</div>
+<a class="nav" href="../../hub/Pages/Office.cshtml"><span class="ico">▦</span>Văn phòng</a>
+<a class="nav on" href="#" aria-current="page"><span class="ico">☷</span>Việc</a>
+<a class="nav" href="../../hub/Pages/Approvals.cshtml"><span class="ico">☑</span>Đơn duyệt</a>
+<a class="nav" href="../../hub/Pages/Projects.cshtml"><span class="ico">▱</span>Dự án <small>▾</small></a>
+<a class="nav" href="../../hub/Pages/Settings.cshtml"><span class="ico">⚙</span>Hệ thống</a>
+<div class="navfoot">AITeam · HieuDV<br><span class="muted">Theo dõi công việc</span></div>
+</nav>
+<main>
+<header class="top"><h1>Việc</h1><div class="project" aria-label="Dự án đang xem">AITeam ▾</div><label class="filters">Trạng thái <select id="filter"><option>Tất cả</option><option>Đang chạy</option><option>Chờ duyệt</option><option>Xong</option></select></label></header>
+<p class="notice"><span class="mock">MOCKUP</span>Bản duyệt bố cục · dữ liệu chụp ngày 25/10/2026 · bấm yêu cầu hoặc task để xem bước.</p>
+<div class="workspace">
+<section aria-label="Danh sách yêu cầu"><div class="listhead"><h2>YÊU CẦU</h2><small id="count">4 yêu cầu</small></div><div id="requests"></div><p id="empty" hidden>Chưa có việc.</p></section>
+<section class="detail" id="detail" aria-label="Chi tiết việc" aria-live="polite"></section>
+</div>
+<p class="emptyhint">Trạng thái rỗng: khi dự án chưa có yêu cầu hoặc bộ lọc không có kết quả, hiển thị “Chưa có việc.”</p>
+</main>
+</div>
+<script>
+// Dữ liệu chụp từ requests/, plans/, tasks/README.md và log thật trong WorkDir.
+const stages=['Tiếp nhận','Kế hoạch','Duyệt kế hoạch','Chuẩn bị','Code','Cổng KT','QC','Nghiệm thu','Merge'];
+const task=(id,title,person,step,done=false)=>({id,title,person,step,done});
+const requests=[
+{id:'R-008',title:'Đẩy việc khỏi Claude: dây chuyền tự chạy, gói nghiệm thu gọn, nhật ký tự ghi',status:'Đang chạy',chip:'Code · sửa sau Cổng KT',tone:'run',tasks:[task('V8-01','Thử lại lỗi máy và ghi nhật ký','Minh',8,true),task('V8-02','Điều phối pipeline theo phụ thuộc','Codex',4),task('V8-03','Gói nghiệm thu và quyết định một lệnh','Minh',3)]},
+{id:'R-011',title:'Bộ test/QC chuẩn + Codex trả kế hoạch/mockup trước khi làm + trang Việc theo dự án hiện bước đang chạy',status:'Chờ duyệt',chip:'Kế hoạch · chờ duyệt',tone:'rev',tasks:[]},
+{id:'R-009',title:'Hub v6.1 theo góp ý: Văn phòng (thẻ + nghiên cứu trái + chat giao việc phải), Đơn duyệt dạng bảng, menu gọn, trang Map phân nhiệm vụ',status:'Đang chạy',chip:'Kế hoạch đã duyệt',tone:'rev',tasks:[task('H7-01','Dịch vụ Map và lưu nguyên tử','Lan',8,true),task('H7-02','Điều phối plan/prep/QC theo Map','Minh',3),task('H7-03','Lõi chat Văn phòng và chuyển hướng','Minh',3),task('H7-04','Thẻ tác nhân và chat giao việc','Lan',3),task('H7-05','Nhúng Phòng nghiên cứu','Lan',3),task('H7-06','Menu, danh sách dự án và bảng duyệt','Lan',3),task('H7-07','Giao diện Map','Lan',8,true)]},
+{id:'R-010',title:'Bộ skill cho từng bước dây chuyền (tiếp nhận → publish git) + skill code WinForms / web / app, tự cập nhật sau đánh giá',status:'Xong',chip:'✓ Đã Merge',tone:'ok',tasks:[task('S1-01','Skill tiếp nhận đến duyệt kế hoạch','Lan',8,true),task('S1-02','Skill chuẩn bị đến publish','Lan',8,true),task('S1-03','Bốn skill code theo stack','Minh',8,true),task('S1-04','Nối skill vào plan, prep và giao code','Minh',8,true),task('S1-05','Nối skill vào review độc lập','Lan',8,true),task('S1-06','Lệnh ghi bài học có commit','Codex',8,true),task('S1-07','Nối nghiệm thu, IMP và hàng chờ Map','Codex',8,true),task('S1-08','Bổ sung quy ước thật vào 4 skill code','Lan',8,true)]}
+];
+let selected='V8-02';
+const pill=(text,tone)=>`<span class="pill ${tone}">${text}</span>`;
+function renderList(){
+ const visible=requests.filter(r=>filter.value==='Tất cả'||r.status===filter.value);
+ document.getElementById('count').textContent=visible.length+' yêu cầu';
+ document.getElementById('empty').hidden=visible.length>0;
+ document.getElementById('requests').innerHTML=visible.map(r=>{
+ const active=r.id===selected||r.tasks.some(t=>t.id===selected);
+ return `<article class="card ${active?'selected':''}"><button class="request" data-id="${r.id}" aria-pressed="${selected===r.id}"><span class="code">${r.id}</span><strong>${r.title}</strong></button><div class="chips">${pill(r.tasks.filter(t=>t.done).length+'/'+r.tasks.length+' task xong','n')}${pill(r.chip,r.tone)}</div>${r.tasks.length?`<details ${active?'open':''}><summary>${r.tasks.length} task · xem công việc thành phần</summary><div class="tasks">${r.tasks.map(t=>`<button class="task ${t.id===selected?'active':''}" data-id="${t.id}" aria-pressed="${t.id===selected}" title="${t.title}"><span class="code">${t.id}</span><span class="person">${t.person}${t.id==='V8-02'?' · dự phòng':''}</span>${pill(t.done?'✓ Merge':t.id==='V8-02'?'Code · lượt 7':'Chờ chuẩn bị',t.done?'ok':t.id==='V8-02'?'run':'n')}</button>`).join('')}</div></details>`:'<div class="chips"><small>Chưa tách task · chờ duyệt kế hoạch.</small></div>'}</article>`;
+ }).join('');
+}
+function renderDetail(){
+ const r=requests.find(r=>r.id===selected||r.tasks.some(t=>t.id===selected));
+ const t=r.tasks.find(t=>t.id===selected),v8=selected==='V8-02';
+ const complete=t?t.done:r.status==='Xong',step=t?t.step:r.id==='R-011'?2:complete?8:3;
+ const title=t?t.title:r.title,id=t?t.id:r.id;
+ const label=v8?'Code · sửa sau Cổng KT':complete?'Merge · đã hoàn tất':!t&&r.id==='R-009'?'Kế hoạch đã duyệt':step===3?'Chuẩn bị · đang chờ':'Duyệt kế hoạch · đang chờ';
+ const source=v8?'Nguồn: R-008 · nhật ký 20:15–20:58; logs/V8-02-7.json và V8-02-verify-3.md trong WorkDir.':`Nguồn: requests/${r.id} · plans/${r.id}/plan.md · tasks/README.md. Các task chưa có phiếu lấy từ kế hoạch.`;
+ const log=v8?[
+ ['21:12:25','Code · lượt 7','Codex trả kết quả; Cổng KT chưa đạt'],
+ ['20:58:55','Code · lượt 7','Codex dự phòng bắt đầu (810 giây)'],
+ ['20:58:00','Cổng KT · lượt 3','KHÔNG ĐẠT'],
+ ['20:20:13','Cổng KT · lượt 2','KHÔNG ĐẠT'],
+ ['20:19:20','Giao code · lượt 1','KHÔNG ĐẠT']
+ ]:r.id==='R-010'?[
+ ['19:52:38','Merge · S1-07','ĐẠT'],['19:41:19','Giao code · S1-07','ĐẠT'],['19:41:10','QC · S1-07','BLOCKED (lịch sử)'],['19:40:20','Cổng KT · S1-07','ĐẠT'],['19:14:29','Chuẩn bị · S1-07','ĐẠT']
+ ]:r.id==='R-009'?[
+ ['16:49:16','Merge · H7-07','ĐẠT'],['16:46:01','Cổng KT · H7-07','ĐẠT'],['16:34:14','Giao code · H7-07','KHÔNG ĐẠT'],['16:34:05','QC · H7-07','CẦN SỬA (lịch sử)'],['16:33:06','Cổng KT · H7-07','ĐẠT']
+ ]:[];
+ document.getElementById('detail').innerHTML=`
+ <header class="detailhead"><div><div class="eyebrow">${r.id} / ${t?'Task thành phần':'Yêu cầu'}</div><h2>${id} · ${title}</h2><p class="description">${v8?'Codex dự phòng · lượt code 7 · chưa qua Cổng KT':t?'Tiến độ riêng của task đang chọn':'Theo dõi tổng hợp; chọn task để xem tiến độ riêng.'}</p></div>${pill(complete?'✓ Xong':r.status==='Chờ duyệt'?'Chờ duyệt':'Đang chạy',complete?'ok':r.tone)}</header>
+ <div class="panel"><h3 class="sectiontitle">Tiến trình công việc</h3><ol class="steps">${stages.map((s,i)=>{const state=complete?'done':v8&&i===5?'failed':i<step?'done':i===step?'current':'';return `<li class="step ${state}" ${state==='current'?'aria-current="step"':''}><span class="circle">${i+1}${state==='done'?' ✓':state==='failed'?' ✗':''}</span><span>${s}</span>${state==='current'?'<span class="here">Đang ở đây</span>':''}</li>`}).join('')}</ol><div class="legend"><span>✓ Xanh: đã xong</span><span>◉ Xanh đậm: hiện tại</span><span>✗ Đỏ: lỗi gần nhất</span><span>○ Xám: chưa tới</span></div></div>
+ <section class="panel currentcard"><p class="sectiontitle">Bước hiện tại</p><div class="currenttitle"><h3>${label}</h3>${pill(v8?'Lượt 7':complete?'Hoàn tất':'Đang chờ',v8?'run':complete?'ok':'rev')}</div><dl class="metadata"><div><dt>Người phụ trách</dt><dd>${v8?'Codex · code dự phòng':t?t.person:complete?'Minh / Lan / Codex':'Claude · duyệt kế hoạch'}</dd></div><div><dt>Bắt đầu lúc</dt><dd>${v8?'20:58:55 · 25/10/2026':'Chưa có dữ liệu'}</dd></div><div><dt>Đã chạy bao lâu</dt><dd>${v8?'13 phút 30 giây · lượt code 7':'Chưa có dữ liệu'}</dd></div><div><dt>Lượt hiện tại</dt><dd>${v8?'Code: 7 · Cổng KT gần nhất: 3':complete?'Xem nhật ký từng task':'Chưa bắt đầu'}</dd></div></dl></section>
+ ${v8?`<section class="panel errorcard"><h3>✗ Lỗi gần nhất · Cổng KT chưa đạt</h3><p>Lượt 7 báo harness S1-04 thiếu hàm khóa; helper V8-02 trả ExitCode=null. Sandbox chặn một số kiểm tra Git/Hub. Chưa có báo cáo Cổng KT mới.</p><a href="#report">Xem báo cáo cổng KT →</a><details id="report"><summary>Báo cáo gần nhất · 20:58 · lượt 3</summary><p>Build đạt, 0 warning. Hub: 527 test đạt. Core: 491 đạt, 64 lỗi. Code thêm 397/380 dòng. Lượt code 7 báo đã sửa lỗi nạp module; 19 ca hồi quy riêng đạt, Cổng KT vẫn chưa đạt.</p></details></section>`:''}
+ <section class="panel"><h3 class="sectiontitle">Nhật ký gần nhất <span class="muted">· 25/10/2026${!v8?' · theo yêu cầu':''}</span></h3>${log.length?`<ol class="timeline">${log.map(l=>`<li><time>${l[0]}</time> · <b>${l[1]}</b> · ${l[2]}</li>`).join('')}</ol>`:'<p class="muted">Chưa có nhật ký bước. Kế hoạch đang chờ duyệt.</p>'}<p class="source">${source}</p></section>`;
+}
+const filter=document.getElementById('filter');
+document.getElementById('requests').addEventListener('click',e=>{const button=e.target.closest('[data-id]');if(button){selected=button.dataset.id;renderList();renderDetail();}});
+filter.addEventListener('change',()=>{const visible=requests.filter(r=>filter.value==='Tất cả'||r.status===filter.value);if(visible.length&&!visible.some(r=>r.id===selected||r.tasks.some(t=>t.id===selected)))selected=visible[0].id;document.getElementById('detail').hidden=!visible.length;renderList();if(visible.length)renderDetail();});
+renderList();renderDetail();
+</script>
+</body>
+</html>
