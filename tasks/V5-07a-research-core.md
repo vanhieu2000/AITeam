@@ -1,4 +1,4 @@
-# V5-07a · Phòng nghiên cứu (lõi): lời nhắn an toàn, che bí mật, lưu kết quả, hỏi ChatGPT / Gemini qua CLI
+﻿# V5-07a · Phòng nghiên cứu (lõi): lời nhắn an toàn, che bí mật, lưu kết quả, hỏi ChatGPT / Gemini qua CLI
 
 - **Agent:** A
 - **Nhánh:** `agent-a/V5-07a-research-core`
@@ -41,15 +41,16 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C4 + G2. Mẫu lỗi TH�
 - `core.tests/AcceptanceV507ResearchTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm mọi ca nghiệm thu V5-07a).
+- [x] `dotnet build AITeam.sln` 0 warning; `dotnet test AITeam.sln --blame-hang-timeout 3m` pass hết (gồm mọi ca nghiệm thu V5-07a).
 
 ## Báo cáo của agent
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
+| Build 0 warning, toàn bộ test + nghiệm thu V5-07a pass | `dotnet build AITeam.sln` → 0 Warning(s), 0 Error(s); `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m` → Passed 583/583 (Core.Tests: 218/218 gồm 35/35 `AcceptanceV507ResearchTests`, Hub.Tests: 365/365) |
 
-- **Đã làm:**
-- **File đã đổi:**
-- **Điều chưa chắc:**
+- **Đã làm:** Hoàn thiện `ResearchPrompt.Build`, `ResearchStore` (`NewQuestionId`, `Save`, `List`), `ProviderResearchConnector.AskAsync` và `GeminiResearchConnector.AskAsync` theo đúng đặc tả.
+- **File đã đổi:** `core/AITeam.Core/Research/Research.cs`, `tasks/V5-07a-research-core.md`.
+- **Điều chưa chắc:** Mẫu JSON thành công của `gemini` CLI theo tài liệu headless (chưa xác minh trên tài khoản đăng nhập thật như nêu trong mục Bối cảnh).
 
 ## Review (Claude)
 
