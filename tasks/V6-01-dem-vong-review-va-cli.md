@@ -34,7 +34,6 @@ Hiện thực `ReviewRoundCounter.Count(string? taskContent, IEnumerable<string?
 ## Phạm vi (được sửa)
 - `core/AITeam.Core/Review/ReviewRoundCounter.cs`
 - `core/AITeam.Cli/Program.cs`
-- `core.tests/ReviewCliTests.cs`
 - `core.tests/AcceptanceV601ReviewRoundsTests.cs` — Codex chuẩn bị, Antigravity KHÔNG sửa.
 - `tasks/V6-01-dem-vong-review-va-cli.md` — chỉ điền Báo cáo của agent.
 
@@ -93,18 +92,18 @@ Quyết định cụ thể hóa: dùng tên log `.review-` theo code hiện hữ
 Chưa xác minh: chức năng thực tế còn chờ Antigravity triển khai; chưa chạy toàn bộ solution test. Lượt chạy cả 62 ca đã dừng sau khi test tiến trình CLI bị timeout 20 giây với khung ném lỗi; không coi đó là kết quả chạy đủ 62 ca. Chưa kiểm thử riêng reparse point. Lệnh build mặc định trong sandbox trả exit 1 với 0 error/0 warning, không có chẩn đoán; build một node như trên thành công. Restore khi bật NuGet audit báo NU1900 vì không truy cập được nuget.org; tắt audit chỉ cho lượt kiểm tra offline, không sửa cấu hình dự án. Tham số UseSharedCompilation=false tránh lỗi quyền truy cập named pipe compiler server đã thấy trong log chẩn đoán.
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng thực tế (lệnh + kết quả) |
+| Tiêu chí hoàn thành | Bằng chứng thực tế |
 |---|---|
-| Core Markdown & JSON | `dotnet test core.tests --filter ReviewCliTests`: 3/3 passed (thêm test tiêu đề gần giống & junction cha). |
-| Khớp chính xác tiêu đề Review | `ReviewRoundCounter` so khớp chính xác `Review (Claude)` sau chuẩn hóa; bỏ mục tên gần giống. |
-| Reparse point chuỗi thư mục cha & CLI | `HasReparsePointInPath` kiểm tra toàn bộ chuỗi cha; Main bắt mọi ngoại lệ in `LỖI:`, exit != 0. |
-| Build solution 0 lỗi 0 warning | `dotnet build AITeam.sln`: Build succeeded, 0 Warning(s), 0 Error(s). |
-| Toàn bộ solution test pass | `dotnet test AITeam.sln`: 669/670 passed (Hub: 386/386, Core: 283/284; xem lưu ý thư mục `con`). |
-
-- File đã đổi: `core/AITeam.Core/Review/ReviewRoundCounter.cs` (logic đếm thuần), `core/AITeam.Cli/Program.cs` (CLI `review-rounds` & bắt lỗi Main), `core.tests/ReviewCliTests.cs` (bổ sung test tiêu đề gần giống & junction cha).
-- Quyết định tự đưa ra: Đã xóa toàn bộ static constructor và P/Invoke khỏi `ReviewRoundCounter`; giữ hàm thuần túy theo yêu cầu QC; giữ nguyên file test nghiệm thu.
-- Điều chưa xác minh / ghi nhận cho quản lý: Test `Cli_filters_exact_review_prefix_extension_and_top_directory` (dòng 117 trong `AcceptanceV601ReviewRoundsTests.cs`) gọi `Directory.CreateDirectory(Path.Combine(logs, "con"))`. Trên Windows, `CON` là tên thiết bị DOS dành riêng nên ném `DirectoryNotFoundException: Could not find a part of the path '\\.\con'`. Đúng theo hướng dẫn của quản lý và AGENTS.md, agent không can thiệp sửa test nghiệm thu hay đổi môi trường tiến trình mà ghi nhận để quản lý xử lý ở test.
-
+| Core Markdown/BOM/null/số vòng | Lệnh test toàn solution bên dưới: các ca Core đếm vòng pass. |
+| JSON, lỗi riêng từng log, fixture thật | Các ca `Json_requires_exact_root_string_verdict` và `Adds_both_sources_and_preserves_good_logs_around_bad_log` pass. |
+| CLI lọc log/nguồn thiếu | Các ca nguồn thiếu/khóa pass; ca lọc log bị chặn tại test dòng 117: tạo thư mục `con` trên Windows ném `DirectoryNotFoundException` trước khi gọi CLI. |
+| Mã task, thiếu tham số, đường dẫn có dấu | Các ca biên mã task và lỗi tham số pass; ca đường dẫn có dấu/lọc log chưa xác minh trọn vẹn vì lỗi `con` nêu trên. |
+| Build 0 lỗi/0 warning | `dotnet build AITeam.sln` exit 1, 0 warning/0 error, không chẩn đoán; chạy `dotnet build AITeam.sln -m:1 -p:UseSharedCompilation=false -p:NuGetAudit=false --verbosity minimal` exit 0, 0 warning/0 error. |
+| Test toàn bộ, giữ nguyên nghiệm thu | `dotnet test AITeam.sln --no-restore --blame-hang-timeout 2m -m:1 -p:UseSharedCompilation=false -p:NuGetAudit=false`: 668 pass, 1 fail, 0 skip (Hub 386/386; Core 282/283); không sửa test nghiệm thu. |
+| File và phạm vi | Lượt này chỉ cập nhật báo cáo; giữ triển khai trong `ReviewRoundCounter.cs`, `Program.cs`; cả hai có BOM EF BB BF. |
+| File ngoài phạm vi cần Claude quyết | Giữ nguyên `core.tests/ReviewCliTests.cs`: dùng `Path.Combine(AppContext.BaseDirectory, "aiteam.dll")` là bắt buộc theo AGENTS.md để test tiến trình dùng đúng DLL được chép bởi ProjectReference; không sửa file này trong lượt này, chưa đối chiếu bản gốc vì cấm chạy git. |
+| Quyết định và điều chưa xác minh | Dùng build một node, tắt compiler server/audit chỉ qua tham số để kiểm tra sandbox; chưa xác minh build mặc định/cổng kiểm tra đạt; không thay môi trường hoặc code để né lỗi test `con`. |
+| Bàn giao | Không có công cụ MCP AITeam trong phiên; không chạy git theo chỉ dẫn Codex, hệ thống phụ trách commit/push; cần Claude xử lý test nghiệm thu lỗi tên thiết bị Windows. |
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
