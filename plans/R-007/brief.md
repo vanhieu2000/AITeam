@@ -1,0 +1,11 @@
+# Brief R-007 — Hub v6: nhóm chức năng theo quy trình v4 (chủ dự án đã duyệt mockup 25/10)
+- **Mockup đã duyệt:** `docs/design/v6-hub-chuc-nang-mockup.html` (bảng "Trang cũ đi đâu?" là đặc tả ánh xạ). Dùng class CSS sẵn có của Hub (`hub.css`), không thêm thư viện.
+- **Menu (`_Layout.cshtml`) còn 9 mục:** Văn phòng (/) · Yêu cầu (/Requests) · Cần anh duyệt · nhóm Dự án (giữ) · nhóm Đánh giá: Hiệu suất, Quy trình & cải tiến · nhóm Hệ thống: AI & tài khoản, Bí mật, Cài đặt. Trang cũ bỏ khỏi menu nhưng ĐỊA CHỈ CŨ vẫn chạy (redirect 302 sang chỗ mới, giữ query) — không gãy liên kết.
+- **Dây chuyền 7 bước** (dùng chung Văn phòng + Yêu cầu + trang Task): Brief · Kế hoạch · Duyệt · Chuẩn bị · Code · QC · Nghiệm thu. Suy trạng thái từ dữ liệu sẵn có: `plans/R-xxx/brief.md`, `plan.md` (+ mục "Quyết định của quản lý" = đã duyệt), task của phiếu (dòng `Yêu cầu: R-xxx`) và trạng thái bảng việc, log `<Task>.prep.json`, `<Task>.review-*.json`, dòng "Vòng N — ĐẠT". Hàm thuần + test.
+- **Văn phòng:** bàn theo vai trò: Claude (quản lý · nghiệm thu), Codex (kế hoạch · chuẩn bị · QC — việc gần nhất từ log plan/prep/review), Minh, Lan, Cổng KT; thêm khung "Dây chuyền đang chạy". Bàn "Phòng nghiên cứu" bỏ (thành tab).
+- **Yêu cầu (/Requests):** gộp Giao việc + Hộp thư (ô "Gửi yêu cầu mới") + Phòng nghiên cứu (tab Research của phiếu, dùng lại `IResearchService`). Mỗi phiếu: thanh 7 bước + tab Brief & kế hoạch (hiện plan.md dạng chữ an toàn) · Task · Research · Nhật ký · Chat.
+- **Hiệu suất:** gộp Tổng quan (số đo, biểu đồ) + Đội ngũ (tab Nhân viên). **AI & tài khoản:** gộp Provider AI + Tài khoản AI + Tài khoản (tab Trạng thái · Phân vai · Đổi tài khoản Antigravity · Lịch sử nghỉ) — dùng lại dịch vụ sẵn có, không viết lại logic.
+- **Không làm:** đổi dữ liệu / file trạng thái, đổi `team.ps1`, xóa dịch vụ cũ (chỉ đổi trang / menu).
+- **Ràng buộc:** mọi trang dựng thật được (thêm vào test dựng trang); POST giữ antiforgery; không `Html.Raw` với nội dung plan / AI; bề rộng 1000px không tràn ngang.
+- **Chia việc:** lõi (hàm dây chuyền + redirect) cho Minh (A); giao diện cho Lan (B); mỗi task ≤ 400 dòng; có thể song song khi khác file.
+- **Tiền tố mã task:** H6.
