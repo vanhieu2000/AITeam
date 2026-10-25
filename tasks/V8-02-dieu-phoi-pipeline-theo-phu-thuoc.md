@@ -71,7 +71,7 @@ Làm đúng V8-02 trong kế hoạch R-008 đã duyệt. V8-01 đã cung cấp k
 `core.tests/AcceptanceV802PipelineTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới; không còn TODO trong khung V8-02.
+- [x] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới; không còn TODO trong khung V8-02.
 - [ ] `dotnet test AITeam.sln` pass; toàn bộ AcceptanceV802PipelineTests bất biến pass.
 - [ ] `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1` pass, gồm hồi quy lệnh cũ và nghiệm thu xUnit mới. Chạy riêng nghiệm thu bằng `-PipelineOnly` sau build.
 - [ ] Plan chưa duyệt/từ chối/đồ thị sai không gọi worker; dữ liệu cũ không BOM/CRLF đọc đúng, không bị viết lại; đường dẫn xấu/reparse bị chặn.
@@ -81,14 +81,19 @@ Làm đúng V8-02 trong kế hoạch R-008 đã duyệt. V8-01 đã cung cấp k
 - [ ] Bổ sung test adapter CLI cho fetch lỗi/bảng local khác origin, tiếp tục prep dở và timeout child; test lõi hiện có không thay cho kiểm tra các adapter thật. Không đổi test nghiệm thu để hợp thức hóa adapter sai.
 
 ## Báo cáo của agent
-Agent điền khi triển khai, không sửa kết quả chuẩn bị thành kết quả đã triển khai.
-
 | Tiêu chí hoàn thành | Bằng chứng: lệnh + kết quả thật |
 |---|---|
-| Build, test, hồi quy và từng tiêu chí trên | Chưa chạy ở bước triển khai |
-
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro.
-
+| Build; không TODO V8-02 | `dotnet build AITeam.sln --no-restore --disable-build-servers -m:1 -v:minimal`: 0 lỗi, 0 warning; parser 3 script: 0 lỗi, BOM EF-BB-BF. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore --disable-build-servers -m:1 --blame-hang-timeout 2m`: đã dừng bằng Ctrl+C sau >3 phút, mã 1; Hub 518 pass/9 fail; Core chưa tổng kết, đã có lỗi S1-04 thiếu import khóa/S1-06 và Access denied. |
+| Hồi quy + nghiệm thu bất biến | `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1`: chặn ở git clone repo tạm, Win32 error 5/signal pipe; `-PipelineOnly`: 26 pass, 12 fail/38, 0 skip. |
+| Duyệt/đồ thị/đường dẫn/dữ liệu cũ | Các ca tương ứng trong `-PipelineOnly` đạt; không sửa fixture, plan hay test nghiệm thu. |
+| Hai child/đúng một dòng/task cũ/phụ thuộc origin | Các ca lõi và adapter origin/fetch trong `-PipelineOnly` đạt; không tự merge. |
+| Khóa trùng/nhả khóa/Codex prep-QC | Ca child lỗi và khóa pipeline đạt; các ca khóa worker chưa đạt (ExitCode rỗng và 1 timeout), chưa chứng minh đầy đủ khóa Codex. |
+| Bộ đếm/không fallback/prep dở | Test bộ đếm bị chặn bởi helper Stage đọc ExitCode rỗng; kiểm riêng kịch bản 17 đạt 3/3, không gọi lại Codex. |
+| Adapter CLI/fetch/prep dở/timeout | Chạy riêng đoạn kịch bản 17–19 từ script qua ScriptBlock: 13/13 kiểm tra đạt; child lỗi/quota/prep hỏng không gọi verify; fetch dùng nghiệm thu CLI 2 ca đạt. |
+File đổi: `team.ps1` (nối adapter, kết quả prep/agent, lỗi Git); `tools/workflow-pipeline.ps1` (an toàn đọc, lỗi child, log/dọn tiến trình); `tools/test-verify.ps1` (BOM, test worker); task này (báo cáo).
+Tự quyết: dùng MSBuild một tiến trình vì restore mặc định trả mã 1 không chẩn đoán; giữ test bất biến, không thêm mã nhận diện harness/AI thật.
+Chưa chắc: nghiệm thu dòng 343–345 dùng Start-Process rồi WaitForExit/ExitCode: tái hiện ExitCode rỗng, giữ Handle trước chờ thì nhận đúng 7; cần Claude xử lý test, không sửa để qua. Không chạy lệnh git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
 ## Ghi nhận bước chuẩn bị (Codex)
 - Khung sản phẩm chỉ throw NotImplementedException; wiring import/lệnh/catch có sẵn, không viết thân nghiệp vụ.
 - Các fixture là bản sao nguyên byte; test sửa bản tạm, không sửa dữ liệu thật. Không chạy git theo yêu cầu.

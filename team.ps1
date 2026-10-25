@@ -69,6 +69,7 @@ $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $Utf8 = New-Object Text.UTF8Encoding $false
 . (Join-Path $Root "tools/workflow-common.ps1")
+. (Join-Path $Root "tools/workflow-pipeline.ps1")   # V8-02: khóa Codex toàn máy cho prep/QC, lõi pipeline
 . (Join-Path $Root "scripts/SkillPrompts.ps1")
 . (Join-Path $Root "scripts/SkillNotes.ps1")
 # Khóa chung Set-BoardStatus/Save-RunMetrics và ghi Prep/Assign/Verify/Qc/Merge cùng cập nhật bảng việc.
@@ -529,11 +530,12 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
             Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
             return
         }
-    } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }; return }
+    } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }; if ($NoVerify) { return @{ Ok = $false; Quota = $true } }; return }
     if ($NoVerify) {
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
-        Set-BoardStatus $r $Task "🔵 Chờ review" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'XONG' }
-        return
+        $agentOk = if ($devProvider -eq 'codex') { [bool]$cx.Ok } else { $proc -and $proc.ExitCode -eq 0 -and $logText -match '"status"\s*:\s*"SUCCESS"' }
+        Set-BoardStatus $r $Task $(if ($agentOk) { "🔵 Chờ review" } else { "🔴 Lỗi agent" }) -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = $(if ($agentOk) { 'XONG' } else { 'LỖI' }) }
+        return @{ Ok = [bool]$agentOk; Quota = $false }
     }
     $gate = Invoke-WorkflowGate -Verify { Invoke-Verify } -Qc {
         Invoke-AutoReview $r $taskFile.Name $work $devProvider
@@ -728,7 +730,7 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
     $a = @("review", "--auto", "--task-file", $taskInWork, "--diff-file", $diff, "--workdir", $work, "--logdir", $dir, "--dev", $devProvider, "--out", $out, "--root", $Root)
     if ($verify) { $a += @("--verify-file", $verify.FullName) }
     Say "Review AI (aiteam review --auto)…" Cyan
-    & $exe @a 2>&1 | ForEach-Object { Say "  $_" }
+    Invoke-WorkflowCodexLock -Action { & $exe @a 2>&1 | ForEach-Object { Say "  $_" } }   # QC Codex dùng chung khóa toàn máy với prep
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $ErrorActionPreference = $eap
     $json = $null; if (Test-Path $out) { try { $json = Read-Json $out } catch { } }
@@ -886,7 +888,73 @@ function Get-PlanDir([string]$req) {
 # /// Mỗi task đúng một dòng "MÃ: trạng thái"; log dài ghi file riêng. Không merge.
 # /// Lỗi chưa làm được catch ngoài cùng in "LỖI: chưa làm", mã 1.</summary>
 function Invoke-Pipeline {
-    throw [System.NotImplementedException]::new(); # TODO(agent)
+    $pipeRepo = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
+    if ($Task) {
+        # Worker (tiến trình riêng do lõi khởi chạy): bộ đếm agent / KT / QC nằm trong Invoke-WorkflowPipelineTask của riêng task này.
+        [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
+        $pipeHasFile = { @(Get-ChildItem (Join-Path $pipeRepo.Path "tasks") -Filter "$Task-*.md" -ErrorAction SilentlyContinue).Count -gt 0 }
+        $script:Project = $pipeRepo.Info.name
+        $pipeResult = Invoke-WorkflowPipelineTask -TaskId $Task -Prep {
+            $script:NoLaunch = $true
+            $prepResult = @(Invoke-Prep) | Select-Object -Last 1   # tiếp tục worktree prep dở
+            @{ Ok = [bool]($prepResult -and $prepResult.Ok -and (& $pipeHasFile)) }   # prep lỗi chỉ return ⇒ xác minh bằng file task thật trên repo chính
+        } -Agent {
+            param($resumeRun, $feedbackText)
+            $script:Resume = [bool]$resumeRun; $script:Feedback = [string]$feedbackText
+            $script:Dev = "agy"; $script:NoVerify = $true   # không fallback Codex, không tự giao lại trong assign
+            $agentResult = @(Invoke-Assign) | Select-Object -Last 1
+            @{ Ok = [bool]($agentResult -and $agentResult.Ok); Quota = [bool]($agentResult -and $agentResult.Quota) }
+        } -Verify {
+            $v = @(Invoke-Verify) | Select-Object -Last 1
+            @{ Ok = [bool]$v.Ok; Feedback = "Cổng kiểm tra tự động KHÔNG ĐẠT. Sửa hết các mục sau, chạy lại build + test, cập nhật báo cáo, commit và push:`n- " + (@($v.Fails) -join "`n- ") }
+        } -Qc {
+            $ctx = Get-TaskContext
+            $rv = @(Invoke-AutoReview $ctx.R $ctx.TaskFile.Name $ctx.Work "agy") | Select-Object -Last 1
+            $verdict = if ($rv) { @{ 0 = 'PASS'; 1 = 'CHANGES_REQUESTED'; 3 = 'BLOCKED' }[[int]$rv.Code] } else { 'BLOCKED' }
+            $fb = if ($rv -and $rv.Json -and $rv.Json.feedback) { "Reviewer AI (provider khác) yêu cầu sửa. Sửa đúng các mục Blocker / Required dưới đây, không làm thêm; chạy lại build + test, cập nhật báo cáo, commit và push:`n" + $rv.Json.feedback } else { "" }
+            @{ Verdict = $verdict; Feedback = $fb }
+        }
+        $pipeBoard = @{ PASS = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS"; VERIFY_FAILED = "🔴 Cần sửa · cổng KT KHÔNG ĐẠT"
+            QC_FAILED = "🔵 Chờ review · cổng KT ĐẠT · AI review CẦN SỬA (Claude xem)"; BLOCKED = "🔵 Chờ review · AI review BLOCKED (Claude review)"; ERROR = "🔴 Lỗi pipeline" }[$pipeResult.Status]
+        if ($pipeBoard -and (& $pipeHasFile)) { Set-BoardStatus $pipeRepo $Task $pipeBoard }
+        Say "$($Task): $($pipeResult.Status)"
+        if ($pipeResult.Status -eq 'ERROR') { exit 1 }
+        return
+    }
+    $pipePlan = Join-Path (Get-PlanDir $Request) "plan.md"
+    $pipeLogs = $pipeRepo.Logs
+    New-Item -ItemType Directory -Force $pipeLogs | Out-Null
+    $rows = @(Invoke-WorkflowPipeline -PlanPath $pipePlan -ProjectKey $pipeRepo.Path -RequestId $Request -ReadBoard {
+        # Luôn fetch rồi đọc bảng việc origin/main; lỗi thì dừng, không dùng bảng local.
+        $global:LASTEXITCODE = 0
+        git -C $pipeRepo.Path fetch -q origin
+        if ($LASTEXITCODE -ne 0) { throw "Không fetch được origin ⇒ dừng pipeline (không dùng bảng việc local)." }
+        $enc = [Console]::OutputEncoding
+        try { [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false; $boardLines = @(git -C $pipeRepo.Path show "origin/main:tasks/README.md") }
+        finally { [Console]::OutputEncoding = $enc }
+        if ($LASTEXITCODE -ne 0) { throw "Không đọc được origin/main:tasks/README.md ⇒ dừng pipeline." }
+        $boardLines -join "`n"
+    } -TaskExists {
+        param($id)
+        @(Get-ChildItem (Join-Path $pipeRepo.Path "tasks") -Filter "$id-*.md" -ErrorAction SilentlyContinue).Count -gt 0
+    } -StartTask {
+        param($item)
+        $base = Join-Path $pipeLogs "$($item.Id).pipeline"
+        $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + (Join-Path $Root 'team.ps1') + '"'), 'pipeline',
+            '-Project', ('"' + $pipeRepo.Info.name + '"'), '-Request', $Request, '-Task', $item.Id)
+        Start-Process powershell.exe -ArgumentList $argList -WindowStyle Hidden -PassThru -RedirectStandardOutput "$base.out.txt" -RedirectStandardError "$base.err.txt"
+    })
+    if ($rows.Count -eq 0) { Say "Pipeline $Request của $($pipeRepo.Info.name) đang chạy ở tiến trình khác ⇒ bỏ qua." Yellow; return }
+    foreach ($row in $rows) {
+        $status = $row.Status
+        $outFile = Join-Path $pipeLogs "$($row.Id).pipeline.out.txt"
+        if ($status -in @('DONE', 'ERROR') -and (Test-Path $outFile)) {
+            # Worker in đúng một dòng "MÃ: trạng thái" ở cuối; log dài nằm trong file riêng.
+            $line = Get-Content $outFile -Encoding UTF8 | Where-Object { $_ -match ('^' + [regex]::Escape($row.Id) + ': [A-Z_]+$') } | Select-Object -Last 1
+            if ($line) { $status = ($line -split ': ', 2)[1] }
+        }
+        Say "$($row.Id): $status"
+    }
 }
 
 function ConvertTo-AsciiSlug([string]$text) {
@@ -1006,7 +1074,7 @@ function Invoke-Prep {
     $out = Join-Path $r.Logs "$Task.prep.json"
     $exe = Get-AITeamExe
     Say "[$(Get-Date -Format HH:mm:ss)] $Task → Codex chuẩn bị task (đặc tả + khung + test nghiệm thu) trong $work" Cyan
-    & $exe run --provider codex --workdir $work --prompt-file $pf --logdir (Join-Path $r.Logs "$Task.prep") --timeout-min 20 --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
+    Invoke-WorkflowCodexLock -Action { & $exe run --provider codex --workdir $work --prompt-file $pf --logdir (Join-Path $r.Logs "$Task.prep") --timeout-min 20 --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" } }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
     if ($code -ne 0) {
@@ -1054,10 +1122,12 @@ function Invoke-Prep {
         $ErrorActionPreference = $eap; return
     }
     git -C $work push -q -u origin $branch 2>&1 | Select-Object -Last 2 | ForEach-Object { Say "  $_" }
+    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Chuẩn bị $Task thất bại ở giao dịch Git." }
 
     # File task + dòng bảng việc lên main (nội dung giống hệt trên nhánh ⇒ merge không xung đột).
     Invoke-RepoTransaction -RepoPath $r.Path -Action {
         git -C $r.Path pull -q --ff-only 2>$null
+    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Chuẩn bị $Task thất bại ở giao dịch Git." }
         Copy-Item (Join-Path $work "tasks\$fileName") (Join-Path $r.Path "tasks\$fileName") -Force
         $prepRun = Get-NextJournalRun $r.Path $fileName $Task 'Prep'
         Update-WorkflowJournal -RepoPath $r.Path -TaskFile $fileName -TaskId $Task -Event 'Prep' -Run $prepRun -Result 'ĐẠT'
@@ -1079,15 +1149,19 @@ function Invoke-Prep {
         git -C $r.Path add -- $commitFiles 2>$null
         git -C $r.Path commit -q -m "Task $Task (Codex chuẩn bị, $Request)" -- $commitFiles 2>&1 | Out-Null
         git -C $r.Path push -q 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Chuẩn bị $Task thất bại ở giao dịch Git." }
     }
     # Gộp main (đã có file task giống hệt) vào nhánh ngay ⇒ tổ tiên chung có file task ⇒ lần sau agent sửa báo cáo không bị xung đột add/add (H6-07).
     git -C $work fetch -q origin 2>$null
+    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Chuẩn bị $Task thất bại ở giao dịch Git." }
     git -C $work merge -q --no-edit origin/main 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Chuẩn bị $Task thất bại ở giao dịch Git." }
     git -C $work push -q 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = $eap; throw "Chuẩn bị $Task thất bại ở giao dịch Git." }
     git -C $r.Path worktree remove --force $work 2>&1 | Out-Null
     $ErrorActionPreference = $eap
     Say "Đã chuẩn bị ${Task}: tasks/$fileName + nhánh $branch$(if ($j) { ' · ' + $j.summary })." Green
-    if ($NoLaunch) { Say "Giao: .\team.ps1 assign -Project $($r.Info.name) -Task $Task"; return }
+    if ($NoLaunch) { Say "Giao: .\team.ps1 assign -Project $($r.Info.name) -Task $Task"; return @{ Ok = $true } }
     Say "Giao Antigravity (Agent $agentId)…" Cyan
     $script:Project = $r.Info.name
     Invoke-Assign
@@ -2214,7 +2288,7 @@ switch ($Command) {
     "ask" { Invoke-Ask }
     "plan" { Invoke-Plan }
     "prep" { Invoke-Prep }
-    "pipeline" { . (Join-Path $Root "tools/workflow-pipeline.ps1"); Invoke-Pipeline }
+    "pipeline" { Invoke-Pipeline }
     "qc" { Invoke-Qc }
     "deputy" { Invoke-Deputy }
     "deputy-on" { Invoke-DeputySchedule $true }
