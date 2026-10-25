@@ -70,7 +70,22 @@ public partial class IndexModel : PageModel
     /// </summary>
     private void LoadPerformanceStaff()
     {
-        throw new NotImplementedException(); // TODO(agent)
+        Tab = Tab == "staff" ? "staff" : "overview";
+        StaffView = null;
+        if (Tab != "staff")
+            return;
+
+        StaffView = new TeamModel(_insights ?? new EmptyPerformanceInsights());
+        StaffView.OnGet();
+    }
+
+    private sealed class EmptyPerformanceInsights : ITeamInsightsService
+    {
+        public TeamInsights Get() => new(
+            Array.Empty<TaskInsight>(), Array.Empty<StaffScore>(), Array.Empty<StageAverage>(),
+            Array.Empty<TeamIssue>(), Array.Empty<Improvement>(), new OverviewKpis(null, null, 0));
+
+        public TaskInsight? GetTask(string project, string taskId) => null;
     }
 
     public void OnGet()

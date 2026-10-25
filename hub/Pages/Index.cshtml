@@ -1,16 +1,37 @@
-﻿@page "/Overview"
+﻿@page "/Performance"
 @using AITeam.Hub.Pages
 @model AITeam.Hub.Pages.IndexModel
 @{
-    ViewData["Title"] = "Tổng quan";
+    if (PageContext?.ViewData is null)
+    {
+        PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext { ViewData = ViewContext.ViewData };
+    }
+    ViewData["Title"] = "Hiệu suất";
 }
 
-@* TODO(agent): đổi route /Performance, nhãn Hiệu suất; thêm hai tab overview/staff giữ range.
-   Nhân viên dùng _PerformanceStaff và StaffView; giữ nội dung tổng quan, handler, bộ lọc. *@
+<style>
+    .performance-page, .performance-page .grid, .performance-page .panel, .performance-page .kpi { min-width:0; }
+    .performance-page { overflow-wrap:anywhere; }
+    .performance-page .panel { overflow-x:auto; }
+    .performance-page .hd { flex-wrap:wrap; }
+    .performance-page .inp { min-width:0; max-width:100%; }
+    .performance-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+</style>
 @section Actions {
     <span class="faint" style="font-size: 12px;">Cập nhật @DateTime.Now.ToString("HH:mm") · tự làm mới 15 giây</span>
 }
 
+<div class="performance-page">
+<nav class="performance-tabs" aria-label="Hiệu suất">
+    <a class="btn @(Model.Tab == "overview" ? "pri" : "")" href="/Performance?tab=overview&amp;range=@Model.Range" aria-current="@(Model.Tab == "overview" ? "page" : null)">Tổng quan</a>
+    <a class="btn @(Model.Tab == "staff" ? "pri" : "")" href="/Performance?tab=staff&amp;range=@Model.Range" aria-current="@(Model.Tab == "staff" ? "page" : null)">Nhân viên</a>
+</nav>
+@if (Model.Tab == "staff")
+{
+    <partial name="_PerformanceStaff" model="Model.StaffView" />
+}
+else
+{
 @if (!string.IsNullOrEmpty(Model.V3Error))
 {
     <div class="row" style="padding: 8px 14px; margin-bottom: 12px; background: rgba(248, 81, 73, 0.15); border: 1px solid var(--err); border-radius: var(--r); font-size: 13px;">
@@ -151,7 +172,7 @@
 })();
 </script>
 
-<div class="grid" style="grid-template-columns: minmax(0, 1fr) 340px;">
+<div class="grid" style="grid-template-columns: minmax(0, 1fr) minmax(0, 340px);">
     <!-- Cột trái: Bảng dự án + Hoạt động gần đây -->
     <div class="grid" style="align-content: start;">
         <div class="panel">
@@ -270,4 +291,6 @@
         <partial name="_RunningAgentsPartial" model="Model.RunningAgents" />
         <partial name="_HealthPanelPartial" model="Model.HealthItems" />
     </div>
+</div>
+}
 </div>

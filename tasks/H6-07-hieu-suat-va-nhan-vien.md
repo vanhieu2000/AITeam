@@ -80,20 +80,19 @@ ITeamInsightsService và Razor Pages hiện có được dùng lại. Menu do ta
 - [ ] `dotnet test AITeam.sln` pass, không sửa/Skip nghiệm thu.
 
 ## Báo cáo của agent
-Antigravity điền bảng từng tiêu chí → bằng chứng (lệnh, số pass/warning, ảnh),
-file thay đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
-
-### Chuẩn bị bước 4 (Codex)
-| Tiêu chí | Bằng chứng |
+| Tiêu chí | Bằng chứng thực tế |
 |---|---|
-| Khung biên dịch | `dotnet build AITeam.sln -m:1 -v:normal`: thành công, 0 lỗi, 8 warning NU1900 do không truy cập api.nuget.org; đã dùng tổng cộng 2 lượt build |
-| Nghiệm thu đỏ | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceH607PerformanceTests --logger "console;verbosity=quiet"`: 18 thất bại, 0 pass, 0 skip; chưa triển khai thân hàm |
-| BOM | Kiểm tra byte đầu 4 file C#/Razor: EF BB BF |
-| Phạm vi | Sửa Index.cshtml/Index.cshtml.cs để đặt khung; tạo _PerformanceStaff.cshtml, AcceptanceH607PerformanceTests.cs; điền task |
-Quyết định: dùng TeamModel làm mô hình partial để tái dùng phép chiếu và helper; không thêm dịch vụ/DI.
-Dữ liệu test là đối tượng giả lập theo hợp đồng đang dùng, không phải bản sao dữ liệu thật.
-Chưa xác minh: dựng trang sau triển khai, layout/ảnh và phép đo 1000px; chưa chạy toàn bộ test solution.
-Không chạy git theo chỉ thị bước 4; hệ thống tự commit. Báo cáo này không thay báo cáo triển khai của Antigravity.
-
+| /Performance, tiêu đề, tab, tab lạ | Test Razor thật và chuẩn hóa tab: H607 18/18 pass trong lệnh test riêng bên dưới. |
+| Số đo, khung giờ, bộ lọc, handler cũ | H607 + H302: 30/30 pass, 0 skip; dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH607PerformanceTests&#124;FullyQualifiedName~AcceptanceH302IndexTests" --blame-hang-timeout 2m. |
+| Nhân viên tương đương Team, dữ liệu cũ | Test phép chiếu TeamModel, task thiếu phiếu/đánh giá pass; không sửa dịch vụ, hợp đồng hay Team. |
+| Null/rỗng/lỗi, mã hóa HTML | Test dịch vụ null/rỗng/lỗi và Razor mã hóa lỗi pass; giữ nguyên thông báo lỗi và hai thông báo rỗng. |
+| Không tràn 1000px, ảnh review | Test hợp đồng CSS pass: min-width:0, overflow-wrap:anywhere, overflow-x:auto; CHƯA đo trình duyệt/chụp ảnh, Claude thực hiện theo phân công. |
+| Build | dotnet build AITeam.sln --no-restore -m:1: thành công, 0 lỗi, 0 warning. |
+| Test toàn solution | dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m: 624 pass, 1 fail, 0 skip (Hub 403/404; Core 221/221); không sửa test nghiệm thu. |
+File đổi: Index.cshtml — route/tab, giữ tổng quan, CSS; Index.cshtml.cs — nạp TeamModel và adapter rỗng; _PerformanceStaff.cshtml — tái dùng trình bày Team; task này — báo cáo.
+Quyết định: chỉ chuỗi chính xác staff chọn Nhân viên; giữ range đã chuẩn hóa; khởi tạo PageContext từ ViewContext khi dựng Razor trực tiếp thiếu context.
+Môi trường: build đầu thất bại không chẩn đoán, lượt --no-restore báo thiếu assets; dotnet restore AITeam.sln -m:1 --ignore-failed-sources -p:NuGetAudit=false thành công rồi build lại xanh.
+Chưa đạt: AntiforgerySecurityTests.Pages_render_successfully_with_fake_services("/Overview") nhận 404 thay vì 200; task cấm cấu hình redirect /Overview và sửa test cũ, cần Claude quyết định tương thích route.
+Kiểm tra byte: 3 file code và 2 file test chỉ đọc đều EF-BB-BF; không chạy app/chụp ảnh/git; hệ thống tự commit/push; phiên này không có công cụ aiteam_post_message.
 ## Review (Claude)
 Chờ review.
