@@ -45,6 +45,7 @@ Chủ dự án: HieuDV.
 ## Lỗi hay gặp (đã xảy ra nhiều lần — bắt buộc tránh)
 - Test chạy tiến trình con (exe / dll của project khác): KHÔNG trỏ `bin\Debug` của project đó — thêm ProjectReference để file được chép kèm, dùng `Path.Combine(AppContext.BaseDirectory, "x.dll")`. (V4-08: clean-clone chạy nhầm bản cũ.)
 - **Giữ nguyên BOM UTF-8** của file đang có BOM khi sửa; script `.ps1` luôn lưu UTF-8 có BOM.
+- Chương trình chạy bằng dòng lệnh (`aiteam`, công cụ): `Main` phải bắt MỌI ngoại lệ, in `LỖI: …` ra stderr và trả mã ≠ 0 — lỗi văng ra ngoài làm Windows hiện hộp "dotnet.exe - Application Error" trên máy chủ dự án (R-006, 25/10).
 - Test cần chuỗi GIỐNG khóa bí mật (sk-…, ghp_…, AIza…, password=…): ghép lúc chạy (`string.Concat("sk-", new string('a', 32))`), không ghi thẳng — hook pre-commit sẽ chặn commit.
 - **Web (Hub) — xác nhận HTMX:** `hx-confirm` phải đặt trên phần tử phát request (thường là `<form>`), HTMX 2 bỏ qua `hx-confirm` trên nút submit trong form (V5-05: nút Dừng chạy không hỏi).
 - **Không viết test luôn pass**: không `if (...) return;` sớm, không `Assert.True(true)`, không bắt exception rồi bỏ qua. Bỏ phần code mới đi thì test phải đỏ.
