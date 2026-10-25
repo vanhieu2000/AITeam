@@ -69,4 +69,9 @@
 
 ## Review (Claude)
 
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code)
+- Cổng KT lượt 2 ĐẠT: Hub 606/606, Core 623/623 (gồm AcceptanceV805SafeMergeTests).
+- Đọc diff: mutex Global\AITeam_Merge 30 phút; clone --no-hardlinks từ main local vào thư mục GUID; build + test (có chạy lại test chập chờn) TRƯỚC push; đỏ ⇒ reset --hard ORIG_HEAD chỉ khi rev-list xác nhận commit merge chưa push. Đủ 8 điểm (xóa test, model sai, models, prep thử lại, assign-recent, build-server shutdown).
+
 ## Kết quả
+- Merge an toàn: test clone sạch đỏ thì không lên main; 2 merge không chạy chồng. Cổng KT chặn xóa test, dừng khi model sai; prep/verify tự xử lý lỗi obj sau Codex.
