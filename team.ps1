@@ -66,6 +66,7 @@ $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $Utf8 = New-Object Text.UTF8Encoding $false
 . (Join-Path $Root "tools/workflow-common.ps1")
+. (Join-Path $Root "scripts/SkillPrompts.ps1")
 # Khóa chung Set-BoardStatus/Save-RunMetrics và ghi Prep/Assign/Verify/Qc/Merge cùng cập nhật bảng việc.
 
 function Get-NextJournalRun([string]$repoPath, [string]$taskFileName, [string]$taskId, [string]$event) {
@@ -459,6 +460,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
 - Chạy đủ lệnh Build + Test của dự án đúng 1 lần ở cuối, trước khi commit.
 - Sửa file bằng chỉnh sửa nhỏ đúng chỗ, không viết lại cả file khi chỉ đổi vài dòng.
 "@
+    $prompt = Add-SkillPrompt -Prompt $prompt -Root $Root -Stage code -Stack $r.Info.stack
     if ($Feedback) { $prompt += "`nYÊU CẦU CỦA QUẢN LÝ: $Feedback`nĐọc kỹ mục 'Review (Claude)' trong file task nếu có." }
 
         $n = @(Get-ChildItem $r.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'prompt' }).Count + 1
@@ -917,6 +919,7 @@ function Invoke-Plan {
     $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\codex-plan.md"))
     $promptText = $tpl.Replace("{REQUEST}", $Request).Replace("{PREFIX}", $prefix) + "`n" + [IO.File]::ReadAllText($brief)
     New-Item -ItemType Directory -Force $r.Logs | Out-Null
+    $promptText = Add-SkillPrompt -Prompt $promptText -Root $Root -Stage plan -Stack $r.Info.stack
     $pf = Join-Path $r.Logs "$Request.plan.prompt.md"
     [IO.File]::WriteAllText($pf, $promptText, $Utf8)
     $out = Join-Path $r.Logs "$Request.plan.json"
@@ -982,6 +985,7 @@ function Invoke-Prep {
 
     $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\codex-prep.md"))
     $promptText = $tpl.Replace("{TASKFILE}", "tasks/$fileName").Replace("{BUILD}", [string]$r.Info.build).Replace("{TASK}", $Task).Replace("{REQUEST}", $Request) + "`n" + $section
+    $promptText = Add-SkillPrompt -Prompt $promptText -Root $Root -Stage prep -Stack $r.Info.stack
     $pf = Join-Path $r.Logs "$Task.prep.prompt.md"
     [IO.File]::WriteAllText($pf, $promptText, $Utf8)
     $out = Join-Path $r.Logs "$Task.prep.json"
