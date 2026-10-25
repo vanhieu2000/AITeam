@@ -3,6 +3,8 @@
 Bạn là lập trình viên trong team AI. **Quản lý: Claude**. Claude giao task, review, test và quyết định merge.
 Chủ dự án: HieuDV.
 
+> **Codex làm quản lý phụ (Claude hết hạn mức): đọc `QUAN-LY-PHU.md` trước.**
+
 ## Quy trình
 1. Đọc file task được giao trong `tasks/`. **Chỉ làm đúng phạm vi task.**
 2. Khi chạy tự động, bạn đã ở sẵn đúng nhánh trong thư mục riêng.
