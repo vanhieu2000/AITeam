@@ -135,7 +135,7 @@ public static class WorkflowBuilder
             {
                 codeStatus = WorkflowStatus.NeedsFix;
             }
-            else if (task.State == TaskState.Review || (selectedReview != null && selectedReview.Passed))
+            else if (task.State == TaskState.Review)
             {
                 codeStatus = WorkflowStatus.Done;
             }
