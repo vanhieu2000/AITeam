@@ -41,6 +41,7 @@
 | 5 | Code | Antigravity (Minh / Lan) | như cũ; cổng KT tự động (0 token AI) |
 | 6 | QC | Codex | `Review AI: có` trong mọi task do `prep` tạo ⇒ CẦN SỬA tự giao lại |
 | 7 | Kiểm cuối | Claude | `.\team.ps1 review …` (gói gọn) + kiểm test nghiệm thu có thật sự kiểm hành vi + bấm thử nếu có UI ⇒ `merge` |
+- **Chia đều Minh / Lan** (chủ dự án 25/10): cùng 1 tài khoản Antigravity, đều code chính, không chia vùng. `prep` / `assign` tự giao người đang ít task 🟡 hơn; Agent trong kế hoạch chỉ là gợi ý.
 - Codex nghỉ / lỗi ở bước 2 hoặc 4 ⇒ bước đó Claude làm (v3). Bước 6 Codex nghỉ ⇒ BLOCKED ⇒ Claude review (Antigravity không tự duyệt code của mình).
 - Thử trên 1 yêu cầu nhỏ, đo: phút + token Claude / Codex / Antigravity, vòng review, lỗi lọt tới bước 7 — rồi mới áp dụng cho mọi việc.
 
