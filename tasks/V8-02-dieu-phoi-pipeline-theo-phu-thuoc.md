@@ -8,7 +8,7 @@
 - **Thời gian tối đa:** 25 phút
 - **Review AI:** có
 - **Độ khó:** M <!-- S (≤150 dòng, rõ ràng) · M (≤400, vài file) · L (>400 / nhiều module / rủi ro cao) -->
-- **Model:** `claude-opus-5-5-medium`
+- **Model:** `gemini-4-argon-high`
 
 ## Tóm tắt
 - Có chức năng mới: một lệnh `pipeline -Request R-xxx` chuẩn bị và giao các việc đủ điều kiện cho Antigravity.
@@ -71,7 +71,7 @@ Làm đúng V8-02 trong kế hoạch R-008 đã duyệt. V8-01 đã cung cấp k
 `core.tests/AcceptanceV802PipelineTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới; không còn TODO trong khung V8-02.
+- [x] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới; không còn TODO trong khung V8-02.
 - [ ] `dotnet test AITeam.sln` pass; toàn bộ AcceptanceV802PipelineTests bất biến pass.
 - [ ] `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1` pass, gồm hồi quy lệnh cũ và nghiệm thu xUnit mới. Chạy riêng nghiệm thu bằng `-PipelineOnly` sau build.
 - [ ] Plan chưa duyệt/từ chối/đồ thị sai không gọi worker; dữ liệu cũ không BOM/CRLF đọc đúng, không bị viết lại; đường dẫn xấu/reparse bị chặn.
@@ -81,13 +81,19 @@ Làm đúng V8-02 trong kế hoạch R-008 đã duyệt. V8-01 đã cung cấp k
 - [ ] Bổ sung test adapter CLI cho fetch lỗi/bảng local khác origin, tiếp tục prep dở và timeout child; test lõi hiện có không thay cho kiểm tra các adapter thật. Không đổi test nghiệm thu để hợp thức hóa adapter sai.
 
 ## Báo cáo của agent
-Agent điền khi triển khai, không sửa kết quả chuẩn bị thành kết quả đã triển khai.
-
-| Tiêu chí hoàn thành | Bằng chứng: lệnh + kết quả thật |
+| Tiêu chí | Bằng chứng lượt sửa harness Codex (25/10) |
 |---|---|
-| Build, test, hồi quy và từng tiêu chí trên | Chưa chạy ở bước triển khai |
-
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro.
+| Build/không TODO | dotnet build AITeam.sln --no-restore -m:1 -v:minimal: 0 lỗi/0 warning; build Core sau sửa harness: 0 lỗi/0 warning. Một lần build khi test giữ DLL bị MSB3027 (10 warning/2 error), đã chạy lại đạt sau khi test kết thúc. |
+| Test solution/nghiệm thu | dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m: Hub 518 pass/9 fail/0 skip (File.Replace Access denied); Core chưa có tổng kết, đã dừng lượt dài. Nghiệm thu đang xác minh theo nhóm, chưa có bằng chứng 38/38. |
+| test-verify/PipelineOnly | powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1 -PipelineOnly: dừng ở giới hạn 3 phút, chưa tổng kết; không chạy bản đầy đủ vì có git. |
+| Plan/đồ thị/đường dẫn/giữ byte | Nhóm test cấu trúc đang chạy lại trên bản build cuối; không sửa fixture hoặc parser sản phẩm. |
+| Đồng thời/task cũ/phụ thuộc origin | Assert giữ nguyên; fake child có điểm hẹn hữu hạn 20 giây trước đo chồng thời gian, tránh phụ thuộc tốc độ khởi động PowerShell; chạy lại đang chờ kết quả. |
+| Khóa pipeline/Codex | Worker khóa prep/QC, thu hồi abandoned mutex, nhả sau exception và chống pipeline trùng đã thấy pass; đang gom kết quả trên build cuối. |
+| Bộ đếm/không fallback/prep dở | Gốc lỗi harness: Stage nhận ExitCode rỗng dù stdout bình thường/stderr rỗng; giữ Handle trước chờ. Fake $action bị tham số khóa $Action che gây đệ quy: dùng $script:fakeAction. Timeout harness dùng chuẩn TestShell 60 giây cho tối đa tám child; không đổi assert. |
+| Adapter/S1-04 | ProviderGiaNhanPromptThat_MoiNhanh(prep,codex) đã pass: harness AST thiếu import khóa, đã nạp module thật; sản phẩm vẫn có Add-SkillPrompt -Stage prep. Adapter fetch/local-origin đã thấy pass. |
+File đổi: AcceptanceV802PipelineTests.cs (TempRepo(false)/TestShell.PowerShell, quản lý child), AcceptanceS104SkillPromptsTests.cs (TempRepo(false)/TestShell.Run + nạp khóa), file task này; giữ BOM, không đổi code sản phẩm/fixture/assert.
+Quyết định theo chỉ dẫn quản lý mới: sửa harness đã chứng minh sai; không chạy git/commit/push (hệ thống làm), chưa có commit được kiểm; không chạy app/chụp ảnh.
+Chưa xác minh: full solution pass, toàn bộ hồi quy test-verify, clean-clone/cổng KT; không nhận lỗi Hub ngoài phạm vi là đã sửa.
 
 ## Ghi nhận bước chuẩn bị (Codex)
 - Khung sản phẩm chỉ throw NotImplementedException; wiring import/lệnh/catch có sẵn, không viết thân nghiệp vụ.
@@ -103,7 +109,15 @@ File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa x�
 ## Review (Claude)
 <!-- Claude điền khi nghiệm thu. -->
 
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code)
+- Cổng KT lượt 7: build 0 warning, Hub 527/527, Core 557/557 (gồm 38 ca V8-02). Mục "ngoài phạm vi" `core.tests/AcceptanceS104SkillPromptsTests.cs`: quản lý yêu cầu Codex sửa harness S1-04 cùng gốc lỗi ⇒ CHẤP NHẬN.
+- Gốc 13–17 test đỏ trước đó: harness test tự dựng sai (đọc ExitCode trước khi chờ, `$action` bị tham số `-Action` che ⇒ đệ quy); Codex chuyển sang `TestShell`, giữ nguyên assert.
+- Đọc diff `team.ps1`: `pipeline` worker riêng mỗi task, bộ đếm riêng, khóa Codex chỉ lúc prep/QC, fetch lỗi thì dừng, không merge; `assign -NoVerify` trả kết quả cho pipeline.
+- [TK] (test) harness V8-02 tự viết thay vì dùng helper chung (nay bắt buộc `TestShell`).
+- [CK] (chất lượng) mã model agy cũ bị gỡ + Opus hết lượt ⇒ 2 lượt agent không chạy, cổng KT vẫn build/giao lại.
 ## Kết quả
+- Có lệnh `team.ps1 pipeline -Request R-xxx`: tự chạy các task theo thứ tự phụ thuộc trong plan (prep → code → cổng KT → QC), mỗi task 1 dòng trạng thái, không merge.
+- Kiểm chứng: 38 test nghiệm thu + toàn bộ 1084 test.
 <!-- Claude điền khi review ĐẠT. -->
 
 ## Đánh giá quy trình
