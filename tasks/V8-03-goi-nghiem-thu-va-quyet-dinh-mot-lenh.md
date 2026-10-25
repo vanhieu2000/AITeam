@@ -146,11 +146,19 @@ chọn log theo tiền tố và chưa có lệnh nghiệm thu. `Get-RunRecord` �
 | Dữ liệu thật | Ba fixture bằng byte với nguồn đã đọc; không tự dựng lại projects/phiếu/metrics cũ. |
 | Chưa xác minh | Không chạy toàn bộ solution test; chưa xác minh model vì agy models yêu cầu đăng nhập; chưa kiểm tích hợp provider thật. |
 ## Báo cáo của agent
-<!-- Agent điền:
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật / ảnh) |
+| Tiêu chí | Bằng chứng thật |
 |---|---|
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro. -->
-
+| Build/test toàn solution | `dotnet build AITeam.sln --no-restore -m:1 --nologo`: 0 lỗi, 0 warning; `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo`: Hub 534 pass/9 fail, Core chưa có tổng kết, đã gửi ngắt sau 3 phút. |
+| Test nghiệm thu bất biến | `powershell -NoProfile -File tools/test-verify.ps1 -AcceptOnly`: bản cuối 41 pass/0 fail/0 skip (1 phút 16 giây); không sửa test/fixture. |
+| Gói, finding, SHA/lượt/mã, dữ liệu hỏng | Các ca Pack/Evidence trong 41 test đạt; adapter gom theo plan, nguồn mới gắn SHA, dữ liệu cũ không rõ; tích hợp git thật chưa xác minh. |
+| Added, UI, phụ thuộc | Các ca Line_count/Pack trong 41 test đạt; adapter lấy seed như Verify, loại task/test nghiệm thu. |
+| ĐẠT/reject, tiếng Việt, ba mục, khóa | Các ca Accept/Reject/Documents/Lock trong 41 test đạt; gọi Codex hữu hạn, dữ liệu UTF-8 qua file; chưa gọi AI thật. |
+| Approval/push/merge/lặp | Các ca Approval/Already_merged/Head_changed trong 41 test đạt; thêm trạng thái publish chờ để tiếp tục, kiểm SHA mới và mã thoát push trước thành công; adapter thật chưa xác minh. |
+| Số liệu có nguồn | Các ca Bound_evidence/Unsafe_metric trong 41 test đạt; phút/token kiểm project/task/run/head, điểm chưa có nguồn ghi không rõ. |
+| Báo cáo | Bảng này ghi đủ tiêu chí, kết quả thực và giới hạn; chưa có commit được kiểm. |
+File đổi: `team.ps1` (adapter/provenance/kiểm lỗi merge), `tools/workflow-accept.ps1` (điền 5 hàm), `templates/codex-accept.md` (escape/nguồn), file task (báo cáo); giữ BOM script và CRLF.
+Quyết định: không chạy git theo chỉ dẫn Codex; hệ thống commit/push. Restore dùng `-m:1 --disable-parallel -p:NuGetAudit=false --ignore-failed-sources` vì NuGet mạng lỗi; không sửa cấu hình.
+Chưa chắc: toàn bộ solution chưa đạt; 9 lỗi Hub có UnauthorizedAccessException tại File.Replace; chưa bổ sung test tích hợp git/khóa thật/reparse point qua TestShell; không có MCP aiteam_post_message. Lệnh taskkill testhost bị sandbox từ chối.
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.

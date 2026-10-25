@@ -12,3 +12,7 @@ Giữ nguyên các vòng trước. Ghi đầy đủ Optional/Note/lý do Reject 
 Kết quả: 3–5 gạch tiếng Việt lời thường dựa trên bằng chứng; không tự nhận đã chạy kiểm tra.
 Đánh giá quy trình: phút/token/lượt/QC đều có đường dẫn nguồn, thiếu ghi `không rõ`.
 Điểm đánh giá chưa có nguồn phải ghi `không rõ`, không suy diễn điểm từ PASS.
+
+Mọi số liệu phải ghi rõ đường dẫn Sources tương ứng trong Evidence; thiếu nguồn ghi `không rõ`.
+Optional, Note và Reject chỉ là văn bản: escape dấu Markdown, chuyển CR/LF thành khoảng trắng;
+không tạo heading từ dữ liệu. Không đổi vòng cũ hoặc tiêu đề mục. Không tự chạy kiểm tra.

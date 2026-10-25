@@ -731,6 +731,7 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
     $out = Join-Path $r.Logs "$Task.review-$n.json"
     $a = @("review", "--auto", "--task-file", $taskInWork, "--diff-file", $diff, "--workdir", $work, "--logdir", $dir, "--dev", $devProvider, "--out", $out, "--root", $Root)
     if ($verify) { $a += @("--verify-file", $verify.FullName) }
+    $qcStartHead=git -C $work rev-parse HEAD
     Say "Review AI (aiteam review --auto)…" Cyan
     Invoke-WorkflowCodexLock -Action { & $exe @a 2>&1 | ForEach-Object { Say "  $_" } }   # QC Codex dùng chung khóa toàn máy với prep
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
@@ -742,6 +743,22 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
     if (-not $json -or -not $expect.ContainsKey([int]$code) -or $json.verdict -ne $expect[[int]$code]) {
         Say "Review AI không ra kết luận hợp lệ (mã $code, file $out) ⇒ coi như BLOCKED, Claude review." Yellow
         return [pscustomobject]@{ Code = 3; Json = $json; Out = $out }
+    }
+    $qcHead=git -C $work rev-parse HEAD
+    if ($script:AcceptVerify -and $script:AcceptVerify.task -ceq $Task -and $script:AcceptVerify.head -ceq $qcHead -and $qcStartHead -ceq $qcHead) {
+        $findings=@(foreach ($finding in @($json.findings)) {
+            if ($finding) { @{id=$finding.id;severity=$finding.severity;open=$finding.open;classification=$finding.classification} }
+        })
+        Invoke-RepoTransaction -RepoPath $r.Path -Action {
+            $script:AcceptVerify.qc=@{verdict=$json.verdict;findings=$findings;source=[IO.Path]::GetFileName($out)}
+            $index=Join-Path $r.Logs "$Task.accept-$($script:AcceptVerify.run).json"
+            for ($node=$index; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+                if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) { throw 'Nguồn không an toàn.' }
+            }
+            $temp="$index.$([guid]::NewGuid().ToString('N')).tmp"
+            [IO.File]::WriteAllText($temp,($script:AcceptVerify | ConvertTo-Json -Depth 16),$Utf8)
+            Move-Item -LiteralPath $temp -Destination $index -Force
+        }
     }
     [pscustomobject]@{ Code = $code; Json = $json; Out = $out }
 }
@@ -1639,6 +1656,38 @@ function Invoke-Verify {
     foreach ($w in $warns) { Say "  [CẢNH BÁO] $w" Yellow }
     foreach ($x in $notes) { Say "  [OK] $x" Green }
     Say ("Cổng kiểm tra: " + $(if ($ok) { "ĐẠT → Claude review nội dung" } else { "KHÔNG ĐẠT" }) + "  ($reportPath)") $(if ($ok) { "Green" } else { "Red" })
+    $verifiedHead=git -C $work rev-parse HEAD
+    if ($LASTEXITCODE -eq 0 -and $verifiedHead -match '^[0-9a-fA-F]{40}$') {
+        $acceptRun=[regex]::Match([IO.Path]::GetFileName($reportPath),'-(\d+)\.md$').Groups[1].Value
+        $agentRun=[regex]::Match([IO.Path]::GetFileName([string]$log),('^'+[regex]::Escape($Task)+'-(\d+)\.json$')).Groups[1].Value
+        if ($agentRun) { $acceptRun=$agentRun }
+        if ([int]$acceptRun -gt 0) {
+            $metricSource=$null
+            $metricDir=Join-Path $Root 'metrics/runs'
+            $matchesMetric=@(foreach ($metricFile in Get-ChildItem -LiteralPath $metricDir -File -ErrorAction SilentlyContinue) {
+                try {
+                    for ($node=$metricFile.FullName; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+                        if ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint) { throw 'Nguồn không an toàn.' }
+                    }
+                    $metricValue=Read-Json $metricFile.FullName
+                    if ($metricValue.project -ceq $r.Info.name -and $metricValue.task -cmatch ('^'+[regex]::Escape($Task)+'(?:-.+)?$') -and
+                        [string]$metricValue.run -eq [string]$acceptRun -and $metricValue.head -ceq $verifiedHead) { $metricFile.Name }
+                } catch { continue } # Metrics hỏng không được dùng làm nguồn.
+            })
+            if ($matchesMetric.Count -eq 1) { $metricSource=@{source=$matchesMetric[0]} }
+            $script:AcceptVerify=@{task=$Task;project=$r.Info.name;head=[string]$verifiedHead;run=[int]$acceptRun;
+                verify=@{ok=[bool]$ok;source=[IO.Path]::GetFileName($reportPath)};qc=$null;metrics=$metricSource}
+            Invoke-RepoTransaction -RepoPath $r.Path -Action {
+                $index=Join-Path $r.Logs "$Task.accept-$acceptRun.json"
+                for ($node=$index; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+                    if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) { throw 'Nguồn không an toàn.' }
+                }
+                $temp="$index.$([guid]::NewGuid().ToString('N')).tmp"
+                [IO.File]::WriteAllText($temp,($script:AcceptVerify | ConvertTo-Json -Depth 16),$Utf8)
+                Move-Item -LiteralPath $temp -Destination $index -Force
+            }
+        }
+    }
     return [pscustomobject]@{ Ok = $ok; Fails = @($fails); Warns = @($warns); Report = $reportPath }
 }
 
@@ -1670,6 +1719,10 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
         $reqText = [IO.File]::ReadAllText((Join-Path $r.Path "tasks/$journalTask"), (New-Object Text.UTF8Encoding($false, $true)))
         $reqMatch = [regex]::Match($reqText, '\*\*Yêu cầu:\*\*\s*(R-\d+)')
         $reqRel = if ($reqMatch.Success) { "requests/$($reqMatch.Groups[1].Value).md" } else { $null }
+        if ($reqRel -and -not (Test-Path -LiteralPath (Join-Path $r.Path $reqRel))) {
+            $requestFiles=@(Get-ChildItem -LiteralPath (Join-Path $r.Path 'requests') -File | Where-Object { $_.Name -match ('^'+[regex]::Escape($reqMatch.Groups[1].Value)+'-.+\.md$') })
+            if ($requestFiles.Count -eq 1) { $reqRel='requests/'+$requestFiles[0].Name }
+        }
         if ($Journal) {
             $jRun = if ($Journal.ContainsKey('Run')) { [int]$Journal.Run } else { Get-NextJournalRun $r.Path $Journal.TaskFile $taskId $Journal.Event }
             Update-WorkflowJournal -RepoPath $r.Path -TaskFile $Journal.TaskFile -TaskId $taskId -Event $Journal.Event -Run $jRun -Result $Journal.Result
@@ -1707,7 +1760,9 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
             if ($commitFiles.Count -eq 0) { return }
 
             git -C $r.Path add -- $commitFiles
+            if ($LASTEXITCODE -ne 0) { throw 'Không cập nhật được bảng việc.' }
             git -C $r.Path commit -q -m "Bảng việc và nhật ký: $taskId $status" -- $commitFiles 2>$null
+            if ($LASTEXITCODE -ne 0) { throw 'Không cập nhật được bảng việc.' }
             git -C $r.Path push -q origin main 2>$null
             if ($LASTEXITCODE -eq 0) { return }
 
@@ -1721,7 +1776,7 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
                 git -C $r.Path rebase --abort 2>$null
             }
         }
-        Say "  Không push được bảng việc (máy khác vừa đổi?). Cập nhật tay sau." Yellow
+        throw 'Không push được bảng việc.'
     }
 }
 
@@ -1763,6 +1818,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
     $u = if ($j) { $j.usage } else { $null }
     [ordered]@{
         at = (Get-Item $logFile).LastWriteTime.ToString("s")
+        head = $(if ($work -and (Test-Path $work)) { git -C $work rev-parse HEAD 2>$null } else { $null })
         machine = $env:COMPUTERNAME
         project = $r.Info.name
         task = $TaskName
@@ -1792,6 +1848,24 @@ function Save-RunMetrics($record) {
         $name = "{0}-{1}-{2}-{3}.json" -f ($record.at -replace '[^0-9]', ''), $record.machine, $record.project, ($record.log -replace '\.json$', '')
         $file = Join-Path $dir $name
         [IO.File]::WriteAllText($file, ($record | ConvertTo-Json), $Utf8)
+        if ($script:AcceptVerify -and $record.task -ceq $script:AcceptVerify.task -and $record.head -ceq $script:AcceptVerify.head -and [string]$record.run -eq [string]$script:AcceptVerify.run) {
+            $metricRepo=Resolve-Project $record.project
+            Invoke-RepoTransaction -RepoPath $metricRepo.Path -Action {
+                $index=Join-Path $metricRepo.Logs "$($record.task).accept-$($record.run).json"
+                for ($node=$index; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+                    if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) { throw 'Nguồn không an toàn.' }
+                }
+                if (Test-Path -LiteralPath $index) {
+                    $envelope=Read-Json $index
+                    if ($envelope.head -ceq $record.head) {
+                        $envelope.metrics=@{source=$name}
+                        $temp="$index.$([guid]::NewGuid().ToString('N')).tmp"
+                        [IO.File]::WriteAllText($temp,($envelope | ConvertTo-Json -Depth 16),$Utf8)
+                        Move-Item -LiteralPath $temp -Destination $index -Force
+                    }
+                }
+            }
+        }
         $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
         for ($i = 0; $i -lt 3; $i++) {
             git -C $Root add -- "metrics/runs/$name" 2>$null
@@ -1872,7 +1946,44 @@ function Invoke-Stop {
 # /// Không fetch, commit, ghi heartbeat hoặc log khi Command=accept-pack. Request sai báo
 # /// 'Thiếu / sai -Request (vd. R-006)'. Không có task in 'Không có task chờ nghiệm thu.'.</summary>
 function Invoke-AcceptPack {
-    throw [System.NotImplementedException]::new() # TODO(agent)
+    if ($Request -notmatch '^R-[0-9]{3}$') { throw 'Thiếu / sai -Request (vd. R-006)' }
+    $r=Resolve-Project $(if ($Project) {$Project} else {'AITeam'})
+    $plan=Read-WorkflowPipelinePlan (Join-Path (Get-PlanDir $Request) 'plan.md')
+    $board=(git -C $r.Path show 'origin/main:tasks/README.md') -join "`n"
+    if ($LASTEXITCODE -ne 0) { throw 'Không đọc được bảng việc.' }
+    $items=@()
+    foreach ($planned in $plan) {
+        $row=Get-BoardRow $board $planned.Id
+        if (-not $row -or $row -notmatch 'Chờ (review|nghiệm thu)' -or $row -match 'Đang chạy|Đã merge') { continue }
+        $taskCandidates=@(Get-ChildItem -LiteralPath (Join-Path $r.Path 'tasks') -File | Where-Object { $_.Name -match ('^'+[regex]::Escape($planned.Id)+'(?:-.+)?\.md$') })
+        if ($taskCandidates.Count -ne 1) { continue }
+        $tf=$taskCandidates[0]
+        if (-not $tf) { continue }
+        $branch=[regex]::Match([IO.File]::ReadAllText($tf.FullName),'\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
+        if (-not $branch -or $branch -match '[\s~^:?*\[\\]' -or $branch.StartsWith('-')) { continue }
+        $ref="origin/$branch"
+        $head=git -C $r.Path rev-parse --verify $ref 2>$null
+        if ($LASTEXITCODE -ne 0) { continue }
+        $text=(git -C $r.Path show "${ref}:tasks/$($tf.Name)" 2>$null) -join "`n"
+        if ($LASTEXITCODE -ne 0 -or [regex]::Match($text,'\*\*Yêu cầu:\*\*\s*(R-\d+)').Groups[1].Value -cne $Request) { continue }
+        $report=(Get-Section $text 'Báo cáo của agent') -replace '(?s)<!--.*?-->',''
+        if ([string]::IsNullOrWhiteSpace($report)) { continue }
+        git -C $r.Path merge-base --is-ancestor $ref origin/main 2>$null
+        if ($LASTEXITCODE -eq 0) { continue }
+        $base=git -C $r.Path merge-base origin/main $ref
+        $seed=git -C $r.Path log --format=%H --grep='^Test nghiệm thu' "$base..$ref" | Select-Object -Last 1
+        $from=if ($seed) {$seed} else {$base}
+        $added=$null; $changes=@()
+        if ($from) {
+            $stat=@(git -C $r.Path diff --numstat $from $ref)
+            if ($LASTEXITCODE -eq 0) { $added=Get-WorkflowAcceptLineCount $stat "tasks/$($tf.Name)" (Get-BacktickPaths (Get-Section $text 'Test nghiệm thu')) }
+            $changes=@(git -C $r.Path diff --name-only $base $ref)
+        }
+        $budgetValue=[regex]::Match($text,'\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
+        $items+=@{Id=$planned.Id;Evidence=(Get-WorkflowAcceptEvidence $planned.Id $head $r.Logs (Join-Path $Root 'metrics/runs'));Added=$added;
+            Budget=$(if ($budgetValue) {[int]$budgetValue} else {$null});Changes=$changes;DependsOn=$planned.DependsOn}
+    }
+    Get-WorkflowAcceptPack $items
 }
 
 # /// <summary>Adapter dựng Context từ đúng nhánh/task, phát hiện đã merge từ bảng và ancestry;
@@ -1883,7 +1994,121 @@ function Invoke-AcceptPack {
 # /// với SHA mới; không tái sử dụng approval SHA trước commit tài liệu. Reject dùng assign -Resume -Feedback.
 # /// Kiểm mọi exit code git, không ghi Merge ĐẠT trước push thành công; lỗi trả qua catch CLI.</summary>
 function Invoke-Accept {
-    throw [System.NotImplementedException]::new() # TODO(agent)
+    if ($Task -notmatch '^[A-Za-z0-9]+-\d+[a-z]?$') { throw 'Thiếu / sai -Task.' }
+    $ctx=Get-TaskContext; $r=$ctx.R; $work=$ctx.Work; $taskRel="tasks/$($ctx.TaskFile.Name)"
+    function AcceptGit {
+        $output=@(& git -C $work @args)
+        if ($LASTEXITCODE -ne 0) { throw 'Không hoàn tất nghiệm thu.' }
+        $output
+    }
+    function Snapshot {
+        $snapshot=@{}
+        foreach ($relative in (AcceptGit ls-files --cached --others --exclude-standard)) {
+            if (@($relative -split '[\\/]') -contains '..' -or [IO.Path]::IsPathRooted($relative)) { throw 'Đường dẫn không an toàn.' }
+            $full=Join-Path $work $relative
+            for ($node=$full; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+                if ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint) { throw 'Đường dẫn không an toàn.' }
+            }
+            $bytes=[IO.File]::ReadAllBytes($full)
+            $snapshot[$relative]=if ($relative -ceq $taskRel) {(New-Object Text.UTF8Encoding($false,$true)).GetString($bytes)} else {[Convert]::ToBase64String($bytes)}
+        }
+        return $snapshot
+    }
+    $board=(git -C $r.Path show 'origin/main:tasks/README.md') -join "`n"
+    if ((Get-BoardRow $board $Task) -match '✅ Đã merge') { return @{Status='ALREADY_MERGED'} }
+    $head=AcceptGit rev-parse HEAD
+    if ((AcceptGit branch --show-current) -cne $ctx.Branch) { throw 'Sai nhánh task.' }
+    $board=(git -C $r.Path show 'origin/main:tasks/README.md') -join "`n"
+    $merged=(Get-BoardRow $board $Task) -match '✅ Đã merge'
+    git -C $work merge-base --is-ancestor $head origin/main 2>$null
+    $merged=$merged -or $LASTEXITCODE -eq 0
+    if ($merged) { return @{Status='ALREADY_MERGED'} }
+    if (@(AcceptGit status --porcelain).Count) { throw 'Nhánh có thay đổi chưa lưu.' }
+    $files=Snapshot
+    $context=[pscustomobject]@{TaskId=$Task;Head=[string]$head;TaskFile=$taskRel;Files=$files;Merged=$false}
+    $pendingPath=Join-Path $r.Logs "$Task.accept-pending.json"
+    for ($node=$pendingPath; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+        if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) { throw 'Đường dẫn không an toàn.' }
+    }
+    $pending=$null
+    if (Test-Path -LiteralPath $pendingPath) {
+        $pending=Read-Json $pendingPath
+        if ($pending.head -cne $head -or $pending.optional -cne $Optional -or $pending.note -cne $Note -or $pending.reject -cne $Reject) { throw 'Không hoàn tất nghiệm thu.' }
+        # Tài liệu đã commit: tiếp tục publish/approval, không thêm vòng hay gán SHA mới cho bằng chứng cũ.
+        try {
+            $null=AcceptGit push -u origin $ctx.Branch
+            if ($Reject) {
+                $script:Resume=$true; $script:Feedback=$Reject; $null=Invoke-Assign
+                $status='REJECTED'
+            } else {
+                $approval=Assert-MergeApproval (Get-Config) $Task $head
+                if (-not $approval -or $approval.commit -cne $head -or $approval.status -ne 'approved') { throw 'Chưa có phê duyệt.' }
+                $null=Invoke-Merge; $status='MERGED'
+            }
+            Remove-Item -LiteralPath $pendingPath
+            return @{Status=$status;Head=$head}
+        } catch { throw 'Không hoàn tất nghiệm thu.' }
+    }
+    $result=Invoke-WorkflowAccept -Context $context -Optional $Optional -Note $Note -Reject $Reject -ReadEvidence {
+        param($id,$sha)
+        Get-WorkflowAcceptEvidence $id $sha $r.Logs (Join-Path $Root 'metrics/runs')
+    } -WriteReview {
+        param($decision)
+        $exe=Get-AITeamExe
+        if (-not $exe) { throw 'Không gọi được Codex.' }
+        $prefix=Join-Path $r.Logs ("$Task.accept-input-"+[guid]::NewGuid().ToString('N'))
+        $dataFile="$prefix.json"; $promptFile="$prefix.md"
+        [IO.File]::WriteAllText($dataFile,($decision | ConvertTo-Json -Depth 16),$Utf8)
+        $template=[IO.File]::ReadAllText((Join-Path $Root 'templates/codex-accept.md'))
+        [IO.File]::WriteAllText($promptFile,($template+"`r`nTask: $taskRel`r`nDữ liệu: $dataFile"),$Utf8)
+        foreach ($argumentPath in @($work,$promptFile,$prefix,$Root)) {
+            if ($argumentPath -match '["\r\n]') { throw 'Đường dẫn không an toàn.' }
+        }
+        $psi=New-Object Diagnostics.ProcessStartInfo
+        $psi.FileName=$exe; $psi.WorkingDirectory=$work; $psi.UseShellExecute=$false; $psi.CreateNoWindow=$true
+        $psi.RedirectStandardOutput=$true; $psi.RedirectStandardError=$true
+        $psi.Arguments='run --provider codex --workdir "'+$work+'" --prompt-file "'+$promptFile+'" --logdir "'+$prefix+'.logs" --timeout-min 25 --out "'+$prefix+'.result.json" --root "'+$Root+'"'
+        $process=[Diagnostics.Process]::Start($psi)
+        try {
+            $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync()
+            if (-not $process.WaitForExit(1500000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null; throw 'Codex quá thời hạn.' }
+            $null=$stdout.GetAwaiter().GetResult(); $err=$stderr.GetAwaiter().GetResult()
+            if ($process.ExitCode -ne 0) { throw 'Codex không hoàn tất nghiệm thu.' }
+        } finally { $process.Dispose() }
+        return (Snapshot)
+    } -Publish {
+        param($updated)
+        Invoke-RepoTransaction -RepoPath $r.Path -Action {
+            if ((AcceptGit rev-parse HEAD) -cne $head) { throw 'Chưa đủ bằng chứng nghiệm thu.' }
+            $current=Snapshot
+            $null=Test-WorkflowAcceptDocuments $files $current $taskRel
+            if ($current[$taskRel] -cne $updated[$taskRel]) { throw 'Codex sửa ngoài mục nghiệm thu cho phép.' }
+            if (-not $pending) {
+                $null=AcceptGit add -- $taskRel
+                $null=AcceptGit commit -m "Nghiệm thu $Task" -- $taskRel
+                $newHead=AcceptGit rev-parse HEAD
+                $state=@{head=[string]$newHead;optional=$Optional;note=$Note;reject=$Reject}
+                [IO.File]::WriteAllText($pendingPath,($state | ConvertTo-Json -Depth 16),$Utf8)
+            } else { $newHead=$head }
+            $null=AcceptGit push -u origin $ctx.Branch
+            return @{Ok=$true;Head=[string]$newHead}
+        }
+    } -CheckApproval {
+        param($sha)
+        try { $approval=Assert-MergeApproval (Get-Config) $Task $sha; return [bool]($approval -and $approval.commit -ceq $sha -and $approval.status -eq 'approved') } catch { return $false }
+    } -Merge {
+        param($sha)
+        if ((AcceptGit rev-parse HEAD) -cne $sha) { return @{Ok=$false} }
+        $null=Invoke-Merge
+        if (Test-Path -LiteralPath $pendingPath) { Remove-Item -LiteralPath $pendingPath }
+        return @{Ok=$true}
+    } -ResumeTask {
+        param($resumeRun,$reason)
+        $script:Resume=$resumeRun; $script:Feedback=$reason
+        Invoke-Assign
+        if (Test-Path -LiteralPath $pendingPath) { Remove-Item -LiteralPath $pendingPath }
+    }
+    $result
 }
 
 function Invoke-ReviewPack {
@@ -1989,6 +2214,7 @@ function Invoke-Merge {
     $approval = Assert-MergeApproval $cfg (Get-TaskId $tf) $head
     $ErrorActionPreference = "Continue"
     git -C $r.Path pull -q 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'Không hoàn tất nghiệm thu.' }
     git -C $r.Path merge --no-ff -q "origin/$branch" -m "Merge $($tf.BaseName) ($(Get-StaffName $agentId), review đạt vòng $round)`n`nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" 2>&1 | Select-Object -Last 2 | ForEach-Object { Say $_ Yellow }
     if ($LASTEXITCODE -ne 0) {
         # File task thường được thêm cả trên main (Claude) lẫn trên nhánh (khung + báo cáo + review) ⇒ add/add.
@@ -1999,12 +2225,15 @@ function Invoke-Merge {
             git -C $r.Path checkout --theirs -- "tasks/$($tf.Name)" 2>$null
             git -C $r.Path add -- "tasks/$($tf.Name)" 2>$null
             git -C $r.Path commit -q --no-edit 2>$null
+            if ($LASTEXITCODE -ne 0) { throw 'Không hoàn tất nghiệm thu.' }
             Say "Xung đột chỉ ở file task ⇒ đã lấy bản trên nhánh (có báo cáo + review)." Yellow
         } else {
             $ErrorActionPreference = $eap
             throw "Merge xung đột ở: $($conflicts -join ', ') — xử lý tay (git merge --abort để hủy)."
         }
     }
+    git -C $r.Path push -q origin main 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'Không hoàn tất nghiệm thu.' }
     $mergeTaskId = Get-TaskId $tf
     Invoke-RepoTransaction -RepoPath $r.Path -Action {
         Update-WorkflowJournal -RepoPath $r.Path -TaskFile $tf.Name -TaskId $mergeTaskId -Event 'Merge' -Run $round -Result 'ĐẠT'
