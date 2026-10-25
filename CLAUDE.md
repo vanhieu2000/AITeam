@@ -110,6 +110,8 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - **Cùng một lỗi còn sau 2 lần sửa ⇒ dừng vá.** Đối chiếu lại thiết kế, giả định, dữ liệu mẫu; sửa thiết kế / test nghiệm thu rồi mới giao tiếp. Tổng quá `review.maxRounds` vòng (mặc định 3): tự sửa phần còn lại hoặc báo người dùng.
    - Thiết kế phải đổi giữa chừng (như C-003 bỏ `service call alarm`) ⇒ sửa luôn file `docs/design/…` trong cùng commit, để thiết kế vẫn là nguồn sự thật duy nhất.
 8. **Đánh giá yêu cầu (bắt buộc, ngay sau khi xong):** chạy `team.ps1 request-report -Request R-xxx` và `team.ps1 staff-report`, điền mục 4 của phiếu (thời gian Claude / agent / chờ, lượt, vòng, tự sửa, lỗi TK / AG / CK, tốn nhất ở đâu). Thêm 1 dòng vào `docs/HIEU-SUAT-LOG.md`, chọn tối đa 2 cải tiến và SỬA NGAY sổ tay / mẫu / `team.ps1`, tăng phiên bản quy trình. Yêu cầu sau đo xem cải tiến có tác dụng không.
+   - **Ghi bài học vào skill:** khi phát hiện lỗi mới từ nguyên nhân TK / AG / CK, chọn skill đúng bước để ghi nhận. Trước khi ghi phải đối chiếu mục Lỗi hay gặp trong skill, lỗi trùng không ghi lại. Chỉ ghi lỗi mới đã đối chiếu skill bằng lệnh:
+     `team.ps1 skill-note -Skill code-test -Text "Mô tả bài học mới" -Source S1-07` (thực tế thay bằng mã task đang đánh giá, không ghi cứng mã mẫu khi chạy).
 9. **Báo cáo** cho người dùng, ngắn gọn (kèm 2–3 dòng đánh giá hiệu suất và cải tiến vừa áp dụng):
    - xong gì;
    - kiểm chứng ra sao;

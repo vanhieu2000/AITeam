@@ -10,7 +10,7 @@ public sealed class AcceptanceS104SkillPromptsTests : IDisposable
 {
     private readonly string tmp = Path.Combine(Path.GetTempPath(), "s104-" + Guid.NewGuid().ToString("N"));
     private readonly string root;
-    private static readonly string[] Ids = ["03-research", "04-ke-hoach", "06-chuan-bi-task", "07-code", "code-test", "code-winforms", "code-web", "code-app"];
+    private static readonly string[] Ids = ["03-research", "04-ke-hoach", "06-chuan-bi-task", "07-code", "10-nghiem-thu", "code-test", "code-winforms", "code-web", "code-app"];
     private const string Permission = "Được phép đọc các skill được liệt kê dù danh sách file cũ bị giới hạn.";
 
     public AcceptanceS104SkillPromptsTests()
@@ -35,6 +35,8 @@ public sealed class AcceptanceS104SkillPromptsTests : IDisposable
     [InlineData("prep", "", "06-chuan-bi-task,code-test")]
     [InlineData("code", "   ", "07-code,code-test")]
     [InlineData("code", "không biết", "07-code,code-test")]
+    [InlineData("accept", "WinForms", "10-nghiem-thu,code-winforms")] // S1-07 (Claude): 1 skill bước + stack, không bị nối chuỗi
+    [InlineData("accept", null, "10-nghiem-thu")]
     public void ChonDungSkill_KhongLap_GiuPromptCu(string stage, string? stack, string expected)
     {
         var result = Run("helper", stage, stack);

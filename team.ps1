@@ -1791,6 +1791,9 @@ function Invoke-ReviewPack {
     (Get-Section ((git -C $r.Path show "origin/${branch}:tasks/$($tf.Name)" 2>$null) -join "`n") "Báo cáo của agent") -split "`n" | Where-Object { $_.Trim() } | Select-Object -First 15 | ForEach-Object { Say $_ }
     $shots = @(git -C $r.Path diff --name-only "origin/main...origin/$branch" 2>$null | Where-Object { $_ -match '\.png$' })
     if ($shots) { Say ("-- Ảnh: " + ($shots -join ', ')) Cyan }
+    # S1-07: nghiệm thu tự kèm skill 10-nghiem-thu + skill stack (helper S1-04), quản lý không tự ghép đường dẫn.
+    $skillLines = Add-SkillPrompt -Prompt '' -Root $Root -Stage accept -Stack $r.Info.stack
+    if ($skillLines) { Say "-- Skill nghiệm thu:" Cyan; $skillLines -split "`n" | ForEach-Object { Say $_ } }
     $ErrorActionPreference = $eap
 }
 

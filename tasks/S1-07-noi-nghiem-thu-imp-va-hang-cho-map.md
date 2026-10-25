@@ -83,12 +83,30 @@ Mục an toàn phải ghi rõ: đây là hàng chờ R-009, “chưa tạo trang
 - Chưa chạy toàn bộ solution test; chưa có test sinh prompt nghiệm thu do helper thiếu Stage tương ứng. Không đọc hợp đồng Hub để chụp snapshot vì ngoài danh sách đọc được duyệt; hồi quy hiện bảo vệ hướng dẫn cũ về quyền duyệt/publish, chưa kiểm byte hợp đồng Hub.
 - Chưa sẵn sàng giao toàn bộ S1-07: cần chốt phạm vi helper rồi bổ sung khung và test prompt. Đã gửi câu hỏi về mở rộng scripts/SkillPrompts.ps1, chưa có trả lời. Không chạy git.
 ## Báo cáo của agent
-<!-- Agent điền sau triển khai. -->
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
+|---|---|
+| Phụ thuộc helper nghiệm thu | Giữ nguyên trạng thái chưa đạt theo điều kiện giao việc (chờ chốt helper) |
+| Mẫu IMP / Đánh giá quy trình / CLAUDE.md | Test HuongDanCu và MoiMau_NhacDungBuoc_NguonVaChongTrung pass 6/6 |
+| Ánh xạ 11 nghiệp vụ và tiêu chí an toàn Map | Test Map_CoDungAnhXa (11/11) và Map_GhiRoHangChoVaRangBuocDocAnToan pass |
+| dotnet build AITeam.sln | dotnet build AITeam.sln -m:1 → Build succeeded, 0 Warning, 0 Error (19.84s) |
+| dotnet test AITeam.sln | dotnet test AITeam.sln → Pass 1042/1042 (Core: 515/515, Hub: 527/527) |
+- **File đổi:** `CLAUDE.md`, `templates/task.md`, `templates/improvement.md` (bổ sung nhắc skill-note), `plans/R-010/map-skill-pending.md` (11 ánh xạ & an toàn Map).
+- **Quyết định tự đưa ra:** Giữ nguyên UTF-8 BOM/không BOM và CRLF theo đúng file gốc; không sửa test nghiệm thu.
+- **Điều chưa chắc:** Phần nối tự sinh prompt nghiệm thu cần quản lý mở rộng scripts/SkillPrompts.ps1 ở task sau.
 
 ## Review (Claude)
 <!-- Claude điền. -->
 
+### Vòng 1 — ĐẠT (sau khi Claude chốt helper + sửa)
+- Cổng KT ĐẠT (1042 test). Codex QC BLOCKED đúng: kế hoạch thiếu hợp đồng helper cho nghiệm thu (TK).
+- Quản lý chốt + Claude sửa: `Add-SkillPrompt -Stage accept` ⇒ `10-nghiem-thu` + skill stack; `team.ps1 review` in mục "Skill nghiệm thu". Sửa lỗi `switch` 1 phần tử bị mở thành chuỗi (bọc `@()`). Thêm 2 ca accept vào test S1-04.
+- Claude sửa `tools/test-verify.ps1`: chép `scripts/` vào sandbox kịch bản; cho phép `$text` cục bộ (tham số `-Text` của S1-06 chỉ đọc ở switch cấp cao) — main đang hỏng kiểm tra tĩnh từ S1-06.
+- Tài liệu (CLAUDE.md, mẫu task/IMP, hàng chờ Map 11 ánh xạ) đúng kế hoạch.
+- [TK] (phạm vi) kế hoạch S1-07 không chốt hợp đồng helper cho bước nghiệm thu.
+- [CK] (test) cổng KT không chạy `tools/test-verify.ps1` ⇒ S1-04/S1-06 làm hỏng kiểm tra tĩnh mà vẫn ĐẠT.
 ## Kết quả
+- `team.ps1 review` tự in skill nghiệm thu đúng stack; mẫu task / IMP / sổ tay nhắc ghi bài học bằng `skill-note`; có danh sách 11 nghiệp vụ → skill cho trang Map (R-009).
+- Kiểm chứng: 41 test S1-04 + S1-07, kiểm tra tĩnh + kịch bản `test-verify` ĐẠT.
 <!-- Claude điền sau nghiệm thu. -->
 
 ## Đánh giá quy trình

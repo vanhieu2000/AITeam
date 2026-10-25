@@ -2,7 +2,7 @@
 # /// Nối chỉ dẫn skill vào Prompt, giữ nguyên toàn bộ nội dung cũ và không đọc nội dung skill.
 # /// Root là gốc AITeam tuyệt đối, không lấy từ thư mục dự án hoặc thư mục hiện hành.
 # /// Stage: plan → 03-research, 04-ke-hoach; prep → 06-chuan-bi-task, code-test;
-# /// code → 07-code, code-test. Sau đó thêm skill stack theo thứ tự winforms, web, app.
+# /// code → 07-code, code-test; accept → 10-nghiem-thu (S1-07, team.ps1 review). Sau đó thêm skill stack theo thứ tự winforms, web, app.
 # /// Stack không phân biệt hoa thường: WinForms; ASP.NET hoặc Blazor; MAUI, console hoặc CLI.
 # /// Stack null/rỗng/lạ không thêm skill stack; hỗn hợp thêm đủ, không lặp code-app.
 # /// Chỉ phát đường dẫn tuyệt đối tới file skills/<id>/SKILL.md tồn tại, không reparse point
@@ -36,7 +36,7 @@ function Add-SkillPrompt {
         [AllowNull()][AllowEmptyString()][string] $Stack
     )
 
-    if ($Stage -notin @('plan', 'prep', 'code')) {
+    if ($Stage -notin @('plan', 'prep', 'code', 'accept')) {
         throw [System.ArgumentException]::new("Bước skill không hợp lệ.")
     }
 
@@ -44,11 +44,12 @@ function Add-SkillPrompt {
         throw [System.ArgumentException]::new("Gốc AITeam phải là đường dẫn tuyệt đối.")
     }
 
-    $stageSkills = switch ($Stage) {
+    $stageSkills = @(switch ($Stage) {
         'plan' { @('03-research', '04-ke-hoach') }
         'prep' { @('06-chuan-bi-task', 'code-test') }
         'code' { @('07-code', 'code-test') }
-    }
+        'accept' { @('10-nghiem-thu') }
+    })
 
     $stackSkills = @()
     if (-not [string]::IsNullOrWhiteSpace($Stack)) {
