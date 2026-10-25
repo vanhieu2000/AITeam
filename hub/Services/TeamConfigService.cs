@@ -1,4 +1,4 @@
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AITeam.Hub.Models;
@@ -242,6 +242,12 @@ public sealed class TeamConfigService : ITeamConfigService
         return GetProjects().FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>
+    /// H7-01: giữ hành vi Settings và .bak; ghi team.json phải dùng chung khóa theo đường dẫn chuẩn hóa
+    /// với WorkflowRolesService, đọc lại trong khóa, giữ workflow.roles/khóa lạ/BOM, thay file nguyên tử.
+    /// JSON hỏng không coi là rỗng; lỗi ghi giữ file cũ và dọn tạm; không theo reparse point.
+    /// Không đổi ITeamConfigService hoặc cách tách đường dẫn vào team.local.json.
+    /// </summary>
     public void SaveSettings(TeamSettings settings)
     {
         // 1. Cập nhật team.json (giữ nguyên các khóa khác kể cả _ghichu; KHÔNG ghi projectsRoot / workRoot vào đây)
