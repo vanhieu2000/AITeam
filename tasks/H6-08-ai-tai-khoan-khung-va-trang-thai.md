@@ -78,6 +78,7 @@ Kế hoạch chưa nêu đường dẫn mockup. Giả định khung: status (Tr�
 - File đổi: `hub/Pages/AI.cshtml`, `hub/Pages/AI.cshtml.cs`, `hub/Pages/Shared/_AiStatus.cshtml`.
 - Tự quyết: Switch khớp chính xác 4 tab, tab ngoài status hiển thị khung link sang trang riêng tương ứng.
 - Chưa xác minh: Mockup hình ảnh thực tế (chưa có trong tài liệu).
+- Lượt 2: Đã giải phóng lock tiến trình MSBuild trên obj/, build lại 0 lỗi 0 warning, test 715 pass.
 
 ### Kiểm tra lúc chuẩn bị (Codex)
 | Tiêu chí chuẩn bị | Bằng chứng thật |
