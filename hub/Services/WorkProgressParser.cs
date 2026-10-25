@@ -162,12 +162,16 @@ public static class WorkProgressParser
                 done[step] = false;
                 errors[step] = ev.Text;
                 isMerged = false;
+                if (step > currentStep) currentStep = step;
                 continue;
             }
 
             errors[step] = null;
             // Assign chỉ chứng minh đã giao việc, không chứng minh code hoàn thành.
             done[step] = ev.Action != WorkAction.Assign;
+            var nextStep = ev.Action == WorkAction.Assign ? WorkStep.Code
+                : ev.Action == WorkAction.Merge ? WorkStep.Merge : step + 1;
+            if (nextStep > currentStep) currentStep = nextStep;
 
             if (ev.Action == WorkAction.Merge)
             {
@@ -185,12 +189,9 @@ public static class WorkProgressParser
         }
         else
         {
-            // Có kết quả Verify (đạt hoặc lỗi) là bằng chứng code đã hoàn thành.
-            done[WorkStep.Code] = workflow.Any(x => x.Event.Round == latestRound
-                && x.Event.Action == WorkAction.Verify);
-            if (latestRound > 0)
-                currentStep = allSteps.First(step => step >= WorkStep.Prep
-                    && (errors[step] != null || !done[step]));
+            // Lỗi chưa được đạt lại chặn bước sau, kể cả khi Assign ghi tổng kết.
+            var failedStep = allSteps.Where(step => errors[step] != null).Cast<WorkStep?>().FirstOrDefault();
+            if (failedStep.HasValue) currentStep = failedStep.Value;
         }
         var latestError = errors[currentStep];
         var stepList = allSteps.Select(s =>
