@@ -7,6 +7,30 @@ param([switch]$Keep, [string]$TeamPs1 = "", [switch]$PipelineOnly, [switch]$Acce
 $ErrorActionPreference = "Stop"
 $src = Split-Path $PSScriptRoot -Parent
 if ($AcceptOnly) {
+    # Bằng chứng QC phải giữ nguyên finding của nguồn, kể cả chỉ mục tự xóa/đổi lỗi.
+    . (Join-Path $src 'tools/workflow-accept.ps1')
+    $evidenceRoot=Join-Path $env:TEMP ('aiteam-accept-source-'+[guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $evidenceRoot | Out-Null
+    try {
+        $sha='a' * 40
+        $finding=@{id='F1';severity='Required';open=$true;classification=''}
+        $record=@{task='V8-03';head=$sha;run=1;verify=@{ok=$true;source='verify.md'};
+            qc=@{verdict='PASS';findings=@($finding);source='qc.json'}}
+        [IO.File]::WriteAllText((Join-Path $evidenceRoot 'verify.md'),'ĐẠT')
+        [IO.File]::WriteAllText((Join-Path $evidenceRoot 'qc.json'),(@{verdict='PASS';findings=@($finding)}|ConvertTo-Json -Depth 8))
+        foreach ($variant in @('valid','omitted','changed')) {
+            $record.qc.findings=switch ($variant) {
+                'valid' { ,@($finding) }
+                'omitted' { ,@() }
+                'changed' { ,@(@{id='F1';severity='Optional';open=$true;classification=''}) }
+            }
+            [IO.File]::WriteAllText((Join-Path $evidenceRoot 'V8-03.accept-1.json'),($record|ConvertTo-Json -Depth 8))
+            $evidence=Get-WorkflowAcceptEvidence 'V8-03' $sha $evidenceRoot $evidenceRoot
+            if (($variant -eq 'valid' -and $evidence.Verdict -cne 'PASS') -or
+                ($variant -ne 'valid' -and $evidence.Verdict -cne 'không rõ')) { throw "Đối chiếu finding QC thất bại: $variant" }
+        }
+        Write-Host 'ĐẠT: 3 trường hợp đối chiếu finding QC với nguồn.'
+    } finally { Remove-Item -LiteralPath $evidenceRoot -Recurse -Force }
     & dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV803AcceptTests --blame-hang-timeout 2m
     exit $LASTEXITCODE
 }

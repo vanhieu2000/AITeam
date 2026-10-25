@@ -732,6 +732,10 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
     $a = @("review", "--auto", "--task-file", $taskInWork, "--diff-file", $diff, "--workdir", $work, "--logdir", $dir, "--dev", $devProvider, "--out", $out, "--root", $Root)
     if ($verify) { $a += @("--verify-file", $verify.FullName) }
     $qcStartHead=git -C $work rev-parse HEAD
+    if ($script:AcceptVerify -and $script:AcceptVerify.task -ceq $Task -and $script:AcceptVerify.head -ceq $qcStartHead) {
+        $a=@($a | Select-Object -First ($a.Count - $(if ($verify) {2} else {0})))
+        $a+=@('--verify-file',(Join-Path $r.Logs $script:AcceptVerify.verify.source))
+    }
     Say "Review AI (aiteam review --auto)…" Cyan
     Invoke-WorkflowCodexLock -Action { & $exe @a 2>&1 | ForEach-Object { Say "  $_" } }   # QC Codex dùng chung khóa toàn máy với prep
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
@@ -1472,6 +1476,10 @@ function Invoke-Verify {
         }
     }
 
+    # Giữ SHA trước các phép kiểm tra; không gắn bằng chứng cho commit đổi giữa lượt.
+    $verifyStartHead=git -C $work rev-parse HEAD
+    $script:AcceptVerify=$null
+
     # 3. Test nghiệm thu do Claude viết trước: phải còn nguyên
     $accept = Get-BacktickPaths (Get-Section $ctx.Text "Test nghiệm thu")
     foreach ($a in $accept) {
@@ -1657,7 +1665,7 @@ function Invoke-Verify {
     foreach ($x in $notes) { Say "  [OK] $x" Green }
     Say ("Cổng kiểm tra: " + $(if ($ok) { "ĐẠT → Claude review nội dung" } else { "KHÔNG ĐẠT" }) + "  ($reportPath)") $(if ($ok) { "Green" } else { "Red" })
     $verifiedHead=git -C $work rev-parse HEAD
-    if ($LASTEXITCODE -eq 0 -and $verifiedHead -match '^[0-9a-fA-F]{40}$') {
+    if ($LASTEXITCODE -eq 0 -and $verifiedHead -match '^[0-9a-fA-F]{40}$' -and $verifiedHead -ceq $verifyStartHead) {
         $acceptRun=[regex]::Match([IO.Path]::GetFileName($reportPath),'-(\d+)\.md$').Groups[1].Value
         $agentRun=[regex]::Match([IO.Path]::GetFileName([string]$log),('^'+[regex]::Escape($Task)+'-(\d+)\.json$')).Groups[1].Value
         if ($agentRun) { $acceptRun=$agentRun }
@@ -1959,6 +1967,11 @@ function Invoke-AcceptPack {
         if ($taskCandidates.Count -ne 1) { continue }
         $tf=$taskCandidates[0]
         if (-not $tf) { continue }
+        $unsafeTask=$false
+        for ($node=$tf.FullName; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+            if ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint) { $unsafeTask=$true; break }
+        }
+        if ($unsafeTask) { continue }
         $branch=[regex]::Match([IO.File]::ReadAllText($tf.FullName),'\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
         if (-not $branch -or $branch -match '[\s~^:?*\[\\]' -or $branch.StartsWith('-')) { continue }
         $ref="origin/$branch"
@@ -2002,6 +2015,12 @@ function Invoke-Accept {
         $output
     }
     function Snapshot {
+        # Kiểm cả index và worktree để phát hiện đổi mode hoặc stage ngoài tài liệu.
+        $changedPaths=@(AcceptGit diff --name-only --no-renames)
+        $changedPaths+=@(AcceptGit diff --cached --name-only --no-renames)
+        foreach ($changedPath in $changedPaths) {
+            if ($changedPath -and $changedPath -cne $taskRel) { throw 'Codex sửa ngoài mục nghiệm thu cho phép.' }
+        }
         $snapshot=@{}
         foreach ($relative in (AcceptGit ls-files --cached --others --exclude-standard)) {
             if (@($relative -split '[\\/]') -contains '..' -or [IO.Path]::IsPathRooted($relative)) { throw 'Đường dẫn không an toàn.' }
@@ -2540,9 +2559,8 @@ function Invoke-DeputySchedule([bool]$on) {
     $global:LASTEXITCODE = 0
 }
 
-if ($Command -ne 'accept-pack') { Update-ManagerHeartbeat }
-
 try {
+if ($Command -ne 'accept-pack') { Update-ManagerHeartbeat }
 if ($Command -ne "skill-note") {
     . (Join-Path $Root "tools/workflow-common.ps1")
     . (Join-Path $Root "tools/workflow-pipeline.ps1")

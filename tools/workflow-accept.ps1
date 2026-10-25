@@ -49,7 +49,15 @@ function Get-WorkflowAcceptEvidence {
     try {
         $qcSource=ReadSource $LogsPath $record.qc.source -Json
         if ($qcSource.verdict -cne $record.qc.verdict) { throw 'Kết luận QC không khớp nguồn.' }
-        foreach ($finding in @($record.qc.findings)) {
+        $sourceFindings=@($qcSource.findings | Where-Object { $null -ne $_ })
+        $indexedFindings=@($record.qc.findings | Where-Object { $null -ne $_ })
+        if ($sourceFindings.Count -ne $indexedFindings.Count) { throw 'Finding QC không khớp nguồn.' }
+        for ($i=0; $i -lt $sourceFindings.Count; $i++) {
+            foreach ($field in @('id','severity','open','classification')) {
+                if ($sourceFindings[$i].$field -cne $indexedFindings[$i].$field) { throw 'Finding QC không khớp nguồn.' }
+            }
+        }
+        foreach ($finding in $indexedFindings) {
             if ($null -eq $finding -or -not $finding.id -or $finding.severity -cnotin @('Blocker','Required','Optional') -or $finding.open -isnot [bool]) { throw 'Finding không hợp lệ.' }
         }
         if ($record.qc.verdict -cin @('PASS','CHANGES_REQUESTED','BLOCKED')) {
