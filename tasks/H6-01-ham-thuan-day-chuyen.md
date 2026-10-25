@@ -98,9 +98,13 @@ Chưa xác minh: adapter chuyển dữ liệu brief/plan/quyết định thực 
 Chưa chạy toàn bộ test solution ở bước chuẩn bị; agent hiện thực phải chạy theo tiêu chí trên.
 
 ## Review (Claude)
-<!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
-**Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
-**Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Cổng KT ĐẠT (457 + 283 test); hàm thuần dây chuyền 7 bước theo bảng suy trạng thái đã chốt trong plan.
+- Codex QC: 1 điểm — chú thích tiếng Việt không dấu ⇒ Optional (không ảnh hưởng hành vi; sửa ở task sau chạm file).
+
+## Kết quả
+- **Không có chức năng mới hiện ngay** — lõi tính "đang ở bước nào" cho thanh dây chuyền 7 bước (Văn phòng / Yêu cầu / Task dùng ở H6-02, H6-04, H6-06).
+- Kiểm chứng: test nghiệm thu Codex viết + Codex QC.
 
 ## Kết quả
 <!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
