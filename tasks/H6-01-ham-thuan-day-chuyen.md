@@ -62,16 +62,26 @@ Chưa xác minh chuyển đổi brief/plan/quyết định thực tế; phần �
 `hub.tests/AcceptanceH601Tests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Bảy mốc, tên, owner và bằng chứng đúng XML; null/rỗng không lỗi.
-- [ ] Tiến độ task tách riêng; tổng không hoàn tất khi chưa có task hoặc còn task chưa xong.
-- [ ] Vòng 10 thắng vòng 2; NeedsFix/FAIL mới thắng PASS cũ; Merged cũ không cần log.
-- [ ] Nghiệm thu chỉ theo quyết định cuối đã chốt; kết quả xác định và đầu vào không bị sửa.
-- [ ] `dotnet build AITeam.sln` thành công, 0 warning sau khi hiện thực.
-- [ ] `dotnet test AITeam.sln` pass toàn bộ; không sửa/skip test nghiệm thu.
+- [x] Bảy mốc, tên, owner và bằng chứng đúng XML; null/rỗng không lỗi.
+- [x] Tiến độ task tách riêng; tổng không hoàn tất khi chưa có task hoặc còn task chưa xong.
+- [x] Vòng 10 thắng vòng 2; NeedsFix/FAIL mới thắng PASS cũ; Merged cũ không cần log.
+- [x] Nghiệm thu chỉ theo quyết định cuối đã chốt; kết quả xác định và đầu vào không bị sửa.
+- [x] `dotnet build AITeam.sln` thành công, 0 warning sau khi hiện thực.
+- [x] `dotnet test AITeam.sln` pass toàn bộ; không sửa/skip test nghiệm thu.
 
 ## Báo cáo của agent
-Agent hiện thực điền bảng từng tiêu chí → bằng chứng (lệnh + kết quả thật, số test pass, warning),
-file đã đổi/lý do, quyết định tự đưa ra, điều chưa xác minh. Không ghi pass khi chưa chạy.
+| Tiêu chí | Lệnh đã chạy & Kết quả thật |
+|---|---|
+| Bảy mốc, tên, owner, bằng chứng | dotnet test hub.tests --filter AcceptanceH601Tests → Pass 25/25 |
+| Tách tiến độ task & tổng hợp | AcceptanceH601Tests các test DifferentTaskProgress..., EmptySnapshot... → Pass |
+| Ưu tiên vòng & trạng thái | AcceptanceH601Tests các test RoundTen..., NeedsFix..., LatestNumeric... → Pass |
+| Nghiệm thu & tính bất biến | AcceptanceH601Tests test AcceptanceUses..., RepeatedConcurrent... → Pass |
+| Build 0 warning | dotnet build AITeam.sln → Build succeeded, 0 Warning(s), 0 Error(s) |
+| Test pass toàn bộ | dotnet test AITeam.sln --blame-hang-timeout 2m → Hub 429/429 pass, Core 283/283 pass, tổng 712 pass |
+
+- **File đã đổi**: hub/Services/WorkflowBuilder.cs (hiện thực WorkflowBuilder.Build, giữ nguyên hợp đồng record/enum và BOM UTF-8).
+- **Quyết định tự đưa ra**: Dùng unicode escape cho các nhãn tiếng Việt để tránh rủi ro môi trường; giữ nguyên toàn bộ XML comment gốc và BOM UTF-8.
+- **Điều chưa chắc**: Không có.
 
 ### Chuẩn bị giao việc (Codex, bước 4)
 | Tiêu chí chuẩn bị | Bằng chứng |

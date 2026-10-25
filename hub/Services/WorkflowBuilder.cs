@@ -53,6 +53,243 @@ public static class WorkflowBuilder
     /// </summary>
     public static WorkflowResult Build(WorkflowSnapshot? snapshot)
     {
-        throw new NotImplementedException(); // TODO(agent)
+        // 1. Tiep nhan
+        var intakeStatus = !string.IsNullOrWhiteSpace(snapshot?.Brief) ? WorkflowStatus.Done : WorkflowStatus.Pending;
+        var intakeEvidence = NormalizeEvidence(new[] { snapshot?.Brief });
+        var intakeStep = new WorkflowStep(WorkflowStage.Intake, "Ti\u1EBFp nh\u1EADn", intakeStatus, "Claude", intakeEvidence);
+
+        // 2. Y tuong
+        var lastIdeaDec = snapshot?.Decisions?.LastOrDefault(d => d.Stage == WorkflowStage.Idea);
+        WorkflowStatus ideaStatus;
+        if (lastIdeaDec == null)
+        {
+            ideaStatus = WorkflowStatus.Pending;
+        }
+        else
+        {
+            ideaStatus = lastIdeaDec.Approved ? WorkflowStatus.Done : WorkflowStatus.NeedsFix;
+        }
+        var ideaEvidence = NormalizeEvidence(new[] { lastIdeaDec?.Evidence });
+        var ideaStep = new WorkflowStep(WorkflowStage.Idea, "\u00DD t\u01B0\u1EDFng", ideaStatus, "Claude", ideaEvidence);
+
+        // 3. Plan
+        var lastPlanDec = snapshot?.Decisions?.LastOrDefault(d => d.Stage == WorkflowStage.Plan);
+        WorkflowStatus planStatus;
+        if (lastPlanDec != null && !lastPlanDec.Approved)
+        {
+            planStatus = WorkflowStatus.NeedsFix;
+        }
+        else if (!string.IsNullOrWhiteSpace(snapshot?.Plan) && lastPlanDec != null && lastPlanDec.Approved)
+        {
+            planStatus = WorkflowStatus.Done;
+        }
+        else
+        {
+            planStatus = WorkflowStatus.Pending;
+        }
+        var planEvidence = NormalizeEvidence(new[] { snapshot?.Plan, lastPlanDec?.Evidence });
+        var planStep = new WorkflowStep(WorkflowStage.Plan, "Plan", planStatus, "Claude", planEvidence);
+
+        // Tien do tung task
+        var tasks = snapshot?.Tasks?.OrderBy(t => t.Id, StringComparer.Ordinal).ToArray() ?? Array.Empty<WorkflowTaskSnapshot>();
+        var taskProgressList = new List<WorkflowTaskProgress>(tasks.Length);
+        var taskPrepSteps = new List<WorkflowStep>(tasks.Length);
+        var taskCodeSteps = new List<WorkflowStep>(tasks.Length);
+        var taskQcSteps = new List<WorkflowStep>(tasks.Length);
+
+        foreach (var task in tasks)
+        {
+            // Review cuoi theo Round so lon nhat, cung Round chon phan tu cuoi
+            WorkflowReview? selectedReview = null;
+            if (task.Reviews != null && task.Reviews.Count > 0)
+            {
+                int maxRound = task.Reviews.Max(r => r.Round);
+                selectedReview = task.Reviews.Last(r => r.Round == maxRound);
+            }
+
+            // Log cuoi dung Task theo Attempt lon nhat, cung Attempt chon phan tu cuoi
+            AgentRun? selectedLog = null;
+            if (task.Logs != null && task.Logs.Count > 0)
+            {
+                var taskLogs = task.Logs.Where(l => l.Task == task.Id).ToList();
+                if (taskLogs.Count > 0)
+                {
+                    int maxAttempt = taskLogs.Max(l => l.Attempt);
+                    selectedLog = taskLogs.Last(l => l.Attempt == maxAttempt);
+                }
+            }
+
+            // Chuan bi
+            bool isPrepDone = task.Prepared || task.State == TaskState.Merged;
+            var prepStatus = isPrepDone ? WorkflowStatus.Done : WorkflowStatus.Pending;
+            var prepEvidence = isPrepDone ? NormalizeEvidence(new[] { task.Id }) : Array.Empty<string>();
+            var prepStep = new WorkflowStep(WorkflowStage.Preparation, "Chu\u1EA9n b\u1ECB", prepStatus, "Codex", prepEvidence);
+
+            // Code
+            WorkflowStatus codeStatus;
+            if (task.State == TaskState.Merged)
+            {
+                codeStatus = WorkflowStatus.Done;
+            }
+            else if (task.State == TaskState.NeedsFix || (selectedReview != null && !selectedReview.Passed))
+            {
+                codeStatus = WorkflowStatus.NeedsFix;
+            }
+            else if (task.State == TaskState.Review || (selectedReview != null && selectedReview.Passed))
+            {
+                codeStatus = WorkflowStatus.Done;
+            }
+            else if (selectedLog != null)
+            {
+                codeStatus = selectedLog.State switch
+                {
+                    RunState.Running => WorkflowStatus.Running,
+                    RunState.Success => WorkflowStatus.Done,
+                    RunState.Error => WorkflowStatus.NeedsFix,
+                    _ => WorkflowStatus.Pending
+                };
+            }
+            else
+            {
+                codeStatus = WorkflowStatus.Pending;
+            }
+
+            var codeEvList = new List<string?>();
+            if (selectedLog != null)
+            {
+                codeEvList.Add(selectedLog.LogPath);
+            }
+            if (selectedReview != null)
+            {
+                codeEvList.Add(selectedReview.Evidence);
+            }
+            if (task.State == TaskState.Merged && selectedLog == null && selectedReview == null)
+            {
+                codeEvList.Add($"\u0110\u00E3 merge: {task.Id}");
+            }
+            var codeEvidence = NormalizeEvidence(codeEvList);
+            var codeStep = new WorkflowStep(WorkflowStage.Code, "Code", codeStatus, task.Owner ?? "", codeEvidence);
+
+            // QC
+            WorkflowStatus qcStatus;
+            if (task.State == TaskState.Merged)
+            {
+                qcStatus = WorkflowStatus.Done;
+            }
+            else if (task.State == TaskState.NeedsFix)
+            {
+                qcStatus = WorkflowStatus.Pending;
+            }
+            else if (selectedReview != null)
+            {
+                qcStatus = selectedReview.Passed ? WorkflowStatus.Done : WorkflowStatus.NeedsFix;
+            }
+            else if (task.State == TaskState.Review)
+            {
+                qcStatus = WorkflowStatus.Running;
+            }
+            else
+            {
+                qcStatus = WorkflowStatus.Pending;
+            }
+
+            var qcEvList = new List<string?>();
+            if (selectedReview != null)
+            {
+                qcEvList.Add(selectedReview.Evidence);
+            }
+            if (task.State == TaskState.Merged && selectedReview == null)
+            {
+                qcEvList.Add($"\u0110\u00E3 merge: {task.Id}");
+            }
+            var qcEvidence = NormalizeEvidence(qcEvList);
+            var qcStep = new WorkflowStep(WorkflowStage.Quality, "QC", qcStatus, "Claude", qcEvidence);
+
+            taskPrepSteps.Add(prepStep);
+            taskCodeSteps.Add(codeStep);
+            taskQcSteps.Add(qcStep);
+
+            var taskSteps = new WorkflowStep[] { prepStep, codeStep, qcStep };
+            taskProgressList.Add(new WorkflowTaskProgress(task.Id, taskSteps));
+        }
+
+        // 4. Chuan bi (Tong)
+        var totalPrepStatus = AggregateStatus(taskPrepSteps);
+        var totalPrepEvidence = NormalizeEvidence(taskPrepSteps.SelectMany(s => s.Evidence));
+        var totalPrepStep = new WorkflowStep(WorkflowStage.Preparation, "Chu\u1EA9n b\u1ECB", totalPrepStatus, "Codex", totalPrepEvidence);
+
+        // 5. Code (Tong)
+        var totalCodeStatus = AggregateStatus(taskCodeSteps);
+        var totalCodeEvidence = NormalizeEvidence(taskCodeSteps.SelectMany(s => s.Evidence));
+        var distinctCodeOwners = tasks
+            .Select(t => t.Owner)
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(o => o, StringComparer.Ordinal);
+        var totalCodeOwner = string.Join(", ", distinctCodeOwners);
+        var totalCodeStep = new WorkflowStep(WorkflowStage.Code, "Code", totalCodeStatus, totalCodeOwner, totalCodeEvidence);
+
+        // 6. QC (Tong)
+        var totalQcStatus = AggregateStatus(taskQcSteps);
+        var totalQcEvidence = NormalizeEvidence(taskQcSteps.SelectMany(s => s.Evidence));
+        var totalQcStep = new WorkflowStep(WorkflowStage.Quality, "QC", totalQcStatus, "Claude", totalQcEvidence);
+
+        // 7. Nghiem thu
+        var lastAcceptDec = snapshot?.Decisions?.LastOrDefault(d => d.Stage == WorkflowStage.Acceptance);
+        WorkflowStatus acceptStatus;
+        if (lastAcceptDec == null || !lastAcceptDec.IsFinal)
+        {
+            acceptStatus = WorkflowStatus.Pending;
+        }
+        else
+        {
+            acceptStatus = lastAcceptDec.Approved ? WorkflowStatus.Done : WorkflowStatus.NeedsFix;
+        }
+        var acceptEvidence = NormalizeEvidence(new[] { lastAcceptDec?.Evidence });
+        var acceptStep = new WorkflowStep(WorkflowStage.Acceptance, "Nghi\u1EC7m thu", acceptStatus, "Claude", acceptEvidence);
+
+        var steps = new WorkflowStep[]
+        {
+            intakeStep,
+            ideaStep,
+            planStep,
+            totalPrepStep,
+            totalCodeStep,
+            totalQcStep,
+            acceptStep
+        };
+
+        return new WorkflowResult(steps, taskProgressList);
+    }
+
+    private static WorkflowStatus AggregateStatus(IReadOnlyList<WorkflowStep> taskStepsForStage)
+    {
+        if (taskStepsForStage.Count == 0)
+        {
+            return WorkflowStatus.Pending;
+        }
+        if (taskStepsForStage.All(s => s.Status == WorkflowStatus.Done))
+        {
+            return WorkflowStatus.Done;
+        }
+        if (taskStepsForStage.Any(s => s.Status == WorkflowStatus.NeedsFix))
+        {
+            return WorkflowStatus.NeedsFix;
+        }
+        if (taskStepsForStage.Any(s => s.Status != WorkflowStatus.Pending))
+        {
+            return WorkflowStatus.Running;
+        }
+        return WorkflowStatus.Pending;
+    }
+
+    private static IReadOnlyList<string> NormalizeEvidence(IEnumerable<string?> items)
+    {
+        return items
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s!)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(s => s, StringComparer.Ordinal)
+            .ToArray();
     }
 }
