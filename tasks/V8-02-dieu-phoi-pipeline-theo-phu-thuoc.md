@@ -8,7 +8,7 @@
 - **Thời gian tối đa:** 25 phút
 - **Review AI:** có
 - **Độ khó:** M <!-- S (≤150 dòng, rõ ràng) · M (≤400, vài file) · L (>400 / nhiều module / rủi ro cao) -->
-- **Model:** `claude-opus-4-6-thinking`
+- **Model:** `claude-opus-5-5-medium`
 
 ## Tóm tắt
 - Có chức năng mới: một lệnh `pipeline -Request R-xxx` chuẩn bị và giao các việc đủ điều kiện cho Antigravity.
