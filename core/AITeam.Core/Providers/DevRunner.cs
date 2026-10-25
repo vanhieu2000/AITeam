@@ -13,7 +13,8 @@ public sealed record DevRunInput(
     string PromptFile,
     string LogDir,
     TimeSpan Timeout,
-    string? Model = null);
+    string? Model = null,
+    RunMode Mode = RunMode.Develop);   // R-006: ReadOnly cho bước lập kế hoạch (Codex chỉ đọc repo)
 
 /// <summary>ExitCode: 0 xong · 1 lỗi khác · 2 đầu vào / cấu hình sai · 5 provider đang nghỉ (không gọi) · 6 hết hạn mức · 7 chưa đăng nhập · 8 quá giờ.</summary>
 public sealed record DevRunOutcome(int ExitCode, string Status, string Summary, AgentRunResult? Result);
@@ -43,7 +44,7 @@ public sealed class DevRunner
     ///    - PromptFile không tồn tại ⇒ (ExitConfig, "Config", "LỖI: không thấy file {PromptFile}");
     ///    - WorkDir không tồn tại ⇒ (ExitConfig, "Config", "LỖI: không thấy thư mục {WorkDir}");
     ///    - state.RestOf(id, now()) có ⇒ (ExitResting, "Resting", "NGHỈ: {id} nghỉ tới {Until:HH:mm dd/MM} ({Reason})").
-    /// 2. Directory.CreateDirectory(LogDir); r = await factory(cfg).RunAsync(new AgentRunRequest(WorkDir, PromptFile, RunMode.Develop, Timeout, Model, null, LogDir), ct);
+    /// 2. Directory.CreateDirectory(LogDir); r = await factory(cfg).RunAsync(new AgentRunRequest(WorkDir, PromptFile, Mode, Timeout, Model, null, LogDir), ct);
     ///    state.Record(r, now()) (ghi nghỉ / xóa nghỉ).
     /// 3. ExitCode theo r.Status: Succeeded 0, QuotaExhausted 6, NotLoggedIn 7, TimedOut 8, còn lại 1. Status = r.Status.ToString().
     ///    Summary = "{Status} · {id} · {giây làm tròn}s · token {Input}/{Output}" (token không biết ⇒ "token ?");
@@ -69,7 +70,7 @@ public sealed class DevRunner
                 return new(ExitResting, "Resting", $"NGHỈ: {cfg.Id} nghỉ tới {rest.Until.ToString("HH:mm dd/MM", CultureInfo.InvariantCulture)} ({rest.Reason})", null);
 
             Directory.CreateDirectory(input.LogDir);
-            var req = new AgentRunRequest(input.WorkDir, input.PromptFile, RunMode.Develop, input.Timeout, input.Model, null, input.LogDir);
+            var req = new AgentRunRequest(input.WorkDir, input.PromptFile, input.Mode, input.Timeout, input.Model, null, input.LogDir);
             var r = await _factory(cfg).RunAsync(req, ct);
             _state.Record(r, _now());
 

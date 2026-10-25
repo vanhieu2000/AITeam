@@ -31,6 +31,19 @@
 7. Xong yêu cầu: `team.ps1 request-report -Request R-xxx` + `staff-report` → đánh giá trong phiếu → 1 dòng `docs/HIEU-SUAT-LOG.md` → tối đa 2 cải tiến, sửa ngay vào công cụ / mẫu → tăng phiên bản quy trình.
 8. Báo chủ dự án **ngắn, gạch đầu dòng**: sửa gì · làm được gì · kiểm chứng · cần cải tiến · cách test (`CHAY-THU.cmd`). Cuối phiên cập nhật `BAN-GIAO.md`.
 
+## Quy trình v4 — ĐANG THỬ (R-006, chủ dự án chọn 25/10): mỗi AI 1 việc nhỏ, tiết kiệm token Claude
+| # | Bước | Ai | Lệnh / đầu ra |
+|---|---|---|---|
+| 1 | Nhận yêu cầu + ý tưởng | Claude | `plans/R-xxx/brief.md` ≤ 20 dòng: mục tiêu, phạm vi, ràng buộc, tiêu chí xong, tiền tố mã task |
+| 2 | Research + kế hoạch | Codex (ChatGPT), CHỈ ĐỌC | `.\team.ps1 plan -Request R-xxx -Name V6` ⇒ `plans/R-xxx/plan.md` |
+| 3 | Duyệt kế hoạch | Claude | đọc 1 trang, sửa trực tiếp plan.md (không viết lại) |
+| 4 | Chia việc | Codex | `.\team.ps1 prep -Request R-xxx -Task V6-01` ⇒ file task + khung + test nghiệm thu, build 0 lỗi, tự giao |
+| 5 | Code | Antigravity (Minh / Lan) | như cũ; cổng KT tự động (0 token AI) |
+| 6 | QC | Codex | `Review AI: có` trong mọi task do `prep` tạo ⇒ CẦN SỬA tự giao lại |
+| 7 | Kiểm cuối | Claude | `.\team.ps1 review …` (gói gọn) + kiểm test nghiệm thu có thật sự kiểm hành vi + bấm thử nếu có UI ⇒ `merge` |
+- Codex nghỉ / lỗi ở bước 2 hoặc 4 ⇒ bước đó Claude làm (v3). Bước 6 Codex nghỉ ⇒ BLOCKED ⇒ Claude review (Antigravity không tự duyệt code của mình).
+- Thử trên 1 yêu cầu nhỏ, đo: phút + token Claude / Codex / Antigravity, vòng review, lỗi lọt tới bước 7 — rồi mới áp dụng cho mọi việc.
+
 ## Tiết kiệm token / thời gian — đã cài vào công cụ
 - Agent: giới hạn thời gian theo task; chỉ đọc file liệt kê; không ảnh / không chạy app; báo cáo ≤ 15 dòng; commit sớm; test có `--blame-hang-timeout`.
 - Claude sửa `team.ps1` ⇒ chạy `tools\test-verify.ps1` (test hồi quy cổng kiểm tra, IMP-001) trước khi commit. **Không để `team.ps1` sửa dở khi giao việc** — `assign` chạy đúng file trên đĩa (R-002: bảng việc ghi nhầm "AI review PASS").

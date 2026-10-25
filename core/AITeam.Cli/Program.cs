@@ -77,7 +77,7 @@ int Help()
     Console.WriteLine("aiteam providers [--no-check] [--root D:\\AITeam]  Kiểm tra từng provider (cài chưa, đăng nhập chưa) + thứ tự routing");
     Console.WriteLine("aiteam task-info --file <task.md>        Đọc thông tin chuẩn hóa của 1 file task");
     Console.WriteLine("aiteam review --task-file <f> --diff-file <f> [--verify-file <f>] --workdir <d> --logdir <d> --dev <id> [--timeout-min 15] [--out <f>] [--auto]");
-    Console.WriteLine("aiteam run --provider <id> --workdir <d> --prompt-file <f> --logdir <d> [--timeout-min 30] [--model <m>] [--out <f>]");
+    Console.WriteLine("aiteam run --provider <id> --workdir <d> --prompt-file <f> --logdir <d> [--timeout-min 30] [--model <m>] [--out <f>] [--read-only]");
     return 0;
 }
 
@@ -167,7 +167,8 @@ async Task<int> Run()
     var state = new ProviderStateStore(root);
     var proc = new ProcessRunner();
     var runner = new DevRunner(settings, state, c => settings.Create(c, proc), () => DateTime.Now);
-    var input = new DevRunInput(provider, workDir, promptFile, logDir, TimeSpan.FromMinutes(timeoutMin), model);
+    var mode = args.Contains("--read-only") ? RunMode.ReadOnly : RunMode.Develop;   // R-006: lập kế hoạch chỉ đọc
+    var input = new DevRunInput(provider, workDir, promptFile, logDir, TimeSpan.FromMinutes(timeoutMin), model, mode);
     var outcome = await runner.RunAsync(input, CancellationToken.None);
 
     Console.WriteLine(outcome.Summary);
