@@ -168,6 +168,15 @@ public static class WorkProgressParser
             errors[step] = null;
             // Assign chỉ chứng minh đã giao việc, không chứng minh code hoàn thành.
             done[step] = ev.Action != WorkAction.Assign;
+            var nextStep = ev.Action switch
+            {
+                WorkAction.Prep or WorkAction.Assign => WorkStep.Code,
+                WorkAction.Verify => WorkStep.Qc,
+                WorkAction.Qc => WorkStep.Acceptance,
+                _ => WorkStep.Merge
+            };
+            // Bằng chứng bước sau xác định tiến độ, không đánh Done các bước bị thiếu.
+            if (nextStep > currentStep) currentStep = nextStep;
 
             if (ev.Action == WorkAction.Merge)
             {
@@ -183,11 +192,11 @@ public static class WorkProgressParser
             currentStep = WorkStep.Merge;
             foreach (var step in allSteps) errors[step] = null;
         }
-        else if (latestRound > 0 || planApproved)
+        else
         {
-            // Không bỏ qua bước thiếu bằng chứng, kể cả khi bước sau đã có kết quả đạt.
-            currentStep = allSteps.First(step => step >= WorkStep.Prep
-                && (errors[step] != null || !done[step]));
+            // Lỗi chưa được chính bước đó đạt lại luôn chặn tiến độ, kể cả sau Assign.
+            var failedStep = allSteps.Where(step => errors[step] != null).Cast<WorkStep?>().FirstOrDefault();
+            if (failedStep.HasValue) currentStep = failedStep.Value;
         }
         var latestError = allSteps.Select(step => errors[step]).FirstOrDefault(error => error != null);
         var stepList = allSteps.Select(s =>
