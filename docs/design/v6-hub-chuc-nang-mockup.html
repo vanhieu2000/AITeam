@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AITeam Hub v6 — nhóm chức năng theo quy trình v4 (mockup)</title>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--s2:#f1f3f6;--line:#e3e6eb;--text:#14171c;--muted:#6b7280;--faint:#9aa1ab;
+--accent:#2563eb;--accent-soft:#e8effd;--run:#b45309;--run-soft:#fdf3e1;--ok:#15803d;--ok-soft:#e5f4ea;--fix:#c2410c;
+--err:#b91c1c;--err-soft:#fbe9e9;--vio:#7c3aed;--vio-soft:#f1eafe;--cx:#111827;--cx-soft:#e9eaee;--r:8px;--font:"Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 var(--font);color:var(--text);background:var(--bg)}
+.app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+nav{background:var(--surface);border-right:1px solid var(--line);padding:14px 10px}
+.brand{font-weight:700;font-size:16px;padding:4px 8px 14px}
+nav .grp{font-size:11px;color:var(--faint);text-transform:uppercase;margin:12px 8px 4px}
+nav a{display:flex;justify-content:space-between;padding:7px 9px;border-radius:6px;color:var(--text);text-decoration:none;cursor:pointer}
+nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.badge{font-size:11px;background:var(--fix);color:#fff;border-radius:9px;padding:0 7px}
+main{padding:18px 22px;min-width:0}
+h1{font-size:20px;margin:0}.sub{color:var(--muted);margin:2px 0 14px}
+.mock{background:#fff7d6;border:1px dashed #d4a72c;color:#7a5b00;padding:6px 10px;border-radius:6px;font-size:12px;margin-bottom:12px}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.ok{background:var(--ok-soft);color:var(--ok)}.run{background:var(--run-soft);color:var(--run)}.err{background:var(--err-soft);color:var(--err)}.rev{background:var(--accent-soft);color:var(--accent)}.vio{background:var(--vio-soft);color:var(--vio)}.cx{background:var(--cx-soft);color:var(--cx)}.n{background:var(--s2);color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px}
+.panel .hd{padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.panel .hd .sp{flex:1}
+.panel .bd{padding:10px 14px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:5px 10px;border-radius:6px;font:inherit;font-size:13px;cursor:pointer}
+.btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--muted);font-size:12px}
+.view{display:none}.view.on{display:block}
+/* dây chuyền 7 bước */
+.line{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:6px 0}
+.st{border-radius:6px;padding:6px 4px;text-align:center;font-size:11px;line-height:1.25;background:var(--s2);color:var(--muted)}
+.st b{display:block;font-size:12px}
+.st.done{background:var(--ok-soft);color:var(--ok)}.st.now{background:var(--run-soft);color:var(--run);outline:2px solid var(--run)}.st.wait{background:var(--accent-soft);color:var(--accent);outline:2px solid var(--accent)}
+.who{font-size:10px;opacity:.8}
+.floor{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.desk{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.desk.mgr{border-left:4px solid var(--vio)}.desk.cxd{border-left:4px solid var(--cx)}.desk.busy{border-left:4px solid var(--run)}.desk.idle{border-left:4px solid var(--ok)}.desk.gate{border-left:4px solid #64748b}
+.dh{display:flex;align-items:center;gap:10px}.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.dh b{font-size:15px}.dh small{display:block;color:var(--muted);font-size:12px}
+.job{background:var(--s2);border-radius:6px;padding:7px 9px;font-size:13px}
+.feed{font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:8px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:10px;flex-wrap:wrap}
+.tabs span{padding:6px 12px;border-radius:6px 6px 0 0;font-size:13px;cursor:pointer}.tabs span.on{background:var(--surface);border:1px solid var(--line);border-bottom-color:var(--surface);margin-bottom:-1px;font-weight:600}
+pre{white-space:pre-wrap;background:var(--s2);border-radius:6px;padding:8px 10px;font:12px/1.45 Consolas,monospace;margin:0}
+.map td:first-child{white-space:nowrap}
+.del{text-decoration:line-through;color:var(--faint)}
+@media (max-width:900px){.app{grid-template-columns:1fr}.line{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav>
+  <div class="brand">AITeam Hub</div>
+  <a class="on" data-v="office">Văn phòng</a>
+  <a data-v="req">Yêu cầu <span class="badge" style="background:var(--run)">2</span></a>
+  <a data-v="appr">Cần anh duyệt <span class="badge">1</span></a>
+  <div class="grp">Dự án</div>
+  <a data-v="map">AITeam</a><a data-v="map">HDVTool</a><a data-v="map">ChinaAndroidToolbox</a>
+  <div class="grp">Đánh giá</div>
+  <a data-v="map">Hiệu suất</a><a data-v="map">Quy trình &amp; cải tiến</a>
+  <div class="grp">Hệ thống</div>
+  <a data-v="ai">AI &amp; tài khoản</a><a data-v="map">Bí mật</a><a data-v="map">Cài đặt</a>
+  <div class="grp">Thiết kế</div>
+  <a data-v="map">⇢ Trang cũ đi đâu?</a>
+</nav>
+<main>
+<div class="mock">MOCKUP để chủ dự án duyệt — dữ liệu giả. Menu từ 16 mục còn 9 (+ danh sách dự án). Bấm các mục menu để xem từng màn hình.</div>
+
+<!-- ======================= VĂN PHÒNG ======================= -->
+<section class="view on" id="office">
+  <h1>Văn phòng</h1>
+  <div class="sub">Mỗi bàn = 1 vai trò trong dây chuyền. Claude chỉ quản lý chung + nghiệm thu; Codex lo kế hoạch / chuẩn bị task / QC.</div>
+  <div class="floor">
+    <div class="desk mgr">
+      <div class="dh"><div class="av" style="background:var(--vio)">C</div><div><b>Claude</b><small>Quản lý · nghiệm thu</small></div><span class="pill vio" style="margin-left:auto">Chờ nghiệm thu 1</span></div>
+      <div class="job"><b>R-006</b> nghiệm thu V6-01 · Codex QC: PASS</div>
+      <div class="feed"><b>10:30</b> Duyệt kế hoạch R-006 (2 task)</div>
+      <div><button class="btn pri">Nghiệm thu</button></div>
+    </div>
+    <div class="desk cxd">
+      <div class="dh"><div class="av" style="background:var(--cx)">X</div><div><b>Codex</b><small>Research · kế hoạch · chuẩn bị task · QC</small></div><span class="pill run" style="margin-left:auto">Đang QC</span></div>
+      <div class="job"><b>V6-01</b> QC vòng 1 · 3 phút</div>
+      <div class="feed"><b>10:24</b> Kế hoạch R-006 · 92 giây<br><b>10:33</b> Chuẩn bị V6-01: khung + 14 ca test</div>
+      <div style="font-size:12px;color:var(--muted)">Hạn mức: còn dùng được · nghỉ ⇒ Claude làm thay</div>
+    </div>
+    <div class="desk busy">
+      <div class="dh"><div class="av" style="background:#2563eb">M</div><div><b>Minh</b><small>Antigravity · lõi, công cụ</small></div><span class="pill run" style="margin-left:auto">Đang code 6′</span></div>
+      <div class="job"><b>V6-02</b> Chặn giao lại quá 3 vòng</div>
+      <div class="feed"><b>10:41</b> Đã đọc khung, bắt đầu điền</div>
+      <div><button class="btn">Dừng</button></div>
+    </div>
+    <div class="desk idle">
+      <div class="dh"><div class="av" style="background:#0d9488">L</div><div><b>Lan</b><small>Antigravity · giao diện Hub</small></div><span class="pill ok" style="margin-left:auto">Rảnh</span></div>
+      <div class="feed">Chưa có task</div>
+    </div>
+    <div class="desk gate">
+      <div class="dh"><div class="av" style="background:#64748b">K</div><div><b>Cổng kiểm tra</b><small>Build · test · bí mật · phạm vi (0 token AI)</small></div><span class="pill ok" style="margin-left:auto">V6-01 ĐẠT</span></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:12px"><div class="hd">Dây chuyền đang chạy</div><div class="bd">
+    <div><b>R-006</b> Quy trình tối ưu token — V6-01</div>
+    <div class="line">
+      <div class="st done"><b>1 Brief</b><span class="who">Claude</span></div><div class="st done"><b>2 Kế hoạch</b><span class="who">Codex</span></div><div class="st done"><b>3 Duyệt</b><span class="who">Claude</span></div><div class="st done"><b>4 Chuẩn bị</b><span class="who">Codex</span></div><div class="st done"><b>5 Code</b><span class="who">Minh</span></div><div class="st done"><b>6 QC</b><span class="who">Codex</span></div><div class="st wait"><b>7 Nghiệm thu</b><span class="who">Claude</span></div>
+    </div>
+  </div></div>
+  <div class="panel"><div class="hd">Điều khiển <span class="sp"></span><span style="font-size:12px;color:var(--muted)">giữ như hiện nay: Giao · Dừng · Giao lại kèm góp ý · Kiểm tra lại</span></div></div>
+</section>
+
+<!-- ======================= YÊU CẦU ======================= -->
+<section class="view" id="req">
+  <h1>Yêu cầu</h1>
+  <div class="sub">Gộp Giao việc + Hộp thư + Phòng nghiên cứu. Mỗi yêu cầu chạy qua dây chuyền 7 bước.</div>
+  <div class="panel"><div class="hd">Gửi yêu cầu mới</div><div class="bd">
+    <textarea style="width:100%;font:inherit;border:1px solid var(--line);border-radius:6px;padding:7px" rows="2" placeholder="Anh cần gì? (Claude nhận, viết brief)"></textarea>
+    <div style="margin-top:6px"><button class="btn pri">Gửi cho Claude</button></div>
+  </div></div>
+  <div class="panel"><div class="hd">R-006 · Quy trình tối ưu token <span class="sp"></span><span class="pill run">Bước 6/7</span></div><div class="bd">
+    <div class="line">
+      <div class="st done"><b>1 Brief</b><span class="who">Claude</span></div><div class="st done"><b>2 Kế hoạch</b><span class="who">Codex</span></div><div class="st done"><b>3 Duyệt</b><span class="who">Claude</span></div><div class="st done"><b>4 Chuẩn bị</b><span class="who">2/2 task</span></div><div class="st now"><b>5 Code</b><span class="who">V6-02 Minh</span></div><div class="st"><b>6 QC</b><span class="who">Codex</span></div><div class="st"><b>7 Nghiệm thu</b><span class="who">Claude</span></div>
+    </div>
+    <div class="tabs"><span class="on">Brief &amp; kế hoạch</span><span>Task (2)</span><span>Research</span><span>Nhật ký</span><span>Chat với Claude</span></div>
+    <pre># Kế hoạch R-006   (Codex · 92 giây · đã duyệt 10:30)
+## Task
+### V6-01 · Đếm vòng review và CLI      ✅ nghiệm thu
+### V6-02 · Chặn giao lại và xin quyết định   🟡 Minh đang code</pre>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px">Tab <b>Research</b> = Phòng nghiên cứu hiện nay (ChatGPT tự động + Thủ công), gắn sẵn vào phiếu này.</div>
+  </div></div>
+  <div class="panel"><div class="hd">R-005 · Văn phòng mini <span class="sp"></span><span class="pill ok">Xong</span></div><div class="bd">
+    <div class="line"><div class="st done"><b>1</b></div><div class="st done"><b>2</b></div><div class="st done"><b>3</b></div><div class="st done"><b>4</b></div><div class="st done"><b>5</b></div><div class="st done"><b>6</b></div><div class="st done"><b>7</b></div></div>
+  </div></div>
+</section>
+
+<!-- ======================= CẦN ANH DUYỆT ======================= -->
+<section class="view" id="appr">
+  <h1>Cần anh duyệt</h1>
+  <div class="sub">Giữ nguyên trang hiện tại. Thêm loại mới: "quá 3 vòng review" (V6-02).</div>
+  <div class="panel"><div class="hd">V5-09 · quá 3 vòng review <span class="sp"></span><span class="pill err">Chờ anh</span></div><div class="bd">
+    Chọn: <button class="btn">Giao tiếp</button> <button class="btn">Claude tự sửa</button> <button class="btn">Bỏ task</button>
+  </div></div>
+</section>
+
+<!-- ======================= AI & TÀI KHOẢN ======================= -->
+<section class="view" id="ai">
+  <h1>AI &amp; tài khoản</h1>
+  <div class="sub">Gộp Provider AI + Tài khoản AI + Tài khoản (Antigravity) thành 1 trang có tab.</div>
+  <div class="tabs"><span class="on">Trạng thái</span><span>Phân vai</span><span>Đổi tài khoản Antigravity</span><span>Lịch sử nghỉ</span></div>
+  <div class="panel"><div class="bd"><table>
+    <tr><th>AI</th><th>Việc trong dây chuyền</th><th>Trạng thái</th><th></th></tr>
+    <tr><td><b>Claude</b></td><td>Quản lý chung · duyệt kế hoạch · nghiệm thu</td><td><span class="pill ok">Phiên Claude Code</span></td><td></td></tr>
+    <tr><td><b>Codex</b> (ChatGPT)</td><td>Research · kế hoạch · chuẩn bị task · QC · Phòng nghiên cứu</td><td><span class="pill ok">Đã kết nối</span></td><td><button class="btn">Kiểm tra</button></td></tr>
+    <tr><td><b>Antigravity</b></td><td>Viết code (Minh, Lan)</td><td><span class="pill ok">Đã kết nối</span></td><td><button class="btn">Kiểm tra</button> <button class="btn">Đổi tài khoản</button></td></tr>
+    <tr><td><b>AI khác</b></td><td>Thủ công (copy / dán ở tab Research)</td><td><span class="pill n">Thủ công</span></td><td></td></tr>
+  </table></div></div>
+</section>
+
+<!-- ======================= BẢNG ÁNH XẠ ======================= -->
+<section class="view" id="map">
+  <h1>Trang cũ đi đâu?</h1>
+  <div class="sub">Không mất dữ liệu: các trang chi tiết (dự án, task) giữ nguyên địa chỉ; chỉ menu gọn lại.</div>
+  <div class="panel"><div class="bd"><table class="map">
+    <tr><th>Trang hiện tại (16)</th><th>Sau khi đổi</th><th>Lý do</th></tr>
+    <tr><td>Văn phòng</td><td><b>Văn phòng</b> (trang chủ)</td><td>Bàn theo vai trò dây chuyền: Claude · Codex · Minh · Lan · Cổng KT</td></tr>
+    <tr><td class="del">Tổng quan</td><td>→ <b>Hiệu suất</b></td><td>Số đo + biểu đồ thời gian là đánh giá, không phải việc hằng ngày</td></tr>
+    <tr><td class="del">Agent</td><td>→ <b>Văn phòng</b> (bàn Minh / Lan)</td><td>Trùng: tiến trình đang chạy đã hiện trên bàn</td></tr>
+    <tr><td>Giao việc</td><td>→ <b>Yêu cầu</b></td><td>Thành bảng dây chuyền 7 bước theo phiếu</td></tr>
+    <tr><td class="del">Hộp thư</td><td>→ <b>Yêu cầu</b> (ô "Gửi yêu cầu mới")</td><td>Trùng chức năng gửi yêu cầu</td></tr>
+    <tr><td class="del">Phòng nghiên cứu</td><td>→ tab <b>Research</b> trong mỗi yêu cầu</td><td>Research gắn với phiếu; bước 2 Codex đã tự research</td></tr>
+    <tr><td>Cần anh duyệt</td><td><b>Cần anh duyệt</b></td><td>Việc chính của anh; thêm loại "quá 3 vòng review"</td></tr>
+    <tr><td>Đội ngũ</td><td>→ <b>Hiệu suất</b> (tab Nhân viên)</td><td>Gộp đánh giá người + số đo</td></tr>
+    <tr><td>Quy trình &amp; cải tiến</td><td><b>Quy trình &amp; cải tiến</b></td><td>Thêm sơ đồ quy trình v4</td></tr>
+    <tr><td class="del">Provider AI</td><td>→ <b>AI &amp; tài khoản</b> (tab Phân vai / Lịch sử nghỉ)</td><td>3 trang cùng nói về AI</td></tr>
+    <tr><td class="del">Tài khoản AI</td><td>→ <b>AI &amp; tài khoản</b> (tab Trạng thái)</td><td>"</td></tr>
+    <tr><td class="del">Tài khoản</td><td>→ <b>AI &amp; tài khoản</b> (tab Đổi tài khoản Antigravity)</td><td>"</td></tr>
+    <tr><td>Bí mật · Cài đặt</td><td>giữ</td><td>—</td></tr>
+    <tr><td>Dự án · Task</td><td>giữ</td><td>Trang task thêm dòng dây chuyền (đang ở bước nào, ai làm)</td></tr>
+  </table></div></div>
+</section>
+</main>
+</div>
+<script>
+document.querySelectorAll('nav a[data-v]').forEach(a => a.onclick = () => {
+  document.querySelectorAll('nav a').forEach(x => x.classList.remove('on')); a.classList.add('on');
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === a.dataset.v));
+});
+</script>
+</body>
+</html>
