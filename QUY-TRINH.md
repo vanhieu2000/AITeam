@@ -17,10 +17,10 @@
    - khung code + **test nghiệm thu** commit trước lên nhánh — **thứ tự: file task lên `main` trước, rồi mới tạo nhánh từ `origin/main`** (ngược lại sẽ xung đột file task khi merge; `merge` tự xử lý nhưng tránh được thì hơn);
    - **Bố cục giao diện** cụ thể nếu có UI (chạy `tools/UiSnapshot` trước, liệt kê lỗi hiện có);
    - việc đơn giản ghi `Model: gemini-3.8-flash-medium`.
-   - Việc ≤ ~100 dòng: Claude làm thẳng, không giao.
+   - Việc ≤ ~100 dòng: giao thẳng Codex (`assign -Dev codex`), Claude chỉ theo dõi + nghiệm thu.
 3. `team.ps1 assign -Project X -Task T-xxx` (nền). Cổng kiểm tra tự chạy: commit, BOM, build 0 warning, test (chặn treo 3 phút), phạm vi; vượt ngân sách chỉ cảnh báo.
 4. `team.ps1 review -Project X -Task T-xxx` → đọc gói review. **Claude sửa code (dù 1 dòng) ⇒ chạy build + TOÀN BỘ test trước khi commit; test và commit là 2 lệnh riêng — đọc kết quả test rồi mới commit** (IMP-001, IMP-005; Hub đang chạy khóa `hub\bin` ⇒ tạm dừng Hub, test, bật lại). Chụp ảnh bằng `tools/UiSnapshot` nếu có UI.
-   - Lỗi ≤ ~50 dòng: **Claude tự sửa**.
+   - Lỗi nhỏ: **giao Codex sửa** (`-Dev codex -Resume -Feedback`), Claude không tự sửa.
    - Còn sót nhưng phần chính đạt: merge, tách **task nhỏ mới**.
    - Chỉ trả agent khi phải làm lại nhiều (`assign -Resume -Feedback`).
    - Lỗi ghi `- [AG|TK|CK] (loại) …`.

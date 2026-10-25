@@ -70,7 +70,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    - **Khung code trước (tính năng mới):** cùng commit đầu tiên với test nghiệm thu, Claude đẩy lên nhánh task: interface / lớp / chữ ký hàm public (thân `throw new NotImplementedException()` hoặc `// TODO(agent)`), và bố cục giao diện (TableLayoutPanel / FlowLayoutPanel, tên control). Agent chỉ điền phần thân, không tự thiết kế.
    - **Ngân sách:** mỗi task ghi dòng `- **Ngân sách:** ~N dòng` (code thêm, không tính test nghiệm thu). Cổng kiểm tra từ chối khi vượt 1,5 lần; sửa ngoài Phạm vi cũng bị từ chối (trước đây chỉ cảnh báo).
    - **Task giao diện phải có bố cục cụ thể** (từ R-001): Claude ghi cây control (TableLayoutPanel / FlowLayoutPanel, cột %, MinimumSize, chỗ xuống dòng) và chạy `tools/UiSnapshot` / LayoutChecker TRƯỚC khi giao để liệt kê lỗi hiện có vào task. Không có bố cục ⇒ agent thử mò (T-007: 73 phút cho 51 dòng).
-   - **Không giao khi không đáng:** việc ≤ ~100 dòng Claude làm thẳng. Sửa sau review ≤ ~50 dòng Claude tự sửa (một vòng agent tốn 20–30 phút); chỉ trả agent khi phải làm lại nhiều.
+   - **Việc nhỏ (≤ ~100 dòng) và sửa sau review: giao THẲNG Codex** (`new-task` ngắn rồi `assign -Dev codex`, bỏ bước prep), Claude KHÔNG tự viết code — chỉ theo dõi và nghiệm thu đúng yêu cầu chủ dự án (25/10). Việc lớn mới qua dây chuyền plan → prep → Antigravity.
 5. **Giao việc**
    - Chạy `team.ps1 assign -Project X -Task T-xxx` (nền). Lệnh tự:
      - chặn nếu task đang chạy trên **máy khác** (< 3 giờ; chắc máy kia đã dừng thì thêm `-Force`);
@@ -89,7 +89,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
       - **Blocker** (bảo mật, mất dữ liệu, hỏng chức năng chính) và **Required** (không đạt tiêu chí, bug, sai thiết kế): mỗi mục ghi file / vị trí, vấn đề, bằng chứng hoặc cách tái hiện, hành vi mong muốn, test xác nhận. Chỉ hai loại này mới trả về sửa.
       - **Optional**: không bắt sửa; ghi thành việc ở hàng chờ.
       - Không yêu cầu đổi theo sở thích khi đã đúng thiết kế và tiêu chí.
-   6. Claude tự sửa chỉ khi nhanh hơn viết lại yêu cầu; ghi rõ dòng "Claude sửa: …" (được đếm trong `team.ps1 metrics`).
+   6. Cần sửa ⇒ giao Codex (`assign -Dev codex -Resume -Feedback "…"`), Claude không tự sửa code (chủ dự án 25/10); chỉ ngoại lệ sự cố chặn cả dây chuyền — ghi rõ "Claude sửa: …".
    6b. **Ghi lỗi theo định dạng đếm được** (dùng cho `staff-report`): mỗi lỗi một dòng `- [AG|TK|CK] (loại) mô tả`, trong đó:
       - AG = nhân viên làm sai dù task rõ;
       - TK = task / thiết kế của Claude thiếu;

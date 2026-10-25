@@ -34,6 +34,11 @@ Sự kiện cần ghi:
 - merge;
 - báo chủ dự án.
 
+- 2026-10-25 20:15:05 +07:00 | V8-02 | Prep | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-02:Prep:1 -->
+- 2026-10-25 20:19:09 +07:00 | V8-02 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:1 -->
+- 2026-10-25 20:19:20 +07:00 | V8-02 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-02:Assign:1 -->
+- 2026-10-25 20:20:13 +07:00 | V8-02 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:2 -->
+- 2026-10-25 20:58:00 +07:00 | V8-02 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:3 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-008`, rồi điền:
 
