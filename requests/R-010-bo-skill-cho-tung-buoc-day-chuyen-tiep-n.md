@@ -1,4 +1,4 @@
-# R-010 · Bộ skill cho từng bước dây chuyền (tiếp nhận → publish git) + skill code WinForms / web / app, tự cập nhật sau đánh giá
+R-010 · Bộ skill cho từng bước dây chuyền (tiếp nhận → publish git) + skill code WinForms / web / app, tự cập nhật sau đánh giá
 
 - **Nhận lúc:** 12:33 25/10/2026 · máy DESKTOP-PP14EFS
 - **Trạng thái:** 🟡 Đang làm
@@ -25,6 +25,8 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-010` để `team.ps1 reque
 | 12:45 | Nhận yêu cầu | |
 | 12:50 | Bước 1: brief plans/R-010/brief.md (nguồn: ~/.claude/skills winforms-expert, create-datadriven-aspnetcore, dotnet-webapi, maui-*, scaffold-dotnet-test-project) | |
 
+| 16:52 25/10/2026 | Quản lý phụ kiểm tra S1-04: lượt 1 hết 25 phút, helper chưa commit; chưa có cổng KT/QC. | Chưa giao lại: prep/assign tự commit/push task hoặc metrics lên main ngoài danh sách được phép của vòng này; giữ S1-06/07 chờ phụ thuộc. |
+
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
 - giao task;
@@ -34,6 +36,8 @@ Sự kiện cần ghi:
 - merge;
 - báo chủ dự án.
 
+- 2026-10-25 16:51:45 +07:00 | S1-04 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:S1-04:Verify:1 -->
+- 2026-10-25 16:51:56 +07:00 | S1-04 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:S1-04:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-010`, rồi điền:
 
