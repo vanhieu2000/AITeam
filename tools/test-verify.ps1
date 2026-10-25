@@ -3,9 +3,37 @@
 # Dựng thư mục tạm có: bản sao team.ps1 + team.json/projects.json giả, remote git trần, repo dự án "Demo",
 # worktree agent với commit khung "Test nghiệm thu … (Claude)" + commit của agent; rồi chạy verify và kiểm kết quả.
 # Không đụng repo / cấu hình thật. Không cần mạng.
-param([switch]$Keep, [string]$TeamPs1 = "", [switch]$PipelineOnly)   # -TeamPs1: thử với bản team.ps1 khác (vd. bản cũ) để chắc test bắt được lỗi
+param([switch]$Keep, [string]$TeamPs1 = "", [switch]$PipelineOnly, [switch]$AcceptOnly)   # -TeamPs1: thử với bản team.ps1 khác (vd. bản cũ) để chắc test bắt được lỗi
 $ErrorActionPreference = "Stop"
 $src = Split-Path $PSScriptRoot -Parent
+if ($AcceptOnly) {
+    # Bằng chứng QC phải giữ nguyên finding của nguồn, kể cả chỉ mục tự xóa/đổi lỗi.
+    . (Join-Path $src 'tools/workflow-accept.ps1')
+    $evidenceRoot=Join-Path $env:TEMP ('aiteam-accept-source-'+[guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $evidenceRoot | Out-Null
+    try {
+        $sha='a' * 40
+        $finding=@{id='F1';severity='Required';open=$true;classification=''}
+        $record=@{task='V8-03';head=$sha;run=1;verify=@{ok=$true;source='verify.md'};
+            qc=@{verdict='PASS';findings=@($finding);source='qc.json'}}
+        [IO.File]::WriteAllText((Join-Path $evidenceRoot 'verify.md'),'ĐẠT')
+        [IO.File]::WriteAllText((Join-Path $evidenceRoot 'qc.json'),(@{verdict='PASS';findings=@($finding)}|ConvertTo-Json -Depth 8))
+        foreach ($variant in @('valid','omitted','changed')) {
+            $record.qc.findings=switch ($variant) {
+                'valid' { ,@($finding) }
+                'omitted' { ,@() }
+                'changed' { ,@(@{id='F1';severity='Optional';open=$true;classification=''}) }
+            }
+            [IO.File]::WriteAllText((Join-Path $evidenceRoot 'V8-03.accept-1.json'),($record|ConvertTo-Json -Depth 8))
+            $evidence=Get-WorkflowAcceptEvidence 'V8-03' $sha $evidenceRoot $evidenceRoot
+            if (($variant -eq 'valid' -and $evidence.Verdict -cne 'PASS') -or
+                ($variant -ne 'valid' -and $evidence.Verdict -cne 'không rõ')) { throw "Đối chiếu finding QC thất bại: $variant" }
+        }
+        Write-Host 'ĐẠT: 3 trường hợp đối chiếu finding QC với nguồn.'
+    } finally { Remove-Item -LiteralPath $evidenceRoot -Recurse -Force }
+    & dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV803AcceptTests --blame-hang-timeout 2m
+    exit $LASTEXITCODE
+}
 # Nghiệm thu V8-02 chạy xUnit đã build; không gọi agent/Codex thật hoặc lệnh git khi dùng -PipelineOnly.
 if ($PipelineOnly) {
     & dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV802PipelineTests --blame-hang-timeout 2m
@@ -33,6 +61,7 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
     Copy-Item (Join-Path $src "tools\secret-scan.ps1") (Join-Path $root "tools")
     Copy-Item (Join-Path $src "tools\workflow-common.ps1") (Join-Path $root "tools")
     Copy-Item (Join-Path $src "tools\workflow-pipeline.ps1") (Join-Path $root "tools")
+    Copy-Item (Join-Path $src "tools\workflow-accept.ps1") (Join-Path $root "tools")
     # team.ps1 dot-source scripts/SkillPrompts.ps1 + SkillNotes.ps1 (S1-04/S1-06) — thiếu ⇒ mọi kịch bản hỏng (Claude sửa 25/10).
     Copy-Item (Join-Path $src "scripts") (Join-Path $root "scripts") -Recurse
     $cfg = Get-Content (Join-Path $src "team.json") -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -434,6 +463,8 @@ finally {
     else { Write-Host "Giữ thư mục tạm: $T" }
 }
 & dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV802PipelineTests --blame-hang-timeout 2m
+if ($LASTEXITCODE -ne 0) { $script:failed++ }
+& dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV803AcceptTests --blame-hang-timeout 2m
 if ($LASTEXITCODE -ne 0) { $script:failed++ }
 if ($script:failed -gt 0) { Write-Host "$($script:failed) kiểm tra HỎNG" -ForegroundColor Red; exit 1 }
 Write-Host "Tất cả kiểm tra ĐẠT" -ForegroundColor Green
