@@ -72,15 +72,15 @@
             @foreach (var oc in Model.Asked.Outcomes)
             {
                 var opt = Model.Options.FirstOrDefault(o => o.Ai == oc.Ai);
-                var name = opt?.Name ?? AiCatalog.Find(oc.Ai)?.Name ?? oc.Ai;
-                var url = opt?.OfficialUrl ?? AiCatalog.Find(oc.Ai)?.OfficialUrl ?? "#";
+                var name = opt?.Name ?? AITeam.Core.Research.ResearchAis.NameOf(oc.Ai);
+                var url = opt?.OfficialUrl ?? AiCatalog.Find(oc.Ai)?.OfficialUrl ?? "";
                 var pillClass = oc.Kind == "started" ? "run" : (oc.Kind == "manual" ? "n" : "err");
                 var pillText = oc.Kind == "started" ? "Đang hỏi…" : (oc.Kind == "manual" ? "Thủ công" : oc.Text);
                 <div style="background:var(--s2);padding:10px;border-radius:8px">
                     <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
                         <b>@name</b>
                         <span class="pill @pillClass">@pillText</span>
-                        @if (oc.Kind == "manual")
+                        @if (oc.Kind == "manual" && !string.IsNullOrEmpty(url))
                         {
                             <a class="btn sm" href="@url" target="_blank" rel="noopener noreferrer">Mở @name ↗</a>
                         }

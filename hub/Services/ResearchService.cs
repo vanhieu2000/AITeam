@@ -22,7 +22,7 @@ public sealed record ResearchAiOutcome(string Ai, string Kind, string Text);
 
 public interface IResearchService
 {
-    /// <summary>Đúng 4 AI theo thứ tự: chatgpt, gemini, deepseek, grok — trạng thái lấy từ IAiAccountsService.List().</summary>
+    /// <summary>Đúng 2 lựa chọn: chatgpt (trạng thái từ IAiAccountsService.List()) và "manual" (Thủ công — AI bất kỳ, OfficialUrl rỗng).</summary>
     IReadOnlyList<ResearchAiOption> Options();
 
     /// <summary>Xem ResearchService.Ask.</summary>
@@ -43,7 +43,8 @@ public interface IResearchService
 
 public sealed class ResearchService : IResearchService
 {
-    public static readonly string[] Ais = ["chatgpt", "gemini", "deepseek", "grok"];
+    // Chủ dự án quyết 25/10: chỉ ChatGPT (tự động qua Codex) + 1 lựa chọn "Thủ công" chung cho mọi AI khác.
+    public static readonly string[] Ais = ["chatgpt", ResearchAis.Manual];
     public static readonly TimeSpan MinInterval = TimeSpan.FromSeconds(60);
 
     private readonly IRequestService _requests;
@@ -77,6 +78,11 @@ public sealed class ResearchService : IResearchService
         var result = new List<ResearchAiOption>(Ais.Length);
         foreach (var ai in Ais)
         {
+            if (ai == ResearchAis.Manual)
+            {
+                result.Add(new ResearchAiOption(ai, ResearchAis.ManualName, AiMode.Manual, AiStatus.ManualOnly, "Thủ công", false, ""));
+                continue;
+            }
             if (!map.TryGetValue(ai, out var v)) continue;
             var canAsk = v.Mode == AiMode.Automatic && _connectorFor(ai) != null;
             result.Add(new ResearchAiOption(ai, v.Service.Name, v.Mode, v.Status, v.StatusText, canAsk, v.Service.OfficialUrl));
@@ -233,7 +239,6 @@ public sealed class ResearchService : IResearchService
     /// Connector thật:
     ///   "chatgpt" ⇒ ProviderSettings.Load(AITeamRoot), provider id "codex" (không có ⇒ null) ⇒ new ProviderResearchConnector("chatgpt", "codex CLI (tài khoản ChatGPT)",
     ///     settings.Create(cfg, new ProcessRunner()), TimeSpan.FromMinutes(10), r => new ProviderStateStore(AITeamRoot).Record(r, DateTime.Now));
-    ///   "gemini" ⇒ provider "agy" (Antigravity, model Gemini) qua ProviderResearchConnector, 10 phút (Gemini CLI không còn nhận tài khoản cá nhân miễn phí — 25/10/2026);
     ///   khác ⇒ null. Lỗi đọc cấu hình ⇒ null.
     /// </summary>
     public static Func<string, IResearchConnector?> DefaultConnectors(HubPaths paths) => ai =>
@@ -250,18 +255,7 @@ public sealed class ResearchService : IResearchService
                     settings.Create(cfg, new ProcessRunner()), TimeSpan.FromMinutes(10),
                     r => new ProviderStateStore(paths.AITeamRoot).Record(r, DateTime.Now));
             }
-            if (key == "gemini")
-            {
-                // Gemini CLI không còn nhận tài khoản cá nhân miễn phí (IneligibleTierError, 25/10/2026) ⇒ hỏi qua agy (model Gemini), chế độ --sandbox.
-                var settings = ProviderSettings.Load(paths.AITeamRoot);
-                var cfg = settings.Providers.FirstOrDefault(p => string.Equals(p.Id, "agy", StringComparison.OrdinalIgnoreCase));
-                if (cfg == null) return null;
-                return new ProviderResearchConnector("gemini", "Antigravity (agy · model Gemini)",
-                    settings.Create(cfg, new ProcessRunner()), TimeSpan.FromMinutes(10),
-                    r => new ProviderStateStore(paths.AITeamRoot).Record(r, DateTime.Now),
-                    "Antigravity", "đăng nhập lại ở trang Tài khoản Antigravity");
-            }
-            return null;
+            return null;   // mọi AI khác: thủ công (chủ dự án quyết 25/10, không tự động hóa Gemini / DeepSeek / Grok)
         }
         catch
         {

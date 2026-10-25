@@ -135,11 +135,13 @@ Mỗi task: nhánh riêng, khung + test nghiệm thu trước, cổng KT, review
    | Claude | Claude Code CLI | Có | Chưa cài; dùng chung hạn mức với phiên quản lý ⇒ tắt mặc định |
    | DeepSeek · Grok | **BrowserConnector** (Playwright .NET, Apache-2.0) điều khiển trình duyệt RIÊNG của AITeam | Không (tự động hóa web) | Mặc định TẮT; chủ dự án bật từng cái sau khi đọc cảnh báo điều khoản; tự đăng nhập trong cửa sổ đó; AITeam KHÔNG đọc / xuất cookie, KHÔNG vượt CAPTCHA / MFA (gặp ⇒ `LoginRequired`, hiện cửa sổ cho người làm); hồ sơ `%LOCALAPPDATA%\AITeam\profiles\<provider>\default` (ACL user hiện tại, không sao lưu); giới hạn 1 câu hỏi / 60 giây; lỗi / đổi giao diện ⇒ tự chuyển `ManualOnly` (Copy + dán) |
    Manual handoff vẫn có cho MỌI AI làm đường dự phòng.
+
+   **Chủ dự án quyết lại 25/10 ~10:00 (thay cho bảng trên):** "việc research dùng được ChatGPT rồi thì không cần cái khác nữa, cứ để thủ công … không cần phân biệt AI nào". ⇒ Phòng nghiên cứu chỉ có 2 lựa chọn: **ChatGPT (tự động qua Codex CLI)** và **Thủ công (AI bất kỳ)**: anh copy lời nhắn, hỏi ở đâu cũng được, dán câu trả lời (lưu id `manual`). BỎ BrowserConnector DeepSeek / Grok (V5-10 / V5-11) và Gemini tự động.
 3. **Văn phòng là trang chủ**; Tổng quan giữ trong menu.
 
 ### Kế hoạch cập nhật cho P3 / P5
 | Task | Nội dung |
 |---|---|
 | V5-07 | Phòng nghiên cứu: `IAgentConnector` + CliConnector (Codex, Gemini) + ManualConnector; chat theo phiếu / task; lưu `research/` |
-| V5-10 | BrowserConnector DeepSeek (thử 1 cái trước, smoke test, chỉ khi bật) |
-| V5-11 | BrowserConnector Grok (sau khi V5-10 chạy ổn) |
+| ~~V5-10~~ | ~~BrowserConnector DeepSeek~~ — BỎ (chủ dự án quyết 25/10: thủ công là đủ) |
+| ~~V5-11~~ | ~~BrowserConnector Grok~~ — BỎ |

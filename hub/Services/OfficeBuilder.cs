@@ -55,7 +55,7 @@ public static class OfficeBuilder
     ///   Task = task Review có LastRun.Time lớn nhất (LastRun null coi như nhỏ nhất; bằng nhau ⇒ thứ tự danh sách), ElapsedMin null.
     /// - n = 0 ⇒ Idle, StateText "Không có việc chờ", Task null.
     ///
-    /// Bàn "research": Name "Phòng nghiên cứu", Role "ChatGPT · Gemini · DeepSeek · Grok", ResearchRunning > 0 ⇒ Working "{n} câu đang hỏi", ngược lại Idle "Rảnh"; Task null, Feed rỗng (không tính vào đếm bàn agent).
+    /// Bàn "research": Name "Phòng nghiên cứu", Role "ChatGPT · Thủ công", ResearchRunning > 0 ⇒ Working "{n} câu đang hỏi", ngược lại Idle "Rảnh"; Task null, Feed rỗng (không tính vào đếm bàn agent).
     ///
     /// Đếm: Working / Idle / Resting = số BÀN AGENT ở trạng thái đó; Review = n. At = Now.
     /// </summary>
@@ -145,7 +145,7 @@ public static class OfficeBuilder
                 DeskState.Idle, "Không có việc chờ", null, Array.Empty<TaskMessage>()));
         }
 
-        desks.Add(new Desk("research", "Phòng nghiên cứu", "ChatGPT · Gemini · DeepSeek · Grok",
+        desks.Add(new Desk("research", "Phòng nghiên cứu", "ChatGPT · Thủ công",
             input.ResearchRunning > 0 ? DeskState.Working : DeskState.Idle,
             input.ResearchRunning > 0 ? $"{input.ResearchRunning} câu đang hỏi" : "Rảnh", null, Array.Empty<TaskMessage>()));
 
