@@ -81,19 +81,20 @@ Làm đúng V8-02 trong kế hoạch R-008 đã duyệt. V8-01 đã cung cấp k
 - [ ] Bổ sung test adapter CLI cho fetch lỗi/bảng local khác origin, tiếp tục prep dở và timeout child; test lõi hiện có không thay cho kiểm tra các adapter thật. Không đổi test nghiệm thu để hợp thức hóa adapter sai.
 
 ## Báo cáo của agent
-| Tiêu chí hoàn thành | Bằng chứng: lệnh + kết quả thật |
+| Tiêu chí hoàn thành | Bằng chứng: lệnh + kết quả thật (lượt sửa cổng KT) |
 |---|---|
-| Build; không TODO V8-02 | `dotnet build AITeam.sln --no-restore --disable-build-servers -m:1 -v:minimal`: 0 lỗi, 0 warning; parser 3 script: 0 lỗi, BOM EF-BB-BF. |
-| Test solution | `dotnet test AITeam.sln --no-build --no-restore --disable-build-servers -m:1 --blame-hang-timeout 2m`: đã dừng bằng Ctrl+C sau >3 phút, mã 1; Hub 518 pass/9 fail; Core chưa tổng kết, đã có lỗi S1-04 thiếu import khóa/S1-06 và Access denied. |
-| Hồi quy + nghiệm thu bất biến | `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1`: chặn ở git clone repo tạm, Win32 error 5/signal pipe; `-PipelineOnly`: 26 pass, 12 fail/38, 0 skip. |
-| Duyệt/đồ thị/đường dẫn/dữ liệu cũ | Các ca tương ứng trong `-PipelineOnly` đạt; không sửa fixture, plan hay test nghiệm thu. |
-| Hai child/đúng một dòng/task cũ/phụ thuộc origin | Các ca lõi và adapter origin/fetch trong `-PipelineOnly` đạt; không tự merge. |
-| Khóa trùng/nhả khóa/Codex prep-QC | Ca child lỗi và khóa pipeline đạt; các ca khóa worker chưa đạt (ExitCode rỗng và 1 timeout), chưa chứng minh đầy đủ khóa Codex. |
-| Bộ đếm/không fallback/prep dở | Test bộ đếm bị chặn bởi helper Stage đọc ExitCode rỗng; kiểm riêng kịch bản 17 đạt 3/3, không gọi lại Codex. |
-| Adapter CLI/fetch/prep dở/timeout | Chạy riêng đoạn kịch bản 17–19 từ script qua ScriptBlock: 13/13 kiểm tra đạt; child lỗi/quota/prep hỏng không gọi verify; fetch dùng nghiệm thu CLI 2 ca đạt. |
-File đổi: `team.ps1` (nối adapter, kết quả prep/agent, lỗi Git); `tools/workflow-pipeline.ps1` (an toàn đọc, lỗi child, log/dọn tiến trình); `tools/test-verify.ps1` (BOM, test worker); task này (báo cáo).
-Tự quyết: dùng MSBuild một tiến trình vì restore mặc định trả mã 1 không chẩn đoán; giữ test bất biến, không thêm mã nhận diện harness/AI thật.
-Chưa chắc: nghiệm thu dòng 343–345 dùng Start-Process rồi WaitForExit/ExitCode: tái hiện ExitCode rỗng, giữ Handle trước chờ thì nhận đúng 7; cần Claude xử lý test, không sửa để qua. Không chạy lệnh git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
+| Build; không TODO V8-02 | `dotnet build AITeam.sln --no-restore --disable-build-servers -m:1 -v:minimal`: đạt, 0 lỗi/0 warning; parser 3 script: 0 lỗi, BOM EF-BB-BF; module không còn TODO. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore --disable-build-servers -m:1 --blame-hang-timeout 2m`: dừng Ctrl+C khi quá 3 phút, mã 1; Hub 518 pass/9 fail (Access denied), Core chưa tổng kết, S1-04 prep thiếu hàm khóa. |
+| Hồi quy + nghiệm thu bất biến | `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1`: 2 kiểm tra tĩnh đạt, dừng ở clone repo tạm (Win32 error 5); thêm `-PipelineOnly`: ít nhất 4 fail, dừng khi quá 3 phút, chưa tổng kết. |
+| Duyệt/đồ thị/đường dẫn/dữ liệu cũ | Đã chạy `-PipelineOnly`, chưa có tổng kết hoàn chỉnh; không sửa plan, fixture hay test nghiệm thu. |
+| Hai child/task cũ/phụ thuộc origin | `-PipelineOnly` chưa hoàn tất; chưa xác minh lại đầy đủ tiêu chí này trong lượt sửa. |
+| Khóa trùng/nhả khóa/Codex prep-QC | `-PipelineOnly` chưa hoàn tất; tái hiện PowerShell 5.1 Start-Process có redirect + WaitForExit trả ExitCode null, giữ Handle trước chờ trả đúng 7. |
+| Bộ đếm/không fallback/prep dở | PowerShell 5.1 gọi lõi worker trực tiếp: 4/4 ca verify, blocked, mixed, qc đạt đúng số agent/KT/QC; nghiệm thu tương ứng vẫn lỗi helper Stage (dòng 343–345). |
+| Adapter CLI/fetch/prep dở/timeout | Script hồi quy bị chặn bởi Git trước các kịch bản adapter; chưa xác minh lại, không gọi AI thật. |
+| Hồi quy skill-note sau sửa | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceS106SkillNotesTests.Unsafe_id_never_changes_data --blame-hang-timeout 2m`: 18/18 pass; lượt riêng duplicate + COM1: 2/2 pass (19 ca duy nhất). |
+File đổi lượt này: `team.ps1` (nạp hai module workflow trong try/catch, lệnh skill-note không phụ thuộc chúng); task này (báo cáo); giữ BOM, không đổi test nghiệm thu.
+Cần Claude xử lý harness: S1-04 trích riêng Invoke-Prep chưa nạp Invoke-WorkflowCodexLock; V8-02 Stage chưa giữ Handle trước WaitForExit. Không thêm mã nhận diện test/bỏ khóa để làm xanh.
+Chưa đạt toàn bộ cổng KT; không chạy git trực tiếp, hệ thống tự commit/push; chưa có commit được kiểm. MCP báo tiến độ không khả dụng trong phiên.
 ## Ghi nhận bước chuẩn bị (Codex)
 - Khung sản phẩm chỉ throw NotImplementedException; wiring import/lệnh/catch có sẵn, không viết thân nghiệp vụ.
 - Các fixture là bản sao nguyên byte; test sửa bản tạm, không sửa dữ liệu thật. Không chạy git theo yêu cầu.

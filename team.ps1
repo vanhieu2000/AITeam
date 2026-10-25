@@ -68,8 +68,7 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $Utf8 = New-Object Text.UTF8Encoding $false
-. (Join-Path $Root "tools/workflow-common.ps1")
-. (Join-Path $Root "tools/workflow-pipeline.ps1")   # V8-02: khóa Codex toàn máy cho prep/QC, lõi pipeline
+# skill-note chỉ dùng kho skill, không phụ thuộc module điều phối pipeline.
 . (Join-Path $Root "scripts/SkillPrompts.ps1")
 . (Join-Path $Root "scripts/SkillNotes.ps1")
 # Khóa chung Set-BoardStatus/Save-RunMetrics và ghi Prep/Assign/Verify/Qc/Merge cùng cập nhật bảng việc.
@@ -2282,6 +2281,10 @@ function Invoke-DeputySchedule([bool]$on) {
 Update-ManagerHeartbeat
 
 try {
+if ($Command -ne "skill-note") {
+    . (Join-Path $Root "tools/workflow-common.ps1")
+    . (Join-Path $Root "tools/workflow-pipeline.ps1")
+}
 switch ($Command) {
     "skill-note" { Invoke-SkillNote -Root $Root -Skill $Skill -Text $Text -Source $Source }
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
