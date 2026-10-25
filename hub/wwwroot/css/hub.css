@@ -1072,3 +1072,5 @@ textarea.inp, textarea.form-control {
 
 /* Tiêu đề mục trong tab task (Tổng quan / Báo cáo & review) */
 .sec-h { font-size: 14px; font-weight: 600; margin: 0 0 8px; color: var(--accent); }
+
+/* TODO(agent) H7-07: CSS giới hạn trong .map-page; bảng co cột, ghi chú xuống dòng, không đặt min-width cố định. */
