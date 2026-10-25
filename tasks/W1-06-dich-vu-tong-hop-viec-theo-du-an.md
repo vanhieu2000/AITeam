@@ -113,19 +113,18 @@ File đã tạo: WorkProgressService.cs, AcceptanceW106WorkProgressServiceTests.
 - `RealFile.Copy` chưa có trong Support tại worktree này; fixture được chép nguyên byte khi prep và hạ tầng Fixtures sẵn có chép ra output, test chỉ đọc bản sao output.
 
 ## Báo cáo của agent
-A: `dotnet build AITeam.sln --no-restore -m:1 -v:normal`; B: `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceW106WorkProgressServiceTests --blame-hang-timeout 2m`; T: `dotnet test AITeam.sln --no-build -m:1 --blame-hang-timeout 2m`.
-| Tiêu chí | Bằng chứng kiểm lại ngày 26/10/2026 |
+B: `dotnet build AITeam.sln --no-restore -m:1 -v:minimal`; N: `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter "FullyQualifiedName~W106WorkProgressSourceSafetyTests|FullyQualifiedName~AcceptanceW106WorkProgressServiceTests" --blame-hang-timeout 2m --logger "console;verbosity=minimal"`; T: `dotnet test AITeam.sln --no-build -m:1 --blame-hang-timeout 2m --logger "console;verbosity=minimal"`.
+| Tiêu chí | Bằng chứng lượt sửa QC 26/10/2026 |
 |---|---|
-| Hai API, DI, giữ hợp đồng | A mã 0; B: 35/35 pass, 0 fail, 0 skip; không sửa code/hợp đồng ở lượt trả về này. |
-| Nối mẫu thật, yêu cầu rỗng/nhiều task/task cũ | B: 35/35 pass. |
-| Repo khác/rỗng, log thiếu/nguồn hỏng | B: 35/35 pass. |
-| ID, traversal, reparse, giới hạn, lỗi an toàn | B: 35/35 pass. |
-| Tên cấu hình, giờ thiếu, đồng thời/đọc lại | B: 35/35 pass; WorkProgressService.cs: 262 dòng, BOM=True, CRLF=True qua kiểm byte/regex. |
-| Build solution | Lệnh mặc định mã 1, 0 warning/0 error nhưng không thành công; A thành công 6,69 giây, 0 warning, 0 error; không tái hiện MSB3491 ở lượt tuần tự. |
-| Test solution | T: Hub 632 pass/9 fail/0 skip; Core có lỗi KhoaChanTienTrinhKhacVaTimeout (tiến trình con không lấy được khóa), chưa có tổng kết; đã ngắt khi gần 3 phút, mã 1, testhost đã kết thúc. Chưa đạt. |
-File đổi lượt này: task này (báo cáo thật); xóa core.tests/TestResults/a8237234-c849-49ac-aa89-894393e0ee4a/Sequence_9b385c509ead4fe4bfedeeb7331dac81.xml là XML sinh tự động cổng kiểm tra nêu; giữ triển khai WorkProgressService.cs từ lượt trước, không đổi Program/test/fixture.
-Tự quyết: build tuần tự để chẩn đoán lỗi mặc định; thử lại 97 test cấu hình/phân vai/Map với TEMP/TMP trong workspace: 88 pass/9 fail, vẫn lỗi quyền File.Replace; đã dọn thư mục tạm, không sửa code ngoài phạm vi.
-Chưa xác minh: toàn solution pass và commit được kiểm; hệ thống tự commit/push theo chỉ dẫn, không chạy git; không có công cụ MCP aiteam_post_message/aiteam_get_test_results; không chạy app/chụp ảnh.
+| Hai API, DI, hợp đồng | N: 35/35 nghiệm thu pass; không đổi chữ ký/DI/hợp đồng. |
+| Mẫu thật, yêu cầu rỗng/nhiều task/task cũ | N: 35/35 nghiệm thu pass. |
+| Repo khác/rỗng, log thiếu/nguồn hỏng; QC plans | N: nghiệm thu pass; 2/2 test mới dùng TeamConfigService thật xác nhận plans thiếu hợp lệ, plans là file báo IOException nguồn plans. |
+| ID, traversal, reparse, giới hạn; QC cấu hình | Kiểm ProjectsJson/TeamJson/TeamLocalJson trước FindProject; N: 3 test symlink mới fail tại tạo liên kết do thiếu quyền, chưa chạy tới assertion; không Skip. |
+| Người, giờ thiếu, đồng thời/đọc lại | N: 35/35 nghiệm thu pass; test nghiệm thu giữ nguyên. |
+| Build, BOM, ngân sách | B mã 0: 0 warning, 0 error, 26,17 giây; hai file C# BOM=True/CRLF=True; service 264 dòng. |
+| Test toàn solution | T mã 1 sau khi ngắt gần 3 phút: Hub 634 pass/12 fail/0 skip (3 thiếu quyền symlink, 9 cấu hình/phân vai/Map lỗi quyền ghi); Core không có tổng kết, chưa đạt toàn solution. |
+File đổi: WorkProgressService.cs (hai REQUIRED); thêm W106WorkProgressSourceSafetyTests.cs (5 ca, dùng Support); task này (báo cáo).
+Tự quyết/giới hạn: thử PowerShell rồi mklink qua Support; cả hai thiếu quyền tạo symlink file; không đổi cấu hình máy. Chưa xác minh 3 assertion symlink trên runner có quyền; hệ thống tự commit/push, chưa có commit được kiểm; không chạy git/app/chụp ảnh.
 ## Review (Claude)
 <!-- Claude điền sau cổng kiểm tra. -->
 

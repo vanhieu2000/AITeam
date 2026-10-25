@@ -74,13 +74,14 @@ public sealed class WorkProgressService(HubPaths paths, ITeamConfigService confi
         try
         {
             CheckPath(paths.ProjectsJson);
+            CheckPath(paths.TeamJson);
+            CheckPath(paths.TeamLocalJson);
             selected = config.FindProject(project);
         }
         catch { throw SourceError(source); }
         if (selected == null) throw InvalidWork();
         try
         {
-            CheckPath(paths.TeamJson);
             var developers = config.GetSettings().Developers.ToArray();
             var assignments = roles.GetRoles().Roles.ToArray();
             source = "requests";
@@ -91,6 +92,7 @@ public sealed class WorkProgressService(HubPaths paths, ITeamConfigService confi
             source = "plans";
             var planRoot = Path.Combine(root, "plans");
             CheckPath(planRoot);
+            if (File.Exists(planRoot)) throw SourceError(source);
             var plans = new Dictionary<string, (bool Exists, bool Approved)>(IdComparer);
             if (Directory.Exists(planRoot))
             {
