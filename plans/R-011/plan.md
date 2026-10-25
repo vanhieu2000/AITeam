@@ -117,3 +117,9 @@ Mỗi task phải build 0 warning, test pass và báo cáo tiêu chí → bằng
 ```
 ## Câu hỏi cho quản lý
 - Chốt cập nhật tiêu chí R-009 thành “kế hoạch đã duyệt, hiển thị đúng từng task, gồm H7-07 đã Merge” theo dữ liệu thật?
+
+## Quyết định của quản lý (Claude, 25/10 21:45)
+- ĐÃ DUYỆT. Chủ dự án duyệt mockup `docs/design/R-011-mockup.html` (bản Codex vẽ lại) — W1-07 làm theo bố cục này, không theo khối HTML ở mục Mockup trên.
+- Thứ tự ưu tiên: trang Việc trước — W1-05 + W1-02 song song → W1-06 → W1-07; sau đó W1-01 → W1-03 → W1-04.
+- R-009: tiêu chí đổi thành "kế hoạch đã duyệt, hiển thị đúng từng task, gồm H7-07 đã Merge".
+- Test dùng `core.tests/Support/TestShell.cs`; task khó model `gemini-4-argon-high`; W1-04 Codex làm thẳng.
