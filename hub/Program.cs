@@ -1,4 +1,4 @@
-using AITeam.Hub.Models;
+﻿using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 
 // AITeam Hub — thiết kế: ../docs/HUB-DESIGN.md. Chỉ nghe 127.0.0.1.
@@ -37,10 +37,12 @@ else
 }
 
 builder.Services.AddHubV3();
+builder.Services.AddSingleton<IOfficeChatService, OfficeChatService>();
 
 var app = builder.Build();
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.UseMiddleware<OfficeChatRedirectMiddleware>();
 app.MapRazorPages();
 app.Run();
 
