@@ -1072,3 +1072,21 @@ textarea.inp, textarea.form-control {
 
 /* Tiêu đề mục trong tab task (Tổng quan / Báo cáo & review) */
 .sec-h { font-size: 14px; font-weight: 600; margin: 0 0 8px; color: var(--accent); }
+
+/* ===== H7-07: Trang Map (Phân vai quy trình) ===== */
+.map-page { display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box; }
+.map-page .map-hint { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
+.map-page .map-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.map-page .map-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.map-page .map-table th, .map-page .map-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; overflow-wrap: anywhere; word-break: break-word; }
+.map-page .map-table th { background: var(--surface-2); font-size: 13px; font-weight: 600; color: var(--text); }
+.map-page .map-table tr:last-child td { border-bottom: none; }
+.map-page .col-step { width: 35%; }
+.map-page .col-actor { width: 20%; }
+.map-page .col-note { width: 45%; }
+.map-page .map-label { font-size: 13px; font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+.map-page select, .map-page input, .map-page textarea { width: 100%; min-width: 0; box-sizing: border-box; font-family: inherit; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius-sm); padding: 6px 8px; }
+.map-page select:focus, .map-page input:focus, .map-page textarea:focus { outline: none; border-color: var(--border-focus); }
+.map-page textarea { resize: vertical; min-height: 34px; line-height: 1.4; }
+.map-page .map-actions { display: flex; justify-content: flex-start; padding: 4px 0; }
+@media (max-width: 1000px) { .map-page .map-table th, .map-page .map-table td { padding: 8px; } }

@@ -1,0 +1,65 @@
+﻿@page
+@model AITeam.Hub.Pages.MapModel
+@{
+    ViewData["Title"] = "Map";
+}
+
+<div class="map-page">
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-success">@Model.Message</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger">@Model.Error</div>
+    }
+    @if (string.IsNullOrEmpty(Model.Error) || HttpContext.Request.Method == "POST")
+    {
+        <form method="post">
+            <input type="hidden" name="Revision" value="@Model.Revision" />
+            <p class="map-hint">Gán vai không tự cấp quyền thực thi hoặc duyệt.</p>
+            <div class="map-panel">
+                <table class="map-table">
+                    <thead>
+                        <tr><th scope="col" class="col-step">Nghiệp vụ</th><th scope="col" class="col-actor">Tác nhân</th><th scope="col" class="col-note">Ghi chú quyền hạn</th></tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Roles.Count; i++)
+                        {
+                            var role = Model.Roles[i];
+                            if (role == null) continue;
+                            var label = Model.GetLabel(role.Code);
+                            <tr>
+                                <td class="col-step">
+                                    <input type="hidden" name="Roles[@i].Code" value="@(role.Code ?? "")" />
+                                    <span class="map-label">@label</span>
+                                </td>
+                                <td class="col-actor">
+                                    <select id="@($"role_actor_{i}")" name="Roles[@i].Actor" aria-label="@($"Tác nhân {label}")" class="map-select">
+                                        @foreach (var (val, text) in Model.ActorChoices)
+                                        {
+                                            if (string.Equals(role.Actor, val, StringComparison.Ordinal))
+                                            {
+                                                <option value="@val" selected="selected">@text</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@val">@text</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td class="col-note">
+                                    <textarea id="@($"role_note_{i}")" name="Roles[@i].Note" maxlength="500" aria-label="@($"Ghi chú quyền hạn {label}")" class="map-note" rows="1">@Html.Raw("\n")@role.Note</textarea>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="map-actions">
+                <button type="submit" class="btn pri">Lưu phân vai</button>
+            </div>
+        </form>
+    }
+</div>
