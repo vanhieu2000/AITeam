@@ -81,11 +81,19 @@ Khung Markdown đã có mục; agent phải thay TODO bằng nội dung, không 
 - Không chạy git theo yêu cầu; hệ thống tự commit. Các file tạo mới lưu UTF-8 BOM.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau khi hoàn thiện:
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-Ghi số test pass/fail, số warning, commit được kiểm; file đã đổi/lý do, quyết định, điều chưa xác minh.
--->
+| Sáu skill đủ mục, nguồn, ví dụ, không placeholder | PowerShell ReadAllLines/Regex: 6/6 file đủ 7 mục, 0 placeholder; test nghiệm thu 19/19 pass. |
+| Chính sách, phân quyền, thứ tự publish | Đã đối chiếu task: KT/QC/trực quan riêng; quyền/private → duyệt đúng commit → bản merge → clone sạch → build/test → push; test nghiệm thu 19/19 pass. |
+| Giới hạn dòng và phạm vi | PowerShell: 35/35/35/36/35/38 dòng, tổng 214 ≤360, BOM=True cả sáu; chỉ sửa sáu skill và mục báo cáo này, không sửa test. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1 -nodeReuse:false`: mã 0, 0 warning, 0 error. |
+| Toàn bộ test | `dotnet test AITeam.sln --no-build --no-restore -m:1 -nodeReuse:false --blame-hang-timeout 2m`: mã 0; Hub 457 + Core 302 = 759 pass, 0 fail, 0 skip. |
+| 19 ca nghiệm thu bất biến | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS102SkillWorkflowTests" --blame-hang-timeout 2m -m:1 -nodeReuse:false`: mã 0, 19 pass/0 fail/0 skip. |
+| Báo cáo, commit được kiểm | Bằng chứng trên thuộc nội dung checkout hiện tại; commit chưa xác minh, không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push. |
+File đổi/lý do: `skills/{06-chuan-bi-task,07-code,08-kiem-thu,09-qc,10-nghiem-thu,11-publish-git}/SKILL.md` — thay nội dung khung; file task — ghi báo cáo.
+Quyết định: giữ cấu trúc Markdown sẵn có, không thêm file/công cụ/UI; không chạy ví dụ skill-note/publish. Không có UI: không áp dụng ảnh.
+Chẩn đoán: build mặc định mã 1 (0 warning/0 error), build chẩn đoán thiếu assets NETSDK1004; `dotnet restore AITeam.sln -m:1 -v:minimal -nodeReuse:false -p:NuGetAudit=false` mã 0 rồi build/test tuần tự đạt.
+Chưa xác minh: commit/push và review nghĩa nội dung độc lập; lượt test mặc định đầu chưa trả kết quả dù gửi Ctrl+C, truy vấn tiến trình để dừng bị sandbox từ chối; không dùng lượt này làm bằng chứng pass.
 
 
 ## Review (Claude)
