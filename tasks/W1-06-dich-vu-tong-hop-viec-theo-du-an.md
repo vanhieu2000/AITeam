@@ -113,18 +113,20 @@ File đã tạo: WorkProgressService.cs, AcceptanceW106WorkProgressServiceTests.
 - `RealFile.Copy` chưa có trong Support tại worktree này; fixture được chép nguyên byte khi prep và hạ tầng Fixtures sẵn có chép ra output, test chỉ đọc bản sao output.
 
 ## Báo cáo của agent
-B: `dotnet build AITeam.sln --no-restore -m:1 -v:minimal`; N: `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceW106WorkProgressServiceTests --blame-hang-timeout 2m --logger "console;verbosity=minimal"`; T: `dotnet test AITeam.sln --no-build -m:1 --blame-hang-timeout 2m --logger "console;verbosity=minimal"`.
-| Tiêu chí | Bằng chứng lượt sửa cổng kiểm tra 26/10/2026 |
+B: `dotnet build AITeam.sln --no-restore -m:1 -v:minimal`; N: `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceW106WorkProgressServiceTests|FullyQualifiedName~W106WorkProgressReviewTests" --blame-hang-timeout 2m --logger "console;verbosity=minimal"`; T: `dotnet test AITeam.sln --no-build -m:1 --blame-hang-timeout 2m --logger "console;verbosity=minimal"`.
+| Tiêu chí | Bằng chứng QC lượt 2, 26/10/2026 |
 |---|---|
-| Hai API, DI, hợp đồng | N: 35 pass, 0 fail, 0 skip; không sửa code sản phẩm/hợp đồng lượt này. |
-| Mẫu thật, yêu cầu rỗng/nhiều task/task cũ | N: 35/35 nghiệm thu pass. |
-| Repo khác/rỗng, log thiếu/nguồn hỏng | N: 35/35 nghiệm thu pass. |
-| ID, traversal, reparse, giới hạn | N: 35/35 nghiệm thu pass; không sửa test nghiệm thu. |
-| Người, giờ thiếu, đồng thời/đọc lại | N: 35/35 nghiệm thu pass. |
-| Build, BOM, ngân sách | B mã 0: 0 warning, 0 error, 15,69 giây; service/Program/test nghiệm thu BOM=True, CRLF=True; service 264 dòng. |
-| Test toàn solution | T mã 1: Hub 632 pass, 9 fail, 0 skip; Core chưa có tổng kết, đã ngắt lệnh gần 3 phút theo giới hạn chống treo. |
-File đổi: xóa W106WorkProgressSourceSafetyTests.cs do được thêm ngoài phạm vi; task này cập nhật báo cáo. Không đổi file sản phẩm.
-Tự quyết/giới hạn: build mặc định mã 1 (0 warning/0 error, không chẩn đoán); build tuần tự B thành công, không tái hiện MSB3491. Toàn solution chưa đạt: lỗi quyền File.Replace ở cấu hình/phân vai và assertion Map; không sửa ngoài phạm vi. Không chạy git/app/chụp ảnh; hệ thống tự commit/push, chưa xác minh commit.
+| Hai API, DI, hợp đồng | N: 47 pass, 0 fail, 0 skip (35 nghiệm thu + 12 bổ sung); giữ nguyên API/DI. |
+| Mẫu thật, yêu cầu rỗng/nhiều task/task cũ | N: 35/35 nghiệm thu pass; không sửa test nghiệm thu/fixture. |
+| Repo khác/rỗng, log thiếu/nguồn hỏng | N: các ca nghiệm thu liên quan pass trong tổng 47/47. |
+| ID, traversal, reparse, giới hạn | N: các ca nghiệm thu liên quan pass trong tổng 47/47. |
+| Người, giờ thiếu, đồng thời/đọc lại | N: các ca nghiệm thu liên quan pass trong tổng 47/47. |
+| REQUIRED 1: cấu hình nghiêm ngặt | N: 9 ca JSON/UTF-8/quá 1 MiB trên 3 file với TeamConfigService thật pass; 2 ca cấu hình hợp lệ/có hoặc thiếu file tùy chọn pass; lỗi IOException nguồn cấu hình, không inner exception. |
+| REQUIRED 2: snapshot độc lập | N: 1 ca sửa Areas sau GET pass; snapshot cũ giữ dữ liệu, GET mới nhận thay đổi; ProjectInfo và dictionary đều sao chép mới. |
+| Build, BOM, ngân sách | B: mã 0, 0 warning, 0 error, 19,16 giây; kiểm byte BOM/CRLF=True; service 270 dòng, test bổ sung 96 dòng. |
+| Test toàn solution | T: Hub 644 pass, 9 fail, 0 skip; Core thấy 2 fail V8-05 (Git signal pipe Win32 error 5), chưa tổng kết; ngắt gần 3 phút theo giới hạn chống treo, mã 1. |
+File đổi: WorkProgressService.cs (2 REQUIRED); W106WorkProgressReviewTests.cs (test hồi quy được quản lý yêu cầu); task này (báo cáo). Tự quyết: kiểm root JSON đúng array/object, tái dùng Read với giới hạn 1 MiB cho cấu hình.
+Chưa xác minh toàn solution xanh: 7 lỗi quyền File.Replace ở cấu hình/phân vai và 2 assertion Map; Core chưa hoàn tất. Không sửa ngoài phạm vi; không chạy lệnh git/app/chụp ảnh; hệ thống tự commit/push, chưa xác minh commit.
 ## Review (Claude)
 <!-- Claude điền sau cổng kiểm tra. -->
 

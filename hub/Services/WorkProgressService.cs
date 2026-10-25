@@ -73,9 +73,15 @@ public sealed class WorkProgressService(HubPaths paths, ITeamConfigService confi
         ProjectInfo? selected;
         try
         {
-            CheckPath(paths.ProjectsJson);
-            CheckPath(paths.TeamJson);
-            CheckPath(paths.TeamLocalJson);
+            foreach (var file in new[] { paths.ProjectsJson, paths.TeamJson, paths.TeamLocalJson })
+            {
+                CheckPath(file);
+                if (Directory.Exists(file)) throw SourceError(source);
+                if (!File.Exists(file)) continue;
+                using var json = JsonDocument.Parse(Read(file, 1024 * 1024));
+                var expected = file == paths.ProjectsJson ? JsonValueKind.Array : JsonValueKind.Object;
+                if (json.RootElement.ValueKind != expected) throw SourceError(source);
+            }
             selected = config.FindProject(project);
         }
         catch { throw SourceError(source); }
@@ -191,7 +197,7 @@ public sealed class WorkProgressService(HubPaths paths, ITeamConfigService confi
                 return new WorkRequestProgress(r.Key, r.Value.Title, progress, children,
                     Enum.GetValues<WorkStep>().ToDictionary(s => s, s => children.Count(t => t.Progress.CurrentStep == s)));
             }).ToArray();
-            return new WorkProjectProgress(selected, results, tasks.Where(t => !requests.ContainsKey(t.Request))
+            return new WorkProjectProgress(selected with { Areas = new Dictionary<string, string>(selected.Areas) }, results, tasks.Where(t => !requests.ContainsKey(t.Request))
                 .Select(t => t.Task).OrderBy(t => t.Id, IdComparer).ToArray());
 
             WorkProgress Decorate(WorkProgress progress, string agent)
@@ -237,17 +243,17 @@ public sealed class WorkProgressService(HubPaths paths, ITeamConfigService confi
         if (files.Length > 2000) throw SourceError("cấu hình");
         return files;
     }
-    private static string Read(string file)
+    private static string Read(string file, int maxBytes = 2 * 1024 * 1024)
     {
         CheckPath(file);
         using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (stream.Length > 2 * 1024 * 1024) throw SourceError("cấu hình");
+        if (stream.Length > maxBytes) throw SourceError("cấu hình");
         using var buffer = new MemoryStream();
         var bytes = new byte[8192];
         int count;
         while ((count = stream.Read(bytes, 0, bytes.Length)) != 0)
         {
-            if (buffer.Length + count > 2 * 1024 * 1024) throw SourceError("cấu hình");
+            if (buffer.Length + count > maxBytes) throw SourceError("cấu hình");
             buffer.Write(bytes, 0, count);
         }
         var content = new UTF8Encoding(false, true).GetString(buffer.ToArray());
