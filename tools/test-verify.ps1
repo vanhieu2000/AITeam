@@ -246,6 +246,20 @@ switch ($Mode) {
         [pscustomobject]@{ Code = 0; Verdict = "PASS" }
     }
     Check "QC KHÔNG được gọi khi Verify lỗi máy không phục hồi" (-not $qcCalledOnFail -and -not $gateRes2.Verify.Ok -and $null -eq $gateRes2.Review) $null
+    Write-Host "Kịch bản 14: Phân loại lỗi hạ tầng không chấp nhận lỗi lạ cùng dòng (Test-InfrastructureFailure)" -ForegroundColor Cyan
+    $mixed1 = "Access to the path 'obj/a' is denied. error MSB1009: project missing"
+    $mixed2 = "Access to the path 'obj/a' is denied. x.cs(1): error CS1002: ; expected"
+    $mixed3 = "x.csproj : error MSB3491: Could not write lines. Access to the path 'obj/x' is denied. error MSB1009: project missing"
+    $pure1 = "Access to the path 'obj/a' is denied."
+    $pure2 = "The process cannot access the file 'a.dll' because it is being used by another process."
+    $pure3 = "x.csproj : error MSB3491: Could not write lines. Access to the path 'obj/x' is denied."
+
+    Check "Lỗi lạ cùng dòng với access denied bị từ chối" (-not (Test-InfrastructureFailure -Stage Build -Code 1 -Output $mixed1)) $null
+    Check "Lỗi CS cùng dòng với access denied bị từ chối" (-not (Test-InfrastructureFailure -Stage Build -Code 1 -Output $mixed2)) $null
+    Check "Lỗi MSB1009 cùng dòng với MSB3491 bị từ chối" (-not (Test-InfrastructureFailure -Stage Build -Code 1 -Output $mixed3)) $null
+    Check "Chữ ký hạ tầng thuần túy 1 được chấp nhận" (Test-InfrastructureFailure -Stage Build -Code 1 -Output $pure1) $null
+    Check "Chữ ký hạ tầng thuần túy 2 được chấp nhận" (Test-InfrastructureFailure -Stage Test -Code 1 -Output $pure2) $null
+    Check "Chữ ký hạ tầng thuần túy 3 được chấp nhận" (Test-InfrastructureFailure -Stage Build -Code 1 -Output $pure3) $null
 }
 finally {
     if (-not $Keep) { Get-ChildItem $T -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { $_.Attributes = 'Normal' }; Remove-Item $T -Recurse -Force -ErrorAction SilentlyContinue }

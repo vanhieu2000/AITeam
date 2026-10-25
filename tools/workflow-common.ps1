@@ -40,20 +40,48 @@ function Test-InfrastructureFailure {
             return $false
         }
 
-        # 3. Dòng lỗi hạ tầng hợp lệ
-        $isInfra = ($trimmed -match 'MSB3491.*?(denied|being used)') -or
-                   ($trimmed -match "Access to the path '[^']+' is denied\.") -or
-                   ($trimmed -match "The process cannot access the file '[^']+' because it is being used by another process\.")
+        # 3. Lỗi không được phép TRƯỚC KHI chấp nhận chữ ký hạ tầng (CS, MSB khác MSB3491, NU khác NU1900, FS, TS, syntaxerror)
+        if ($trimmed -match '(?i)\berror\s+MSB(?!3491\b)\d+' -or $trimmed -match '(?i)\bMSB(?!3491\b)\d+:' -or
+            $trimmed -match '(?i)\berror\s+CS\d+' -or $trimmed -match '(?i)\bCS\d{4}:' -or
+            $trimmed -match '(?i)\berror\s+NU(?!1900\b)\d+' -or
+            $trimmed -match '(?i)\berror\s+(FS|TS)\d+' -or
+            $trimmed -match '(?i)\b(syntaxerror)\b') {
+            return $false
+        }
+
+        # 4. Kiểm tra chữ ký hạ tầng hợp lệ
+        $isInfra = $false
+        if ($trimmed -match 'MSB3491.*?(denied|being used)') {
+            # Nếu có MSB3491 nhưng dòng lại chứa thêm từ error thứ 2 hoặc exception/failed
+            if ($trimmed -match '(?i)error.*error' -or $trimmed -match '(?i)\b(exception|failed)\b') {
+                return $false
+            }
+            $isInfra = $true
+        }
+        elseif ($trimmed -match "^.*Access to the path '[^']+' is denied\..*$") {
+            # Nếu có lỗi/warning/exception/failed cùng dòng thì là lỗi hỗn hợp -> trượt
+            if ($trimmed -match '(?i)\b(error|failed|exception|warning)\b') {
+                return $false
+            }
+            $isInfra = $true
+        }
+        elseif ($trimmed -match "^.*The process cannot access the file '[^']+' because it is being used by another process\..*$") {
+            if ($trimmed -match '(?i)\b(error|failed|exception|warning)\b') {
+                return $false
+            }
+            $isInfra = $true
+        }
+
         if ($isInfra) {
             $hasInfra = $true
             continue
         }
 
-        # 4. Bất kỳ lỗi code / build / NuGet / MSBuild / runtime khác ngoài danh sách hạ tầng cho phép
-        if ($trimmed -match ':\s*error\s+[A-Za-z0-9]+:' -or $trimmed -match '^\s*error\s+[A-Za-z0-9]+:' -or $trimmed -match '(?i)\berror\s+(NU|MSB|CS|FS|TS)\d+:' -or $trimmed -match '(?i)\b(error|syntaxerror)\b') {
+        # 5. Dòng không khớp hạ tầng: nếu có error, failed (khác 0 failed/0 error) hoặc exception -> return $false
+        if ($trimmed -match ':\s*error\s+' -or $trimmed -match '^\s*error\s+' -or ($trimmed -match '(?i)\berror\b' -and $trimmed -notmatch '(?i)\b0\s+error\b')) {
             return $false
         }
-        if ($trimmed -match '(?i)\b(exception|failed)\b' -and $trimmed -notmatch '(?i)(0\s+failed|0\s+error)') {
+        if ($trimmed -match '(?i)\b(exception|failed)\b' -and $trimmed -notmatch '(?i)\b0\s+failed\b') {
             return $false
         }
     }

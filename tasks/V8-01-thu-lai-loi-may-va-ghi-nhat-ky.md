@@ -80,15 +80,16 @@
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
 | Build 0 error, 0 warning | `dotnet build AITeam.sln` → Build succeeded. 0 Warning(s), 0 Error(s) |
-| Test xUnit 100% pass | `dotnet test AITeam.sln` → Hub.Tests: 457/457 pass; Core.Tests: 399/399 pass (gồm 66/66 test V8-01) |
-| Hồi quy test-verify đạt | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1` → Tất cả 13 kiểm tra ĐẠT |
-| Thử lại hạ tầng & lưu 2 output | `Test-InfrastructureFailure` lọc allowlist khắt khe, `Invoke-WorkflowCheck` lưu mảng Attempts giữ 2 output |
-| Nhật ký 5 sự kiện & marker | `Update-WorkflowJournal` ghi Prep/Assign/Verify/Qc/Merge, marker `<!-- workflow:TaskId:Event:Run -->`, chống trùng |
-| Khóa repo & an toàn dữ liệu | `Invoke-RepoTransaction` bằng Mutex SHA256 repo; bỏ git reset --hard; gộp commit phiếu + bảng việc |
-| An toàn đường dẫn & UTF-8 BOM | Kiểm tra strict UTF-8, chặn path rooted/../wildcard, chặn reparse point, bảo toàn BOM UTF-8 |
+| Test xUnit 100% pass | `dotnet test AITeam.sln` → 925/925 pass (Hub: 500/500, Core: 425/425 gồm 66/66 test V8-01) |
+| Hồi quy test-verify đạt | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1` → Tất cả 14/14 kiểm tra ĐẠT |
+| Thử lại hạ tầng & lưu 2 output | `Test-InfrastructureFailure` chặn lỗi lạ/CS cùng dòng; `Invoke-WorkflowCheck` lưu mảng Attempts 2 output |
+| Nhật ký 5 sự kiện & marker | `Update-WorkflowJournal` đủ 5 sự kiện Prep/Assign/Verify/Qc/Merge, marker chống trùng theo lượt |
+| Khóa repo & commit chung | `Invoke-RepoTransaction` khóa Mutex SHA256 repo; `Set-BoardStatus` commit chung bảng việc + request; bỏ reset --hard |
+| Cấp lượt nguyên tử & trượt cổng | Cấp `$n` verify nguyên tử dưới khóa; lỗi ghi nhật ký làm trượt cổng đổi tiêu đề KHÔNG ĐẠT và ném exception |
+| An toàn đường dẫn & UTF-8 BOM | Kiểm tra strict UTF-8, chặn rooted/../reparse point, mọi file .ps1/.cs/.md bảo toàn BOM UTF-8 |
 
 - **File đã đổi:** `tools/workflow-common.ps1`, `team.ps1`, `tools/test-verify.ps1`, `tasks/V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md`.
-- **Quyết định tự đưa ra:** Cấp lượt Run journal theo số marker đã có trong phiếu tăng dần; Verify bọc cấp số báo cáo nguyên tử dưới khóa; bỏ `dotnet build-server shutdown` trong Verify để không ảnh hưởng máy khi test.
+- **Quyết định tự đưa ra:** Cấp lượt Run journal theo số marker đã có trong phiếu tăng dần (`Get-NextJournalRun`); Verify bọc cấp số báo cáo nguyên tử dưới khóa; bỏ `git reset --hard` chuyển sang `pull --rebase origin main` an toàn không mất dữ liệu.
 - **Chưa xác minh:** Chữ ký lỗi MCP trên hạ tầng mạng thực tế (tuân thủ đúng mẫu allowlist theo thiết kế).
 
 ## Review (Claude)
