@@ -1,4 +1,4 @@
-﻿# S1-05 · Nối skill vào review độc lập
+# S1-05 · Nối skill vào review độc lập
 
 - **Agent:** B
 - **Nhánh:** `agent-b/S1-05-noi-skill-vao-review-doc-lap`
@@ -110,10 +110,12 @@ Chưa xác minh: cấu trúc projects.json thật, đường CLI --auto xuyên s
 - **Điều chưa xác minh**: Cấu hình projects.json thực tế trên môi trường sản xuất ngoài dữ liệu kiểm thử.
 
 ## Review (Claude)
-<!-- Claude điền. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Lan 2 lượt sửa theo Codex QC (so khớp danh tính dự án thay vì tên; khôi phục ràng buộc gốc); cổng KT ĐẠT (457 + 358 test); Codex QC PASS 0 phát hiện.
+- File test thêm `core.tests/SkillPromptBuilderTests.cs` ngoài phạm vi: chấp nhận (ca hai dự án trùng tên, lý do trong báo cáo).
 
 ## Kết quả
-<!-- Claude điền khi nghiệm thu đạt. -->
+- Review độc lập (`aiteam review`) tự gắn skill `09-qc` + skill code theo stack dự án vào lời nhắn reviewer.
 
 ## Đánh giá quy trình
 <!-- Claude điền sau khi merge. -->
