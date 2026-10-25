@@ -34,7 +34,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V5-04 Hub: trang Văn phòng](V5-04-hub-office.md) | B | `agent-b/V5-04-hub-office` | ✅ Đã merge (vòng 1) |
 | [V5-05 Hub: nút điều khiển Văn phòng](V5-05-hub-control.md) | B | `agent-b/V5-05-hub-control` | ✅ Đã merge (vòng 1) |
 | [V5-06 Tài khoản AI](V5-06-ai-accounts.md) | A | `agent-a/V5-06-ai-accounts` | ✅ Đã merge (vòng 1) |
-| [V5-07a Phòng nghiên cứu (lõi)](V5-07a-research-core.md) | A | `agent-a/V5-07a-research-core` | ⬜ Chưa giao |
+| [V5-07a Phòng nghiên cứu (lõi)](V5-07a-research-core.md) | A | `agent-a/V5-07a-research-core` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 08:48 25/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
