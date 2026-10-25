@@ -42,6 +42,8 @@ Sự kiện cần ghi:
 - 2026-10-25 17:03:04 +07:00 | S1-04 | Qc | lượt 1 | CẦN SỬA <!-- workflow:S1-04:Qc:1 -->
 - 17:16 25/10/2026 | Quản lý phụ | Xác nhận S1-04 lượt code 3 đang sửa theo QC CẦN SỬA; không giao trùng, chờ cổng KT/QC bản mới. Chưa có đề xuất nghiệm thu.
 
+- 2026-10-25 17:28:42 +07:00 | S1-04 | Verify | lượt 3 | ĐẠT <!-- workflow:S1-04:Verify:3 -->
+- 2026-10-25 17:32:10 +07:00 | S1-04 | Merge | lượt 1 | ĐẠT <!-- workflow:S1-04:Merge:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-010`, rồi điền:
 
