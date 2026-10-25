@@ -45,6 +45,8 @@ Chủ dự án: HieuDV.
 ## Lỗi hay gặp (đã xảy ra nhiều lần — bắt buộc tránh)
 - Test chạy tiến trình con (exe / dll của project khác): KHÔNG trỏ `bin\Debug` của project đó — thêm ProjectReference để file được chép kèm, dùng `Path.Combine(AppContext.BaseDirectory, "x.dll")`. (V4-08: clean-clone chạy nhầm bản cũ.)
 - **Giữ nguyên BOM UTF-8** của file đang có BOM khi sửa; script `.ps1` luôn lưu UTF-8 có BOM.
+- Test cần chuỗi GIỐNG khóa bí mật (sk-…, ghp_…, AIza…, password=…): ghép lúc chạy (`string.Concat("sk-", new string('a', 32))`), không ghi thẳng — hook pre-commit sẽ chặn commit.
+- **Web (Hub) — xác nhận HTMX:** `hx-confirm` phải đặt trên phần tử phát request (thường là `<form>`), HTMX 2 bỏ qua `hx-confirm` trên nút submit trong form (V5-05: nút Dừng chạy không hỏi).
 - **Không viết test luôn pass**: không `if (...) return;` sớm, không `Assert.True(true)`, không bắt exception rồi bỏ qua. Bỏ phần code mới đi thì test phải đỏ.
 - Kiểm tra chuỗi lệnh đã gửi (tới thiết bị / tiến trình) bằng `Contains` phần cốt lõi, không `StartsWith`: lệnh thật thường có tiền tố.
 - **Web (Hub):** không đưa giá trị lấy từ query / form / file vào `<script>` bằng `Html.Raw` (H-007 bị XSS qua `?drawer=`); chỉ nhận số / giá trị trong danh sách cho phép. Chuỗi C# chứa thẻ HTML in bằng `@(...)` sẽ hiện nguyên mã `<span…>` — viết markup Razor thay vì ghép chuỗi.

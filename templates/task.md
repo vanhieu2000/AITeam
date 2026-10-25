@@ -42,6 +42,7 @@ KIỂM TRA "HỢP ĐỒNG NGOÀI & KHUNG" (IMP-001 — lỗi TK lặp 3/3 task c
 - [ ] Trang / dịch vụ mới: đã đăng ký DI trong khung + thêm trang vào test dựng trang thật (R-003: /Requests trắng trang).
 - [ ] Đọc dữ liệu thật (metrics, phiếu, git, file người dùng): ≥ 1 ca nghiệm thu dựng từ bản sao dữ liệu THẬT, đủ dài / nhiều ngày (R-003: khung giờ, số đo cộng dồn).
 - [ ] (IMP-005) Đọc file theo đường dẫn ⇒ chặn symlink / reparse point; dịch vụ singleton / gọi đồng thời (MCP, Hub) ⇒ khóa + 1 ca test đồng thời (V5-01: Codex bắt cả hai).
+- [ ] Test có chuỗi GIỐNG bí mật (sk-…, ghp_…, password=…) ⇒ ghép lúc chạy (`string.Concat("sk-", …)`), không ghi thẳng — hook quét bí mật chặn commit (V5-07a).
 - [ ] (IMP-005) Hiển thị ghép chữ / giờ ⇒ dựng thử đặc tả bằng dữ liệu đang có (phiếu, log) trước khi giao (V5-04: bàn Claude hiện 2 giờ). -->
 -
 
