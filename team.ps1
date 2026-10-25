@@ -847,7 +847,7 @@ function Invoke-Prep {
     [IO.File]::WriteAllText($taskPath, $tt, $Utf8)
 
     $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\codex-prep.md"))
-    $promptText = $tpl.Replace("{TASKFILE}", "tasks/$fileName").Replace("{BUILD}", [string]$r.Info.build).Replace("{TASK}", $Task) + "`n" + $section
+    $promptText = $tpl.Replace("{TASKFILE}", "tasks/$fileName").Replace("{BUILD}", [string]$r.Info.build).Replace("{TASK}", $Task).Replace("{REQUEST}", $Request) + "`n" + $section
     $pf = Join-Path $r.Logs "$Task.prep.prompt.md"
     [IO.File]::WriteAllText($pf, $promptText, $Utf8)
     $out = Join-Path $r.Logs "$Task.prep.json"
