@@ -1,0 +1,9 @@
+# Brief R-008 — Đẩy việc khỏi Claude (tiết kiệm token Claude)
+Hiện Claude còn làm tay: gọi `prep` / `assign` / `qc` từng task, đọc log dài để biết kết quả, ghi nhật ký phiếu, điền "Review (Claude)" / "Kết quả" / "Đánh giá quy trình", chạy lại cổng KT khi lỗi máy. Mục tiêu: Claude chỉ còn brief → duyệt plan → **1 lệnh xem gói nghiệm thu** → ĐẠT / CẦN SỬA từng task.
+1. **`team.ps1 pipeline -Request R-xxx`**: đọc plan.md đã duyệt; với mọi task chưa có file task mà phụ thuộc đã ✅ merge: `prep` (Codex) rồi `assign` (Antigravity; cổng KT; Codex QC tự giao lại ≤ 1 lần). Các task độc lập chạy song song (tối đa 2 agent cùng lúc, 1 Codex cùng lúc). Dừng khi không còn task sẵn sàng; in 1 dòng / task.
+2. **Cổng KT tự chạy lại 1 lần** khi lỗi thuộc máy (khóa file "Access … denied", MSB3491, test MCP) trước khi coi là KHÔNG ĐẠT; QC Codex chạy cả khi cổng chỉ trượt vì lỗi máy đã chạy lại đạt.
+3. **`team.ps1 accept-pack -Request R-xxx`**: ≤ 40 dòng cho mọi task chờ nghiệm thu: cổng KT (1 dòng), kết luận Codex QC + phát hiện còn mở (1 dòng mỗi cái), số dòng / ngân sách, có đổi giao diện không (trang nào cần xem), task phụ thuộc.
+4. **`team.ps1 accept -Project X -Task T [-Optional "…"] [-Note "…"]`**: Codex viết sẵn "### Vòng N — ĐẠT", "## Kết quả" (lời thường) và bảng "Đánh giá quy trình" từ log (phút, token, vòng, QC) — rồi merge. CẦN SỬA: `accept … -Reject "lý do"` ⇒ giao lại.
+5. **Nhật ký phiếu tự ghi**: prep / assign xong / cổng KT / QC / merge tự thêm 1 dòng có giờ vào mục Nhật ký của `requests/R-xxx-*.md` (theo dòng `Yêu cầu:` trong task), commit cùng bảng việc.
+- **Ràng buộc:** không đổi hành vi lệnh cũ khi không dùng lệnh mới; PowerShell 5.1, giữ BOM; test trong `tools/test-verify.ps1` dùng repo tạm + agent / codex giả, KHÔNG gọi AI thật; lỗi đọc log ⇒ in "không rõ", không ném.
+- **Tiền tố mã task:** V8. Ưu tiên ít task (2–3), Agent A.
