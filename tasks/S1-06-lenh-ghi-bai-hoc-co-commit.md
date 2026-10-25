@@ -80,18 +80,19 @@ Triển khai phần thân `Invoke-SkillNote -Root <repo> -Skill <id> -Text <text
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đã đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật, lượt sửa cổng kiểm tra 25/10) |
 |---|---|
-| Build | `dotnet build AITeam.sln` thất bại không chẩn đoán (0 warning/0 error); chạy lại `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers -v:minimal` đạt 0 lỗi, 0 warning. |
-| Test toàn dự án | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 518 đạt/9 lỗi/0 skip; Core chưa hoàn tất, dừng bằng Ctrl+C sau hơn 3 phút. |
-| Định dạng, Unicode, chống trùng | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS106SkillNotesTests" --blame-hang-timeout 2m`: 0 đạt/51 lỗi/0 skip, chưa nghiệm thu được. |
-| ID, nội dung, dữ liệu thiếu, file bẩn, liên kết | Cùng lệnh test riêng: 50 ca lỗi tại `Area.Dispose():349` khi xóa object Git chỉ đọc; ca không tạo repo bị thêm CLIXML PowerShell vào stderr. Không sửa test. |
-| Cô lập commit, Git lỗi, không push | Đã triển khai argv riêng tương thích PS 5.1, timeout/exit code, status trước chống trùng và commit --only; test bị lỗi dọn dữ liệu nên chưa kết luận đạt. |
-| Báo cáo, phạm vi, mã hóa | Parser PowerShell: 0 lỗi; `ReadAllBytes`: BOM EF-BB-BF; script 241 dòng; giữ nguyên test nghiệm thu. |
-File đổi: `scripts/SkillNotes.ps1` (kiểm đường dẫn, chống trùng, bảo toàn byte, gọi Git); file task này (báo cáo).
-Quyết định: giữ nguyên khung/chữ ký, dùng fixture/test đã có; không thêm test ngoài phạm vi, không sửa lỗi Hub; không chạy app/chụp ảnh.
-Điều chưa xác minh: nghiệm thu xanh và commit/push; hệ thống tự commit/push theo chỉ dẫn Codex, không có commit được kiểm.
-Vướng cần Claude xử lý: cleanup test Git chỉ đọc, CLIXML stderr và lỗi quyền truy cập Hub; log solution: `%TEMP%\S106-solution-tests.log`; MCP aiteam_post_message không có trong phiên.
+| Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers -v:minimal`: đạt, 0 lỗi, 0 warning, 17,48 giây. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 518 đạt/9 lỗi/0 skip; Core dừng sau khoảng 3 phút, chưa có tổng kết; không tuyên bố đạt. |
+| Tám biến thể BOM/newline, Unicode, trùng | Cùng lệnh: các ca `Inserts_exact_bullet_preserving_real_document`, giới hạn độ dài và chống trùng lỗi `UnauthorizedAccessException` khi `Area.Dispose():349` xóa object Git chỉ đọc; chưa nghiệm thu được. |
+| ID/nội dung/thiếu dữ liệu/file bẩn/liên kết | Các ca đã chạy lỗi dọn repo tại `Area.Dispose():349`; kiểm CLI ID `..` riêng: mã 1, đúng thông báo nhưng stderr có thêm CLIXML tiến độ PowerShell. Liên kết chưa có kết quả lượt này. |
+| Cô lập commit/Git lỗi/không push | Các ca `Commit_excludes_other_staged_and_unstaged_files_and_does_not_push`, `Git_failure_cannot_report_success` cũng lỗi tại `Area.Dispose():349`; chưa xác nhận đạt. |
+| Phạm vi/mã hóa/báo cáo | Parser `scripts/SkillNotes.ps1`: 0 lỗi; `ReadAllBytes` xác nhận script và `team.ps1` có BOM EF-BB-BF; không sửa test nghiệm thu hay mã sản phẩm lượt này. |
+File đổi: chỉ file task này để cập nhật bằng chứng và điểm chặn, giữ BOM hiện có.
+Quyết định: không đổi mã sản phẩm để sửa thuộc tính object Git phục vụ cleanup; không nhận diện harness, không sửa test bất biến, không sửa Hub ngoài phạm vi.
+Cần Claude xử lý: cleanup `Directory.Delete(Root, true)` tại test dòng 349; helper `RunPowerShell` dòng 270–272 phát CLIXML “Preparing modules for first use”; 9 lỗi Hub liên quan quyền `FileSystem.ReplaceFile`.
+Chưa xác minh: test toàn dự án xanh và commit được kiểm; không chạy lệnh git, hệ thống tự commit/push. MCP aiteam_post_message/aiteam_get_test_results không có trong phiên.
+Ghi chú chạy: test riêng ban đầu kẹt ở build không in kết quả, đã dừng; solution test vượt khoảng 3 phút đã dừng tiến trình do lượt này tạo theo yêu cầu chống treo.
 ## Review (Claude)
 <!-- Claude điền sau khi coder hoàn thành. -->
 
