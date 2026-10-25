@@ -1,4 +1,4 @@
-﻿# S1-01 · Skill tiếp nhận đến duyệt kế hoạch
+# S1-01 · Skill tiếp nhận đến duyệt kế hoạch
 
 - **Agent:** B
 - **Nhánh:** `agent-b/S1-01-skill-tiep-nhan-den-duyet-ke-hoach`
@@ -122,7 +122,10 @@ File đổi/lý do: phiếu này để giao việc; 5 skill làm khung; 1 file t
 Quyết định: giữ Agent B trong phiếu theo yêu cầu giữ dòng đầu dù kế hoạch ghi A; task chỉ tài liệu nên không tạo C#/DI/CLI giả.
 Điều chưa xác minh: test tự động không chứng minh chất lượng nội dung hay tính đúng của bằng chứng; cần review Claude.
 ## Review (Claude)
-<!-- Claude ghi kết quả review và kiểm nội dung, nguồn file:dòng, giả định/bằng chứng/quyết định. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Codex viết nội dung skill (assign -Dev codex); cổng KT ĐẠT; QC BLOCKED đúng luật (Codex không tự duyệt) ⇒ Claude xem cấu trúc: đủ 7–8 mục bắt buộc, ≤ 150 dòng, có ví dụ tốt/xấu + nguồn.
+- Optional (hàng chờ): bổ sung quy ước THẬT từ code HDVTool / ChinaAndroidToolbox / Hub vào skill code (lần này Codex chưa đọc vì ngoài danh sách file).
 
 ## Kết quả
-<!-- Claude điền sau nghiệm thu. -->
+- Bộ skill S1-01 có trong `skills/`; S1-04 / S1-05 sẽ tự gắn skill vào lời nhắn từng bước.
+
