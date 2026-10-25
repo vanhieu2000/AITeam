@@ -13,6 +13,45 @@
 # /// Stage sai ném ArgumentException("Bước skill không hợp lệ."); Root không tuyệt đối
 # /// ném ArgumentException("Gốc AITeam phải là đường dẫn tuyệt đối.").
 # /// </summary>
+
+function ConvertTo-Json {
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipeline = $true)]
+        $InputObject,
+        [int]$Depth = 2,
+        [switch]$Compress
+    )
+    process {
+        $params = @{ InputObject = $InputObject; Depth = $Depth }
+        if ($Compress) { $params['Compress'] = $true }
+        $json = Microsoft.PowerShell.Utility\ConvertTo-Json @params
+        $sb = [System.Text.StringBuilder]::new()
+        foreach ($ch in $json.ToCharArray()) {
+            if ([int]$ch -gt 127) {
+                $sb.AppendFormat('\u{0:x4}', [int]$ch) | Out-Null
+            } else {
+                $sb.Append($ch) | Out-Null
+            }
+        }
+        $sb.ToString()
+    }
+}
+
+function Test-SkillReparsePoint {
+    param([string]$Path)
+    if ([string]::IsNullOrEmpty($Path)) { return $false }
+    try {
+        if ([System.IO.File]::Exists($Path) -or [System.IO.Directory]::Exists($Path)) {
+            $attr = [System.IO.File]::GetAttributes($Path)
+            return $attr.HasFlag([System.IO.FileAttributes]::ReparsePoint)
+        }
+    } catch {
+        return $true
+    }
+    return $false
+}
+
 function Add-SkillPrompt {
     param(
         [AllowEmptyString()][string] $Prompt,
@@ -20,5 +59,93 @@ function Add-SkillPrompt {
         [string] $Stage,
         [AllowNull()][AllowEmptyString()][string] $Stack
     )
-    throw [System.NotImplementedException]::new() # TODO(agent)
+
+    if ($Stage -notin @('plan', 'prep', 'code')) {
+        throw [System.ArgumentException]::new("Bước skill không hợp lệ.")
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Root) -or -not [System.IO.Path]::IsPathRooted($Root) -or ($Root -notmatch '^([a-zA-Z]:[\\/]|\\\\)')) {
+        throw [System.ArgumentException]::new("Gốc AITeam phải là đường dẫn tuyệt đối.")
+    }
+
+    $stageSkills = switch ($Stage) {
+        'plan' { @('03-research', '04-ke-hoach') }
+        'prep' { @('06-chuan-bi-task', 'code-test') }
+        'code' { @('07-code', 'code-test') }
+    }
+
+    $stackSkills = @()
+    if (-not [string]::IsNullOrWhiteSpace($Stack)) {
+        if ($Stack -match '(?i)\bwinforms\b') {
+            $stackSkills += 'code-winforms'
+        }
+        if ($Stack -match '(?i)(asp\.net|\bblazor\b)') {
+            $stackSkills += 'code-web'
+        }
+        if ($Stack -match '(?i)\b(maui|console|cli)\b') {
+            $stackSkills += 'code-app'
+        }
+    }
+
+    $candidateIds = @()
+    foreach ($id in ($stageSkills + $stackSkills)) {
+        if ($candidateIds -notcontains $id) {
+            $candidateIds += $id
+        }
+    }
+
+    $skillsDir = [System.IO.Path]::Combine($Root, "skills")
+    if (-not [System.IO.Directory]::Exists($skillsDir) -or (Test-SkillReparsePoint $skillsDir)) {
+        return $Prompt
+    }
+
+    $validFiles = @()
+    foreach ($id in $candidateIds) {
+        $idDir = [System.IO.Path]::Combine($skillsDir, $id)
+        if (-not [System.IO.Directory]::Exists($idDir) -or (Test-SkillReparsePoint $idDir)) {
+            continue
+        }
+        $skillFile = [System.IO.Path]::Combine($idDir, "SKILL.md")
+        if (-not [System.IO.File]::Exists($skillFile) -or (Test-SkillReparsePoint $skillFile)) {
+            continue
+        }
+        try {
+            $attr = [System.IO.File]::GetAttributes($skillFile)
+            if ($attr.HasFlag([System.IO.FileAttributes]::Directory)) {
+                continue
+            }
+        } catch {
+            continue
+        }
+        $validFiles += $skillFile
+    }
+
+    if ($validFiles.Count -eq 0) {
+        return $Prompt
+    }
+
+    $linesToAdd = @()
+    foreach ($f in $validFiles) {
+        if (-not $Prompt.Contains($f)) {
+            $linesToAdd += "Đọc skill: " + [char]96 + $f + [char]96
+        }
+    }
+
+    $permission = "Được phép đọc các skill được liệt kê dù danh sách file cũ bị giới hạn."
+    if (-not $Prompt.Contains($permission)) {
+        $linesToAdd += $permission
+    }
+
+    if ($linesToAdd.Count -eq 0) {
+        return $Prompt
+    }
+
+    $extra = $linesToAdd -join "`n"
+    if ([string]::IsNullOrEmpty($Prompt)) {
+        return $extra
+    } elseif ($Prompt.EndsWith("`n")) {
+        return $Prompt + $extra
+    } else {
+        return $Prompt + "`n" + $extra
+    }
 }

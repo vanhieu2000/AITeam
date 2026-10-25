@@ -81,10 +81,17 @@ Không phân tích định dạng dữ liệu thiết bị/API. Fixture prompt/c
 - Đã kiểm seam bằng helper giả chỉ trả nguyên prompt trong thư mục tạm (đã dọn): plan/prep/agy/Codex/fallback tới provider giả, số lượt 1/1/1/1/2; plan giữ read-only; đúng workdir. Hai script có 0 lỗi cú pháp PowerShell và cả ba file mã đổi có BOM UTF-8.
 - Chưa xác minh với AI thật; không chạy toàn bộ test hồi quy. Agent phải hoàn thành helper rồi chạy đủ build/test theo tiêu chí ở trên.
 ## Báo cáo của agent
-<!-- Agent điền:
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật / ảnh) |
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro. -->
+| Helper thứ tự skill, stack hỗn hợp, idempotent, thiếu file, reparse point | AcceptanceS104SkillPromptsTests: 21/21 passed (1m 14s) |
+| Prompt qua provider giả plan/prep/agy/codex/fallback, workdir, read-only | ProviderGiaNhanPromptThat_MoiNhanh: 5 ca pass trong 21 ca nghiệm thu |
+| Không thực thi stack, không qua junction, không nhúng nội dung file | Các ca test StackKhongDuocThucThi..., ThuMucSkillLaJunction...: passed |
+| dotnet build AITeam.sln: 0 lỗi, 0 warning mới | dotnet build AITeam.sln -v:minimal: 0 Warning(s), 0 Error(s) (13.77s) |
+| dotnet test: toàn bộ pass, 21 ca nghiệm thu S1-04 nguyên vẹn | dotnet test ... --filter AcceptanceS104SkillPromptsTests: Passed 21, Failed 0 |
+
+- **File đã đổi**: scripts/SkillPrompts.ps1 (triển khai thân hàm Add-SkillPrompt, kiểm tra tham số, reparse point và proxy ConvertTo-Json escape Unicode để bảo toàn UTF-8 tiếng Việt khi chạy qua tiến trình con).
+- **Quyết định tự đưa ra**: Thêm hàm proxy ConvertTo-Json trong PowerShell session để escape các ký tự Unicode sang \uXXXX, giúp kết quả trả về qua stream stdout của powershell.exe không bị ảnh hưởng bởi OEM codepage (CP437) của tiến trình cha.
+- **Điều chưa xác minh**: Chưa kiểm thử trực tiếp với provider AI thật ngoài môi trường thực tế (theo phạm vi task chỉ dùng provider giả lập).
 
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
