@@ -24,7 +24,7 @@ Chủ dự án (25/10 21:15): "test qc cần có bộ chuyên chứ mỗi lần 
 - Dữ liệu THẬT: đọc file thật trong repo trước khi đặc tả (projects.json là MẢNG; phiếu `requests/R-xxx-<slug>.md`, tiêu đề `## 3. Nhật ký (…)`, CRLF).
 - Không đổi định dạng nhật ký / bảng việc đang dùng (các lệnh khác đang ghi vào).
 - Task sửa `team.ps1` chạy tuần tự; không đụng V8-02 đang làm (`tools/workflow-pipeline.ps1`).
-- Ưu tiên ít task; task ≤ ~100 dòng ghi "Claude/Codex làm thẳng".
+- Ưu tiên ít task; task ≤ ~100 dòng ghi "Codex làm thẳng" (không qua prep).
 - Model task khó: `gemini-4-argon-high` (Opus hết lượt).
 
 ## Tiêu chí nghiệm thu của quản lý
