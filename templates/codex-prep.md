@@ -7,8 +7,10 @@ TIẾT KIỆM TOKEN (bắt buộc): CHỈ đọc `AGENTS.md`, `templates/task.md
    - "## Tóm tắt" (3–5 gạch lời thường, có chức năng mới cho người dùng không), "## Đọc (CHỈ những file này)", "## Phạm vi (được sửa)" (đường dẫn trong backtick), "## Không làm", "## Ràng buộc", "## Tiêu chí hoàn thành";
    - "## Test nghiệm thu": CHỈ đường dẫn file test trong backtick (vd. `core.tests/AcceptanceXxxTests.cs`).
    - Dòng "- **Ngân sách:** ~N dòng" theo kế hoạch.
+   - Task khó (sửa `team.ps1` / khóa / chạy song song / giao dịch git / Độ khó L) ⇒ thêm dòng "- **Model:** `claude-opus-4-6-thinking`" (V8-01: flash-medium bỏ sót lỗi `reset --hard` 2 lượt). Task giao diện / tài liệu nhỏ ⇒ để trống (mặc định).
 2. Khung code: interface / record / lớp / chữ ký public đúng như kế hoạch; chú thích `///` mô tả CHÍNH XÁC hành vi + câu báo lỗi; đăng ký DI nếu là dịch vụ Hub.
-3. Test nghiệm thu (xUnit): đủ ca biên / lỗi / bảo mật / dữ liệu cũ trong kế hoạch; bỏ code mới đi thì test phải đỏ; không `return` sớm; chuỗi giống bí mật ghép lúc chạy (`string.Concat("sk-", …)`); không chạy tiến trình thật của agy / codex.
+3. **Dữ liệu THẬT, không đoán định dạng** (lỗi lặp 2 lần 25/10: `projects.json` là MẢNG ở gốc; phiếu là `requests/R-xxx-<slug>.md` với tiêu đề `## 3. Nhật ký (…)`, xuống dòng CRLF): mở file thật trong repo trước khi đặc tả; test dựng từ BẢN SAO nội dung file thật (giữ BOM / CRLF / tên file), không tự chế cấu trúc.
+   Test nghiệm thu (xUnit): đủ ca biên / lỗi / bảo mật / dữ liệu cũ trong kế hoạch; bỏ code mới đi thì test phải đỏ; không `return` sớm; chuỗi giống bí mật ghép lúc chạy (`string.Concat("sk-", …)`); không chạy tiến trình thật của agy / codex.
    - Khung của lệnh CLI / tiến trình con (vd. `aiteam <lệnh>`): KHÔNG để `NotImplementedException` văng khỏi `Main` — bắt lại, in `LỖI: chưa làm` ra stderr, trả mã 1. (Lỗi chưa bắt trong tiến trình con ⇒ Windows hiện hộp "dotnet.exe - Application Error" trên máy chủ dự án — 25/10.)
 4. Chạy `{BUILD}` — phải 0 lỗi (test nghiệm thu được phép ĐỎ khi chạy vì thân hàm chưa có; cảnh báo CS9113 tham số chưa dùng trong khung được chấp nhận).
 5. KHÔNG đưa vào task tiêu chí "chụp ảnh / chạy app / đo trình duyệt": lập trình viên không chạy app; Claude kiểm giao diện thật ở bước 7 (nghiệm thu). Giao diện kiểm bằng test dựng trang + test markup.

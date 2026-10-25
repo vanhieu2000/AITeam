@@ -228,6 +228,11 @@ function Update-WorkflowJournal {
     }
 
     $reqPath = Join-Path $reqDir "$reqVal.md"
+    if (-not (Test-Path -LiteralPath $reqPath -PathType Leaf)) {
+        # Tên phiếu THẬT: requests/R-010-<slug>.md (team.ps1 new-request) — nhận đúng 1 file khớp (Claude sửa 25/10).
+        $cands = @(Get-ChildItem -LiteralPath $reqDir -Filter "$reqVal-*.md" -File -ErrorAction SilentlyContinue)
+        if ($cands.Count -eq 1) { $reqPath = $cands[0].FullName }
+    }
     if (-not (Test-Path -LiteralPath $reqPath -PathType Leaf)) { throw $failMsg }
     if (Test-Reparse $reqPath) { throw $failMsg }
 
@@ -246,7 +251,7 @@ function Update-WorkflowJournal {
             throw $failMsg
         }
 
-        $journalMatches = [regex]::Matches($reqText, '(?m)^##\s+Nhật ký\s*$')
+        $journalMatches = [regex]::Matches($reqText, '(?m)^##\s+(?:\d+\.\s*)?Nhật ký\b[^\r\n]*\r?$')
         if ($journalMatches.Count -ne 1) {
             throw $failMsg
         }
