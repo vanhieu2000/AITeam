@@ -334,5 +334,5 @@ static string FindRoot()
 static ReviewRunInput CreateReviewInput(string taskFile, string diffFile, string? verifyFile,
     string workDir, string logDir, string dev, int timeoutMin, string root)
 {
-    throw new NotImplementedException(); // TODO(agent)
+    return new ReviewRunInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, TimeSpan.FromMinutes(timeoutMin), root);
 }

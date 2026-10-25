@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using AITeam.Core.Providers;
 using AITeam.Core.Routing;
+using AITeam.Core.Skills;
 
 namespace AITeam.Core.Review;
 
@@ -206,7 +207,18 @@ public sealed class ReviewRunner
     /// </summary>
     public static ReviewPack BuildReviewPack(ReviewRunInput input, string taskText, string diffText, string? verifyText)
     {
-        throw new NotImplementedException(); // TODO(agent)
+        var service = new ReviewService();
+        var basePack = service.BuildPack(new ReviewPackInput(taskText, diffText, verifyText, null));
+
+        if (string.IsNullOrWhiteSpace(input.Root))
+            return basePack;
+
+        var instructions = SkillPromptBuilder.BuildReviewInstructions(input.Root, input.WorkDir, input.TaskFile, input.Profile);
+        if (string.IsNullOrWhiteSpace(instructions))
+            return basePack;
+
+        var prompt = basePack.Prompt.TrimEnd() + "\n\n" + instructions.Trim() + "\n";
+        return new ReviewPack(prompt, basePack.DiffHash, basePack.DiffTruncated);
     }
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 
