@@ -51,21 +51,21 @@
 
 ## Báo cáo của agent
 
-| Tiêu chí | Bằng chứng thật |
+| Tiêu chí | Bằng chứng thật lượt sửa cổng 26/10 |
 |---|---|
-| 1. Clone trước push, hủy merge đỏ | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceV805SafeMergeTests&FullyQualifiedName!~Merge_checks_local_clone" --blame-hang-timeout 2m -m:1`: 9/9 pass; 4 ca giả lập kiểm thứ tự/reset; 2 ca repo bare bị chặn `sh.exe` Win32 error 5. |
-| 2. Mutex, clone GUID, dọn clone | Cùng lượt 9/9: ca hai tiến trình chờ mutex và nhả khi lỗi; các ca merge kiểm clone đã dọn. |
-| 3. Chặn xóa test | Cùng lượt 9/9: xóa `core.tests/Regression.cs` bị ghi lỗi, file thường không bị chặn. |
-| 4. Model không hợp lệ | Cùng lượt 9/9: trạng thái đúng, nhánh xử lý return trước verify. |
-| 5. Models bỏ stderr tiến độ | Cùng lượt 9/9: còn `model-id`, bỏ dòng Fetching, khôi phục ErrorActionPreference. |
-| 6. Prep retry lỗi máy | Cùng lượt 9/9: MSB3491 gọi build 2 lần, shutdown 1 lần; nhận MSB3027, không nhận lỗi code kèm theo. |
-| 7. Chia đều gần nhất | Cùng lượt 9/9: A/B, giữ đặt chỗ cùng task, không đếm trùng bảng, hết hạn 10 phút. |
-| 8. Shutdown và đợi retry | Cùng lượt 9/9: sau Codex có shutdown, retry build đợi đúng 20 giây (mock thời gian). |
-| Build 0 warning | `dotnet restore AITeam.sln --disable-parallel -v minimal -m:1` đạt; `dotnet build AITeam.sln --no-restore -m:1`: 0 lỗi, 0 warning; hai script parse 0 lỗi, cả 3 file mã giữ/có BOM. |
-| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 597 pass/9 fail (Access denied khi ReplaceFile và kiểm lưu); Core có 2 ca Git lỗi quyền, chưa tổng kết; chủ động dừng gần 3 phút, mã 1. |
-| Cổng kiểm tra | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: mã 1; báo `$note` trùng tham số tại Invoke-CodexDevelop (không sửa ngoài mục tiêu), rồi clone repo tạm bị Win32 error 5. |
-| File đổi | `team.ps1`: 8 mục tiêu; `tools/workflow-common.ps1`: nhận MSB3027; `core.tests/AcceptanceV805SafeMergeTests.cs`: 11 ca; file task này: báo cáo. Không sửa test task khác. |
-| Quyết định / chưa chắc | Dùng `rev-list --first-parent origin/main..main` để chỉ xét commit trên main; từ chối main bẩn và pull ff-only trước thao tác có thể reset. Chưa nghiệm thu Git thật/toàn solution; không chạy git trên repo làm việc, chưa có commit được kiểm; hệ thống tự commit/push. |
+| 1. Clone trước push, hủy merge đỏ | Test liên quan bên dưới: các ca giả lập đạt; 2 ca Git thật trong solution lỗi `sh.exe` Win32 error 5, chưa xác minh đầy đủ. |
+| 2. Mutex, clone GUID, dọn clone | Test liên quan: ca chờ khóa/nhả khóa và dọn clone đạt. |
+| 3. Chặn xóa test | Test liên quan: ca xóa file test bị chặn đạt. |
+| 4. Model không hợp lệ | Test liên quan: ca dừng trước verify đạt. |
+| 5. Models bỏ stderr tiến độ | Test liên quan: ca giữ id, bỏ Fetching đạt. |
+| 6. Prep retry lỗi máy | Test liên quan: ca retry MSB3491 và nhận MSB3027 đạt. |
+| 7. Chia đều gần nhất | Test liên quan: ca đặt chỗ, không đếm trùng, hết hạn đạt. |
+| 8. Shutdown và chờ retry | Test liên quan: ca shutdown sau Codex và chờ 20 giây đạt; đã gọi `dotnet build-server shutdown` trước build, không tái hiện MSB3491. |
+| Build, BOM, cú pháp | `dotnet build AITeam.sln --no-restore -m:1`: mã 0, 0 warning, 0 lỗi; 3 file mã có BOM, 2 script parse 0 lỗi. |
+| Test liên quan | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceV805SafeMergeTests&FullyQualifiedName!~Merge_checks_local_clone" --blame-hang-timeout 2m -m:1`: 9 pass, 0 fail/skip. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 597 pass/9 fail (ReplaceFile bị từ chối quyền và kiểm lưu); Core 2 ca Git lỗi quyền, chưa tổng kết; dừng gần 3 phút theo giới hạn, mã 1. |
+| Cổng kiểm tra | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: kiểm tra tĩnh đạt sau sửa biến; mã 1 do clone repo tạm bị `sh.exe` Win32 error 5. |
+| File đổi / giới hạn | Lượt này: `team.ps1` đổi `$note` thành `$codexPromptPrefix` tránh đè tham số script; task cập nhật báo cáo. Giữ nguyên test nghiệm thu, không sửa Hub ngoài phạm vi; cần kiểm lại solution/cổng ngoài sandbox. Không chạy git trực tiếp, chưa có commit được kiểm; hệ thống tự commit/push. |
 
 ## Review (Claude)
 

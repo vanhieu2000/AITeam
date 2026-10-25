@@ -703,9 +703,9 @@ function Get-AITeamExe {
 function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin) {
     $exe = Get-AITeamExe
     if (-not $exe) { return [pscustomobject]@{ Ok = $false; Status = "không build được aiteam.exe" } }
-    $note = "CHẠY BẰNG CODEX (dự phòng Antigravity): KHÔNG chạy lệnh git (sandbox chặn ghi .git) — hệ thống tự commit + push sau khi bạn xong; bỏ qua mọi yêu cầu commit / push bên dưới. Vẫn phải điền mục 'Báo cáo của agent' trong file task.`n`n"
+    $codexPromptPrefix = "CHẠY BẰNG CODEX (dự phòng Antigravity): KHÔNG chạy lệnh git (sandbox chặn ghi .git) — hệ thống tự commit + push sau khi bạn xong; bỏ qua mọi yêu cầu commit / push bên dưới. Vẫn phải điền mục 'Báo cáo của agent' trong file task.`n`n"
     $pf = $logFile -replace '\.json$', '.codex.prompt.md'
-    [IO.File]::WriteAllText($pf, $note + $prompt, (New-Object Text.UTF8Encoding $false))
+    [IO.File]::WriteAllText($pf, $codexPromptPrefix + $prompt, (New-Object Text.UTF8Encoding $false))
     $out = $logFile -replace '\.json$', '.codex.json'
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Say "[$(Get-Date -Format HH:mm:ss)] $TaskName → Codex (aiteam run), thư mục $work" Cyan
