@@ -164,6 +164,8 @@ public sealed class AcceptanceV801WorkflowTests : IDisposable
         Expect ($s.Contains('- 2026-10-25 14:03:02 +07:00 | V8-01 | Prep | lượt 1 | ĐẠT <!-- workflow:V8-01:Prep:1 -->')) 'Sai định dạng giờ/task/lượt'
         Expect ($s.Contains("## Nội dung`r`nGiữ nguyên`r`n## Nhật ký`r`n- 2026-10-20: dữ liệu cũ`r`n")) 'Mất dữ liệu cũ'
         Expect ($s.EndsWith("## Kết quả`r`nChưa xong`r`n")) 'Ghi sai mục'
+        # Hồi quy 25/10: StartsWith([char]0xFEFF) luôn True trong PS 5.1 ⇒ cắt mất '#' của tiêu đề phiếu.
+        Expect ($s -cmatch '\A# Phiếu\r\n') 'Mất ký tự đầu tiêu đề phiếu'
         Expect (-not [regex]::IsMatch($s,'(?<!\r)\n')) 'Đổi xuống dòng'
         $b=[IO.File]::ReadAllBytes($p)
         Expect (($b[0] -eq 239 -and $b[1] -eq 187 -and $b[2] -eq 191) -eq $bom) 'Đổi BOM'

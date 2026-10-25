@@ -213,7 +213,8 @@ function Update-WorkflowJournal {
     try {
         $taskBytes = [System.IO.File]::ReadAllBytes($taskPath)
         $taskText = $utf8Strict.GetString($taskBytes)
-        if ($taskText.StartsWith([char]0xFEFF)) { $taskText = $taskText.Substring(1) }
+        # Không dùng StartsWith([char]0xFEFF): PS 5.1 so theo văn hóa, BOM bị bỏ qua ⇒ luôn True, cắt mất ký tự đầu (25/10).
+        if ($taskText.Length -gt 0 -and [int]$taskText[0] -eq 0xFEFF) { $taskText = $taskText.Substring(1) }
     } catch {
         throw $failMsg
     }
@@ -246,7 +247,7 @@ function Update-WorkflowJournal {
         $hasBom = ($reqBytes.Length -ge 3 -and $reqBytes[0] -eq 0xEF -and $reqBytes[1] -eq 0xBB -and $reqBytes[2] -eq 0xBF)
         try {
             $reqText = $utf8Strict.GetString($reqBytes)
-            if ($reqText.StartsWith([char]0xFEFF)) { $reqText = $reqText.Substring(1) }
+            if ($reqText.Length -gt 0 -and [int]$reqText[0] -eq 0xFEFF) { $reqText = $reqText.Substring(1) }
         } catch {
             throw $failMsg
         }

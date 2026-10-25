@@ -1,4 +1,4 @@
-R-010 · Bộ skill cho từng bước dây chuyền (tiếp nhận → publish git) + skill code WinForms / web / app, tự cập nhật sau đánh giá
+# R-010 · Bộ skill cho từng bước dây chuyền (tiếp nhận → publish git) + skill code WinForms / web / app, tự cập nhật sau đánh giá
 
 - **Nhận lúc:** 12:33 25/10/2026 · máy DESKTOP-PP14EFS
 - **Trạng thái:** 🟡 Đang làm
@@ -38,6 +38,8 @@ Sự kiện cần ghi:
 
 - 2026-10-25 16:51:45 +07:00 | S1-04 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:S1-04:Verify:1 -->
 - 2026-10-25 16:51:56 +07:00 | S1-04 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:S1-04:Assign:1 -->
+- 2026-10-25 17:01:47 +07:00 | S1-04 | Verify | lượt 2 | ĐẠT <!-- workflow:S1-04:Verify:2 -->
+- 2026-10-25 17:03:04 +07:00 | S1-04 | Qc | lượt 1 | CẦN SỬA <!-- workflow:S1-04:Qc:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-010`, rồi điền:
 

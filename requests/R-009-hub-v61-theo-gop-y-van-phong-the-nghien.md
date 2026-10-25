@@ -1,4 +1,4 @@
-﻿ R-009 · Hub v6.1 theo góp ý: Văn phòng (thẻ + nghiên cứu trái + chat giao việc phải), Đơn duyệt dạng bảng, menu gọn, trang Map phân nhiệm vụ
+# R-009 · Hub v6.1 theo góp ý: Văn phòng (thẻ + nghiên cứu trái + chat giao việc phải), Đơn duyệt dạng bảng, menu gọn, trang Map phân nhiệm vụ
 
 - **Nhận lúc:** 12:23 25/10/2026 · máy DESKTOP-PP14EFS
 - **Trạng thái:** 🟡 Đang làm
