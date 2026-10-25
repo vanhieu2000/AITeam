@@ -80,22 +80,30 @@ Triển khai phần thân `Invoke-SkillNote -Root <repo> -Skill <id> -Text <text
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đã đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau triển khai; không lấy kết quả build khung làm bằng chứng tính năng đã hoàn tất. -->
-
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật, lượt sửa cổng kiểm tra 25/10) |
 |---|---|
-| Build và test | Chưa triển khai |
-| Định dạng, chống trùng | Chưa triển khai |
-| Bảo mật, Git và lỗi | Chưa triển khai |
-
-File đã đổi và lý do: …
-Quyết định tự đưa ra: …
-Điều chưa xác minh: …
-
+| Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers -v:minimal`: đạt, 0 lỗi, 0 warning, 17,48 giây. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 518 đạt/9 lỗi/0 skip; Core dừng sau khoảng 3 phút, chưa có tổng kết; không tuyên bố đạt. |
+| Tám biến thể BOM/newline, Unicode, trùng | Cùng lệnh: các ca `Inserts_exact_bullet_preserving_real_document`, giới hạn độ dài và chống trùng lỗi `UnauthorizedAccessException` khi `Area.Dispose():349` xóa object Git chỉ đọc; chưa nghiệm thu được. |
+| ID/nội dung/thiếu dữ liệu/file bẩn/liên kết | Các ca đã chạy lỗi dọn repo tại `Area.Dispose():349`; kiểm CLI ID `..` riêng: mã 1, đúng thông báo nhưng stderr có thêm CLIXML tiến độ PowerShell. Liên kết chưa có kết quả lượt này. |
+| Cô lập commit/Git lỗi/không push | Các ca `Commit_excludes_other_staged_and_unstaged_files_and_does_not_push`, `Git_failure_cannot_report_success` cũng lỗi tại `Area.Dispose():349`; chưa xác nhận đạt. |
+| Phạm vi/mã hóa/báo cáo | Parser `scripts/SkillNotes.ps1`: 0 lỗi; `ReadAllBytes` xác nhận script và `team.ps1` có BOM EF-BB-BF; không sửa test nghiệm thu hay mã sản phẩm lượt này. |
+File đổi: chỉ file task này để cập nhật bằng chứng và điểm chặn, giữ BOM hiện có.
+Quyết định: không đổi mã sản phẩm để sửa thuộc tính object Git phục vụ cleanup; không nhận diện harness, không sửa test bất biến, không sửa Hub ngoài phạm vi.
+Cần Claude xử lý: cleanup `Directory.Delete(Root, true)` tại test dòng 349; helper `RunPowerShell` dòng 270–272 phát CLIXML “Preparing modules for first use”; 9 lỗi Hub liên quan quyền `FileSystem.ReplaceFile`.
+Chưa xác minh: test toàn dự án xanh và commit được kiểm; không chạy lệnh git, hệ thống tự commit/push. MCP aiteam_post_message/aiteam_get_test_results không có trong phiên.
+Ghi chú chạy: test riêng ban đầu kẹt ở build không in kết quả, đã dừng; solution test vượt khoảng 3 phút đã dừng tiến trình do lượt này tạo theo yêu cầu chống treo.
 ## Review (Claude)
 <!-- Claude điền sau khi coder hoàn thành. -->
 
+### Vòng 1 — ĐẠT (sau khi Claude sửa test)
+- Antigravity hết hạn mức (429) ⇒ Codex viết code dự phòng. Cổng KT 2 lượt KHÔNG ĐẠT chỉ do lỗi harness test nghiệm thu, không do code.
+- Claude sửa test: (1) `-EncodedCommand` làm stderr thành CLIXML ⇒ chạy `-File` script tạm; (2) Dispose bỏ cờ ReadOnly của object git trước khi xóa; (3) biến thể CRLF+BOM+giữa trùng fixture ⇒ `commit --allow-empty`. 51/51 pass.
+- Đọc code `scripts/SkillNotes.ps1`: chặn ID/DOS/reparse, chống trùng ordinal trong mục, chèn byte giữ BOM/CRLF, chỉ stage + commit đúng file, không push.
+- [TK] (test) harness S1-06 dùng -EncodedCommand + xóa repo git tạm không bỏ ReadOnly + biến thể trùng fixture.
 ## Kết quả
+- Có lệnh `team.ps1 skill-note -Skill <id> -Text "…" [-Source IMP-xxx]`: ghi 1 bài học vào mục Lỗi hay gặp của skill rồi tự commit (không push), lặp lại không ghi trùng.
+- Kiểm chứng: 51 test nghiệm thu.
 <!-- Claude điền khi review đạt. -->
 
 ## Đánh giá quy trình
