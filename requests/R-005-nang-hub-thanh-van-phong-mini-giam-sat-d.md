@@ -51,6 +51,11 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-005` để `team.ps1 reque
 | 02:20 | IMP-005 áp dụng (mẫu task, kiểm tra tĩnh bảng việc, tách test/commit) | |
 | 02:24 | Review V5-06: Hub dữ liệu thật — agy / Codex kết nối, Gemini cần đăng nhập, Claude chưa cài; Claude gộp main + menu; ĐẠT vòng 1, merge | |
 | 02:26 | Hub chính 5057 chạy bản mới (Văn phòng có Điều khiển; trang Tài khoản AI) | |
+| 08:30 | Chủ dự án: "Tiếp đi" ⇒ V5-07 Phòng nghiên cứu; thử gemini CLI thật: lấy mẫu lỗi chưa đăng nhập (mã 41) làm dữ liệu test | |
+| 08:45 | Hook quét bí mật chặn commit test nghiệm thu của Claude (chuỗi giống khóa) ⇒ ghép lúc chạy; ghi AGENTS.md + mẫu task [TK] | |
+| 08:48 | Giao V5-07a (Minh): lõi lời nhắn / che bí mật / lưu research / connector Codex + Gemini, 35 ca nghiệm thu | |
+| 08:55 | Minh xong V5-07a (7', cổng KT ĐẠT lần đầu); review ĐẠT vòng 1; merge | |
+| 09:05 | Giao V5-07b (Lan): trang Phòng nghiên cứu, 17 ca nghiệm thu | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;

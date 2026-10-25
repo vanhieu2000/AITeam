@@ -25,4 +25,5 @@ Tên chỉ dùng trong log và đánh giá. Bảng điểm: `.\team.ps1 staff-re
 | 24/10 | R-002 / V4-07 | 1 · 7′ · 1 · 176/230 | Regex chống treo, giờ qua tham số, giữ BOM | — | — |
 | 24/10 | R-004 / V4-09 | 1 · 8′ · 1 · 155/170 | Đúng đặc tả; Codex review tự động PASS | — | — |
 | 25/10 | R-005 / V5-01 | 2 · 10′ · 1 | 4 công cụ MCP + phân quyền; sửa nhanh theo Codex review | — | Tốt |
+| 25/10 | R-005 / V5-07a | 1 · 7′ · 1 · 242/260 | Đúng đặc tả, luôn dọn thư mục tạm, hủy thì ném lại | — | Tốt |
 | 25/10 | R-005 / V5-06 | 1 · 9′ · 1 · 381/420 | Đủ 11 luật trạng thái; không đọc nội dung tệp đăng nhập; tự phát hiện file task thiếu trên nhánh | — | Tốt |
