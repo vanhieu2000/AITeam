@@ -878,6 +878,17 @@ function Get-PlanDir([string]$req) {
     Join-Path $Root "plans\$req"
 }
 
+# /// <summary>pipeline -Request R-xxx [-Project X]: nối Read-WorkflowPipelinePlan và
+# /// Invoke-WorkflowPipeline với repo đã Resolve-Project (mặc định AITeam), bảng origin/main
+# /// sau fetch thành công; lỗi fetch phải dừng, không dùng bảng local. Worker là powershell.exe
+# /// riêng mỗi task; prep -NoLaunch rồi assign -Dev agy; khóa Codex chỉ giữ lúc prep/QC.
+# /// Dùng Invoke-WorkflowPipelineTask để cô lập bộ đếm, tiếp tục prep dở theo Invoke-Prep.
+# /// Mỗi task đúng một dòng "MÃ: trạng thái"; log dài ghi file riêng. Không merge.
+# /// Lỗi chưa làm được catch ngoài cùng in "LỖI: chưa làm", mã 1.</summary>
+function Invoke-Pipeline {
+    throw [System.NotImplementedException]::new(); # TODO(agent)
+}
+
 function ConvertTo-AsciiSlug([string]$text) {
     $t = $text.ToLower().Replace([string][char]0x0111, "d").Normalize([Text.NormalizationForm]::FormD)
     $t = -join ($t.ToCharArray() | Where-Object { [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne [Globalization.UnicodeCategory]::NonSpacingMark })
@@ -2203,6 +2214,7 @@ switch ($Command) {
     "ask" { Invoke-Ask }
     "plan" { Invoke-Plan }
     "prep" { Invoke-Prep }
+    "pipeline" { . (Join-Path $Root "tools/workflow-pipeline.ps1"); Invoke-Pipeline }
     "qc" { Invoke-Qc }
     "deputy" { Invoke-Deputy }
     "deputy-on" { Invoke-DeputySchedule $true }
