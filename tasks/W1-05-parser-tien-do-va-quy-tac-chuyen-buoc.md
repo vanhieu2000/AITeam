@@ -101,32 +101,20 @@ không phải hợp đồng tính tiến độ; dùng model riêng trong file đ
 - [x] Báo cáo từng tiêu chí → lệnh/kết quả thật, file/lý do, quyết định tự đưa ra và điều chưa xác minh.
 
 ## Báo cáo của agent
-Antigravity điền sau khi triển khai:
 
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Parse dữ liệu thật và biến thể | ĐẠT — `dotnet test hub.tests/AITeam.Hub.Tests.csproj --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m`: Passed 63, Failed 0, Skipped 0 |
-| Quy tắc chín bước, lỗi và chuyển lượt | ĐẠT — `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m`: Passed 63, Failed 0, Skipped 0; đã sửa theo dõi lỗi theo từng bước (`Qc Failed → Verify Failed → Qc Passed` giữ `CurrentStep=Verify`, `LatestError` của Verify) |
-| Thuần, an toàn dữ liệu và tương thích | ĐẠT — `Untrusted_text_remains_data_and_input_is_not_mutated` pass; không đổi đầu vào, giữ UTF-8 BOM (+231 dòng) |
-| Build/test toàn solution | `dotnet build AITeam.sln --no-restore`: 0 warning, 0 error. `AITeam.Hub.Tests`: 590/590 pass (0 fail, 0 skip); `AITeam.Core.Tests`: 518/519 pass, 1 fail (`AcceptanceV801WorkflowTests.KhoaChanTienTrinhKhacVaTimeout` đỏ do máy quá tải khi chạy toàn cục; quản lý đã chạy lại riêng: PASS — không tự đánh dấu vượt tiêu chí test toàn solution) |
-
-File đã đổi và lý do: `hub/Services/WorkProgressParser.cs` (triển khai `Parse`, `Calculate` và theo dõi lỗi còn hiệu lực theo từng bước); `tasks/W1-05-parser-tien-do-va-quy-tac-chuyen-buoc.md` (cập nhật báo cáo; đã hoàn tác `hub.tests/W105WorkProgressExtraTests.cs` vì cổng kiểm tra báo ngoài `## Phạm vi (được sửa)`).  
-Quyết định tự đưa ra: Theo dõi lỗi đang hiệu lực theo từng bước (`errors[step]`); chỉ `Passed` cùng bước mới xóa lỗi của bước đó, và chỉ `Merge` `Passed` mới hơn hoặc `boardStatus` chứa `✅` mới xóa toàn bộ lỗi; `CurrentStep`/`LatestError` lấy theo cổng lỗi sớm nhất chưa được gỡ.  
-Điều chưa xác minh: Cổng kiểm tra tự động chỉ cho phép sửa `hub/Services/WorkProgressParser.cs` theo mục Phạm vi (từ chối thêm `hub.tests/W105WorkProgressExtraTests.cs`, còn `AcceptanceW105WorkProgressTests.cs` là bất biến); test `KhoaChanTienTrinhKhacVaTimeout` (V8-01) đỏ khi máy quá tải (quản lý chạy riêng đã PASS); chưa có log workflow thực thi thật trong phiếu R-011 gốc.
-
-### Kiểm tra chuẩn bị (Codex)
-- Đã tạo khung hai hàm, chỉ throw NotImplementedException; chưa viết phần thân sản phẩm.
-- Đã viết 63 ca dữ liệu (14 Fact + 49 InlineData), chưa xác minh discovery/chạy thực tế.
-- SHA256 hai fixture bằng đúng nguồn; hai file .cs đã kiểm byte EF BB BF (UTF-8 BOM).
-- `dotnet build AITeam.sln`: exit 1, “Build FAILED”, 0 warning/0 error trong output, chưa có chẩn đoán restore.
-- `dotnet build AITeam.sln --no-restore -m:1 -v:normal`: exit 1, 0 warning/5 lỗi NETSDK1004;
-  cả 5 project thiếu project.assets.json. Đã dùng đủ 2 lần build, không chạy thêm.
-- `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceW105WorkProgressTests --blame-hang-timeout 2m`:
-  exit 0 nhưng không có output/test count; KHÔNG coi là test pass hoặc đã khám phá test.
-- Chưa xác minh biên dịch và test đỏ thực tế vì chưa build được; cần restore/build ở môi trường có dependency.
-- Không có giao diện, DI, CLI, tiến trình ngoài hoặc phụ thuộc task khác.
-- Giữ nguyên Agent/Nhánh/Yêu cầu/Review AI ở đầu phiếu (Agent B dù kế hoạch tóm tắt ghi A).
-  Độ khó M, không sửa team.ps1/khóa/giao dịch git/chạy song song nên để model mặc định.
+| Triển khai đúng phạm vi, hết TODO | `Select-String hub/Services/WorkProgressParser.cs -Pattern 'TODO|NotImplementedException'`: không khớp; sản phẩm 243 dòng, giữ chữ ký/model. |
+| Parse mẫu thật, BOM/CRLF, chuẩn hóa | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~W105WorkProgressExtraTests|FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m`: 47 pass/23 fail/0 skip; các ca Parse pass. |
+| Chín bước, CurrentStep, LatestError | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~W105WorkProgressExtraTests --blame-hang-timeout 2m`: 7 pass/0 fail/0 skip, gồm cả hai chuỗi QC quản lý yêu cầu. |
+| Lượt, thời gian, lỗi và Merge | Cùng lệnh hồi quy: pass so thời gian trước lượt số, giữ kết quả riêng từng bước; Merge/✅ hoàn thành cả chín bước và xóa lỗi. |
+| Thuần, dữ liệu độc hại, thiếu metadata | Không đổi Parse/SetMeta; test nghiệm thu kiểm bất biến đầu vào qua các assertion trước khi đỏ tại LatestError (quy tắc mới chỉ lấy lỗi của CurrentStep); chưa đạt nguyên bộ nghiệm thu cũ. |
+| Build toàn solution | `dotnet build AITeam.sln --no-restore -m:1 -p:UseSharedCompilation=false --nologo`: exit 0, 0 warning/0 error; build mặc định trước đó exit 1 không chẩn đoán, sandbox chặn pipe compiler server. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=quiet"`: Hub 565 pass/32 fail/0 skip (23 W1-05 xung đột quy tắc mới, 9 ngoài phạm vi); dừng bằng Ctrl+C sau ~3 phút, Core chưa có tổng kết, exit 1. |
+| Báo cáo, BOM, nghiệm thu bất biến | Đã kiểm byte EF-BB-BF hai file .cs; SHA256 nghiệm thu trước/sau bằng `83515705FD8E75C306C7DD0467841F17BF47E80470C53A15753C541182E95F04`; không sửa fixture/test nghiệm thu. |
+File đổi/lý do: `hub/Services/WorkProgressParser.cs` (chọn kết quả riêng từng bước, nhận XONG); `hub.tests/W105WorkProgressExtraTests.cs` (7 hồi quy theo chỉ đạo mới); file task này (báo cáo).
+Quyết định: ưu tiên yêu cầu mới của quản lý so với task/test cũ: Assign Passed ⇒ Code Done; bước đầu chưa Done là Current; Merge ⇒ mọi bước Done. Không vá test nghiệm thu để xanh; 23 ca cần quản lý cập nhật hợp đồng.
+Chưa xác minh: Core/toàn bộ test chưa đạt; không điều tra lỗi ngoài phạm vi. V8-02 Bo_dem_rieng: quản lý báo đã chạy lại riêng 9/9 PASS do máy bận, không phải kết quả chạy riêng của agent; chưa có workflow thực thi thật. Không có MCP aiteam_post_message; không chạy git, hệ thống tự commit/push, chưa có commit được kiểm.
 
 ## Review (Claude)
 <!-- Claude ghi kết quả review sau khi agent triển khai. -->
