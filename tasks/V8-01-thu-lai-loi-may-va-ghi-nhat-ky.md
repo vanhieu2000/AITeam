@@ -1,4 +1,4 @@
-﻿# V8-01 · Thử lại lỗi máy và ghi nhật ký
+# V8-01 · Thử lại lỗi máy và ghi nhật ký
 
 - **Agent:** A
 - **Nhánh:** `agent-a/V8-01-thu-lai-loi-may-va-ghi-nhat-ky`
@@ -92,7 +92,11 @@
 - File đổi: `team.ps1` (giao dịch/lượt/phiếu), `tools/workflow-common.ps1` (summary), `tools/test-verify.ps1` (hồi quy), file task (báo cáo). Quyết định: thu hồi task tạm của Prep lỗi để vẫn chuẩn bị lại được; hệ thống tự commit/push, không chạy git trực tiếp. Lượt riêng `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceV801WorkflowTests --blame-hang-timeout 2m -m:1 -nr:false` đã ngắt sau hơn 3 phút; ghi nhận 1 ca lỗi `KhoaChanTienTrinhKhacVaTimeout` (tiến trình con chưa lấy được khóa), chưa có tổng kết. Chưa xác minh: toàn bộ hồi quy/nghiệm thu, MCP thật.
 
 ## Review (Claude)
-<!-- Claude điền khi nghiệm thu. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- 4 vòng: Minh 3 lượt (2 lượt flash-medium, 1 lượt claude-opus-4-6-thinking) + Codex vòng 4 sửa 6 phát hiện QC; cổng KT ĐẠT.
+- Claude kiểm: không còn `reset --hard` (thay bằng pull --rebase); dòng tổng kết MSBuild 'N Error(s)' không còn bị coi là lỗi lạ; kịch bản test-verify 14 (lỗi hạ tầng lẫn lỗi lạ) + 15 (chỉ commit phiếu của task).
+- Bài học: task lõi khó ⇒ dùng model mạnh ngay từ đầu (flash-medium bỏ sót lỗi nguy hiểm 2 lượt); vượt ngân sách 758/320 dòng.
 
 ## Kết quả
-<!-- Claude điền sau review đạt. -->
+- Cổng KT tự chạy lại 1 lần khi lỗi máy (khóa file, MSB3491); nhật ký phiếu tự ghi (prep / assign / cổng KT / QC / merge) dưới khóa chung, không commit nhầm phiếu khác.
+
