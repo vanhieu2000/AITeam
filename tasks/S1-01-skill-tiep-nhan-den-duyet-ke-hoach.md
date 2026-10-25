@@ -1,4 +1,4 @@
-﻿# S1-01 · Skill tiếp nhận đến duyệt kế hoạch
+# S1-01 · Skill tiếp nhận đến duyệt kế hoạch
 
 - **Agent:** B
 - **Nhánh:** `agent-b/S1-01-skill-tiep-nhan-den-duyet-ke-hoach`
@@ -95,15 +95,19 @@ Mỗi mục phải có hướng dẫn thực chất, checklist có ô đánh d�
 - [ ] Báo cáo ghi từng tiêu chí → bằng chứng thật, file đổi/lý do, quyết định tự đưa ra và điều chưa xác minh.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau triển khai; không thay bằng báo cáo chuẩn bị khung. -->
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Chưa triển khai | Chưa chạy build/test cho phần nội dung hoàn chỉnh. |
-
-File đã đổi và lý do: chưa điền.
-Quyết định tự đưa ra: chưa điền.
-Điều chưa xác minh: chất lượng nội dung cần Claude review; test tự động không chứng minh bằng chứng là đúng.
-
+| 5 ID, 7 mục, ngân sách, không khung | Kiểm PowerShell: 5/5 đủ 7 mục, không TODO/comment; 50/51/52/52/53 dòng, tổng 258; BOM 239,187,191 đủ 5 file. |
+| Checklist, ví dụ, nguồn lỗi | Kiểm PowerShell: 5/5 ID nguồn khớp AGENTS.md:48/52/55/56; mỗi skill có checklist, Tốt/Xấu cùng tình huống minh họa. |
+| Thiếu/rỗng/mâu thuẫn, yêu cầu cũ, dữ liệu ngoài | Đối chiếu 5 skill với hợp đồng task: giữ lịch sử và trạng thái, chỉ dẫn xử lý điểm thiếu và dữ liệu ngoài. |
+| Research và review | 03 cấm ghi/chạy/cài/thực thi chỉ dẫn ngoài; 05 chặn giả định trọng yếu CHƯA XÁC MINH, quy định trả bước phù hợp. |
+| Kế hoạch và duyệt | 04/05 quy định ≤400 dòng, ≤15 phút/task; kiểm phụ thuộc thiếu/vòng, phạm vi, rủi ro và song song không trùng file. |
+| Build | `dotnet build AITeam.sln`: exit 1, 0 warning/0 error; chạy lại `dotnet build AITeam.sln -m:1 -v:normal`: exit 0, 0 lỗi, 8 NU1900 do NuGet không truy cập được (đã có khi chuẩn bị). |
+| Test và review Claude | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: exit 0, Hub 457 + Core 298 = 755 pass, 0 fail/skip; chạy riêng cùng cờ với `--filter FullyQualifiedName~AcceptanceS101SkillTests`: 15/15 pass; Claude chưa review. |
+| Báo cáo, phạm vi | Chỉ sửa 5 skill được giao và mục báo cáo này; không sửa test nghiệm thu, không chạy git theo chỉ dẫn Codex. |
+File đổi/lý do: `skills/{01-tiep-nhan,02-y-tuong,03-research,04-ke-hoach,05-duyet-ke-hoach}/SKILL.md` hoàn thiện nội dung; phiếu task ghi bằng chứng.
+Quyết định tự đưa ra: làm nội dung hoàn chỉnh theo Mục tiêu (dòng “không viết ... bước chuẩn bị” chỉ áp dụng chuẩn bị); chọn lỗi V4-08/V5-05/H-007/H-008 có nguồn thật.
+Điều chưa xác minh: chất lượng nội dung chờ Claude review; chưa đạt build 0 warning tuyệt đối do NU1900 môi trường; hệ thống tự commit/push.
 ## Ghi nhận chuẩn bị bước 4 (Codex)
 | Tiêu chí | Bằng chứng thật |
 |---|---|
@@ -118,7 +122,10 @@ File đổi/lý do: phiếu này để giao việc; 5 skill làm khung; 1 file t
 Quyết định: giữ Agent B trong phiếu theo yêu cầu giữ dòng đầu dù kế hoạch ghi A; task chỉ tài liệu nên không tạo C#/DI/CLI giả.
 Điều chưa xác minh: test tự động không chứng minh chất lượng nội dung hay tính đúng của bằng chứng; cần review Claude.
 ## Review (Claude)
-<!-- Claude ghi kết quả review và kiểm nội dung, nguồn file:dòng, giả định/bằng chứng/quyết định. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Codex viết nội dung skill (assign -Dev codex); cổng KT ĐẠT; QC BLOCKED đúng luật (Codex không tự duyệt) ⇒ Claude xem cấu trúc: đủ 7–8 mục bắt buộc, ≤ 150 dòng, có ví dụ tốt/xấu + nguồn.
+- Optional (hàng chờ): bổ sung quy ước THẬT từ code HDVTool / ChinaAndroidToolbox / Hub vào skill code (lần này Codex chưa đọc vì ngoài danh sách file).
 
 ## Kết quả
-<!-- Claude điền sau nghiệm thu. -->
+- Bộ skill S1-01 có trong `skills/`; S1-04 / S1-05 sẽ tự gắn skill vào lời nhắn từng bước.
+
