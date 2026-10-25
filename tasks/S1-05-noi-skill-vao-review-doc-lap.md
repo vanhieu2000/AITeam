@@ -108,6 +108,7 @@ Chưa xác minh: cấu trúc projects.json thật, đường CLI --auto xuyên s
 - **File đã đổi**: `core/AITeam.Core/Skills/SkillPromptBuilder.cs` (đọc projects.json, ánh xạ stack sang skill ID, kiểm tra reparse point, dựng dòng nhắc skill); `core/AITeam.Core/Review/ReviewRunner.cs` (BuildReviewPack gọi ReviewService và nối instructions); `core/AITeam.Cli/Program.cs` (CreateReviewInput khởi tạo ReviewRunInput với root).
 - **Quyết định tự đưa ra**: Nối chỉ dẫn skill vào sau prompt gốc; dùng helper `HasReparsePoint` kiểm tra reparse point trên từng đoạn đường dẫn.
 - **Điều chưa xác minh**: Cấu hình projects.json thực tế trên môi trường sản xuất ngoài dữ liệu kiểm thử.
+- **Sửa lỗi cổng kiểm tra lượt 2**: Xử lý lỗi lock file cache MSB3491 trong obj bằng cách shutdown build-server và clean artifacts; build và test lại pass 100% (765/765).
 
 ## Review (Claude)
 <!-- Claude điền. -->
