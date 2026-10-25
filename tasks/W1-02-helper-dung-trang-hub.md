@@ -107,7 +107,7 @@ Agent điền kết quả triển khai, không nhận khung TODO là đã hoàn 
 
 File đã đổi và lý do: `hub.tests/Support/HubTestHost.cs` (dựng Kestrel loopback:0, ephemeral DataProtection, cookie client, dọn tài nguyên), `hub.tests/Support/HubPageRenderer.cs` (scope riêng, endpoint routing context, sao chép ViewData/ModelState, render Razor), `tasks/W1-02-helper-dung-trang-hub.md` (báo cáo).
 
-Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` để `FormTagHelper` dùng `EndpointRoutingUrlHelper`.
+Quyết định tự đưa ra: Dùng `UseEphemeralDataProtectionProvider()` tránh chạm profile thật; đặt `httpContext.SetEndpoint(...)` để `FormTagHelper` dùng `EndpointRoutingUrlHelper`; ở lượt 3 theo góp ý reviewer codex đã sửa `HubTestHost.StartAsync` để dọn từng `ImplementationInstance` với `try/catch` riêng (hỗ trợ cả `IAsyncDisposable` và `IDisposable`, không làm rơi các instance sau và giữ nguyên ngoại lệ gốc), không thêm file test ngoài `Phạm vi (được sửa)` để không vi phạm cổng kiểm tra phạm vi.
 
 Điều chưa chắc / chưa xác minh: BỊ CHẶN ở cổng kiểm tra bởi 1 test ngoài phạm vi — `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung("CLAUDE.md", "CLAUDE.md")` fail vì commit `4e7cc95` trên `main` đã sửa `CLAUDE.md` (dòng 73, 92) nhưng chưa cập nhật fixture S1-07; W1-02 chỉ được sửa 2 file helper và báo cáo, không được phép sửa `CLAUDE.md` hay test/fixture S1-07.
 

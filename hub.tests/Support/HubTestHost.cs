@@ -87,7 +87,14 @@ public sealed class HubTestHost : IAsyncDisposable
             else
             {
                 foreach (var d in builder.Services)
-                    (d.ImplementationInstance as IDisposable)?.Dispose();
+                    try
+                    {
+                        if (d.ImplementationInstance is IAsyncDisposable ad)
+                            await ad.DisposeAsync();
+                        else if (d.ImplementationInstance is IDisposable disp)
+                            disp.Dispose();
+                    }
+                    catch { }
             }
             throw;
         }
