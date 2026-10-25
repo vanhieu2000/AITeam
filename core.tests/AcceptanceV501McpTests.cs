@@ -121,7 +121,10 @@ public sealed class AcceptanceV501McpTests : IDisposable
             Command = "dotnet",
             Arguments = [Dll, "mcp", "--project", "AITeam", "--task", "V5-1", "--role", "developer", "--task-file", _taskFile, "--logs", _logs, "--from", "Minh (A)"],
         });
-        await using var client = await McpClient.CreateAsync(transport);
+        // Ghim giao thức 2025-11-25 (bản cuối còn `initialize`): SDK 2.3.0 mặc định thử 2026-07-28 (`server/discover`);
+        // máy bận ngay sau build ⇒ dò chậm, client rơi về `initialize` mà vẫn gắn 2026-07-28 ⇒ server từ chối
+        // ("Method 'initialize' is not available on protocol version '2026-07-28'") — gốc của lỗi "chập chờn" (R-006, Claude sửa).
+        await using var client = await McpClient.CreateAsync(transport, new McpClientOptions { ProtocolVersion = "2025-11-25" });
 
         var tools = (await client.ListToolsAsync()).Select(t => t.Name).OrderBy(n => n).ToArray();
         Assert.Equal(new[] { "aiteam_get_artifacts", "aiteam_get_task", "aiteam_get_test_results", "aiteam_post_message" }, tools);
