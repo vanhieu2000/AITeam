@@ -80,18 +80,18 @@ Triển khai phần thân `Invoke-SkillNote -Root <repo> -Skill <id> -Text <text
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đã đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau triển khai; không lấy kết quả build khung làm bằng chứng tính năng đã hoàn tất. -->
-
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Build và test | Chưa triển khai |
-| Định dạng, chống trùng | Chưa triển khai |
-| Bảo mật, Git và lỗi | Chưa triển khai |
-
-File đã đổi và lý do: …
-Quyết định tự đưa ra: …
-Điều chưa xác minh: …
-
+| Build | `dotnet build AITeam.sln` thất bại không chẩn đoán (0 warning/0 error); chạy lại `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers -v:minimal` đạt 0 lỗi, 0 warning. |
+| Test toàn dự án | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 518 đạt/9 lỗi/0 skip; Core chưa hoàn tất, dừng bằng Ctrl+C sau hơn 3 phút. |
+| Định dạng, Unicode, chống trùng | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS106SkillNotesTests" --blame-hang-timeout 2m`: 0 đạt/51 lỗi/0 skip, chưa nghiệm thu được. |
+| ID, nội dung, dữ liệu thiếu, file bẩn, liên kết | Cùng lệnh test riêng: 50 ca lỗi tại `Area.Dispose():349` khi xóa object Git chỉ đọc; ca không tạo repo bị thêm CLIXML PowerShell vào stderr. Không sửa test. |
+| Cô lập commit, Git lỗi, không push | Đã triển khai argv riêng tương thích PS 5.1, timeout/exit code, status trước chống trùng và commit --only; test bị lỗi dọn dữ liệu nên chưa kết luận đạt. |
+| Báo cáo, phạm vi, mã hóa | Parser PowerShell: 0 lỗi; `ReadAllBytes`: BOM EF-BB-BF; script 241 dòng; giữ nguyên test nghiệm thu. |
+File đổi: `scripts/SkillNotes.ps1` (kiểm đường dẫn, chống trùng, bảo toàn byte, gọi Git); file task này (báo cáo).
+Quyết định: giữ nguyên khung/chữ ký, dùng fixture/test đã có; không thêm test ngoài phạm vi, không sửa lỗi Hub; không chạy app/chụp ảnh.
+Điều chưa xác minh: nghiệm thu xanh và commit/push; hệ thống tự commit/push theo chỉ dẫn Codex, không có commit được kiểm.
+Vướng cần Claude xử lý: cleanup test Git chỉ đọc, CLIXML stderr và lỗi quyền truy cập Hub; log solution: `%TEMP%\S106-solution-tests.log`; MCP aiteam_post_message không có trong phiên.
 ## Review (Claude)
 <!-- Claude điền sau khi coder hoàn thành. -->
 
