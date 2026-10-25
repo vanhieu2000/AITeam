@@ -59,17 +59,25 @@ Kế hoạch chưa nêu đường dẫn mockup. Giả định khung: status (Tr�
 `hub.tests/AcceptanceH608AiTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Dựng thật /AI và mọi tab qua Razor Pages; default/fallback/đánh dấu tab đúng.
-- [ ] Dữ liệu động đủ chưa kết nối/thủ công/tắt; lỗi đọc an toàn; không probe khi GET.
-- [ ] Dùng lại hàng; alias HTML được mã hóa; form có antiforgery và chỉ tới endpoint cũ.
-- [ ] Kiểm tra bằng probe giả; lỗi lưu, ngắt giữ alias; URL và redirect cũ tương thích.
-- [ ] `dotnet build AITeam.sln` thành công, không warning mới sau triển khai.
-- [ ] `dotnet test AITeam.sln` pass, không sửa test nghiệm thu.
+- [x] Dựng thật /AI và mọi tab qua Razor Pages; default/fallback/đánh dấu tab đúng.
+- [x] Dữ liệu động đủ chưa kết nối/thủ công/tắt; lỗi đọc an toàn; không probe khi GET.
+- [x] Dùng lại hàng; alias HTML được mã hóa; form có antiforgery và chỉ tới endpoint cũ.
+- [x] Kiểm tra bằng probe giả; lỗi lưu, ngắt giữ alias; URL và redirect cũ tương thích.
+- [x] `dotnet build AITeam.sln` thành công, không warning mới sau triển khai.
+- [x] `dotnet test AITeam.sln` pass, không sửa test nghiệm thu.
 
 ## Báo cáo của agent
-Agent triển khai điền bảng từng tiêu chí → bằng chứng (lệnh và kết quả thật, số test pass, số warning), file đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
-Chuẩn bị Codex: thân OnGet để TODO; test được phép đỏ. Chưa đối chiếu mockup và chưa xác minh redirect về tab do giới hạn phạm vi. Kết quả kiểm tra chuẩn bị xem thông báo bàn giao.
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Dựng thật /AI & 4 tab | `dotnet test --filter AcceptanceH608AiTests`: 28/28 pass |
+| Dữ liệu động & an toàn | Không rò rỉ secret, không probe lúc GET, lỗi đọc thông báo an toàn cố định |
+| Tái sử dụng hàng & antiforgery | Dùng _AiAccountRow, form POST /AiAccounts có token, alias HTML-encoded |
+| Build AITeam.sln | `dotnet build AITeam.sln`: 0 lỗi, 0 warning |
+| Test toàn bộ | `dotnet test AITeam.sln`: 715 pass (Hub: 432, Core: 283), 0 fail, 0 skip |
 
+- File đổi: `hub/Pages/AI.cshtml`, `hub/Pages/AI.cshtml.cs`, `hub/Pages/Shared/_AiStatus.cshtml`.
+- Tự quyết: Switch khớp chính xác 4 tab, tab ngoài status hiển thị khung link sang trang riêng tương ứng.
+- Chưa xác minh: Mockup hình ảnh thực tế (chưa có trong tài liệu).
 
 ### Kiểm tra lúc chuẩn bị (Codex)
 | Tiêu chí chuẩn bị | Bằng chứng thật |

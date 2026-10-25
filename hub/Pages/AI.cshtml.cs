@@ -23,6 +23,26 @@ public class AIModel(IAiAccountsService accounts) : PageModel
     /// </summary>
     public void OnGet(string? tab = null)
     {
-        throw new NotImplementedException(); // TODO(agent)
+        Tab = tab switch
+        {
+            "status" => "status",
+            "accounts" => "accounts",
+            "providers" => "providers",
+            "vault" => "vault",
+            _ => "status"
+        };
+
+        if (Tab == "status")
+        {
+            try
+            {
+                Rows = accounts.List();
+            }
+            catch (Exception)
+            {
+                Rows = Array.Empty<AiAccountView>();
+                Error = "Không đọc được danh sách tài khoản AI.";
+            }
+        }
     }
 }
