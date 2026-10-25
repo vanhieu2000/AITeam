@@ -51,6 +51,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H7-07 Giao diện Map](H7-07-giao-dien-map.md) | B | `agent-b/H7-07-giao-dien-map` | ✅ Đã merge (vòng 1) |
 | [S1-04 Nối skill vào plan, prep và giao code](S1-04-noi-skill-vao-plan-prep-va-giao-code.md) | A | `agent-a/S1-04-noi-skill-vao-plan-prep-va-giao-code` | ✅ Đã merge (vòng 1) |
 | [S1-06 Lệnh ghi bài học có commit](S1-06-lenh-ghi-bai-hoc-co-commit.md) | B | `agent-b/S1-06-lenh-ghi-bai-hoc-co-commit` | ✅ Đã merge (vòng 1) |
+| [S1-07 Nối nghiệm thu, IMP và hàng chờ Map](S1-07-noi-nghiem-thu-imp-va-hang-cho-map.md) | A | `agent-a/S1-07-noi-nghiem-thu-imp-va-hang-cho-map` | ⬜ Chưa giao |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
