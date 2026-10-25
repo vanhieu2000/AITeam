@@ -103,12 +103,12 @@ Chưa xác minh: cấu trúc projects.json thật, đường CLI --auto xuyên s
 | Chặn traversal, reparse point, JSON hỏng | Test `KhongTimDuocDuAn_KhongKhopTienToThuMuc`, `HaiDuAnMauThuan_BoStack`, `JsonHong_KhongAmThamCoiLaCauHinhRong`, `JsonHong_RunnerBlockedKhongGoiProvider` pass. |
 | Giữ nguyên schema & hash | Test `DiffDai_GiuHashDayDuVaCoCat`, `LoiGoiCuKhongRoot_GiuNguyenPack`, `CamTuDuyet_VanHieuLucKhiCoSkill` pass. |
 | Build 0 warning, 0 error | `dotnet build AITeam.sln`: 0 Warning, 0 Error. |
-| Test pass toàn bộ | `dotnet test AITeam.sln`: Core: 308 passed, Hub: 457 passed, tổng 765 passed, 0 failed, 0 skipped. |
+| Test pass toàn bộ | `dotnet test AITeam.sln`: Core: 310 passed, Hub: 457 passed, tổng 767 passed (gồm 25 nghiệm thu cố định + 2 test mới), 0 failed, 0 skipped. |
 
-- **File đã đổi**: `core/AITeam.Core/Skills/SkillPromptBuilder.cs` (đọc projects.json, ánh xạ stack sang skill ID, kiểm tra reparse point, dựng dòng nhắc skill); `core/AITeam.Core/Review/ReviewRunner.cs` (BuildReviewPack gọi ReviewService và nối instructions); `core/AITeam.Cli/Program.cs` (CreateReviewInput khởi tạo ReviewRunInput với root).
+- **File đã đổi**: `core/AITeam.Core/Skills/SkillPromptBuilder.cs` (so sánh danh tính mục cấu hình bằng `ReferenceEquals(projWork, projTask)`, không so sánh Name thay thế; đọc projects.json, ánh xạ stack, chặn traversal/reparse point); `core/AITeam.Core/Review/ReviewRunner.cs` (BuildReviewPack gọi ReviewService và nối instructions); `core/AITeam.Cli/Program.cs` (CreateReviewInput khởi tạo ReviewRunInput với root); `core.tests/SkillPromptBuilderTests.cs` (thêm test riêng cho hai dự án trùng tên và cùng thiếu tên; giữ nguyên test nghiệm thu cố định).
 - **Quyết định tự đưa ra**: Nối chỉ dẫn skill vào sau prompt gốc; dùng helper `HasReparsePoint` kiểm tra reparse point trên từng đoạn đường dẫn.
+- **Sửa theo Reviewer Codex (lượt 3)**: Đổi so sánh mục dự án sang thuần `ReferenceEquals(projWork, projTask)` để khi hai mục cấu hình khác nhau trùng Name hoặc cùng thiếu Name thì hai nguồn vẫn nhận diện là mâu thuẫn và bỏ stack đúng yêu cầu; bổ sung test riêng trong `SkillPromptBuilderTests.cs`.
 - **Điều chưa xác minh**: Cấu hình projects.json thực tế trên môi trường sản xuất ngoài dữ liệu kiểm thử.
-- **Sửa lỗi cổng kiểm tra lượt 2**: Xử lý lỗi lock file cache MSB3491 trong obj bằng cách shutdown build-server và clean artifacts; build và test lại pass 100% (765/765).
 
 ## Review (Claude)
 <!-- Claude điền. -->

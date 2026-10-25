@@ -66,8 +66,7 @@ public static class SkillPromptBuilder
                 ProjectItem? selected = null;
                 if (projWork != null && projTask != null)
                 {
-                    bool same = ReferenceEquals(projWork, projTask) ||
-                        string.Equals(projWork.Name, projTask.Name, StringComparison.OrdinalIgnoreCase);
+                    bool same = ReferenceEquals(projWork, projTask);
                     if (same)
                         selected = projWork;
                     else
