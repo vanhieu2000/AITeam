@@ -1,4 +1,5 @@
-﻿using AITeam.Hub.Services;
+﻿using System.ComponentModel.DataAnnotations;
+using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -7,8 +8,10 @@ namespace AITeam.Hub.Pages;
 /// <summary>Dòng nhập Map; Code/Actor phân biệt hoa thường, Note giữ nguyên văn, tối đa 500 đơn vị UTF-16.</summary>
 public sealed class MapRoleInput
 {
-    public string Code { get; set; } = "";
-    public string Actor { get; set; } = "";
+    [DisplayFormat(ConvertEmptyStringToNull = false)]
+    public string? Code { get; set; } = "";
+    public string? Actor { get; set; } = "";
+    [DisplayFormat(ConvertEmptyStringToNull = false)]
     public string? Note { get; set; } = "";
 }
 
@@ -33,7 +36,7 @@ public sealed class MapModel(IWorkflowRolesService service) : PageModel
     private static readonly Dictionary<string, string> CodeLabels = Steps.ToDictionary(s => s.Code, s => s.Label, StringComparer.Ordinal);
 
     public (string Val, string Text)[] ActorChoices => StaticActors;
-    public string GetLabel(string code) => CodeLabels.TryGetValue(code, out var label) ? label : code;
+    public string GetLabel(string? code) => !string.IsNullOrEmpty(code) && CodeLabels.TryGetValue(code, out var label) ? label : (code ?? "");
 
     [BindProperty] public List<MapRoleInput> Roles { get; set; } = [];
     [BindProperty] public string Revision { get; set; } = "";

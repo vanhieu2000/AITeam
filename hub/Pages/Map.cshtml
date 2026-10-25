@@ -27,10 +27,11 @@
                         @for (var i = 0; i < Model.Roles.Count; i++)
                         {
                             var role = Model.Roles[i];
+                            if (role == null) continue;
                             var label = Model.GetLabel(role.Code);
                             <tr>
                                 <td class="col-step">
-                                    <input type="hidden" name="Roles[@i].Code" value="@role.Code" />
+                                    <input type="hidden" name="Roles[@i].Code" value="@(role.Code ?? "")" />
                                     <span class="map-label">@label</span>
                                 </td>
                                 <td class="col-actor">

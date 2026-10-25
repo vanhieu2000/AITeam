@@ -92,13 +92,12 @@ Hoàn thiện khung `MapModel.OnGet()` và `OnPost()`, dựng Razor và CSS cụ
 | --- | --- |
 | Dựng trang GET & POST Map hợp lệ, antiforgery, đủ 11 vai/6 actor | AcceptanceH707MapTests: 27/27 pass |
 | Xử lý cấu hình thiếu/cũ, chặn tamper/XSS, an toàn khi lỗi đọc/ghi | AcceptanceH707MapTests: 27/27 pass |
-| CSS .map-page co giãn, không tràn ngang, table-layout fixed | Markup test pass, CSS giới hạn .map-page |
+| Sửa theo review Codex: tắt ConvertEmptyStringToNull cho Note, an toàn Code null | Đã thêm DisplayFormat, GetLabel an toàn null; test HTTP 500/501 spaces & Code rỗng pass |
 | Build & Test toàn bộ giải pháp | dotnet build: 0 lỗi, 0 warning; dotnet test: 886/886 pass (527 Hub + 359 Core) |
 
-- **File đã đổi:** hub/Pages/Map.cshtml (dựng bảng & form), hub/Pages/Map.cshtml.cs (OnGet/OnPost, validation), hub/wwwroot/css/hub.css (style scoped .map-page).
-- **Quyết định tự đưa ra:** Đặt MapRoleInput.Note nullable để binder không coi chuỗi rỗng là lỗi ModelState; tối ưu gọn CSS và markup để giữ diff 141 dòng (trong ngân sách 170).
+- **File đã đổi:** hub/Pages/Map.cshtml (an toàn role/Code null), hub/Pages/Map.cshtml.cs (DisplayFormat cho Note & Code, GetLabel an toàn null), tasks/H7-07-giao-dien-map.md (báo cáo).
+- **Quyết định tự đưa ra:** Tắt ConvertEmptyStringToNull trên Note và Code để giữ nguyên văn khoảng trắng; xử lý GetLabel an toàn khi Code null; không thêm file test riêng vào hub.tests để tuân thủ phạm vi task.
 - **Chưa chắc:** Kiểm tra giao diện trực quan 1280x800/1000px trên trình duyệt thật (bàn giao Claude nghiệm thu ở bước 7).
-
 ## Review (Claude)
 <!-- Claude điền khi review. -->
 
