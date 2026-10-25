@@ -1,4 +1,4 @@
-﻿# S1-08 · Bổ sung quy ước thật vào 4 skill code
+# S1-08 · Bổ sung quy ước thật vào 4 skill code
 
 - **Agent:** B
 - **Nhánh:** `agent-b/S1-08-bo-sung-quy-uoc-that-vao-4-skill-code`
@@ -101,12 +101,12 @@ Thêm mục `## Quy ước của dự án` vào từng skill. Mỗi quy ước g
 | Nguồn ChinaAndroidToolbox (đường dẫn tương đối gốc dự án) | src/ChinaAndroidToolbox.App/{MainForm.cs:22,MainForm.Designer.cs:309,Views/DashboardView.cs:23,Views/DashboardView.Designer.cs:82,Views/SettingsView.cs:14,Views/SettingsView.Designer.cs:233}; tests/ChinaAndroidToolbox.Tests/{AcceptanceC011Tests.cs:37,ChinaAndroidToolbox.Tests.csproj:4,UiLayout/ViewLayoutTests.cs:37,UiLayout/UiThread.cs:9,UiLayout/LayoutChecker.cs:19,UiLayout/TestUiContext.cs:22}; tools/UiSnapshot/Program.cs:11. |
 | Nguồn AITeam | Hub: hub/Pages/{Office.cshtml:22,Office.cshtml.cs:17,Approvals.cshtml:61,Approvals.cshtml.cs:9,Shared/_OfficeControl.cshtml:19,Shared/_OfficeDesks.cshtml:96}; hub/Services/OfficeService.cs:41; hub.tests/{PageTests.cs:14,AcceptanceV504OfficeTests.cs:151}. Core: core/AITeam.Cli/Program.cs:9; core/AITeam.Core/Process/ProcessRunner.cs:7; core.tests/{ReviewCliTests.cs:13,DevRunnerCliTests.cs:14,AITeam.Core.Tests.csproj:19}. Hướng dẫn: AGENTS.md:47, plans/R-010/brief.md:5 và bốn skill/task được giao. |
 ## Review (Claude)
-<!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
-**Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
-**Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude)
+- Codex đọc code thật HDVTool / ChinaAndroidToolbox / Hub, thêm mục 'Quy ước của dự án' (file:dòng) vào 4 skill code; cổng KT ĐẠT; QC BLOCKED đúng luật (Codex không tự duyệt).
+- Optional (hàng chờ): LayoutChecker bỏ qua cây control không Visible ⇒ test bố cục trên form ẩn có thể đạt giả — cần task sửa helper ở HDVTool / Toolbox.
 
 ## Kết quả
-<!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
+- Skill code có quy ước THẬT của từng dự án (helper UiThread / LayoutChecker / UiSnapshot, bố cục từng view, cách test Hub).
 
 ## Đánh giá quy trình
 <!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
