@@ -97,7 +97,16 @@ Mục an toàn phải ghi rõ: đây là hàng chờ R-009, “chưa tạo trang
 ## Review (Claude)
 <!-- Claude điền. -->
 
+### Vòng 1 — ĐẠT (sau khi Claude chốt helper + sửa)
+- Cổng KT ĐẠT (1042 test). Codex QC BLOCKED đúng: kế hoạch thiếu hợp đồng helper cho nghiệm thu (TK).
+- Quản lý chốt + Claude sửa: `Add-SkillPrompt -Stage accept` ⇒ `10-nghiem-thu` + skill stack; `team.ps1 review` in mục "Skill nghiệm thu". Sửa lỗi `switch` 1 phần tử bị mở thành chuỗi (bọc `@()`). Thêm 2 ca accept vào test S1-04.
+- Claude sửa `tools/test-verify.ps1`: chép `scripts/` vào sandbox kịch bản; cho phép `$text` cục bộ (tham số `-Text` của S1-06 chỉ đọc ở switch cấp cao) — main đang hỏng kiểm tra tĩnh từ S1-06.
+- Tài liệu (CLAUDE.md, mẫu task/IMP, hàng chờ Map 11 ánh xạ) đúng kế hoạch.
+- [TK] (phạm vi) kế hoạch S1-07 không chốt hợp đồng helper cho bước nghiệm thu.
+- [CK] (test) cổng KT không chạy `tools/test-verify.ps1` ⇒ S1-04/S1-06 làm hỏng kiểm tra tĩnh mà vẫn ĐẠT.
 ## Kết quả
+- `team.ps1 review` tự in skill nghiệm thu đúng stack; mẫu task / IMP / sổ tay nhắc ghi bài học bằng `skill-note`; có danh sách 11 nghiệp vụ → skill cho trang Map (R-009).
+- Kiểm chứng: 41 test S1-04 + S1-07, kiểm tra tĩnh + kịch bản `test-verify` ĐẠT.
 <!-- Claude điền sau nghiệm thu. -->
 
 ## Đánh giá quy trình

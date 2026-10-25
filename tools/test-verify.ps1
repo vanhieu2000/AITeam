@@ -27,6 +27,8 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
     Copy-Item $(if ($TeamPs1) { $TeamPs1 } else { Join-Path $src "team.ps1" }) (Join-Path $root "team.ps1")
     Copy-Item (Join-Path $src "tools\secret-scan.ps1") (Join-Path $root "tools")
     Copy-Item (Join-Path $src "tools\workflow-common.ps1") (Join-Path $root "tools")
+    # team.ps1 dot-source scripts/SkillPrompts.ps1 + SkillNotes.ps1 (S1-04/S1-06) — thiếu ⇒ mọi kịch bản hỏng (Claude sửa 25/10).
+    Copy-Item (Join-Path $src "scripts") (Join-Path $root "scripts") -Recurse
     $cfg = Get-Content (Join-Path $src "team.json") -Raw -Encoding UTF8 | ConvertFrom-Json
     $cfg.projectsRoot = $S; $cfg.workRoot = $work
     W (Join-Path $root "team.json") ($cfg | ConvertTo-Json -Depth 10) $NoBom
@@ -79,12 +81,14 @@ try {
     $params = @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
     # Cho phép: biến gán có chủ đích thay giá trị tham số trong hàm không đọc tham số đó (đã rà 24/10).
     $allow = @{ "Invoke-Assign" = @("prompt", "model"); "Set-ManagerIdentity" = @("name"); "Invoke-SecretList" = @("names"); "Save-RunMetrics" = @("name"); "Invoke-ApprovalRequest" = @("title") }
+    # -Text (S1-06 skill-note) chỉ đọc ở switch cấp cao nhất; $text cục bộ có sẵn ở nhiều hàm không đọc tham số này (Claude rà 25/10).
+    $allowAll = @("text")
     $bad = @()
     foreach ($fn in $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)) {
         foreach ($as in $fn.FindAll({ $args[0] -is [System.Management.Automation.Language.AssignmentStatementAst] }, $true)) {
             $v = $as.Left; if ($v -isnot [System.Management.Automation.Language.VariableExpressionAst]) { continue }
             $nm = $v.VariablePath.UserPath; if ($nm -match ':') { continue }
-            if (($params | Where-Object { $_ -ieq $nm }) -and -not ($allow[$fn.Name] -contains $nm.ToLower())) { $bad += "$($fn.Name):$($v.Extent.StartLineNumber) `$$nm" }
+            if (($params | Where-Object { $_ -ieq $nm }) -and -not ($allow[$fn.Name] -contains $nm.ToLower()) -and -not ($allowAll -contains $nm.ToLower())) { $bad += "$($fn.Name):$($v.Extent.StartLineNumber) `$$nm" }
         }
     }
     Check "không biến cục bộ nào đè tham số script ngoài danh sách cho phép" ($bad.Count -eq 0) ($bad -join "`n")
