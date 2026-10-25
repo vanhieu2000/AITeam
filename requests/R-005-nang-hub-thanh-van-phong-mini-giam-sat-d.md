@@ -56,6 +56,10 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-005` để `team.ps1 reque
 | 08:48 | Giao V5-07a (Minh): lõi lời nhắn / che bí mật / lưu research / connector Codex + Gemini, 35 ca nghiệm thu | |
 | 08:55 | Minh xong V5-07a (7', cổng KT ĐẠT lần đầu); review ĐẠT vòng 1; merge | |
 | 09:05 | Giao V5-07b (Lan): trang Phòng nghiên cứu, 17 ca nghiệm thu | |
+| 09:07 | Lan xong V5-07b (8', cổng KT ĐẠT lần đầu) | |
+| 09:10 | Review V5-07b trên Hub thật: hỏi ChatGPT qua Codex ⇒ ~30 giây câu trả lời tự hiện + lưu research/R-005; Gemini báo đúng "chưa đăng nhập" | |
+| 09:15 | Claude: bàn Phòng nghiên cứu ở Văn phòng + menu; test MCP lõi lỗi chập chờn 1 lần ⇒ tách việc điều tra; ĐẠT vòng 1, merge; Hub 5057 bản mới | |
+| 09:20 | IMP-006 (hx-confirm trên form, chuỗi bí mật giả ghép lúc chạy, test chập chờn tách riêng) | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
