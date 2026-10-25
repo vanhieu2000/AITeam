@@ -26,6 +26,13 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-006` để `team.ps1 reque
 | 10:20 | Chủ dự án chọn: research = ChatGPT qua Codex; thử 1 yêu cầu nhỏ trước | |
 | 10:45 | Claude: aiteam run --read-only, team.ps1 plan / prep, mẫu codex-plan / codex-prep, QUY-TRINH v4 (thử); test đạt; merge | |
 | 10:50 | Bước 1: Claude viết plans/R-006/brief.md (giới hạn vòng review) | |
+| 10:24 | Bước 2: Codex lập kế hoạch 92s (183k token vào) ⇒ 2 task; Claude duyệt | |
+| 10:32 | Bước 4: Codex chuẩn bị V6-01 343s (~967k token vào) ⇒ tự giao Minh | |
+| 10:30 | Hộp lỗi dotnet.exe trên máy chủ dự án: test của Codex gọi CLI khung (NotImplementedException) ⇒ luật CLI bắt mọi ngoại lệ | |
+| 10:52 | Bước 5: Minh 2 lượt; cổng KT trượt (test MCP chập chờn) ⇒ Claude chạy lại ĐẠT | |
+| 11:00 | Bước 6: Codex QC 47s ⇒ CẦN SỬA 3 lỗi thật (Minh đổi TEMP toàn tiến trình…) ⇒ giao lại | |
+| 11:11 | Antigravity HẾT HẠN MỨC ⇒ tự chuyển Codex sửa 111s | |
+| 11:25 | Claude sửa test nghiệm thu (thư mục tên DOS con); Codex QC vòng 2 còn 1 điểm hẹp ⇒ Claude xếp Optional; nghiệm thu ĐẠT; merge | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;

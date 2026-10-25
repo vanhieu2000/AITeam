@@ -893,6 +893,10 @@ function Invoke-Prep {
     git -C $r.Path add -- "tasks/$fileName" "tasks/README.md" 2>$null
     git -C $r.Path commit -q -m "Task $Task (Codex chuẩn bị, $Request)" -- "tasks/$fileName" "tasks/README.md" 2>&1 | Out-Null
     git -C $r.Path push -q 2>&1 | Out-Null
+    # Gộp main (đã có file task giống hệt) vào nhánh ngay ⇒ tổ tiên chung có file task ⇒ lần sau agent sửa báo cáo không bị xung đột add/add (H6-07).
+    git -C $work fetch -q origin 2>$null
+    git -C $work merge -q --no-edit origin/main 2>&1 | Out-Null
+    git -C $work push -q 2>&1 | Out-Null
     git -C $r.Path worktree remove --force $work 2>&1 | Out-Null
     $ErrorActionPreference = $eap
     Say "Đã chuẩn bị ${Task}: tasks/$fileName + nhánh $branch$(if ($j) { ' · ' + $j.summary })." Green

@@ -17,6 +17,7 @@ try
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
         "review" => await Review(),
+        "review-rounds" => ReviewRounds(),
         "run" => await Run(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         _ => Help(),
@@ -26,6 +27,11 @@ catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException o
 {
     Console.Error.WriteLine($"LỖI cấu hình: {ex.Message}");
     return 2;
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"LỖI: {ex.Message}");
+    return 1;
 }
 
 async Task<int> Providers()
@@ -72,6 +78,126 @@ int TaskInfo()
     return 0;
 }
 
+/// <summary>
+/// Lệnh review-rounds --task-file &lt;f&gt; --logs &lt;d&gt; --task &lt;T&gt;.
+/// Thiếu/giá trị trắng của bất kỳ tham số bắt buộc nào (kiểm tra trước mã task):
+/// stderr "LỖI: thiếu tham số bắt buộc (--task-file, --logs, --task).", stdout rỗng, trả 2.
+/// T chỉ gồm [A-Za-z0-9][A-Za-z0-9_-]{0,63}, khớp toàn chuỗi (kể cả từ chối LF cuối):
+/// sai thì stderr "LỖI: mã task không hợp lệ.", stdout rỗng, trả 2 trước khi đọc nguồn.
+/// Đọc UTF-8 có/không BOM. Chỉ file trực tiếp trong logs có tên bắt đầu bằng
+/// T + ".review-" và kết thúc ".json" (so sánh Ordinal); không duyệt thư mục con,
+/// không theo file/thư mục reparse point. Không dùng T làm mẫu wildcard hay ghép lệnh.
+/// Nguồn thiếu, không đọc được, đường dẫn hỏng: riêng nguồn đó đóng góp 0, vẫn đọc nguồn khác.
+/// Gọi ReviewRoundCounter.Count; stdout duy nhất số nguyên thập phân + xuống dòng,
+/// stderr rỗng, trả 0. Không đọc cấu hình, ghi file hoặc gọi agy/codex.
+/// </summary>
+int ReviewRounds()
+{
+    var taskFile = Arg("--task-file");
+    var logsDir = Arg("--logs");
+    var taskId = Arg("--task");
+
+    if (string.IsNullOrWhiteSpace(taskFile) ||
+        string.IsNullOrWhiteSpace(logsDir) ||
+        string.IsNullOrWhiteSpace(taskId))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--task-file, --logs, --task).");
+        return 2;
+    }
+
+    if (!IsValidTaskId(taskId))
+    {
+        Console.Error.WriteLine("LỖI: mã task không hợp lệ.");
+        return 2;
+    }
+
+    string? taskContent = null;
+    try
+    {
+        if (File.Exists(taskFile))
+        {
+            taskContent = File.ReadAllText(taskFile, Encoding.UTF8);
+        }
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+    {
+        taskContent = null;
+    }
+
+    var logsList = new List<string?>();
+    try
+    {
+        var dirInfo = new DirectoryInfo(logsDir);
+        if (dirInfo.Exists && !HasReparsePointInPath(dirInfo))
+        {
+            string prefix = taskId + ".review-";
+            string suffix = ".json";
+
+            foreach (var file in dirInfo.EnumerateFiles())
+            {
+                if ((file.Attributes & FileAttributes.ReparsePoint) != 0)
+                    continue;
+
+                string name = file.Name;
+                if (name.StartsWith(prefix, StringComparison.Ordinal) &&
+                    name.EndsWith(suffix, StringComparison.Ordinal))
+                {
+                    try
+                    {
+                        string content = File.ReadAllText(file.FullName, Encoding.UTF8);
+                        logsList.Add(content);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+                    {
+                        logsList.Add(null);
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+    {
+        // thiếu/không liệt kê được logs → logs đóng góp 0
+    }
+
+    int count = ReviewRoundCounter.Count(taskContent, logsList);
+    Console.WriteLine(count);
+    return 0;
+
+    static bool HasReparsePointInPath(DirectoryInfo dir)
+    {
+        try
+        {
+            var current = new DirectoryInfo(dir.FullName);
+            while (current != null)
+            {
+                if (current.Exists && (current.Attributes & FileAttributes.ReparsePoint) != 0)
+                    return true;
+                current = current.Parent;
+            }
+        }
+        catch
+        {
+            return true;
+        }
+        return false;
+    }
+
+    static bool IsValidTaskId(string id)
+    {
+        if (string.IsNullOrEmpty(id) || id.Length > 64) return false;
+        char first = id[0];
+        if (!((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z') || (first >= '0' && first <= '9')))
+            return false;
+        for (int i = 1; i < id.Length; i++)
+        {
+            char c = id[i];
+            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-'))
+                return false;
+        }
+        return true;
+    }
+}
 int Help()
 {
     Console.WriteLine("aiteam providers [--no-check] [--root D:\\AITeam]  Kiểm tra từng provider (cài chưa, đăng nhập chưa) + thứ tự routing");

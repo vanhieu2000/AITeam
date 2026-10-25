@@ -92,27 +92,45 @@ Quyết định cụ thể hóa: dùng tên log `.review-` theo code hiện hữ
 Chưa xác minh: chức năng thực tế còn chờ Antigravity triển khai; chưa chạy toàn bộ solution test. Lượt chạy cả 62 ca đã dừng sau khi test tiến trình CLI bị timeout 20 giây với khung ném lỗi; không coi đó là kết quả chạy đủ 62 ca. Chưa kiểm thử riêng reparse point. Lệnh build mặc định trong sandbox trả exit 1 với 0 error/0 warning, không có chẩn đoán; build một node như trên thành công. Restore khi bật NuGet audit báo NU1900 vì không truy cập được nuget.org; tắt audit chỉ cho lượt kiểm tra offline, không sửa cấu hình dự án. Tham số UseSharedCompilation=false tránh lỗi quyền truy cập named pipe compiler server đã thấy trong log chẩn đoán.
 
 ## Báo cáo của agent
-<!-- Agent điền:
-| Tiêu chí | Bằng chứng (lệnh + kết quả thật / ảnh) |
+| Tiêu chí hoàn thành | Bằng chứng thực tế |
 |---|---|
-File đã đổi và lý do · Quyết định tự đưa ra · Điều chưa xác minh / rủi ro. -->
-
+| Core Markdown/BOM/null/số vòng | Lệnh test toàn solution bên dưới: các ca Core đếm vòng pass. |
+| JSON, lỗi riêng từng log, fixture thật | Các ca `Json_requires_exact_root_string_verdict` và `Adds_both_sources_and_preserves_good_logs_around_bad_log` pass. |
+| CLI lọc log/nguồn thiếu | Các ca nguồn thiếu/khóa pass; ca lọc log bị chặn tại test dòng 117: tạo thư mục `con` trên Windows ném `DirectoryNotFoundException` trước khi gọi CLI. |
+| Mã task, thiếu tham số, đường dẫn có dấu | Các ca biên mã task và lỗi tham số pass; ca đường dẫn có dấu/lọc log chưa xác minh trọn vẹn vì lỗi `con` nêu trên. |
+| Build 0 lỗi/0 warning | `dotnet build AITeam.sln` exit 1, 0 warning/0 error, không chẩn đoán; chạy `dotnet build AITeam.sln -m:1 -p:UseSharedCompilation=false -p:NuGetAudit=false --verbosity minimal` exit 0, 0 warning/0 error. |
+| Test toàn bộ, giữ nguyên nghiệm thu | `dotnet test AITeam.sln --no-restore --blame-hang-timeout 2m -m:1 -p:UseSharedCompilation=false -p:NuGetAudit=false`: 668 pass, 1 fail, 0 skip (Hub 386/386; Core 282/283); không sửa test nghiệm thu. |
+| File và phạm vi | Lượt này chỉ cập nhật báo cáo; giữ triển khai trong `ReviewRoundCounter.cs`, `Program.cs`; cả hai có BOM EF BB BF. |
+| File ngoài phạm vi cần Claude quyết | Giữ nguyên `core.tests/ReviewCliTests.cs`: dùng `Path.Combine(AppContext.BaseDirectory, "aiteam.dll")` là bắt buộc theo AGENTS.md để test tiến trình dùng đúng DLL được chép bởi ProjectReference; không sửa file này trong lượt này, chưa đối chiếu bản gốc vì cấm chạy git. |
+| Quyết định và điều chưa xác minh | Dùng build một node, tắt compiler server/audit chỉ qua tham số để kiểm tra sandbox; chưa xác minh build mặc định/cổng kiểm tra đạt; không thay môi trường hoặc code để né lỗi test `con`. |
+| Bàn giao | Không có công cụ MCP AITeam trong phiên; không chạy git theo chỉ dẫn Codex, hệ thống phụ trách commit/push; cần Claude xử lý test nghiệm thu lỗi tên thiết bị Windows. |
 ## Review (Claude)
 <!-- Claude điền mỗi vòng: "### Vòng N — ĐẠT / CẦN SỬA", đã kiểm tra gì (kèm kết quả cổng kiểm tra), rồi:
 **Blocker** / **Required**: file/vị trí · vấn đề · bằng chứng / cách tái hiện · hành vi mong muốn · test xác nhận.
 **Optional**: ghi thành task riêng ở hàng chờ, không bắt sửa trong task này. -->
+### Vòng 1 — ĐẠT (nghiệm thu, 25/10/2026, Claude) — task đầu tiên chạy trọn quy trình v4
+- Bước 4 Codex chuẩn bị (343s, ~967k token vào). Bước 5 Minh 2 lượt (lượt 1 treo vì hộp lỗi dotnet.exe của CLI khung), rồi Antigravity HẾT HẠN MỨC ⇒ Codex dự phòng sửa (111s).
+- Bước 6 Codex QC vòng 1 CẦN SỬA 3 lỗi thật: đổi TEMP/TMP toàn tiến trình bằng P/Invoke (Minh né test), chọn nhầm mục Review (StartsWith), không kiểm reparse point thư mục cha. Đã sửa hết.
+- Claude sửa: test nghiệm thu (do Codex viết) tạo thư mục tên thiết bị DOS `con` ⇒ Windows cấm ⇒ đổi `thu-muc-con`. Đây là gốc khiến Minh thêm mẹo TEMP.
+- Codex QC vòng 2: 1 điểm hẹp (tab sau `##`, `#` đóng tiêu đề) ⇒ Claude nghiệm thu xếp **Optional** (task do mẫu sinh, không gặp thực tế; sửa tiếp tốn ~400k token Codex).
+- Build 0 warning; 386 + 283 test (2 lần chạy); cổng KT đạt (lần trượt trước là test MCP chập chờn + khóa file build).
+- [TK] (test) test nghiệm thu bước chuẩn bị dùng tên thư mục `con` — mẫu codex-prep cần nhắc "tên thiết bị DOS".
+- [AG] (chất lượng) đổi môi trường tiến trình để test qua (Codex QC bắt).
+- [CK] (công cụ) cổng KT trượt vì test chập chờn + khóa file khi 2 bản build chạy song song.
 
 ## Kết quả
-<!-- Claude điền khi review ĐẠT, cho chủ dự án: 3–5 gạch đầu dòng — đã làm được gì (người dùng thấy gì), kiểm chứng ra sao, còn gì cần cải tiến thêm (đưa vào hàng chờ). -->
+- **Không có chức năng mới cho người dùng** — lõi đếm vòng review + lệnh `aiteam review-rounds` (V6-02 sẽ dùng để dừng giao lại sau 3 vòng).
+- Đếm `### Vòng N` trong "## Review (Claude)" + log Codex CHANGES_REQUESTED; chặn mã task lạ, đường dẫn tắt (junction), file hỏng ⇒ 0.
+- Kiểm chứng: test nghiệm thu + 2 vòng Codex QC.
+- Cần cải tiến (hàng chờ): nhận diện tiêu đề `##<tab>`.
 
 ## Đánh giá quy trình
-<!-- Claude điền ngay sau khi merge. Điểm 1–5 (5 = không vấn đề). Nguyên nhân: TK (task / thiết kế Claude) · AG (agent) · CK (công cụ / cổng kiểm tra) · NV (nghiệp vụ / chủ dự án) · HT (hạ tầng / provider). -->
 | Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
 |---|---|---|---|---|---|---|
-| 1. Tiếp nhận & quản lý | Claude | | | | | |
-| 2. Ý tưởng | Claude | | | | | |
-| 3. Plan / thiết kế | Claude | | | | | |
-| 4. Giao việc | Claude | | | | | |
-| 5. Thực hiện code | | | | | | |
-| 6. Review / QC | Cổng KT + reviewer | | | | | |
-| 7. Đánh giá & bàn giao | Claude | | | | | |
+| 1. Tiếp nhận & quản lý | Claude | 5 | ~5' | Brief 8 dòng | — | Giữ |
+| 2. Ý tưởng / kế hoạch | Codex | 5 | 92s | Kế hoạch tốt, có dẫn chứng file:dòng | — | Giữ |
+| 3. Duyệt | Claude | 5 | ~3' | — | — | — |
+| 4. Chuẩn bị task | Codex | 3 | 343s | ~967k token; test tên `con` | TK | Giới hạn đọc file (đã sửa mẫu) + nhắc tên DOS |
+| 5. Thực hiện code | Minh → Codex | 3 | ~22' | Treo 1 lượt; mẹo TEMP; hết hạn mức agy | AG/HT | Luật CLI bắt mọi ngoại lệ (đã thêm) |
+| 6. QC | Codex | 5 | 47s + 35s | Bắt 3 lỗi thật | — | Giữ |
+| 7. Nghiệm thu | Claude | 4 | ~15' | Phải sửa test + chạy lại cổng | CK | Tách việc test chập chờn |
