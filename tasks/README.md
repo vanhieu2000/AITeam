@@ -53,7 +53,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [S1-06 Lệnh ghi bài học có commit](S1-06-lenh-ghi-bai-hoc-co-commit.md) | B | `agent-b/S1-06-lenh-ghi-bai-hoc-co-commit` | ✅ Đã merge (vòng 1) |
 | [S1-07 Nối nghiệm thu, IMP và hàng chờ Map](S1-07-noi-nghiem-thu-imp-va-hang-cho-map.md) | A | `agent-a/S1-07-noi-nghiem-thu-imp-va-hang-cho-map` | ✅ Đã merge (vòng 1) |
 | [V8-02 Điều phối pipeline theo phụ thuộc](V8-02-dieu-phoi-pipeline-theo-phu-thuoc.md) | A | `agent-a/V8-02-dieu-phoi-pipeline-theo-phu-thuoc` | ✅ Đã merge (vòng 1) |
-| [W1-05 Parser tiến độ và quy tắc chuyển bước](W1-05-parser-tien-do-va-quy-tac-chuyen-buoc.md) | B | `agent-b/W1-05-parser-tien-do-va-quy-tac-chuyen-buoc` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 00:07 26/10/2026 |
+| [W1-05 Parser tiến độ và quy tắc chuyển bước](W1-05-parser-tien-do-va-quy-tac-chuyen-buoc.md) | B | `agent-b/W1-05-parser-tien-do-va-quy-tac-chuyen-buoc` | 🔴 Cần sửa · tự giao lại |
 | [W1-02 Helper dựng trang Hub](W1-02-helper-dung-trang-hub.md) | B | `agent-b/W1-02-helper-dung-trang-hub` | ✅ Đã merge (vòng 3) |
 | [V8-03 Gói nghiệm thu và quyết định một lệnh](V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh.md) | A | `agent-a/V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 00:18 26/10/2026 |
 
