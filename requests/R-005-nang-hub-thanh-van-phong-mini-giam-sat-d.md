@@ -60,6 +60,8 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-005` để `team.ps1 reque
 | 09:10 | Review V5-07b trên Hub thật: hỏi ChatGPT qua Codex ⇒ ~30 giây câu trả lời tự hiện + lưu research/R-005; Gemini báo đúng "chưa đăng nhập" | |
 | 09:15 | Claude: bàn Phòng nghiên cứu ở Văn phòng + menu; test MCP lõi lỗi chập chờn 1 lần ⇒ tách việc điều tra; ĐẠT vòng 1, merge; Hub 5057 bản mới | |
 | 09:20 | IMP-006 (hx-confirm trên form, chuỗi bí mật giả ghép lúc chạy, test chập chờn tách riêng) | |
+| 09:50 | Chủ dự án đăng nhập Gemini CLI OK nhưng Gemini báo IneligibleTierError (tài khoản cá nhân miễn phí không còn hỗ trợ, "migrate to Antigravity") ⇒ chủ dự án chọn hỏi Gemini qua agy | |
+| 09:58 | Claude: Gemini qua agy (Tài khoản AI + Phòng nghiên cứu), hỏi thật ~40 giây; merge; Hub 5057 bản mới | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
