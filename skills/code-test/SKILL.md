@@ -76,6 +76,7 @@ Giữ nguyên test nghiệm thu do quản lý viết; chỉ thêm ca trong tiêu
 - AGENTS.md: nuốt lỗi đọc rồi ghi lại có thể phá dữ liệu; assert báo lỗi, giữ dữ liệu cũ.
 - scaffold-dotnet-test-project: CI không khám phá là lỗi wiring, không tạo project trùng.
 
+- Test cần chạy PowerShell / git / tiến trình con: dùng core.tests/Support/TestShell.cs (TestShell.PowerShell, TestShell.Run, TempRepo), không tự viết ProcessStartInfo. (Nguồn: R-010)
 ## Ví dụ
 Tốt — ghép bí mật lúc chạy, kiểm nội dung lệnh có tiền tố.
 ```csharp
