@@ -9,12 +9,32 @@ public sealed class MapRoleInput
 {
     public string Code { get; set; } = "";
     public string Actor { get; set; } = "";
-    public string Note { get; set; } = "";
+    public string? Note { get; set; } = "";
 }
 
 /// <summary>Trang /Map dùng dịch vụ H7-01 đã đăng ký DI; không ghi file trực tiếp hay cấp quyền thực thi/duyệt.</summary>
 public sealed class MapModel(IWorkflowRolesService service) : PageModel
 {
+    private static readonly (string Code, string Label)[] Steps =
+    [
+        ("receive", "Tiếp nhận yêu cầu"), ("idea", "Lên ý tưởng"), ("research", "Research"),
+        ("plan", "Lên kế hoạch"), ("approve_plan", "Duyệt kế hoạch"), ("prep", "Chia việc / chuẩn bị task"),
+        ("code", "Code"), ("gate", "Kiểm thử tự động (cổng KT)"), ("qc", "Test / QC"),
+        ("accept", "Duyệt cuối (nghiệm thu)"), ("publish", "Publish git (merge + push)")
+    ];
+    private static readonly (string Val, string Text)[] StaticActors =
+    [
+        ("claude", "Claude"), ("codex", "Codex"), ("minh", "Minh"),
+        ("lan", "Lan"), ("gate", "Cổng KT"), ("owner", "Chủ dự án")
+    ];
+
+    private static readonly HashSet<string> StandardCodesSet = new(Steps.Select(s => s.Code), StringComparer.Ordinal);
+    private static readonly HashSet<string> ValidActorsSet = new(StaticActors.Select(a => a.Val), StringComparer.Ordinal);
+    private static readonly Dictionary<string, string> CodeLabels = Steps.ToDictionary(s => s.Code, s => s.Label, StringComparer.Ordinal);
+
+    public (string Val, string Text)[] ActorChoices => StaticActors;
+    public string GetLabel(string code) => CodeLabels.TryGetValue(code, out var label) ? label : code;
+
     [BindProperty] public List<MapRoleInput> Roles { get; set; } = [];
     [BindProperty] public string Revision { get; set; } = "";
     public string? Error { get; private set; }
@@ -27,7 +47,14 @@ public sealed class MapModel(IWorkflowRolesService service) : PageModel
     /// </summary>
     public void OnGet()
     {
-        throw new NotImplementedException(); // TODO(agent)
+        try
+        {
+            var snapshot = service.GetRoles();
+            Roles = snapshot.Roles.Select(r => new MapRoleInput { Code = r.Code, Actor = r.Actor, Note = r.Note }).ToList();
+            Revision = snapshot.Revision;
+        }
+        catch (InvalidDataException) { Error = "Phân vai không hợp lệ."; Roles = []; Revision = ""; }
+        catch (IOException) { Error = "Không đọc được cấu hình phân vai."; Roles = []; Revision = ""; }
     }
 
     /// <summary>
@@ -42,6 +69,36 @@ public sealed class MapModel(IWorkflowRolesService service) : PageModel
     /// </summary>
     public IActionResult OnPost()
     {
-        throw new NotImplementedException(); // TODO(agent)
+        if (!ModelState.IsValid || string.IsNullOrEmpty(Revision) || Roles == null || Roles.Count != 11)
+        {
+            Error = "Phân vai không hợp lệ.";
+            return Page();
+        }
+
+        var seenCodes = new HashSet<string>(StringComparer.Ordinal);
+        var roleList = new List<WorkflowRole>(11);
+        foreach (var r in Roles)
+        {
+            if (r == null || string.IsNullOrEmpty(r.Code) || string.IsNullOrEmpty(r.Actor)) { Error = "Phân vai không hợp lệ."; return Page(); }
+            r.Note ??= "";
+            if (!StandardCodesSet.Contains(r.Code) || !seenCodes.Add(r.Code) || !ValidActorsSet.Contains(r.Actor) || r.Note.Length > 500)
+            {
+                Error = "Phân vai không hợp lệ.";
+                return Page();
+            }
+            roleList.Add(new WorkflowRole(r.Code, r.Actor, r.Note));
+        }
+
+        try
+        {
+            var snapshot = service.SaveRoles(roleList, Revision);
+            Message = "Đã lưu phân vai.";
+            Revision = snapshot.Revision;
+            Roles = snapshot.Roles.Select(r => new MapRoleInput { Code = r.Code, Actor = r.Actor, Note = r.Note }).ToList();
+            return Page();
+        }
+        catch (InvalidOperationException) { Error = "Cấu hình đã thay đổi. Vui lòng tải lại."; return Page(); }
+        catch (InvalidDataException) { Error = "Phân vai không hợp lệ."; return Page(); }
+        catch (IOException) { Error = "Không lưu được cấu hình phân vai."; return Page(); }
     }
 }
