@@ -108,11 +108,11 @@ Antigravity điền sau khi triển khai:
 | Parse dữ liệu thật và biến thể | ĐẠT — `dotnet test hub.tests/AITeam.Hub.Tests.csproj --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m`: Passed 63, Failed 0, Skipped 0 |
 | Quy tắc chín bước, lỗi và chuyển lượt | ĐẠT — `AcceptanceW105WorkProgressTests` (63/63 pass): 9 bước, lượt 10>2, lỗi/BLOCKED/Assign/Merge/✅ đúng quy tắc |
 | Thuần, an toàn dữ liệu và tương thích | ĐẠT — `Untrusted_text_remains_data_and_input_is_not_mutated` pass; không đổi đầu vào, giữ UTF-8 BOM (+231 dòng) |
-| Build/test toàn solution | `dotnet build AITeam.sln`: 0 warning, 0 error. `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: Hub.Tests 590/590 pass (0 fail, 0 skip); Core.Tests 517/519 pass (2 fail có sẵn ngoài phạm vi: `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung` trên `CLAUDE.md` và `AcceptanceV801WorkflowTests.KhoaChanTienTrinhKhacVaTimeout`) |
+| Build/test toàn solution | `dotnet build AITeam.sln`: 0 warning, 0 error. `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: Hub.Tests 590/590 pass (63/63 W1-05 pass); Core.Tests 518/519 pass — BỊ CHẶN bởi 1 test ngoài phạm vi: `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung` trên `CLAUDE.md` |
 
 File đã đổi và lý do: `hub/Services/WorkProgressParser.cs` (triển khai `Parse`, `Calculate` và các hàm phụ nội bộ theo đặc tả W1-05); `tasks/W1-05-parser-tien-do-va-quy-tac-chuyen-buoc.md` (điền báo cáo).  
 Quyết định tự đưa ra: Với bảng nhật ký cũ có cột Ghi chú khác rỗng thì gộp `Sự kiện (Ghi chú)` vào `Text`; khi có cổng lỗi đang hiệu lực trong lượt mới nhất thì chỉ sự kiện `Passed` cùng bước đó hoặc `Merge` `Passed` (hay `boardStatus` có `✅`) mới gỡ trạng thái lỗi.  
-Điều chưa xác minh: Chưa có dòng nhật ký workflow thực thi thật trong phiếu R-011 gốc (mới kiểm trên biến thể chèn vào bản sao phiếu thật theo brief); 2 test `AITeam.Core.Tests` ngoài phạm vi Hub bị đỏ như nêu trên.
+Điều chưa xác minh: BỊ CHẶN Ở CỔNG KIỂM TRA — `AcceptanceS107WorkflowDocsTests.HuongDanCu_GiuNguyenThuTuVaNoiDung("CLAUDE.md")` trong `AITeam.Core.Tests` báo lệch dòng hướng dẫn cũ trong `CLAUDE.md` trên `main`, nhưng `AGENTS.md` và phạm vi W1-05 cấm sửa `CLAUDE.md` / `core.tests`. Chưa có log workflow thực thi thật trong phiếu R-011 gốc.
 
 ### Kiểm tra chuẩn bị (Codex)
 - Đã tạo khung hai hàm, chỉ throw NotImplementedException; chưa viết phần thân sản phẩm.
