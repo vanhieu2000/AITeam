@@ -40,6 +40,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H6-07 Hiệu suất và Nhân viên](H6-07-hieu-suat-va-nhan-vien.md) | B | `agent-b/H6-07-hieu-suat-va-nhan-vien` | ✅ Đã merge (vòng 1) |
 | [H6-01 Hàm thuần dây chuyền](H6-01-ham-thuan-day-chuyen.md) | A | `agent-a/H6-01-ham-thuan-day-chuyen` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 11:49 25/10/2026 |
 | [H6-08 AI & tài khoản: khung và Trạng thái](H6-08-ai-tai-khoan-khung-va-trang-thai.md) | B | `agent-b/H6-08-ai-tai-khoan-khung-va-trang-thai` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 11:58 25/10/2026 |
+| [V8-01 Thử lại lỗi máy và ghi nhật ký](V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md) | A | `agent-a/V8-01-thu-lai-loi-may-va-ghi-nhat-ky` | ⬜ Chưa giao |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
