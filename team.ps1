@@ -9,6 +9,8 @@
   .\team.ps1 add-project -Project Ten -Path D:\Ten           Thêm dự án có sẵn trên máy (tự tạo kho GitHub private nếu chưa có)
   .\team.ps1 add-project -Project Ten -New                   Tạo dự án mới (thư mục + git + kho private)
   .\team.ps1 new-task -Project Ten -Task T-003 -Title "..." -Agent B
+  .\team.ps1 plan -Request R-006 [-Project Ten] [-Name V6]   Quy trình v4: Codex (CHỈ ĐỌC) đọc plans\R-006\brief.md + repo ⇒ plans\R-006\plan.md
+  .\team.ps1 prep -Request R-006 -Task V6-01 [-NoLaunch]     Quy trình v4: Codex viết file task + khung + test nghiệm thu ⇒ giao Antigravity (Codex QC sau cổng KT)
   .\team.ps1 assign -Project Ten -Task T-003 [-Resume] [-Feedback "..."] [-NoVerify] [-Force]
   .\team.ps1 assign -Project Ten -Task T-003 -Dev codex   Giao cho Codex viết code (mặc định agy; agy hết hạn mức tự chuyển Codex, -Dev agy để tắt)
                                                     Giao task (chờ tới khi agent xong). Ghi "đang chạy · máy X" lên bảng việc;
@@ -743,6 +745,151 @@ $Prompt
 }
 
 function Invoke-Models { & (Get-Config).agy.exe models }
+
+# ===== Quy trình v4 (R-006, chủ dự án chọn 25/10): Claude brief → Codex kế hoạch (CHỈ ĐỌC) → Claude duyệt →
+# Codex chuẩn bị từng task (đặc tả + khung + test nghiệm thu) → Antigravity code → cổng KT + Codex QC → Claude kiểm cuối.
+function Get-PlanDir([string]$req) {
+    if ($req -notmatch '^R-\d{3}$') { throw "Thiếu / sai -Request (vd. R-006)" }
+    Join-Path $Root "plans\$req"
+}
+
+function ConvertTo-AsciiSlug([string]$text) {
+    $t = $text.ToLower().Replace([string][char]0x0111, "d").Normalize([Text.NormalizationForm]::FormD)
+    $t = -join ($t.ToCharArray() | Where-Object { [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne [Globalization.UnicodeCategory]::NonSpacingMark })
+    $s = ($t -replace '[^a-z0-9]+', '-').Trim('-')
+    if ($s.Length -gt 40) { $s = $s.Substring(0, 40).Trim('-') }
+    if (-not $s) { "task" } else { $s }
+}
+
+# Bước 2: plans/R-xxx/brief.md (Claude viết, ≤ 20 dòng) ⇒ Codex đọc repo CHỈ ĐỌC ⇒ plans/R-xxx/plan.md. -Name = tiền tố mã task (vd. V6).
+function Invoke-Plan {
+    $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
+    $dir = Get-PlanDir $Request
+    $brief = Join-Path $dir "brief.md"
+    if (-not (Test-Path $brief)) { throw "Chưa có $brief — Claude viết brief (≤ 20 dòng) trước." }
+    $prefix = if ($Name) { $Name } else { "T" }
+    $exe = Get-AITeamExe
+    if (-not $exe) { throw "Không build được aiteam.exe" }
+    $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\codex-plan.md"))
+    $promptText = $tpl.Replace("{REQUEST}", $Request).Replace("{PREFIX}", $prefix) + "`n" + [IO.File]::ReadAllText($brief)
+    New-Item -ItemType Directory -Force $r.Logs | Out-Null
+    $pf = Join-Path $r.Logs "$Request.plan.prompt.md"
+    [IO.File]::WriteAllText($pf, $promptText, $Utf8)
+    $out = Join-Path $r.Logs "$Request.plan.json"
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    $before = git -C $r.Path status --porcelain
+    Say "[$(Get-Date -Format HH:mm:ss)] $Request → Codex lập kế hoạch (chỉ đọc) trong $($r.Path)" Cyan
+    & $exe run --provider codex --read-only --workdir $r.Path --prompt-file $pf --logdir (Join-Path $r.Logs "$Request.plan") --timeout-min 20 --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
+    $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
+    $after = git -C $r.Path status --porcelain
+    $ErrorActionPreference = $eap
+    if ("$before" -ne "$after") { Say "CẢNH BÁO: bước chỉ đọc đã làm thay đổi file trong $($r.Path) — kiểm tra git status!" Red }
+    $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
+    if ($code -ne 0 -or -not $j -or -not $j.text) {
+        Say "Codex không lập được kế hoạch (mã $code$(if ($j) { ': ' + $j.summary })) ⇒ Claude tự viết $dir\plan.md (quy trình v3)." Yellow
+        return
+    }
+    $plan = Join-Path $dir "plan.md"
+    [IO.File]::WriteAllText($plan, ([string]$j.text).Trim() + "`n", $Utf8)
+    Say "Đã ghi $plan ($($j.summary))." Green
+    Say "Bước 3: Claude đọc + sửa plan.md nếu cần, rồi với từng task: .\team.ps1 prep -Request $Request -Task <MÃ> [-NoLaunch]"
+}
+
+# Bước 4–6: Codex chuẩn bị 1 task từ mục "### <MÃ> · …" của plan.md (worktree nhánh mới từ origin/main):
+# file task + khung + test nghiệm thu ⇒ build phải 0 lỗi ⇒ commit + push nhánh, file task + dòng bảng việc lên main
+# ⇒ giao Antigravity (assign; task có "Review AI: có" ⇒ Codex QC sau cổng KT). -NoLaunch: chỉ chuẩn bị, không giao.
+function Invoke-Prep {
+    $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
+    $dir = Get-PlanDir $Request
+    $planFile = Join-Path $dir "plan.md"
+    if (-not (Test-Path $planFile)) { throw "Chưa có $planFile (chạy .\team.ps1 plan -Request $Request trước)" }
+    if ($Task -notmatch '^[A-Za-z0-9]+-\d+[a-z]?$') { throw "Thiếu / sai -Task (mã trong plan.md, vd. V6-01)" }
+    $plan = [IO.File]::ReadAllText($planFile)
+    $m = [regex]::Match($plan, "(?ms)^###\s+" + [regex]::Escape($Task) + "\s*[·:-]\s*(?<title>[^\r\n]+)\r?\n(?<body>.*?)(?=^###\s|^##\s|\z)")
+    if (-not $m.Success) { throw "Không thấy mục '### $Task · …' trong $planFile" }
+    $ttl = $m.Groups['title'].Value.Trim()
+    $section = "### $Task · $ttl`n" + $m.Groups['body'].Value
+    $agentId = [regex]::Match($section, '\*\*Agent:\*\*\s*([ABab])').Groups[1].Value.ToUpper()
+    if (-not $agentId) { $agentId = "A" }
+    $budget = [regex]::Match($section, '\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
+    $existing = @(Get-ChildItem (Join-Path $r.Path "tasks") -Filter "$Task-*.md" -ErrorAction SilentlyContinue)
+    if ($existing.Count -gt 0) { throw "Đã có tasks\$($existing[0].Name) — task này đã được chuẩn bị." }
+    $slug = ConvertTo-AsciiSlug $ttl
+    $fileName = "$Task-$slug.md"
+    $branch = "agent-$($agentId.ToLower())/$Task-$slug"
+    $work = Join-Path $r.Work "prep-$($Task.ToLower())"
+    New-Item -ItemType Directory -Force $r.Logs | Out-Null
+
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git -C $r.Path fetch -q origin 2>$null
+    git -C $r.Path worktree add -q -b $branch $work origin/main 2>&1 | ForEach-Object { Say "  $_" }
+    if (-not (Test-Path $work)) { $ErrorActionPreference = $eap; throw "Không tạo được worktree $work" }
+    $taskPath = Join-Path $work "tasks\$fileName"
+    Copy-Template "task.md" $taskPath @{ TASK = $Task; TITLE = $ttl; AGENT = $agentId; BRANCH = $branch; BUILD = $r.Info.build; TEST = $r.Info.test } | Out-Null
+    $tt = [IO.File]::ReadAllText($taskPath).Replace("- **Yêu cầu:** R-xxx", "- **Yêu cầu:** $Request")
+    $tt = [regex]::Replace($tt, '(?m)^<!-- Tùy chọn: - \*\*Review AI:\*\*.*-->\r?$', '- **Review AI:** có')
+    if ($budget) { $tt = [regex]::Replace($tt, '\*\*Ngân sách:\*\*\s*~\d+ dòng', "**Ngân sách:** ~$budget dòng") }
+    [IO.File]::WriteAllText($taskPath, $tt, $Utf8)
+
+    $tpl = [IO.File]::ReadAllText((Join-Path $Root "templates\codex-prep.md"))
+    $promptText = $tpl.Replace("{TASKFILE}", "tasks/$fileName").Replace("{BUILD}", [string]$r.Info.build).Replace("{TASK}", $Task) + "`n" + $section
+    $pf = Join-Path $r.Logs "$Task.prep.prompt.md"
+    [IO.File]::WriteAllText($pf, $promptText, $Utf8)
+    $out = Join-Path $r.Logs "$Task.prep.json"
+    $exe = Get-AITeamExe
+    Say "[$(Get-Date -Format HH:mm:ss)] $Task → Codex chuẩn bị task (đặc tả + khung + test nghiệm thu) trong $work" Cyan
+    & $exe run --provider codex --workdir $work --prompt-file $pf --logdir (Join-Path $r.Logs "$Task.prep") --timeout-min 20 --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
+    $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
+    $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
+    if ($code -ne 0) {
+        Say "Codex không chuẩn bị được $Task (mã $code$(if ($j) { ': ' + $j.summary })). Worktree giữ ở $work, nhánh $branch — Claude làm tiếp (quy trình v3)." Yellow
+        $ErrorActionPreference = $eap; return
+    }
+    # Codex hay ghi UTF-8 không BOM ⇒ trả BOM cho file mã (quy ước dự án, PowerShell 5.1).
+    foreach ($f in @(git -C $work status --porcelain -uall 2>$null | ForEach-Object { $_.Substring(3).Trim('"') } | Where-Object { $_ -match '\.(cs|cshtml|ps1)$' })) {
+        $p = Join-Path $work $f
+        if (Test-Path $p -PathType Leaf) { $b = [IO.File]::ReadAllBytes($p); if (-not (Test-HasBom $b)) { [IO.File]::WriteAllBytes($p, [byte[]](@(0xEF, 0xBB, 0xBF) + $b)) } }
+    }
+    Push-Location $work
+    $bo = cmd /c "$($r.Info.build) 2>&1"; $bc = $LASTEXITCODE; $global:LASTEXITCODE = 0
+    Pop-Location
+    if ($bc -ne 0) {
+        Say "Build khung $Task LỖI ⇒ KHÔNG giao. Worktree giữ ở $work." Red
+        $bo | Select-String -Pattern ' error ' | Select-Object -First 10 | ForEach-Object { Say "  $_" }
+        $ErrorActionPreference = $eap; return
+    }
+    git -C $work add -A 2>$null
+    git -C $work commit -q -m "Test nghiệm thu $Task + khung (Codex, quy trình v4)" 2>&1 | Select-Object -Last 8 | ForEach-Object { Say "  $_" Yellow }
+    if (@(git -C $work status --porcelain 2>$null | Where-Object { $_ }).Count -gt 0) {
+        Say "Commit $Task bị chặn (hook quét bí mật?) ⇒ KHÔNG giao. Worktree giữ ở $work." Red
+        $ErrorActionPreference = $eap; return
+    }
+    git -C $work push -q -u origin $branch 2>&1 | Select-Object -Last 2 | ForEach-Object { Say "  $_" }
+
+    # File task + dòng bảng việc lên main (nội dung giống hệt trên nhánh ⇒ merge không xung đột).
+    git -C $r.Path pull -q --ff-only 2>$null
+    Copy-Item (Join-Path $work "tasks\$fileName") (Join-Path $r.Path "tasks\$fileName") -Force
+    $board = Join-Path $r.Path "tasks\README.md"
+    if (Test-Path $board) {
+        $bt = [IO.File]::ReadAllText($board)
+        $lines = [Collections.ArrayList]@($bt -split "`r?`n")
+        $last = -1; for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\| \[') { $last = $i } }
+        $row = "| [$Task $ttl]($fileName) | $agentId | ``$branch`` | ⬜ Chưa giao |"
+        if ($last -ge 0) { $lines.Insert($last + 1, $row) } else { [void]$lines.Add($row) }
+        $nl = if ($bt -match "`r`n") { "`r`n" } else { "`n" }
+        [IO.File]::WriteAllText($board, ($lines -join $nl), (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($board)))))
+    }
+    git -C $r.Path add -- "tasks/$fileName" "tasks/README.md" 2>$null
+    git -C $r.Path commit -q -m "Task $Task (Codex chuẩn bị, $Request)" -- "tasks/$fileName" "tasks/README.md" 2>&1 | Out-Null
+    git -C $r.Path push -q 2>&1 | Out-Null
+    git -C $r.Path worktree remove --force $work 2>&1 | Out-Null
+    $ErrorActionPreference = $eap
+    Say "Đã chuẩn bị ${Task}: tasks/$fileName + nhánh $branch$(if ($j) { ' · ' + $j.summary })." Green
+    if ($NoLaunch) { Say "Giao: .\team.ps1 assign -Project $($r.Info.name) -Task $Task"; return }
+    Say "Giao Antigravity (Agent $agentId)…" Cyan
+    $script:Project = $r.Info.name
+    Invoke-Assign
+}
 
 # ───────────────────────── Bảo mật: hook + kho bí mật cục bộ ─────────────────────────
 
@@ -1712,6 +1859,8 @@ function Invoke-Metrics {
 switch ($Command) {
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
     "ask" { Invoke-Ask }
+    "plan" { Invoke-Plan }
+    "prep" { Invoke-Prep }
     "models" { Invoke-Models }
     "install-hooks" { Invoke-InstallHooks }
     "secret-set" { Invoke-SecretSet }
