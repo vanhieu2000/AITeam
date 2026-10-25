@@ -114,7 +114,7 @@ public sealed class AcceptanceV601ReviewRoundsTests : IDisposable
         foreach (var name in new[] { "V6-010.review-1.json", "V6-02.review-1.json", "V6-01-1.json",
                      "V6-01.prep.json", "V6-01.review-1.json.bak", "xV6-01.review-1.json" })
             WriteLog(logs, name, Changes);
-        var child = Directory.CreateDirectory(Path.Combine(logs, "con")).FullName;
+        var child = Directory.CreateDirectory(Path.Combine(logs, "thu-muc-con")   /* "con" là tên thiết bị DOS — Windows cấm (Claude sửa)*/).FullName;
         WriteLog(child, "V6-01.review-5.json", Changes);
         var result = await Cli("--task-file", task, "--logs", logs, "--task", "V6-01");
         AssertSuccess(result, 3);
