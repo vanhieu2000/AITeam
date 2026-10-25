@@ -31,3 +31,7 @@ Chủ dự án (25/10 21:15): "test qc cần có bộ chuyên chứ mỗi lần 
 - Task mới sau R-011 viết test chỉ bằng helper chung (cổng KT cảnh báo nếu file test mới có `new ProcessStartInfo`).
 - `plan` cho yêu cầu có giao diện sinh ra file mockup mở được; `prep` chặn khi chưa duyệt.
 - Trang Việc hiện đúng bước cho R-010 (✅ Merge), V8-02 (đang Code/Cổng KT), R-009 (Kế hoạch đã duyệt, task chưa làm) — đối chiếu nhật ký thật.
+
+## Ưu tiên (chủ dự án 25/10 21:25)
+- Làm TRƯỚC phần 3 (trang "Việc" trên Hub) để chủ dự án theo dõi; phần 1–2 sau. Đánh số task giao diện là W1-01, W1-02…
+- Việc nhỏ giao thẳng Codex; Claude chỉ theo dõi + nghiệm thu.
