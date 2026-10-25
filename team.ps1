@@ -344,10 +344,28 @@ function Get-AgentLoad($r) {
 # Người gợi ý đang bận hơn người kia ⇒ trả người kia; bằng nhau ⇒ giữ gợi ý. Không phải A / B (vd. C = Codex) ⇒ giữ nguyên.
 function Select-FreeAgent($r, [string]$suggested) {
     if ($suggested -notin @('A', 'B')) { return $suggested }
+    return Invoke-RepoTransaction -RepoPath $r.Path -Action {
+    $state = Join-Path $r.Path '.state/assign-recent.json'
+    $recent = @(); if (Test-Path -LiteralPath $state) { $recent = Get-Content -LiteralPath $state -Raw -Encoding UTF8 | ConvertFrom-Json }
+    $recent = @($recent | Where-Object { [datetimeoffset]$_.At -gt [datetimeoffset]::Now.AddMinutes(-10) })
+    $reserved = @($recent | Where-Object { $_.Task -eq $Task })
+    if ($reserved.Count) { return $reserved[-1].Agent }
     $load = Get-AgentLoad $r
+    $board = Join-Path $r.Path 'tasks/README.md'
+    $rows = @(); if (Test-Path $board) { $rows = @([IO.File]::ReadAllLines($board)) }
+    foreach ($entry in $recent) {
+        $onBoard = @($rows | Where-Object { $_ -match ('(\[|\(|\|\s*)' + [regex]::Escape($entry.Task) + '\b') -and $_.Contains('🟡') })
+        if (-not $onBoard.Count -and $load.ContainsKey($entry.Agent)) { $load[$entry.Agent]++ }
+    }
     $other = if ($suggested -eq 'A') { 'B' } else { 'A' }
-    if ($load[$suggested] -gt $load[$other]) { return $other }
+    if ($load[$suggested] -gt $load[$other]) { $suggested = $other }
+    if ($Task) {
+        $recent += [pscustomobject]@{ Task = $Task; Agent = $suggested; At = [datetimeoffset]::Now.ToString('o') }
+        New-Item -ItemType Directory -Force (Split-Path $state) | Out-Null
+        [IO.File]::WriteAllText($state, (ConvertTo-Json -InputObject @($recent)), (New-Object Text.UTF8Encoding $true))
+    }
     $suggested
+    }
 }
 
 function Invoke-Assign {
@@ -504,6 +522,10 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         $errText = Get-Content $err -Raw -ErrorAction SilentlyContinue
         Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
     }
+    if ("$logText`n$errText" -match '(?i)invalid model selection') {
+        Set-BoardStatus $r $Task '🔴 Lỗi agent · model không hợp lệ' -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
+        if ($NoVerify) { return @{ Ok = $false; Quota = $false } }; return
+    }
     if ($errText -match 'waiting up to \d+m\d+s for \d+ background task') {
         Say "CẢNH BÁO: agent đã ngồi chờ một lệnh nền bị treo (agy chờ tối đa 30 phút rồi cắt). Lượt này có thể chưa commit / chưa báo cáo." Yellow
     }
@@ -539,6 +561,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         Set-BoardStatus $r $Task $(if ($agentOk) { "🔵 Chờ review" } else { "🔴 Lỗi agent" }) -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = $(if ($agentOk) { 'XONG' } else { 'LỖI' }) }
         return @{ Ok = [bool]$agentOk; Quota = $false }
     }
+    if ($devProvider -eq 'codex') { dotnet build-server shutdown 2>&1 | Out-Null }
     $gate = Invoke-WorkflowGate -Verify { Invoke-Verify } -Qc {
         Invoke-AutoReview $r $taskFile.Name $work $devProvider
     }
@@ -680,9 +703,9 @@ function Get-AITeamExe {
 function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin) {
     $exe = Get-AITeamExe
     if (-not $exe) { return [pscustomobject]@{ Ok = $false; Status = "không build được aiteam.exe" } }
-    $note = "CHẠY BẰNG CODEX (dự phòng Antigravity): KHÔNG chạy lệnh git (sandbox chặn ghi .git) — hệ thống tự commit + push sau khi bạn xong; bỏ qua mọi yêu cầu commit / push bên dưới. Vẫn phải điền mục 'Báo cáo của agent' trong file task.`n`n"
+    $codexPromptPrefix = "CHẠY BẰNG CODEX (dự phòng Antigravity): KHÔNG chạy lệnh git (sandbox chặn ghi .git) — hệ thống tự commit + push sau khi bạn xong; bỏ qua mọi yêu cầu commit / push bên dưới. Vẫn phải điền mục 'Báo cáo của agent' trong file task.`n`n"
     $pf = $logFile -replace '\.json$', '.codex.prompt.md'
-    [IO.File]::WriteAllText($pf, $note + $prompt, (New-Object Text.UTF8Encoding $false))
+    [IO.File]::WriteAllText($pf, $codexPromptPrefix + $prompt, (New-Object Text.UTF8Encoding $false))
     $out = $logFile -replace '\.json$', '.codex.json'
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Say "[$(Get-Date -Format HH:mm:ss)] $TaskName → Codex (aiteam run), thư mục $work" Cyan
@@ -894,7 +917,15 @@ $Prompt
     Say "Log: $log" DarkGray
 }
 
-function Invoke-Models { & (Get-Config).agy.exe models }
+function Invoke-Models {
+    $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    try {
+        $output = @(& (Get-Config).agy.exe models 2>&1)
+        $code = $LASTEXITCODE
+        $output | Where-Object { "$_" -notmatch '^Fetching available models\.\.\.$' } | ForEach-Object { Say "$_" }
+        if ($code -ne 0) { throw "Không lấy được danh sách model (mã $code)." }
+    } finally { $ErrorActionPreference = $eap }
+}
 
 # ===== Quy trình v4 (R-006, chủ dự án chọn 25/10): Claude brief → Codex kế hoạch (CHỈ ĐỌC) → Claude duyệt →
 # Codex chuẩn bị từng task (đặc tả + khung + test nghiệm thu) → Antigravity code → cổng KT + Codex QC → Claude kiểm cuối.
@@ -1115,6 +1146,7 @@ function Invoke-Prep {
         if ($attempt -gt 1) {
             Say "Build lỗi do khóa file (lỗi máy) ⇒ tắt build server, build lại 1 lần." Yellow
             dotnet build-server shutdown 2>&1 | Out-Null
+            Start-Sleep -Seconds 20
         }
         Invoke-ShellCapture $r.Info.build $work
     }
@@ -1441,6 +1473,9 @@ function Invoke-Verify {
     [void]$notes.Add("File thay đổi so với main: $($changed.Count)")
     if ($changed.Count -eq 0) { [void]$fails.Add("Nhánh không có thay đổi nào so với main (agent chưa làm hoặc chưa commit).") }
 
+    foreach ($deleted in @(git -C $work diff --name-only --diff-filter=D origin/main...HEAD 2>$null)) {
+        if ($deleted -match '(?i)(^|/)[^/]*tests/.*\.cs$') { [void]$fails.Add("Xóa file test: $deleted") }
+    }
     # 1. Agent đã commit hết chưa
     $dirty = @(git -C $work status --porcelain 2>$null | Where-Object { $_ })
     if ($dirty.Count -gt 0) {
@@ -1562,6 +1597,7 @@ function Invoke-Verify {
     if ($r.Info.build) {
         $bCheck = Invoke-WorkflowCheck -Stage 'Build' -Run {
             param($attempt)
+            if ($attempt -gt 1) { Start-Sleep -Seconds 20 }
             Invoke-ShellCapture $r.Info.build $work
         }
         $b = [pscustomobject]@{ Code = $bCheck.Code; Output = $bCheck.Output }
@@ -2217,6 +2253,12 @@ function Assert-MergeApproval($cfg, $taskId, $head) {
 }
 
 function Invoke-Merge {
+    $mutex = New-Object Threading.Mutex($false, 'Global\AITeam_Merge')
+    $locked = $false; $clone = $null
+    $savedPreference = $ErrorActionPreference
+    try {
+    try { $locked = $mutex.WaitOne([TimeSpan]::FromMinutes(30)) } catch [Threading.AbandonedMutexException] { $locked = $true }
+    if (-not $locked) { throw 'Đang có merge khác chạy' }
     $cfg = Get-Config
     $r = Resolve-Project $Project
     $tf = Find-TaskFile $r $Task
@@ -2232,8 +2274,13 @@ function Invoke-Merge {
     $ErrorActionPreference = $eap
     $approval = Assert-MergeApproval $cfg (Get-TaskId $tf) $head
     $ErrorActionPreference = "Continue"
-    git -C $r.Path pull -q 2>$null
+    $dirty = @(git -C $r.Path status --porcelain)
+    if ((git -C $r.Path branch --show-current) -ne 'main' -or $dirty.Count -ne 0) { throw 'Main local chưa sạch; không merge.' }
+    git -C $r.Path pull -q --ff-only 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Không hoàn tất nghiệm thu.' }
+    $before = git -C $r.Path rev-parse HEAD
+    $ahead = @(git -C $r.Path rev-list origin/main..HEAD)
+    if ((git -C $r.Path branch --show-current) -ne 'main' -or $ahead.Count -ne 0) { throw 'Main local chưa đồng bộ; không merge.' }
     git -C $r.Path merge --no-ff -q "origin/$branch" -m "Merge $($tf.BaseName) ($(Get-StaffName $agentId), review đạt vòng $round)`n`nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" 2>&1 | Select-Object -Last 2 | ForEach-Object { Say $_ Yellow }
     if ($LASTEXITCODE -ne 0) {
         # File task thường được thêm cả trên main (Claude) lẫn trên nhánh (khung + báo cáo + review) ⇒ add/add.
@@ -2251,6 +2298,37 @@ function Invoke-Merge {
             throw "Merge xung đột ở: $($conflicts -join ', ') — xử lý tay (git merge --abort để hủy)."
         }
     }
+    $mergeHead = git -C $r.Path rev-parse HEAD
+    if ($mergeHead -eq $before) { throw 'Không tạo được commit merge mới.' }
+    $clone = Join-Path $env:TEMP ('merge-check-' + [guid]::NewGuid().ToString('N'))
+    try {
+        git clone --no-hardlinks -q -- $r.Path $clone 2>$null
+        if ($LASTEXITCODE -ne 0) { throw 'Không clone được main local.' }
+        $built = Invoke-ShellCapture $r.Info.build $clone
+        if ($built.Code -ne 0 -or $built.Output -match ': warning (?!NU1900)[A-Za-z]+\d+:') { throw "Build clone sạch lỗi: $($built.Output)" }
+        $testCmd = $r.Info.test
+        if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += ' --blame-hang-timeout 2m --blame-hang-dump-type none' }
+        $res = Invoke-ShellCapture $testCmd $clone
+        $res = Invoke-FailedTestRetry -Code $res.Code -Output $res.Output -TestCommand $testCmd -Run {
+            param($command)
+            Invoke-ShellCapture $command $clone
+        }
+        foreach ($warning in $res.Warnings) { Say $warning Yellow }
+        if ($res.Code -ne 0 -or $res.Output -notmatch 'Passed!\s+.*Passed:\s*[1-9]') { throw "Test clone sạch lỗi: $($res.Output)" }
+    } catch {
+        $failure = $_
+        git -C $r.Path fetch -q origin 2>$null
+        if ($LASTEXITCODE -ne 0) { throw 'Không xác minh được remote; không reset main.' }
+        # Chỉ xét chuỗi cha thứ nhất của main; các commit nhánh thuộc chính merge vừa tạo.
+        $pending = @(git -C $r.Path rev-list --first-parent origin/main..main)
+        $current = git -C $r.Path rev-parse main
+        $original = git -C $r.Path rev-parse ORIG_HEAD
+        if ($LASTEXITCODE -ne 0 -or $pending.Count -ne 1 -or $pending[0] -ne $mergeHead -or $current -ne $mergeHead -or $original -ne $before) { throw 'Không an toàn để hủy merge; không reset main.' }
+        git -C $r.Path reset --hard ORIG_HEAD 2>$null | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw 'Không hủy được merge local.' }
+        Say "$failure" Red
+        throw 'Clone sạch KHÔNG ĐẠT — đã hủy merge, main không đổi'
+    }
     git -C $r.Path push -q origin main 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Không hoàn tất nghiệm thu.' }
     $mergeTaskId = Get-TaskId $tf
@@ -2265,22 +2343,6 @@ function Invoke-Merge {
         git -C $Root commit -q -m "Duyệt $($approval.id): $($approval.title)" 2>$null
         git -C $Root push -q 2>$null
     }
-    # Kiểm tra bằng clone sạch
-    $clone = Join-Path $env:TEMP ("merge-check-" + $r.Info.name)
-    if (Test-Path $clone) { Remove-Item $clone -Recurse -Force }
-    gh repo clone $r.Info.repo $clone -- -q 2>$null
-    $testCmd = $r.Info.test; if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += " --blame-hang-timeout 3m --blame-hang-dump-type none" }
-    $res = Invoke-ShellCapture $testCmd $clone
-    $res = Invoke-FailedTestRetry -Code $res.Code -Output $res.Output -TestCommand $testCmd -Run {
-        param($command)
-        Invoke-ShellCapture $command $clone
-    }
-    foreach ($warning in $res.Warnings) { Say $warning Yellow }
-    if ($res.Code -ne 0) { Say ("Clone sạch: KHÔNG ĐẠT`n" + $res.Output) Red }
-    $lines = @($res.Output -split "`n" | Where-Object { $_ -match 'Passed!|Failed!' } | ForEach-Object { $_.Trim() })
-    if (-not $lines) { Say "Clone sạch: KHÔNG đọc được kết quả test — kiểm tra tay!" Red }
-    foreach ($l in $lines) { Say ("Clone sạch: " + $l) $(if ($l -match 'Failed!') { "Red" } else { "Green" }) }
-    Remove-Item $clone -Recurse -Force -ErrorAction SilentlyContinue
     # Dọn worktree của task
     foreach ($wt in ((git -C $r.Path worktree list --porcelain) -join "`n" | Select-String -Pattern "worktree ([^\n]+)\nHEAD [0-9a-f]+\nbranch refs/heads/$([regex]::Escape($branch))" -AllMatches).Matches) {
         git -C $r.Path worktree remove --force $wt.Groups[1].Value 2>$null; Say "Đã dọn $($wt.Groups[1].Value)"
@@ -2290,6 +2352,11 @@ function Invoke-Merge {
     # Bản chạy thử cho chủ dự án
     $own = Join-Path $r.Path "tools\ban-chay-thu.ps1"
     if (Test-Path $own) { & powershell -NoProfile -ExecutionPolicy Bypass -File $own -NoLaunch -NoPull | Select-Object -Last 1 | ForEach-Object { Say $_ } }
+    } finally {
+        if ($clone -and (Test-Path -LiteralPath $clone)) { Remove-Item -LiteralPath $clone -Recurse -Force -ErrorAction SilentlyContinue }
+        $ErrorActionPreference = $savedPreference
+        if ($locked) { $mutex.ReleaseMutex() }; $mutex.Dispose()
+    }
 }
 # ===== Chạy thử app cho chủ dự án: bản ĐÃ MERGE (main), build ra thư mục riêng, không đụng việc agent đang làm =====
 function Invoke-Try {

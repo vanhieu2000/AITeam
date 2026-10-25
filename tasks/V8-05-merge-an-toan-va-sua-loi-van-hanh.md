@@ -46,11 +46,32 @@
 - `core.tests/AcceptanceV805SafeMergeTests.cs` (Codex viết cùng lượt): clone sạch đỏ ⇒ main local quay về, remote không đổi; xanh ⇒ push; 2 merge song song ⇒ cái sau chờ; xóa file test ⇒ PHẢI SỬA; log "invalid model selection" ⇒ dừng không verify; models bỏ qua "Fetching"; prep MSB3491 lần 1 ⇒ thử lại; chia đều với assign-recent.
 
 ## Tiêu chí hoàn thành
-- [ ] Build 0 warning
+- [x] Build 0 warning
 - [ ] `dotnet test AITeam.sln` pass + `powershell -File tools\test-verify.ps1` ĐẠT
 
 ## Báo cáo của agent
 
+| Tiêu chí | Bằng chứng thật lượt sửa cổng 26/10 |
+|---|---|
+| 1. Clone trước push, hủy merge đỏ | Test liên quan bên dưới: các ca giả lập đạt; 2 ca Git thật trong solution lỗi `sh.exe` Win32 error 5, chưa xác minh đầy đủ. |
+| 2. Mutex, clone GUID, dọn clone | Test liên quan: ca chờ khóa/nhả khóa và dọn clone đạt. |
+| 3. Chặn xóa test | Test liên quan: ca xóa file test bị chặn đạt. |
+| 4. Model không hợp lệ | Test liên quan: ca dừng trước verify đạt. |
+| 5. Models bỏ stderr tiến độ | Test liên quan: ca giữ id, bỏ Fetching đạt. |
+| 6. Prep retry lỗi máy | Test liên quan: ca retry MSB3491 và nhận MSB3027 đạt. |
+| 7. Chia đều gần nhất | Test liên quan: ca đặt chỗ, không đếm trùng, hết hạn đạt. |
+| 8. Shutdown và chờ retry | Test liên quan: ca shutdown sau Codex và chờ 20 giây đạt; đã gọi `dotnet build-server shutdown` trước build, không tái hiện MSB3491. |
+| Build, BOM, cú pháp | `dotnet build AITeam.sln --no-restore -m:1`: mã 0, 0 warning, 0 lỗi; 3 file mã có BOM, 2 script parse 0 lỗi. |
+| Test liên quan | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceV805SafeMergeTests&FullyQualifiedName!~Merge_checks_local_clone" --blame-hang-timeout 2m -m:1`: 9 pass, 0 fail/skip. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 597 pass/9 fail (ReplaceFile bị từ chối quyền và kiểm lưu); Core 2 ca Git lỗi quyền, chưa tổng kết; dừng gần 3 phút theo giới hạn, mã 1. |
+| Cổng kiểm tra | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: kiểm tra tĩnh đạt sau sửa biến; mã 1 do clone repo tạm bị `sh.exe` Win32 error 5. |
+| File đổi / giới hạn | Lượt này: `team.ps1` đổi `$note` thành `$codexPromptPrefix` tránh đè tham số script; task cập nhật báo cáo. Giữ nguyên test nghiệm thu, không sửa Hub ngoài phạm vi; cần kiểm lại solution/cổng ngoài sandbox. Không chạy git trực tiếp, chưa có commit được kiểm; hệ thống tự commit/push. |
+
 ## Review (Claude)
 
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code)
+- Cổng KT lượt 2 ĐẠT: Hub 606/606, Core 623/623 (gồm AcceptanceV805SafeMergeTests).
+- Đọc diff: mutex Global\AITeam_Merge 30 phút; clone --no-hardlinks từ main local vào thư mục GUID; build + test (có chạy lại test chập chờn) TRƯỚC push; đỏ ⇒ reset --hard ORIG_HEAD chỉ khi rev-list xác nhận commit merge chưa push. Đủ 8 điểm (xóa test, model sai, models, prep thử lại, assign-recent, build-server shutdown).
+
 ## Kết quả
+- Merge an toàn: test clone sạch đỏ thì không lên main; 2 merge không chạy chồng. Cổng KT chặn xóa test, dừng khi model sai; prep/verify tự xử lý lỗi obj sau Codex.
