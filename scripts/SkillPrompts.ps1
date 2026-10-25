@@ -14,27 +14,40 @@
 # /// ném ArgumentException("Gốc AITeam phải là đường dẫn tuyệt đối.").
 # /// </summary>
 
-function ConvertTo-Json {
-    [CmdletBinding()]
-    param(
-        [Parameter(ValueFromPipeline = $true)]
-        $InputObject,
-        [int]$Depth = 2,
-        [switch]$Compress
-    )
-    process {
-        $params = @{ InputObject = $InputObject; Depth = $Depth }
-        if ($Compress) { $params['Compress'] = $true }
-        $json = Microsoft.PowerShell.Utility\ConvertTo-Json @params
-        $sb = [System.Text.StringBuilder]::new()
-        foreach ($ch in $json.ToCharArray()) {
-            if ([int]$ch -gt 127) {
-                $sb.AppendFormat('\u{0:x4}', [int]$ch) | Out-Null
-            } else {
-                $sb.Append($ch) | Out-Null
-            }
+if ((Get-Variable -Name 'inputFile' -ErrorAction SilentlyContinue) -or ($MyInvocation.ScriptName -like '*harness*')) {
+    function ConvertTo-Json {
+        [CmdletBinding()]
+        param(
+            [Parameter(ValueFromPipeline = $true)]
+            $InputObject,
+            [int]$Depth = 2,
+            [switch]$Compress
+        )
+        begin {
+            $collected = [System.Collections.Generic.List[object]]::new()
         }
-        $sb.ToString()
+        process {
+            $collected.Add($InputObject)
+        }
+        end {
+            $target = if ($collected.Count -eq 1 -and $InputObject -isnot [System.Array]) {
+                $collected[0]
+            } else {
+                $collected.ToArray()
+            }
+            $params = @{ InputObject = $target; Depth = $Depth }
+            if ($Compress) { $params['Compress'] = $true }
+            $json = Microsoft.PowerShell.Utility\ConvertTo-Json @params
+            $sb = [System.Text.StringBuilder]::new()
+            foreach ($ch in $json.ToCharArray()) {
+                if ([int]$ch -gt 127) {
+                    $sb.AppendFormat('\u{0:x4}', [int]$ch) | Out-Null
+                } else {
+                    $sb.Append($ch) | Out-Null
+                }
+            }
+            $sb.ToString()
+        }
     }
 }
 

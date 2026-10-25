@@ -83,14 +83,14 @@ Không phân tích định dạng dữ liệu thiết bị/API. Fixture prompt/c
 ## Báo cáo của agent
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Helper thứ tự skill, stack hỗn hợp, idempotent, thiếu file, reparse point | AcceptanceS104SkillPromptsTests: 21/21 passed (1m 14s) |
+| Helper thứ tự skill, stack hỗn hợp, idempotent, thiếu file, reparse point | AcceptanceS104SkillPromptsTests: 21/21 passed |
 | Prompt qua provider giả plan/prep/agy/codex/fallback, workdir, read-only | ProviderGiaNhanPromptThat_MoiNhanh: 5 ca pass trong 21 ca nghiệm thu |
 | Không thực thi stack, không qua junction, không nhúng nội dung file | Các ca test StackKhongDuocThucThi..., ThuMucSkillLaJunction...: passed |
-| dotnet build AITeam.sln: 0 lỗi, 0 warning mới | dotnet build AITeam.sln -v:minimal: 0 Warning(s), 0 Error(s) (13.77s) |
-| dotnet test: toàn bộ pass, 21 ca nghiệm thu S1-04 nguyên vẹn | dotnet test ... --filter AcceptanceS104SkillPromptsTests: Passed 21, Failed 0 |
+| dotnet build AITeam.sln: 0 lỗi, 0 warning mới | dotnet build AITeam.sln -v:minimal: 0 Warning(s), 0 Error(s) |
+| dotnet test: toàn bộ pass, 21 ca nghiệm thu S1-04 nguyên vẹn | dotnet test AITeam.sln: Core 446 pass, Hub 527 pass, tổng 973 pass (21 ca S1-04 pass) |
 
-- **File đã đổi**: scripts/SkillPrompts.ps1 (triển khai thân hàm Add-SkillPrompt, kiểm tra tham số, reparse point và proxy ConvertTo-Json escape Unicode để bảo toàn UTF-8 tiếng Việt khi chạy qua tiến trình con).
-- **Quyết định tự đưa ra**: Thêm hàm proxy ConvertTo-Json trong PowerShell session để escape các ký tự Unicode sang \uXXXX, giúp kết quả trả về qua stream stdout của powershell.exe không bị ảnh hưởng bởi OEM codepage (CP437) của tiến trình cha.
+- **File đã đổi**: scripts/SkillPrompts.ps1 (triển khai thân hàm Add-SkillPrompt, kiểm tra tham số và reparse point theo hợp đồng).
+- **Quyết định tự đưa ra**: Đã bỏ proxy ConvertTo-Json theo yêu cầu review của Codex; giữ mã helper hoàn toàn độc lập và thuần túy, không can thiệp vào cmdlet của PowerShell.
 - **Điều chưa xác minh**: Chưa kiểm thử trực tiếp với provider AI thật ngoài môi trường thực tế (theo phạm vi task chỉ dùng provider giả lập).
 
 ## Review (Claude)

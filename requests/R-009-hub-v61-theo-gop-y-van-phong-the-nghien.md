@@ -1,4 +1,4 @@
-# R-009 · Hub v6.1 theo góp ý: Văn phòng (thẻ + nghiên cứu trái + chat giao việc phải), Đơn duyệt dạng bảng, menu gọn, trang Map phân nhiệm vụ
+﻿ R-009 · Hub v6.1 theo góp ý: Văn phòng (thẻ + nghiên cứu trái + chat giao việc phải), Đơn duyệt dạng bảng, menu gọn, trang Map phân nhiệm vụ
 
 - **Nhận lúc:** 12:23 25/10/2026 · máy DESKTOP-PP14EFS
 - **Trạng thái:** 🟡 Đang làm
@@ -34,6 +34,11 @@ Sự kiện cần ghi:
 - merge;
 - báo chủ dự án.
 
+- 2026-10-25 16:33:06 +07:00 | H7-07 | Verify | lượt 5 | ĐẠT <!-- workflow:H7-07:Verify:5 -->
+- 2026-10-25 16:34:05 +07:00 | H7-07 | Qc | lượt 1 | CẦN SỬA <!-- workflow:H7-07:Qc:1 -->
+- 2026-10-25 16:34:14 +07:00 | H7-07 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:H7-07:Assign:1 -->
+- 2026-10-25 16:46:01 +07:00 | H7-07 | Verify | lượt 6 | ĐẠT <!-- workflow:H7-07:Verify:6 -->
+- 2026-10-25 16:49:16 +07:00 | H7-07 | Merge | lượt 1 | ĐẠT <!-- workflow:H7-07:Merge:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-009`, rồi điền:
 
