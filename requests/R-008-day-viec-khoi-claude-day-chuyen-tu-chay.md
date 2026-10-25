@@ -39,6 +39,27 @@ Sự kiện cần ghi:
 - 2026-10-25 20:19:20 +07:00 | V8-02 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-02:Assign:1 -->
 - 2026-10-25 20:20:13 +07:00 | V8-02 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:2 -->
 - 2026-10-25 20:58:00 +07:00 | V8-02 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:3 -->
+- 2026-10-25 21:19:00 +07:00 | V8-02 | Verify | lượt 4 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:4 -->
+- 2026-10-25 21:29:45 +07:00 | V8-02 | Verify | lượt 5 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:5 -->
+- 2026-10-25 21:53:06 +07:00 | V8-02 | Verify | lượt 6 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:6 -->
+- 2026-10-25 22:32:11 +07:00 | V8-02 | Verify | lượt 7 | KHÔNG ĐẠT <!-- workflow:V8-02:Verify:7 -->
+- 2026-10-25 22:33:35 +07:00 | V8-02 | Merge | lượt 1 | ĐẠT <!-- workflow:V8-02:Merge:1 -->
+- 2026-10-25 23:21:28 +07:00 | V8-04 | Verify | lượt 1 | ĐẠT <!-- workflow:V8-04:Verify:1 -->
+- 2026-10-25 23:21:35 +07:00 | V8-04 | Qc | lượt 1 | BLOCKED <!-- workflow:V8-04:Qc:1 -->
+- 2026-10-25 23:21:44 +07:00 | V8-04 | Assign | lượt 1 | ĐẠT <!-- workflow:V8-04:Assign:1 -->
+- 2026-10-25 23:23:02 +07:00 | V8-04 | Merge | lượt 1 | ĐẠT <!-- workflow:V8-04:Merge:1 -->
+- 2026-10-26 00:18:12 +07:00 | V8-03 | Prep | lượt 1 | ĐẠT <!-- workflow:V8-03:Prep:1 -->
+- 2026-10-26 00:32:57 +07:00 | V8-03 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-03:Verify:1 -->
+- 2026-10-26 00:33:04 +07:00 | V8-03 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-03:Assign:1 -->
+- 2026-10-26 00:39:23 +07:00 | V8-03 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:V8-03:Verify:2 -->
+- 2026-10-26 00:55:27 +07:00 | V8-03 | Verify | lượt 3 | ĐẠT <!-- workflow:V8-03:Verify:3 -->
+- 2026-10-26 00:55:31 +07:00 | V8-03 | Qc | lượt 1 | BLOCKED <!-- workflow:V8-03:Qc:1 -->
+- 2026-10-26 00:57:19 +07:00 | V8-03 | Merge | lượt 1 | ĐẠT <!-- workflow:V8-03:Merge:1 -->
+- 2026-10-26 01:17:07 +07:00 | V8-05 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-05:Verify:1 -->
+- 2026-10-26 01:17:15 +07:00 | V8-05 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-05:Assign:1 -->
+- 2026-10-26 01:28:52 +07:00 | V8-05 | Verify | lượt 2 | ĐẠT <!-- workflow:V8-05:Verify:2 -->
+- 2026-10-26 01:28:55 +07:00 | V8-05 | Qc | lượt 1 | BLOCKED <!-- workflow:V8-05:Qc:1 -->
+- 2026-10-26 01:29:58 +07:00 | V8-05 | Merge | lượt 1 | ĐẠT <!-- workflow:V8-05:Merge:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-008`, rồi điền:
 
