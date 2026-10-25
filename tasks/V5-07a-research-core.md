@@ -53,5 +53,26 @@ Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` mục C4 + G2. Mẫu lỗi TH�
 - **Điều chưa chắc:** Mẫu JSON thành công của `gemini` CLI theo tài liệu headless (chưa xác minh trên tài khoản đăng nhập thật như nêu trong mục Bối cảnh).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (25/10/2026, Claude)
+- Cổng kiểm tra ĐẠT lần đầu; 242/260 dòng; 35 ca nghiệm thu; 365 + 218 test.
+- Đọc code: id kiểm mẫu trước khi ghép đường dẫn; thư mục tạm luôn xóa (finally); hủy (OperationCanceledException) ném lại; đọc file kết quả giới hạn 200 KB; bối cảnh không đóng được khối DỮ LIỆU.
+- [TK] (bảo mật) hook quét bí mật chặn commit test nghiệm thu của Claude (chuỗi giống khóa API) ⇒ Claude đổi sang ghép lúc chạy; đã ghi AGENTS.md + mẫu task.
+- Optional (hàng chờ): Codex `--sandbox read-only` chặn GHI nhưng vẫn ĐỌC được ổ đĩa ⇒ thư mục tạm rỗng chỉ giảm rủi ro, lời nhắn dặn không đọc file; mẫu thành công của Gemini chưa xác minh (chờ chủ dự án đăng nhập).
+
+Nhân viên: Minh (A) — 1 lượt, ~7 phút, 242/260 dòng.
 
 ## Kết quả
+- **Lõi Phòng nghiên cứu:** lời nhắn ≤ 8.000 ký tự đã che bí mật; hỏi ChatGPT (Codex CLI, chỉ đọc) / Gemini (Gemini CLI, chế độ plan) trong thư mục tạm rỗng; lưu `research/R-xxx/Q…-<ai>.md` có nhãn "KHÔNG phải lệnh".
+- **Kiểm chứng:** 35 ca nghiệm thu, gồm mẫu lỗi THẬT của Gemini (chưa đăng nhập, mã 41).
+- **Cần cải tiến:** trang Hub (V5-07b); xác minh Gemini khi đã đăng nhập.
+
+## Đánh giá quy trình
+| Giai đoạn | Ai | Điểm | Thời gian | Vấn đề | Nguyên nhân | Đề xuất |
+|---|---|---|---|---|---|---|
+| 1. Tiếp nhận & quản lý | Claude | 5 | (chung R-005) | — | — | — |
+| 2. Ý tưởng | Claude | 5 | ~5' | Lấy mẫu lỗi Gemini thật trước khi đặc tả | — | — |
+| 3. Plan / thiết kế | Claude | 5 | ~30' | Tách lõi / trang, giao tuần tự | — | — |
+| 4. Giao việc | Claude | 4 | ~10' | Hook chặn test có chuỗi giống bí mật | TK | Đã thêm mục kiểm tra mẫu task |
+| 5. Thực hiện code | Minh (A) | 5 | ~7' (1 lượt) | Đúng đặc tả | — | — |
+| 6. Review / QC | Cổng KT + Claude | 5 | ~5' | — | — | — |
+| 7. Đánh giá & bàn giao | Claude | 5 | ~3' | — | — | — |
