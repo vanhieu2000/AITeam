@@ -91,12 +91,12 @@ Hoàn thiện khung `MapModel.OnGet()` và `OnPost()`, dựng Razor và CSS cụ
 | Tiêu chí | Bằng chứng |
 | --- | --- |
 | Dựng trang GET & POST Map hợp lệ, antiforgery, đủ 11 vai/6 actor | AcceptanceH707MapTests: 27/27 pass |
-| Chặn dòng thừa ngoài hợp đồng (Roles[12]), XSS, lỗi đọc/ghi | Form key validation chặn Roles[12], Writes = 0 |
+| Chặn dòng thừa (Roles[12], roles case-insensitive, overflow index), XSS, lỗi đọc/ghi | Form key validation chặn Roles[12]/roles/ROLES và TryParse chống overflow, Writes = 0 |
 | Bảo toàn ký tự xuống dòng đầu trong textarea Note | Thêm LF đệm ngay sau mở textarea (@Html.Raw("\n")), 1-2 LF đầu giữ nguyên |
 | Build & Test toàn bộ giải pháp | dotnet build: 0 lỗi, 0 warning; dotnet test: 886/886 pass (527 Hub + 359 Core) |
 
-- **File đã đổi:** hub/Pages/Map.cshtml (LF đệm sau textarea), hub/Pages/Map.cshtml.cs (chặn dòng thừa Roles[12]), tasks/H7-07-giao-dien-map.md (báo cáo).
-- **Quyết định tự đưa ra:** Kiểm tra mọi key dạng Roles[...] trong Request.Form để chặn dòng thừa (như Roles[12]); thêm LF đệm cho textarea; không commit file test mới vào hub.tests để tuân thủ phạm vi task.
+- **File đã đổi:** hub/Pages/Map.cshtml (LF đệm sau textarea), hub/Pages/Map.cshtml.cs (chặn dòng thừa Roles[12], OrdinalIgnoreCase, int.TryParse), tasks/H7-07-giao-dien-map.md (báo cáo).
+- **Quyết định tự đưa ra:** Dùng RegexOptions.IgnoreCase và StringComparison.OrdinalIgnoreCase cho tiền tố Roles; dùng int.TryParse chặn số vượt Int32; không commit file test mới vào hub.tests để tuân thủ phạm vi task.
 - **Chưa chắc:** Kiểm tra giao diện trực quan 1280x800/1000px trên trình duyệt thật (bàn giao Claude nghiệm thu ở bước 7).
 ## Review (Claude)
 <!-- Claude điền khi review. -->

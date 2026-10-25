@@ -82,16 +82,19 @@ public sealed class MapModel(IWorkflowRolesService service) : PageModel
         {
             foreach (var key in Request.Form.Keys)
             {
-                if (key.StartsWith("Roles[", StringComparison.Ordinal))
+                if (key.StartsWith("Roles[", StringComparison.OrdinalIgnoreCase))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(key, @"^Roles\[(\d+)\]\.(Code|Actor|Note)$");
-                    if (!match.Success || int.Parse(match.Groups[1].Value) >= 11)
+                    var match = System.Text.RegularExpressions.Regex.Match(
+                        key,
+                        @"^Roles\[(\d+)\]\.(Code|Actor|Note)$",
+                        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (!match.Success || !int.TryParse(match.Groups[1].Value, out var idx) || idx < 0 || idx >= 11)
                     {
                         Error = "Phân vai không hợp lệ.";
                         return Page();
                     }
                 }
-                else if (key.StartsWith("Roles", StringComparison.Ordinal))
+                else if (key.StartsWith("Roles", StringComparison.OrdinalIgnoreCase))
                 {
                     Error = "Phân vai không hợp lệ.";
                     return Page();
