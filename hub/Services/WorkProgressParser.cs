@@ -27,7 +27,7 @@ public sealed record WorkProgressStep(
     WorkStep Step, WorkStepState State, string TimeText, string ActorText);
 
 /// <summary>Kết quả thuần: đúng chín bước; LatestError là nội dung lỗi đang hiệu lực hoặc null.
-/// IsMerged chỉ true khi có Merge đạt hoặc boardStatus chứa ✅; khi đó mọi bước đều Done.</summary>
+/// IsMerged chỉ true khi có Merge đạt hoặc boardStatus chứa ✅; không suy diễn Acceptance Done.</summary>
 public sealed record WorkProgress(
     WorkStep CurrentStep, IReadOnlyList<WorkProgressStep> Steps, string? LatestError, bool IsMerged);
 
@@ -112,11 +112,11 @@ public static class WorkProgressParser
     /// <summary>
     /// Trả đúng 9 bước theo enum; mặc định Received=Current, còn lại Waiting. planExists chuyển sang PlanApproval (Received/Plan Done);
     /// planApproved chuyển sang Prep (Received/Plan/PlanApproval Done); chỉ đánh dấu Done những bước có bằng chứng, không điền người/giờ giả.
-    /// Lọc đúng TaskId (OrdinalIgnoreCase), bỏ Unknown/round&lt;1; lấy kết quả mới nhất RIÊNG từng bước.
-    /// So theo giờ UTC trước, lượt theo số sau; hòa giữ thứ tự nguồn, thiếu giờ xếp sau.
-    /// Prep/Assign/Verify/QC/Merge đạt hoàn thành chính bước đó; lỗi/BLOCKED giữ bước đó Failed.
-    /// CurrentStep là bước đầu tiên chưa Done; LatestError chỉ lấy lỗi mới nhất của chính bước đó.
-    /// Merge đạt hoặc boardStatus chứa ✅ hoàn thành mọi bước, CurrentStep=Merge, xóa mọi lỗi.
+    /// Lọc đúng TaskId (OrdinalIgnoreCase), bỏ Unknown/round&lt;1; chỉ dùng lượt mới nhất theo số.
+    /// Trong lượt so theo giờ UTC; hòa giữ thứ tự nguồn, thiếu giờ xếp sau.
+    /// Prep/Verify/QC/Merge đạt hoàn thành chính bước đó; Assign đạt chỉ chuyển Code Current.
+    /// Lỗi/BLOCKED giữ bước Failed, chặn bước sau đến khi đạt lại; LatestError là lỗi đang hiệu lực.
+    /// Merge đạt mới hơn hoặc boardStatus chứa ✅ hoàn thành Merge, không suy diễn nghiệm thu; xóa lỗi cũ.
     /// 🟡/🔵/🔴 không tự chứng minh gate đạt; không suy diễn Done từ kết quả bước khác.
     /// Chuỗi hiển thị thiếu giờ/người là "Chưa có dữ liệu"; giờ rõ đổi +07:00 định dạng HH:mm dd/MM/yyyy.
     /// null events coi rỗng. Không đổi đầu vào, không I/O, không suy luận từ đồng hồ hoặc máy hiện tại.
@@ -134,8 +134,10 @@ public static class WorkProgressParser
         if (planExists || planApproved) { done[WorkStep.Received] = true; done[WorkStep.Plan] = true; }
         if (planApproved) done[WorkStep.PlanApproval] = true;
 
-        // Mỗi bước giữ kết quả riêng; kết quả bước sau không được bỏ qua vì bước trước lỗi.
-        var latest = (events ?? Array.Empty<WorkProgressEvent>())
+        var currentStep = planApproved ? WorkStep.Prep
+            : planExists ? WorkStep.PlanApproval : WorkStep.Received;
+        var isMerged = false;
+        var workflow = (events ?? Array.Empty<WorkProgressEvent>())
             .Select((ev, index) => (Event: ev, Index: index))
             .Where(x => x.Event != null
                 && !string.IsNullOrWhiteSpace(taskId)
@@ -143,35 +145,57 @@ public static class WorkProgressParser
                 && x.Event.Round >= 1
                 && x.Event.Action != WorkAction.Unknown
                 && x.Event.Outcome != WorkOutcome.Unknown)
-            .GroupBy(x => MapStep(x.Event.Action))
-            .Select(group => group
-                .OrderBy(x => x.Event.Time.HasValue ? 0 : 1)
-                .ThenBy(x => x.Event.Time?.UtcDateTime)
-                .ThenBy(x => x.Event.Round)
-                .ThenBy(x => x.Index)
-                .Last().Event)
             .ToArray();
+        var latestRound = workflow.Length == 0 ? 0 : workflow.Max(x => x.Event.Round);
 
-        foreach (var ev in latest)
+        // Chỉ lượt mới nhất có hiệu lực; trong lượt so giờ UTC, thiếu giờ giữ cuối.
+        foreach (var item in workflow.Where(x => x.Event.Round == latestRound)
+            .OrderBy(x => x.Event.Time.HasValue ? 0 : 1)
+            .ThenBy(x => x.Event.Time?.UtcDateTime)
+            .ThenBy(x => x.Index))
         {
+            var ev = item.Event;
             var step = MapStep(ev.Action);
             SetMeta(step, ev, timeText, actorText);
-            done[step] = ev.Outcome == WorkOutcome.Passed;
-            errors[step] = ev.Outcome is WorkOutcome.Failed or WorkOutcome.Blocked ? ev.Text : null;
-        }
-
-        var isMerged = done[WorkStep.Merge]
-            || (boardStatus?.Contains("✅", StringComparison.Ordinal) ?? false);
-        if (isMerged)
-        {
-            foreach (var step in allSteps)
+            if (ev.Outcome is WorkOutcome.Failed or WorkOutcome.Blocked)
             {
-                done[step] = true;
-                errors[step] = null;
+                done[step] = false;
+                errors[step] = ev.Text;
+                currentStep = step;
+                isMerged = false;
+                continue;
+            }
+
+            errors[step] = null;
+            // Assign chỉ chứng minh đã giao việc, không chứng minh code hoàn thành.
+            done[step] = ev.Action != WorkAction.Assign;
+            currentStep = ev.Action switch
+            {
+                WorkAction.Prep or WorkAction.Assign => WorkStep.Code,
+                WorkAction.Verify => WorkStep.Qc,
+                WorkAction.Qc => WorkStep.Acceptance,
+                _ => WorkStep.Merge
+            };
+            if (ev.Action == WorkAction.Merge)
+            {
+                isMerged = true;
+                foreach (var key in allSteps) errors[key] = null;
             }
         }
 
-        var currentStep = isMerged ? WorkStep.Merge : allSteps.First(step => !done[step]);
+        isMerged |= boardStatus?.Contains("✅", StringComparison.Ordinal) ?? false;
+        if (isMerged)
+        {
+            done[WorkStep.Merge] = true;
+            currentStep = WorkStep.Merge;
+            foreach (var step in allSteps) errors[step] = null;
+        }
+        else
+        {
+            // Lỗi gate chưa được đạt lại chặn bước sau, kể cả Assign tổng kết.
+            var failed = allSteps.Where(step => errors[step] != null).ToArray();
+            if (failed.Length > 0) currentStep = failed[0];
+        }
         var latestError = errors[currentStep];
         var stepList = allSteps.Select(s =>
         {
@@ -217,7 +241,7 @@ public static class WorkProgressParser
 
     private static WorkOutcome ParseOutcome(string text)
     {
-        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT") || HasPrefix(text, "XONG")) return WorkOutcome.Passed;
+        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT")) return WorkOutcome.Passed;
         if (HasPrefix(text, "CẦN SỬA") || HasPrefix(text, "FAILED") || HasPrefix(text, "FAIL") || HasPrefix(text, "LỖI")) return WorkOutcome.Failed;
         return HasPrefix(text, "BLOCKED") ? WorkOutcome.Blocked : WorkOutcome.Unknown;
     }

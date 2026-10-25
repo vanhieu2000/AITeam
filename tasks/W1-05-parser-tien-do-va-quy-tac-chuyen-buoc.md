@@ -101,20 +101,19 @@ không phải hợp đồng tính tiến độ; dùng model riêng trong file đ
 - [x] Báo cáo từng tiêu chí → lệnh/kết quả thật, file/lý do, quyết định tự đưa ra và điều chưa xác minh.
 
 ## Báo cáo của agent
-
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Triển khai đúng phạm vi, hết TODO | `Select-String hub/Services/WorkProgressParser.cs -Pattern 'TODO|NotImplementedException'`: không khớp; sản phẩm 243 dòng, giữ chữ ký/model. |
-| Parse mẫu thật, BOM/CRLF, chuẩn hóa | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~W105WorkProgressExtraTests|FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m`: 47 pass/23 fail/0 skip; các ca Parse pass. |
-| Chín bước, CurrentStep, LatestError | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~W105WorkProgressExtraTests --blame-hang-timeout 2m`: 7 pass/0 fail/0 skip, gồm cả hai chuỗi QC quản lý yêu cầu. |
-| Lượt, thời gian, lỗi và Merge | Cùng lệnh hồi quy: pass so thời gian trước lượt số, giữ kết quả riêng từng bước; Merge/✅ hoàn thành cả chín bước và xóa lỗi. |
-| Thuần, dữ liệu độc hại, thiếu metadata | Không đổi Parse/SetMeta; test nghiệm thu kiểm bất biến đầu vào qua các assertion trước khi đỏ tại LatestError (quy tắc mới chỉ lấy lỗi của CurrentStep); chưa đạt nguyên bộ nghiệm thu cũ. |
-| Build toàn solution | `dotnet build AITeam.sln --no-restore -m:1 -p:UseSharedCompilation=false --nologo`: exit 0, 0 warning/0 error; build mặc định trước đó exit 1 không chẩn đoán, sandbox chặn pipe compiler server. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=quiet"`: Hub 565 pass/32 fail/0 skip (23 W1-05 xung đột quy tắc mới, 9 ngoài phạm vi); dừng bằng Ctrl+C sau ~3 phút, Core chưa có tổng kết, exit 1. |
-| Báo cáo, BOM, nghiệm thu bất biến | Đã kiểm byte EF-BB-BF hai file .cs; SHA256 nghiệm thu trước/sau bằng `83515705FD8E75C306C7DD0467841F17BF47E80470C53A15753C541182E95F04`; không sửa fixture/test nghiệm thu. |
-File đổi/lý do: `hub/Services/WorkProgressParser.cs` (chọn kết quả riêng từng bước, nhận XONG); `hub.tests/W105WorkProgressExtraTests.cs` (7 hồi quy theo chỉ đạo mới); file task này (báo cáo).
-Quyết định: ưu tiên yêu cầu mới của quản lý so với task/test cũ: Assign Passed ⇒ Code Done; bước đầu chưa Done là Current; Merge ⇒ mọi bước Done. Không vá test nghiệm thu để xanh; 23 ca cần quản lý cập nhật hợp đồng.
-Chưa xác minh: Core/toàn bộ test chưa đạt; không điều tra lỗi ngoài phạm vi. V8-02 Bo_dem_rieng: quản lý báo đã chạy lại riêng 9/9 PASS do máy bận, không phải kết quả chạy riêng của agent; chưa có workflow thực thi thật. Không có MCP aiteam_post_message; không chạy git, hệ thống tự commit/push, chưa có commit được kiểm.
+| Đúng phạm vi, hết TODO | `Select-String hub/Services/WorkProgressParser.cs -Pattern 'TODO|NotImplementedException'`: không khớp; parser 267 dòng, giữ chữ ký/model. |
+| Parse bảng thật, BOM/CRLF, chuẩn hóa | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests" --blame-hang-timeout 2m --nologo`: 63 pass/0 fail/0 skip. |
+| Chín bước, không suy diễn nghiệm thu | Cùng lệnh nghiệm thu: 63/63 pass; Assign chỉ Code Current; Merge chỉ chứng minh Merge Done. |
+| Lượt, thời gian, lỗi và Merge | Cùng lệnh nghiệm thu: 63/63 pass; chọn lượt số mới nhất, sắp UTC trong lượt, giữ gate lỗi đến khi đạt lại. |
+| Hàm thuần, dữ liệu độc hại, thiếu metadata | Cùng lệnh nghiệm thu: 63/63 pass, gồm bất biến đầu vào, chuỗi độc hại và placeholder. |
+| Build solution | `dotnet build AITeam.sln --no-restore -m:1 -p:UseSharedCompilation=false --nologo`: exit 0, 0 warning/0 error. |
+| Test solution: chưa đạt | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=quiet" --nologo`: Hub 597 pass/9 fail/0 skip; Core chưa tổng kết; Ctrl+C sau >3 phút, exit 1. |
+| BOM, nghiệm thu và báo cáo | Parser EF-BB-BF; SHA256 nghiệm thu giữ nguyên `83515705FD8E75C306C7DD0467841F17BF47E80470C53A15753C541182E95F04`; không sửa fixture/test nghiệm thu. |
+File đổi/lý do: `hub/Services/WorkProgressParser.cs` sửa theo hợp đồng task; xóa `hub.tests/W105WorkProgressExtraTests.cs` để hoàn tác bổ sung ngoài phạm vi theo yêu cầu quản lý; file task cập nhật báo cáo.
+Quyết định: dùng đúng quy tắc task/test bất biến; không thêm test trùng, không sửa mã ngoài phạm vi. Chạy riêng `TeamConfigServiceTests.SaveSettings_preserves_unknown_keys_and_creates_bak_and_separates_local_paths` (cùng tùy chọn test): 0 pass/1 fail, UnauthorizedAccessException tại File.Replace trong TeamConfigService.SaveSettings:366.
+Chưa xác minh: Core/toàn solution chưa đạt, chưa có workflow thực thi thật; không có MCP aiteam_post_message trong phiên; không chạy git theo chỉ dẫn, hệ thống tự commit/push, chưa có commit được kiểm.
 
 ## Review (Claude)
 <!-- Claude ghi kết quả review sau khi agent triển khai. -->
