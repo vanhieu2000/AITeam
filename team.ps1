@@ -42,6 +42,7 @@ param(
     [string] $Task,
     [string] $Feedback = "",
     [switch] $Resume,
+    [switch] $Restart,
     [string] $Repo,
     [string] $Path,
     [switch] $New,
@@ -1392,6 +1393,19 @@ function Test-PortOpen([string]$hostName, [int]$port) {
 }
 
 function Invoke-Hub {
+    param([switch]$Restart)
+    if ($Restart) {
+        $bin = [IO.Path]::GetFullPath((Join-Path $Root 'hub\bin')) + '\'
+        $dllPattern = '(?i)(?:^|[\s"])' + [regex]::Escape($bin) + '[^"\r\n]*?AITeam\.Hub\.dll(?=["\s]|$)'
+        Get-CimInstance Win32_Process | Where-Object {
+            ($_.ExecutablePath -and [IO.Path]::GetFullPath($_.ExecutablePath).StartsWith($bin, [StringComparison]::OrdinalIgnoreCase)) -or
+            ($_.CommandLine -and $_.CommandLine -match $dllPattern)
+        } | ForEach-Object {
+            $stopped = Stop-Process -Id $_.ProcessId -Force -PassThru -ErrorAction Stop
+            if ($stopped -and -not $stopped.WaitForExit(10000)) { throw "Hub chưa dừng sau 10 giây." }
+        }
+        if (Test-PortOpen "127.0.0.1" 5057) { throw "Cổng 5057 vẫn đang được sử dụng; không thể khởi động lại Hub." }
+    }
     $hubUrl = "http://127.0.0.1:5057"
     if (Test-PortOpen "127.0.0.1" 5057) {
         Say "Hub đang chạy tại $hubUrl — đang mở trình duyệt." Green
@@ -1403,7 +1417,7 @@ function Invoke-Hub {
     $hubProj = Join-Path $hubDir "AITeam.Hub.csproj"
     $hubDll = Join-Path $hubDir "bin\Debug\net10.0-windows\AITeam.Hub.dll"
 
-    $needBuild = $false
+    $needBuild = [bool]$Restart
     if (-not (Test-Path $hubDll)) {
         $needBuild = $true
     } else {
@@ -1426,7 +1440,7 @@ function Invoke-Hub {
     Say "Đang khởi động AITeam Hub ở nền..." Cyan
     Start-Process dotnet -ArgumentList "`"$hubDll`"" -WorkingDirectory $hubDir -WindowStyle Hidden
 
-    $timeoutSeconds = 30
+    $timeoutSeconds = 90
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $opened = $false
     while ($sw.Elapsed.TotalSeconds -lt $timeoutSeconds) {
@@ -2667,6 +2681,7 @@ function Update-ManagerHeartbeat {
 }
 
 function Invoke-Deputy {
+    param([ValidateRange(1, 2700)][int]$TimeoutSeconds = 2700)
     $hb = Join-Path $Root ".state\claude-heartbeat"
     $lock = Join-Path $Root ".state\deputy.lock"
     $idle = if (Test-Path $hb) { ((Get-Date) - (Get-Item $hb).LastWriteTime).TotalMinutes } else { 999 }
@@ -2693,8 +2708,24 @@ Cuối vòng: cập nhật mục "Việc đang dở" + thêm 1 dòng có giờ v
         Say "[$(Get-Date -Format HH:mm)] Claude vắng $([int]$idle) phút ⇒ Codex quản lý phụ chạy 1 vòng (log $log)." Cyan
         $env:AITEAM_ACTOR = "deputy"
         # Model ghi đè theo lần gọi (KHÔNG sửa ~/.codex/config.toml): model mặc định trong config của máy không dùng được với tài khoản ChatGPT.
-        Start-Process $codexCmd -ArgumentList "exec", "-m", "gpt-6.1-sol", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "`"$Root`"", "-" `
-            -WorkingDirectory $Root -NoNewWindow -Wait -RedirectStandardInput $pf -RedirectStandardOutput $log -RedirectStandardError "$log.err" | Out-Null
+        $proc = Start-Process $codexCmd -ArgumentList "exec", "-m", "gpt-6.1-sol", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "`"$Root`"", "-" `
+            -WorkingDirectory $Root -WindowStyle Hidden -PassThru -RedirectStandardInput $pf -RedirectStandardOutput $log -RedirectStandardError "$log.err"
+        try {
+            if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+                & taskkill.exe /PID $proc.Id /T /F | Out-Null
+                if ($LASTEXITCODE -ne 0 -and -not $proc.HasExited) { throw "Không dừng được cây tiến trình quản lý phụ." }
+                $journal = Join-Path $Root 'QUAN-LY-PHU.md'
+                $text = if (Test-Path $journal) { [IO.File]::ReadAllText($journal) } else { '' }
+                $entry = "`r`n- $(Get-Date -Format 'yyyy-MM-dd HH:mm'): Lượt quản lý quá 45 phút — đã dừng`r`n"
+                $heading = [regex]::Match($text, '(?m)^## Nhật ký quản lý phụ[^\r\n]*(?:\r?\n|$)')
+                if ($heading.Success) { $text = $text.Insert($heading.Index + $heading.Length, $entry) }
+                else { $text += "`r`n## Nhật ký quản lý phụ`r`n" + $entry }
+                $bytes = if (Test-Path $journal) { [IO.File]::ReadAllBytes($journal) } else { @() }
+                $bom = $bytes.Length -ge 3 -and $bytes[0] -eq 239 -and $bytes[1] -eq 187 -and $bytes[2] -eq 191
+                [IO.File]::WriteAllText($journal, $text, (New-Object Text.UTF8Encoding $bom))
+                Say "Lượt quản lý quá 45 phút — đã dừng" Yellow
+            }
+        } finally { $proc.Dispose() }
         Get-Content $log -Tail 12 -ErrorAction SilentlyContinue | ForEach-Object { Say "  $_" }
     }
     finally { Remove-Item $lock -Force -ErrorAction SilentlyContinue; $env:AITEAM_ACTOR = $null }
@@ -2759,7 +2790,7 @@ switch ($Command) {
     "approval-request" { Invoke-ApprovalRequest }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
-    "hub" { Invoke-Hub }
+    "hub" { Invoke-Hub -Restart:$Restart }
     default { Get-Help $PSCommandPath -Detailed | Out-String | Write-Host }
 }
 } catch {
