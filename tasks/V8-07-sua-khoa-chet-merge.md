@@ -53,4 +53,8 @@
 - Không chạy lệnh git trực tiếp; chưa có commit được kiểm, hệ thống tự commit/push theo chỉ dẫn Codex.
 ## Review (Claude)
 
+### Vòng 1 — ĐẠT (Claude)
+- Cổng KT: test đạt hết; mục 'sửa test nghiệm thu V8-05' là yêu cầu của chính task ⇒ CHẤP NHẬN. Diff: AITEAM_MERGE_MUTEX (mặc định Global\AITeam_Merge), test dùng tên GUID, mọi WaitOne có giới hạn, test clone sạch có --blame-hang-timeout.
+
 ## Kết quả
+- Hết khóa chết merge ↔ test (gốc của treo 5 giờ đêm 25/10 và 3 giờ sáng 26/10); test treo khi merge bị cắt sau 5 phút.
