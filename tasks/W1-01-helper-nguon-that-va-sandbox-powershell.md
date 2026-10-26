@@ -94,17 +94,19 @@ File chuẩn bị: task này (đặc tả), RealFile.cs và TeamScript.cs (khung
 Quyết định: thêm sourceRoot tùy chọn để kiểm nguồn thiếu/reparse bằng thư mục tạm; fake toàn bộ git để không rò lệnh ra máy thật; giữ model mặc định vì task M không có các điều kiện bắt buộc đổi model.
 Điều chưa xác minh: hành vi triển khai chưa có; test timeout hiện đỏ ngay từ constructor TODO nên chưa chứng minh dừng tiến trình. Sandbox không bảo vệ trước mã test độc hại gọi exe bằng đường dẫn tường minh.
 ## Báo cáo của agent
-<!-- Antigravity điền sau khi triển khai; không nhận đã pass khi thân hàm còn TODO. -->
-| Tiêu chí | Bằng chứng (lệnh và kết quả thật) |
+| Tiêu chí | Bằng chứng thật |
 |---|---|
-| Sao chép và bảo vệ đường dẫn | dotnet test: 21/21 ca pass (thêm 3 ca chặn drive-relative / root-relative qua Path.IsPathFullyQualified). |
-| Sandbox và AST | dotnet test: 7/7 ca pass, nạp đúng hàm chọn, giữ BOM/Unicode/CRLF, chặn dispatcher. |
-| Fake và timeout | dotnet test: 10/10 ca pass (thêm 2 ca: giữ chuỗi rỗng và fake ghi đè script scope khi trùng tên hàm). |
-| Build/test | dotnet build AITeam.sln: 0 warning/0 error; dotnet test AITeam.sln: 1328 pass, 0 fail. |
-
-File đã đổi và lý do: core.tests/Support/RealFile.cs (Copy nguồn thật, bảo vệ đường dẫn); core.tests/Support/TeamScript.cs (sandbox, AST, fake runner, sửa 3 điểm review của Codex).
-Quyết định tự đưa ra: cài fake ở cả script: và global: scope để chống che khuất; duyệt mảng không qua truthiness; dùng Path.IsPathFullyQualified.
-Điều chưa chắc: sandbox chỉ bẫy lệnh theo tên trong script test tin cậy, không cách ly process gọi exe bằng đường dẫn tuyệt đối.
+| Sao chép byte/cây/tên, ghi đè, thiếu file, chặn đường dẫn | Nhóm W1-01: 43/43 pass, 0 fail/skip (lệnh bên dưới); test nghiệm thu giữ nguyên. |
+| Sandbox, cây tùy chọn, cô lập/dọn | Cùng nhóm 43/43 pass; thêm 3 ca tools/scripts/templates là liên kết tới file hoặc thư mục mất đích. |
+| AST, lỗi hàm/cú pháp, Unicode/BOM/CRLF | Cùng nhóm 43/43 pass; không sửa luồng nạp AST. |
+| Fake tiến trình con/alias/git, đối số/kết quả/log riêng | Cùng nhóm 43/43 pass; SkillNotes gọi git giả code 19; agy/codex/git.exe giữ đối số rỗng, Unicode, stderr/code. |
+| Timeout, lỗi sau fake, tham số, reparse | Cùng nhóm 43/43 pass; kiểm reparse trước Directory.Exists và từ cha xuống; chặn đường dẫn thiết bị Windows. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1`: thành công, 0 warning, 0 error. Build riêng lần đầu mặc định trả 1 không chẩn đoán; dùng -m:1 thành công. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: chưa pass; Hub 673 pass/9 fail (File.Replace bị từ chối quyền); Core có lỗi git CreateFileMapping, mutex và timeout ngoài W1-01. |
+| Lệnh nhóm W1-01 | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW101HelperTests\|FullyQualifiedName~TeamScriptCodexReviewTests" --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: 43 pass, 0 fail/skip, 45 giây. Dấu \ trước ký tự phân cách trong bảng chỉ để hiển thị Markdown. |
+| File đổi/lý do, mã hóa | RealFile.cs: nhận reparse hỏng; TeamScript.cs: kiểm cây tùy chọn, shim exe + test QC; task: báo cáo. Kiểm byte: cả hai .cs và task có BOM EF BB BF. |
+Quyết định: biên dịch shim exe tạm bằng Add-Type, PATH chỉ chứa shim trong tiến trình sandbox; dùng junction đổi đích thành file do máy thiếu quyền symlink; không đổi test nghiệm thu.
+Chưa xác minh: toàn suite xanh trong môi trường đủ quyền; không chạy app/chụp ảnh; không chạy lệnh git trực tiếp, hệ thống tự commit/push nên chưa có commit được kiểm.
 
 ## Review (Claude)
 <!-- Claude ghi kết quả sau triển khai. -->
