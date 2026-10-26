@@ -14,10 +14,49 @@ public class OfficeModel : PageModel
     private readonly IOfficeService _office;
     private readonly ICommandService? _commands;
 
-    public OfficeModel(IOfficeService office, ICommandService? commands = null)
+    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null)
     {
         _office = office;
         _commands = commands;
+    }
+
+    [BindProperty(SupportsGet = true)] public string? RequestId { get; set; }
+    public IReadOnlyList<RequestThread> Threads { get; private set; } = Array.Empty<RequestThread>();
+    public RequestThread? SelectedThread { get; private set; }
+    public IReadOnlyList<ProjectInfo> ChatProjects { get; private set; } = Array.Empty<ProjectInfo>();
+    public string? ChatNotice { get; private set; }
+    public string? ChatError { get; private set; }
+
+    /// <summary>
+    /// Đọc GetAll/GetProjects. RequestId null/rỗng chọn tạo mới; khác phải khớp toàn bộ
+    /// R-[0-9]{3} và tồn tại theo Ordinal, sai/mất: "Phiếu không hợp lệ."; không tự chọn phiếu khác.
+    /// Lỗi đọc: "Không đọc được hội thoại: " + ex.Message. Thiếu dịch vụ: danh sách rỗng,
+    /// "Chat đang ở chế độ chỉ xem.". Không ghi dữ liệu hoặc chạy tiến trình.
+    /// </summary>
+    public void LoadChat()
+    {
+        throw new NotImplementedException(); // TODO(agent)
+    }
+
+    /// <summary>
+    /// GET Chat: LoadChat rồi trả _OfficeChat, Model=this, sao chép ViewData và ModelState.
+    /// Partial chỉ có hội thoại/thông báo, root office-chat-thread, không chứa form soạn.
+    /// </summary>
+    public IActionResult OnGetChat()
+    {
+        throw new NotImplementedException(); // TODO(agent)
+    }
+
+    /// <summary>
+    /// POST Chat: gọi IOfficeChatService.Send(project,text,requestId) đúng một lần, không trim thay dịch vụ.
+    /// Thành công: "Đã gửi. Claude nhận yêu cầu khi bắt đầu phiên làm việc và trả lời trong phiếu R-xxx.".
+    /// ArgumentException: ChatError=ex.Message; lỗi khác: "Không gửi được yêu cầu: " + ex.Message.
+    /// Thiếu chat: "Chat đang ở chế độ chỉ xem.". Giữ RequestId, nạp hội thoại, trả _OfficeChat,
+    /// giữ ViewData/ModelState. Không redirect. Form ngoài swap, lỗi giữ bản nháp, chỉ thành công mới xóa.
+    /// </summary>
+    public IActionResult OnPostChat(string project, string? text, string? requestId)
+    {
+        throw new NotImplementedException(); // TODO(agent)
     }
 
     public OfficeView? View { get; private set; }
@@ -53,6 +92,7 @@ public class OfficeModel : PageModel
             Error = "Không đọc được dữ liệu văn phòng: " + ex.Message;
         }
         LoadControl();
+        LoadChat();
     }
 
     /// <summary>
