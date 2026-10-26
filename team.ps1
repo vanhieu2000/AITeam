@@ -1013,6 +1013,39 @@ function Invoke-Models {
 
 # ===== Quy trình v4 (R-006, chủ dự án chọn 25/10): Claude brief → Codex kế hoạch (CHỈ ĐỌC) → Claude duyệt →
 # Codex chuẩn bị từng task (đặc tả + khung + test nghiệm thu) → Antigravity code → cổng KT + Codex QC → Claude kiểm cuối.
+# /// <summary>Đọc khai báo **Giao diện:** Có/Không của từng task; thiếu/chưa rõ:
+# /// "Chưa xác định loại task; cần bổ sung Giao diện: Có/Không.".
+# /// Trả PSCustomObject { HasUi: bool; Html: string }; lõi Html rỗng.
+# /// UI cần đúng một khối html trong đúng một mục ## Mockup, 1..120 dòng nội dung.
+# /// Chỉ HTML/CSS tĩnh, CSS Hub hoặc nội tuyến; chỉ href="#" và liên kết CSS Hub.
+# /// Cấm mã chạy, handler on*, URL ngoài, CSS url/@import, iframe/object/embed/form,
+# /// base/meta refresh, SVG/MathML; lỗi: "Mockup không hợp lệ.". Không ghi/chạy file.</summary>
+function Read-PlanMockup([string]$PlanText) {
+    throw [System.NotImplementedException]::new() # TODO(agent): điền phần thân
+}
+
+# /// <summary>Kiểm Request ^R-\d{3}$; sai: "Đường dẫn mockup không hợp lệ.".
+# /// Gọi Read-PlanMockup, lõi trả null và không tạo file; UI ghi UTF-8 BOM CRLF
+# /// docs/design/REQUEST-mockup.html dưới Root, thay href CSS Hub bằng URI file tuyệt đối
+# /// của Root/hub/wwwroot/css/hub.css. Không thực thi/mở HTML. Chặn reparse point
+# /// ở file và mọi cha trước ghi; lỗi đường dẫn như trên. Trả { Path; Fingerprint }
+# /// với Fingerprint SHA-256 hex thường của toàn bộ byte file. Không tự ghi duyệt.</summary>
+function Write-PlanMockup([string]$RequestId, [string]$PlanText) {
+    throw [System.NotImplementedException]::new() # TODO(agent): điền phần thân
+}
+
+# /// <summary>Chỉ đọc, không fetch/worktree/provider/ghi file. Loại comment HTML và
+# /// fenced code trước tìm đúng mục ## Quyết định của quản lý (cho phép hậu tố).
+# /// Chỉ dòng '- ĐÃ DUYỆT.' trong mục đó hợp lệ; thiếu: "Kế hoạch chưa được duyệt.".
+# /// Plan cũ không khai báo UI và không Mockup vẫn nhận duyệt hiện có.
+# /// UI cần mockup hợp lệ, file hiện tại khớp HTML được xuất và dòng chính thức
+# /// '- Mockup SHA256: &lt;64 hex&gt;' khớp byte hiện tại; thiếu/sai/đổi/reparse point:
+# /// "Mockup chưa được duyệt hoặc đã thay đổi.". Không tin dấu duyệt trong comment/code.
+# /// Lõi mới cần khai báo Không; chưa rõ báo lỗi loại task như Read-PlanMockup.</summary>
+function Assert-PrepPlanApproval([string]$RequestId, [string]$PlanText) {
+    throw [System.NotImplementedException]::new() # TODO(agent): điền phần thân
+}
+
 function Get-PlanDir([string]$req) {
     if ($req -notmatch '^R-\d{3}$') { throw "Thiếu / sai -Request (vd. R-006)" }
     Join-Path $Root "plans\$req"
@@ -1158,6 +1191,7 @@ function Invoke-Plan {
         return
     }
     $plan = Join-Path $dir "plan.md"
+    $mockup = Write-PlanMockup -RequestId $Request -PlanText ([string]$j.text)
     [IO.File]::WriteAllText($plan, ([string]$j.text).Trim() + "`n", $Utf8)
     Say "Đã ghi $plan ($($j.summary))." Green
     Say "Bước 3: Claude đọc + sửa plan.md nếu cần, rồi với từng task: .\team.ps1 prep -Request $Request -Task <MÃ> [-NoLaunch]"
@@ -1173,6 +1207,7 @@ function Invoke-Prep {
     if (-not (Test-Path $planFile)) { throw "Chưa có $planFile (chạy .\team.ps1 plan -Request $Request trước)" }
     if ($Task -notmatch '^[A-Za-z0-9]+-\d+[a-z]?$') { throw "Thiếu / sai -Task (mã trong plan.md, vd. V6-01)" }
     $plan = [IO.File]::ReadAllText($planFile)
+    Assert-PrepPlanApproval -RequestId $Request -PlanText $plan
     $m = [regex]::Match($plan, "(?ms)^###\s+" + [regex]::Escape($Task) + "\s*[·:-]\s*(?<title>[^\r\n]+)\r?\n(?<body>.*?)(?=^###\s|^##\s|\z)")
     if (-not $m.Success) { throw "Không thấy mục '### $Task · …' trong $planFile" }
     $ttl = $m.Groups['title'].Value.Trim()
