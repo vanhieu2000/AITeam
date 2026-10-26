@@ -57,7 +57,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-02 Helper dựng trang Hub](W1-02-helper-dung-trang-hub.md) | B | `agent-b/W1-02-helper-dung-trang-hub` | ✅ Đã merge (vòng 3) |
 | [V8-03 Gói nghiệm thu và quyết định một lệnh](V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh.md) | A | `agent-a/V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh` | ✅ Đã merge (vòng 1) |
 | [W1-06 Dịch vụ tổng hợp việc theo dự án](W1-06-dich-vu-tong-hop-viec-theo-du-an.md) | B | `agent-b/W1-06-dich-vu-tong-hop-viec-theo-du-an` | ✅ Đã merge (vòng 3) |
-| [V6-02 Chặn giao lại và xin quyết định](V6-02-chan-giao-lai-va-xin-quyet-dinh.md) | A | `agent-a/V6-02-chan-giao-lai-va-xin-quyet-dinh` | 🔴 Cần sửa · cổng KT KHÔNG ĐẠT |
+| [V6-02 Chặn giao lại và xin quyết định](V6-02-chan-giao-lai-va-xin-quyet-dinh.md) | A | `agent-a/V6-02-chan-giao-lai-va-xin-quyet-dinh` | ⏸ Tạm dừng · quá 3 vòng (còn 2 ca Fresh_ai_log đỏ ở lượt Codex 5) |
 | [W1-07 Trang Việc và thanh bước](W1-07-trang-viec-va-thanh-buoc.md) | B | `agent-b/W1-07-trang-viec-va-thanh-buoc` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 12:10 26/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
