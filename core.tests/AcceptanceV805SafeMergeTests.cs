@@ -17,6 +17,7 @@ public class AcceptanceV805SafeMergeTests
 
     private static string Quote(string value) => "'" + value.Replace("'", "''") + "'";
     private static string Load => $$$"""
+        $env:AITEAM_MERGE_MUTEX={{{Quote("Global\\AITeam_Merge_test_" + Guid.NewGuid().ToString("N"))}}}
         . {{{Quote(Path.Combine(Root, "tools/workflow-common.ps1"))}}}
         $tokens=$null; $errors=$null
         $ast=[Management.Automation.Language.Parser]::ParseFile({{{Quote(Path.Combine(Root, "team.ps1"))}}},[ref]$tokens,[ref]$errors)
@@ -49,6 +50,7 @@ public class AcceptanceV805SafeMergeTests
         repo.Git("push", "-q", "origin", "agent-a/task"); repo.Git("checkout", "-q", "main");
         var result = await TestShell.PowerShell(repo.Root, Load + $$$"""
             $Task='V8-05'; $Project='Test'; $Root={{{Quote(repo.Root)}}}
+            $mergeMutexName=$env:AITEAM_MERGE_MUTEX
             $r=@{Path={{{Quote(repo.Root)}}}; Info=@{name='Test';build='build';test='test'}}
             function Get-Config { @{} }
             function Resolve-Project { $r }
@@ -62,9 +64,11 @@ public class AcceptanceV805SafeMergeTests
                 if ($dir -eq $r.Path -or -not (Test-Path (Join-Path $dir 'change.txt'))) { throw 'Không kiểm clone sạch' }
                 $script:clonePath=$dir
                 if ($command -eq 'build') { return @{Code=0;Output='Build succeeded. 0 Warning(s)'} }
+                if ($env:AITEAM_MERGE_MUTEX -eq $mergeMutexName -or $env:AITEAM_MERGE_MUTEX -notlike 'Global\AITeam_Merge_test_*') { throw 'Test clone chưa cô lập mutex' }
                 return @{Code={{{(pass ? 0 : 1)}}};Output={{{Quote(pass ? "Passed! Failed: 0 Passed: 1 Total: 1" : "Không đạt")}}}}
             }
             try { Invoke-Merge; 'MERGED' } catch { "FAILED: $_" }
+            if ($env:AITEAM_MERGE_MUTEX -ne $mergeMutexName) { throw 'Chưa khôi phục biến mutex' }
             if (Test-Path $script:clonePath) { throw 'Chưa dọn clone' }
             "PREFERENCE:$ErrorActionPreference"
             """, 60);
@@ -153,19 +157,49 @@ public class AcceptanceV805SafeMergeTests
     public async Task Merge_waits_for_machine_mutex_and_releases_on_failure()
     {
         using var tmp = new TempRepo(false);
+        var mutexName = "Global\\AITeam_Merge_test_" + Guid.NewGuid().ToString("N");
         var marker = Path.Combine(tmp.Root, "locked");
         var holder = TestShell.PowerShell(tmp.Root, $$$"""
-            $m=New-Object Threading.Mutex($false,'Global\AITeam_Merge'); $null=$m.WaitOne()
+            $m=New-Object Threading.Mutex($false,{{{Quote(mutexName)}}}); if (-not $m.WaitOne(10000)) { throw 'Không lấy được khóa test' }
             try { [IO.File]::WriteAllText({{{Quote(marker)}}},'x'); Start-Sleep -Seconds 3 } finally { $m.ReleaseMutex(); $m.Dispose() }
             """, 15);
         var deadline = DateTime.UtcNow.AddSeconds(10);
         while (!File.Exists(marker) && DateTime.UtcNow < deadline) await Task.Delay(50);
         Assert.True(File.Exists(marker), "Tiến trình giữ khóa chưa khởi động.");
-        var result = await TestShell.PowerShell(tmp.Root, Load + "\nfunction Get-Config { throw 'ĐÃ VÀO MERGE' }; try { Invoke-Merge } catch { $_ }; $m=New-Object Threading.Mutex($false,'Global\\AITeam_Merge'); if (-not $m.WaitOne(0)) { throw 'Khóa chưa nhả' }; $m.ReleaseMutex(); $m.Dispose()", 15);
+        var result = await TestShell.PowerShell(tmp.Root, Load + "\n$env:AITEAM_MERGE_MUTEX=" + Quote(mutexName) + "; function Get-Config { throw 'ĐÃ VÀO MERGE' }; try { Invoke-Merge } catch { $_ }; $m=New-Object Threading.Mutex($false,$env:AITEAM_MERGE_MUTEX); if (-not $m.WaitOne(0)) { throw 'Khóa chưa nhả' }; $m.ReleaseMutex(); $m.Dispose()", 15);
         Assert.True(holder.IsCompleted, "Merge thứ hai đã vượt khóa.");
         Assert.Equal(0, (await holder).Code);
         Assert.True(result.Code == 0, result.Output + result.Error);
         Assert.Contains("ĐÃ VÀO MERGE", result.Output);
+    }
+
+    [Fact]
+    public async Task Merge_tests_finish_while_real_machine_mutex_is_held()
+    {
+        using var tmp = new TempRepo(false);
+        var marker = Path.Combine(tmp.Root, "locked");
+        var release = Path.Combine(tmp.Root, "release");
+        var holder = TestShell.PowerShell(tmp.Root, $$$"""
+            $m=New-Object Threading.Mutex($false,'Global\AITeam_Merge'); $locked=$false
+            try {
+                try { $locked=$m.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked=$true }
+                [IO.File]::WriteAllText({{{Quote(marker)}}},'x')
+                $deadline=[datetime]::UtcNow.AddSeconds(20)
+                while (-not (Test-Path {{{Quote(release)}}})) {
+                    if ([datetime]::UtcNow -ge $deadline) { throw 'Test chưa kết thúc khi đang giữ khóa thật' }
+                    Start-Sleep -Milliseconds 50
+                }
+            } finally { if ($locked) { $m.ReleaseMutex() }; $m.Dispose() }
+            """, 25);
+        try
+        {
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (!File.Exists(marker) && DateTime.UtcNow < deadline) await Task.Delay(50);
+            Assert.True(File.Exists(marker), "Tiến trình kiểm tra khóa thật chưa khởi động.");
+            await Merge_waits_for_machine_mutex_and_releases_on_failure();
+            Assert.False(holder.IsCompleted, "Tiến trình giữ khóa thật đã kết thúc trước test.");
+        }
+        finally { await File.WriteAllTextAsync(release, "x"); Assert.Equal(0, (await holder).Code); }
     }
 
     [Fact]
