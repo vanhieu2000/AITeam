@@ -40,19 +40,17 @@
 
 ## Báo cáo của agent
 
-| Tiêu chí | Lệnh / bằng chứng thực tế |
+| Tiêu chí | Lệnh / bằng chứng thực tế lượt sửa cổng KT |
 |---|---|
-| Build 0 warning — chưa đạt | `dotnet build AITeam.sln --no-restore -m:1`: thành công, 0 lỗi, 4 warning NU1900 do NuGet không truy cập được; lượt build ban đầu chưa restore thất bại. |
-| Test solution — chưa đạt | `dotnet test AITeam.sln --no-restore --no-build --blame-hang-timeout 2m --blame-hang-dump-type none -m:1`: Hub 644 pass/9 fail/0 skip (có lỗi quyền File.Replace); Core chưa kết thúc, đã dừng cả lệnh khi quá 3 phút. |
-| Cổng kiểm tra — chưa đạt | `powershell -NoProfile -File tools\test-verify.ps1`: 2 kiểm tra tĩnh ĐẠT; kịch bản 1 lỗi Git sh.exe CreateFileMapping, Win32 error 5. |
-| Cô lập mutex, chờ hữu hạn, hồi quy khóa thật | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceV805SafeMergeTests" --blame-hang-timeout 2m --blame-hang-dump-type none -m:1`: 10 pass/2 fail/0 skip; ca khóa thật pass, 2 ca Git tạm lỗi sandbox trước logic merge. |
-| Mutex cấu hình, test clone riêng + timeout 5m | `team.ps1`: đọc biến môi trường, mặc định khóa thật; đổi biến riêng quanh test/retry và khôi phục bằng finally; Parser PowerShell: 0 lỗi. Chưa kiểm chứng clone thật vì sandbox. |
-| BOM | Kiểm tra byte đầu bằng ReadAllBytes: `team.ps1` và `core.tests/AcceptanceV805SafeMergeTests.cs` đều còn EF BB BF. |
-- File đổi: `team.ps1` sửa mutex/timeout; `core.tests/AcceptanceV805SafeMergeTests.cs` cô lập khóa, giữ assert cũ, thêm đúng 1 ca hồi quy và kiểm môi trường clone; file task này ghi báo cáo.
-- Quyết định: sửa test nghiệm thu theo ngoại lệ có chủ đích ở mục Mục tiêu; nếu khóa thật đã bị tiến trình ngoài giữ thì ca hồi quy không chờ lấy khóa đó.
-- Chưa xác minh: toàn bộ test pass, build 0 warning, cổng kiểm tra đầy đủ; cần chạy lại ngoài sandbox. Không chạy app/chụp ảnh.
+| Khắc phục lỗi sửa test — bị chặn | Phản hồi cấm sửa `AcceptanceV805SafeMergeTests.cs`, nhưng Mục tiêu 3–4 và Phạm vi yêu cầu sửa chính file này; Review (Claude) trống. Chưa có bản gốc được xác minh để khôi phục; không sửa thêm test hoặc né cổng KT. |
+| Build 0 warning — chưa đạt | `dotnet build AITeam.sln`: mã 1, 0 warning/0 error nhưng không in nguyên nhân; chạy lại `dotnet build AITeam.sln --no-restore -m:1`: mã 0, 0 lỗi, 4 warning NU1900 (không truy cập NuGet). |
+| Test solution — chưa đạt | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m --blame-hang-dump-type none -m:1`: Hub 644 pass/9 fail/0 skip (có lỗi quyền File.Replace); Core có 2 ca V8-05 fail do Git CreateFileMapping error 5, chưa có tổng kết. Dừng tại giới hạn 3 phút. |
+| Cổng kiểm tra — chưa đạt | `powershell -NoProfile -File tools\test-verify.ps1`: mã 1; 2 kiểm tra tĩnh ĐẠT; kịch bản 1 dừng do Git sh.exe CreateFileMapping, Win32 error 5. |
+| Cú pháp và BOM | Parser PowerShell `team.ps1`: 0 lỗi; ReadAllBytes xác nhận `team.ps1` và file test còn EF BB BF. |
+- File đổi lượt này: chỉ file task, cập nhật kết quả thật; giữ nguyên mã sản phẩm và test từ lượt trước.
+- Quyết định: không hoàn tác yêu cầu cô lập mutex khi chưa có chỉ dẫn giải quyết mâu thuẫn; cần quản lý xác định ngoại lệ cổng KT hoặc sửa thiết kế/phạm vi.
+- Chưa xác minh: toàn bộ test pass, build 0 warning, cổng KT đạt, bản gốc test; không chạy app/chụp ảnh, không tạo công cụ phụ.
 - Không chạy lệnh git trực tiếp; chưa có commit được kiểm, hệ thống tự commit/push theo chỉ dẫn Codex.
-
 ## Review (Claude)
 
 ## Kết quả
