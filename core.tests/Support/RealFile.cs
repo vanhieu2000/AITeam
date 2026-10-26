@@ -27,18 +27,20 @@ public static class RealFile
     internal static bool HasReparsePoint(string path)
     {
         var fullPath = Path.GetFullPath(path);
-        if (File.Exists(fullPath))
+        if (fullPath.StartsWith(@"\\.\", StringComparison.Ordinal))
+            throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+        var ancestors = new Stack<string>();
+        for (string? current = fullPath; current != null; current = Path.GetDirectoryName(current))
+            ancestors.Push(current);
+        foreach (var current in ancestors)
         {
-            var fa = File.GetAttributes(fullPath);
-            if ((fa & FileAttributes.ReparsePoint) != 0) return true;
-        }
-
-        var dir = new DirectoryInfo(fullPath);
-        while (dir != null)
-        {
-            if (dir.Exists && (dir.Attributes & FileAttributes.ReparsePoint) != 0)
-                return true;
-            dir = dir.Parent;
+            try
+            {
+                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                    return true;
+            }
+            catch (FileNotFoundException) { }
+            catch (DirectoryNotFoundException) { }
         }
         return false;
     }

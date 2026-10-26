@@ -59,6 +59,8 @@ public sealed class TeamScript : IDisposable
             foreach (var optDir in new[] { "tools", "scripts", "templates" })
             {
                 var fullOptSrc = Path.Combine(srcRoot, optDir);
+                if (RealFile.HasReparsePoint(fullOptSrc))
+                    throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
                 if (Directory.Exists(fullOptSrc))
                 {
                     CopyDirectorySafe(fullOptSrc, Path.Combine(_repo.Root, optDir));
@@ -291,6 +293,48 @@ function global:git.exe { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitE
 function script:git.exe { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitErr }
 ");
 
+        // Shim exe chặn cả ProcessStartInfo; PATH chỉ có chương trình giả của lượt chạy.
+        sb.AppendLine("$env:W101_FAKE_LOG = $logPath");
+        sb.AppendLine($"$env:W101_FAKE_CONFIG = {ToPsLiteral(JsonSerializer.Serialize(new[] { agy, codex, git }))}");
+        sb.AppendLine("$shimDir = Join-Path $Root ('.w101-shims-' + [Guid]::NewGuid().ToString('N'))");
+        sb.AppendLine(@"
+$null = New-Item -ItemType Directory -Path $shimDir
+$shimSource = @'
+using System;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+using System.Web.Script.Serialization;
+public static class W101FakeProgram {
+    public static int Main(string[] args) {
+        try {
+            Console.OutputEncoding = new UTF8Encoding(false);
+            var json = new JavaScriptSerializer();
+            var name = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]).ToLowerInvariant();
+            var configs = json.Deserialize<Dictionary<string, object>[]>(Environment.GetEnvironmentVariable(""W101_FAKE_CONFIG""));
+            foreach (var config in configs) {
+                if (!String.Equals((string)config[""Name""], name, StringComparison.OrdinalIgnoreCase)) continue;
+                config[""Name""] = name;
+                config[""Arguments""] = args;
+                File.AppendAllText(Environment.GetEnvironmentVariable(""W101_FAKE_LOG""), json.Serialize(config) + Environment.NewLine, new UTF8Encoding(false));
+                Console.Out.Write((string)config[""Output""]);
+                Console.Error.Write((string)config[""Error""]);
+                return Convert.ToInt32(config[""Code""]);
+            }
+            throw new InvalidOperationException(""Không tìm thấy cấu hình lệnh giả."");
+        } catch (Exception error) {
+            Console.Error.WriteLine(""LỖI: "" + error.Message);
+            return 1;
+        }
+    }
+}
+'@
+Add-Type -TypeDefinition $shimSource -ReferencedAssemblies 'System.Web.Extensions' -OutputAssembly (Join-Path $shimDir 'git.exe') -OutputType ConsoleApplication
+[IO.File]::Copy((Join-Path $shimDir 'git.exe'), (Join-Path $shimDir 'agy.exe'))
+[IO.File]::Copy((Join-Path $shimDir 'git.exe'), (Join-Path $shimDir 'codex.exe'))
+$env:PATH = $shimDir
+");
+
         // 3. User script
         sb.AppendLine("try {");
         sb.AppendLine(userScript);
@@ -353,6 +397,91 @@ function script:git.exe { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitE
 
 public sealed class TeamScriptCodexReviewTests
 {
+    [Fact]
+    public async Task SkillNotes_child_git_is_fake_and_failure_keeps_log()
+    {
+        using var sandbox = new TeamScript();
+        var r = await sandbox.RunAsync("scripts/SkillNotes.ps1", ["Invoke-SkillNote"], """
+            function Test-SkillReparsePoint { param($Path) return $false }
+            $skillDir = Join-Path $Root 'skills/thu'
+            $null = New-Item -ItemType Directory -Path $skillDir
+            [IO.File]::WriteAllText((Join-Path $skillDir 'SKILL.md'), "## Lỗi hay gặp`r`n", [Text.Encoding]::UTF8)
+            Invoke-SkillNote -Root $Root -Skill 'thu' -Text 'Bài học thử'
+            """, [new("git", 19, "đầu ra giả", "lỗi giả")]);
+        Assert.Equal(1, r.Process.Code);
+        Assert.Contains("Không thể ghi hoặc commit bài học.", r.Process.Error);
+        var call = Assert.Single(r.Calls);
+        Assert.Equal("git", call.Name);
+        Assert.Equal(["status", "--porcelain", "--", "skills/thu/SKILL.md"], call.Arguments);
+        Assert.Equal(19, call.Code);
+        Assert.Equal("đầu ra giả", call.Output);
+        Assert.Equal("lỗi giả", call.Error);
+        Assert.DoesNotContain("Bài học thử", File.ReadAllText(Path.Combine(sandbox.Root, "skills/thu/SKILL.md")));
+    }
+
+    [Fact]
+    public async Task Child_process_names_and_exe_aliases_use_only_shims()
+    {
+        using var sandbox = new TeamScript();
+        var r = await sandbox.RunAsync("team.ps1", ["Get-NextJournalRun"], """
+            foreach ($name in @('AGY', 'codex.exe', 'git.exe')) {
+                $info = New-Object Diagnostics.ProcessStartInfo
+                $info.FileName = $name
+                $info.Arguments = '"hai từ" "" "a;b"'
+                $info.UseShellExecute = $false
+                $info.CreateNoWindow = $true
+                $info.RedirectStandardOutput = $true
+                $info.RedirectStandardError = $true
+                $proc = [Diagnostics.Process]::Start($info)
+                try {
+                    $stdout = $proc.StandardOutput.ReadToEndAsync()
+                    $stderr = $proc.StandardError.ReadToEndAsync()
+                    if (-not $proc.WaitForExit(10000)) { $proc.Kill(); throw 'Lệnh giả quá hạn.' }
+                    Write-Output $stdout.Result
+                    [Console]::Error.Write($stderr.Result)
+                    if ($proc.ExitCode -ne 7) { throw 'Sai mã thoát giả.' }
+                } finally { $proc.Dispose() }
+            }
+            """, [new("agy", 7, "đầu ra", "lỗi"), new("codex", 7), new("git", 7)]);
+        Assert.Equal(0, r.Process.Code);
+        Assert.Contains("đầu ra", r.Process.Output);
+        Assert.Contains("lỗi", r.Process.Error);
+        Assert.Equal(new[] { "agy", "codex", "git" }, r.Calls.Select(c => c.Name));
+        Assert.All(r.Calls, c =>
+        {
+            Assert.Equal(["hai từ", "", "a;b"], c.Arguments);
+            Assert.Equal(7, c.Code);
+        });
+    }
+
+    [Theory]
+    [InlineData("tools", true)]
+    [InlineData("scripts", false)]
+    [InlineData("templates", false)]
+    public async Task Optional_root_rejects_file_link_or_dangling_directory_link(string folder, bool fileLink)
+    {
+        using var source = new TempRepo(false);
+        using var outside = new TempRepo(false);
+        RealFile.Copy("team.ps1", source.Root);
+        var link = Path.Combine(source.Root, folder);
+        var target = Path.Combine(outside.Root, "đích");
+        Directory.CreateDirectory(target);
+        var result = await TestShell.PowerShell(source.Root,
+            $"New-Item -ItemType Junction -Path '{link}' -Target '{target}' | Out-Null");
+        Assert.Equal(0, result.Code);
+        Directory.Delete(target);
+        if (fileLink) File.WriteAllText(target, "giữ nguyên");
+        try
+        {
+            var ex = Assert.Throws<ArgumentException>(() => new TeamScript(source.Root));
+            Assert.Contains("Đường dẫn bản sao không hợp lệ.", ex.Message);
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
     [Fact]
     public async Task Fake_captures_single_empty_string_argument()
     {
