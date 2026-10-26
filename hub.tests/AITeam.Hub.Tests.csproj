@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="..\core.tests\Support\TestShell.cs" Link="Support\TestShell.cs" />
     <ProjectReference Include="..\hub\AITeam.Hub.csproj" />
     <None Include="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
