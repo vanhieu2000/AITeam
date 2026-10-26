@@ -20,6 +20,7 @@
 Mỗi file task phải có dòng `- **Yêu cầu:** R-009` để `team.ps1 request-report` gom số liệu.
 
 ## 3. Nhật ký (ghi ngay khi xảy ra, giờ:phút)
+- 16:16 26/10/2026: Codex quản lý phụ tạm dừng H7-02 sau lượt 4, H7-04 vướng warning test nghiệm thu bất biến và hồi quy V5-05/W1-02. Giao H7-06 chạy nền với -Dev codex -Resume sau lỗi quá tải, PID 32068; log H7-06.deputy-20261026-161620.out.txt/.err.txt. Chưa có task mới đủ ĐẠT/PASS để đề xuất nghiệm thu.
 | Giờ | Sự kiện | Ghi chú |
 |---|---|---|
 | 12:15 | Nhận yêu cầu; R-007 dừng các task chưa làm (H6-02…06, H6-09), thay bằng R-009 | |
@@ -53,6 +54,7 @@ Sự kiện cần ghi:
 - 2026-10-26 15:36:15 +07:00 | H7-04 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:H7-04:Assign:1 -->
 - 2026-10-26 15:55:21 +07:00 | H7-02 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:H7-02:Verify:2 -->
 - 2026-10-26 15:55:28 +07:00 | H7-04 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:H7-04:Verify:2 -->
+- 2026-10-26 16:31:07 +07:00 | H7-06 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:H7-06:Verify:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-009`, rồi điền:
 
