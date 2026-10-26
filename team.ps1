@@ -119,6 +119,53 @@ function Get-Config {
     return $cfg
 }
 
+# V8-06: hàm chọn thuần; thứ tự cấu hình được truyền vào, không đọc file trong hàm.
+function Resolve-AgyModel($wanted, [string[]]$available, [string[]]$fallback = @(
+    'claude-opus-4-6-thinking', 'claude-opus-5-5-medium', 'gemini-4-argon-high',
+    'claude-sonnet-5-5-high', 'claude-sonnet-4-6', 'gemini-3.8-flash-high')) {
+    if (-not $wanted) { return '' }
+    if ($wanted -in $available) { return $wanted }
+    foreach ($candidate in $fallback) { if ($candidate -in $available) { return $candidate } }
+    return ''
+}
+
+function ConvertFrom-AgyModels([string]$output) {
+    @($output -split '\r?\n' | ForEach-Object {
+        if ($_ -match '^\s*([a-z0-9][a-z0-9.-]*)\t') { $Matches[1] }
+    } | Select-Object -Unique)
+}
+
+function Get-AgyModels($cfg) {
+    $cache = Join-Path $Root '.state/agy-models.json'
+    if (Test-Path -LiteralPath $cache) {
+        try {
+            $saved = Read-Json $cache
+            $age = ([DateTime]::UtcNow - [DateTime]::Parse($saved.fetchedAt).ToUniversalTime()).TotalSeconds
+            if ($age -ge 0 -and $age -lt 3600 -and $null -ne $saved.models) { return $saved }
+        } catch { Write-Warning "Không đọc được cache model: $_" }
+    }
+    $out = $null; $err = $null
+    try {
+        $null = New-Item -ItemType Directory -Force (Split-Path $cache)
+        $out = Join-Path (Split-Path $cache) ('models-' + [guid]::NewGuid().ToString('N') + '.out')
+        $err = $out + '.err'
+        $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList 'models' -PassThru -NoNewWindow -RedirectStandardOutput $out -RedirectStandardError $err
+        try {
+            if (-not $proc.WaitForExit(60000)) { $proc.Kill(); throw 'agy models quá 60 giây.' }
+            $proc.WaitForExit()
+            if ($proc.ExitCode -ne 0) { throw "agy models trả mã $($proc.ExitCode)." }
+        } finally { $proc.Dispose() }
+        $models = @(ConvertFrom-AgyModels ([IO.File]::ReadAllText($out)))
+        if ($models.Count -eq 0) { throw 'Không đọc được danh sách model tab-separated.' }
+        $saved = @{ fetchedAt = [DateTime]::UtcNow.ToString('o'); models = $models }
+        [IO.File]::WriteAllText($cache, ($saved | ConvertTo-Json), (New-Object Text.UTF8Encoding $true))
+        return $saved
+    } catch { Write-Warning "Giữ model cũ: $_"; return $null }
+    finally {
+        foreach ($file in @($out, $err)) { if ($file -and (Test-Path -LiteralPath $file)) { Remove-Item -LiteralPath $file } }
+    }
+}
+
 function Get-Projects {
     # PowerShell 5.1: ConvertFrom-Json trả mảng JSON như MỘT đối tượng → phải "trải" ra từng phần tử.
     $raw = Read-Json (Join-Path $Root "projects.json")
@@ -501,6 +548,16 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     # Model theo task (dòng **Model:** `tên` trong file task) > model mặc định trong team.json.
     $taskModel = [regex]::Match($text, '\*\*Model:\*\*\s*`([^`]+)`').Groups[1].Value
     $model = if ($taskModel) { $taskModel } else { $cfg.agy.model }
+    if ($Dev -ne 'codex' -and $model) {
+        $available = Get-AgyModels $cfg
+        if ($null -ne $available) {
+            $resolved = if ($null -ne $cfg.agy.modelFallback) {
+                Resolve-AgyModel $model $available.models $cfg.agy.modelFallback
+            } else { Resolve-AgyModel $model $available.models }
+            if ($resolved -ne $model) { Say "Model $model không có trên tài khoản ⇒ dùng $(if ($resolved) { $resolved } else { 'mặc định của agy' })" Yellow }
+            $model = $resolved
+        }
+    }
     if ($model) { $argLine += " --model `"$model`""; Say "Model: $model" }
     if ($Resume) {
         $last = Get-ChildItem $r.Logs -Filter "$Task-*.json" | Where-Object { $_.Length -gt 0 -and $_.Name -notmatch 'prompt' } |
