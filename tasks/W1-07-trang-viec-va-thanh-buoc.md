@@ -123,19 +123,19 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 - [x] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng lượt sửa KHÔNG ĐẠT 26/10 |
+| Tiêu chí | Bằng chứng lượt sửa 26/10 |
 |---|---|
 | Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers`: exit 0, 0 lỗi, 0 warning. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 672 pass/10 fail/0 skip; Core ít nhất 5 fail Git Win32 error 5, chưa tổng kết; dừng trước 3 phút, exit 1. Chưa đạt. |
-| Hồi quy dòng thật/Cổng KT/lỗi | [A] `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter 'FullyQualifiedName~WorkProgressOutcomeRegressionTests\|FullyQualifiedName~AcceptanceW107WorkPageTests' --blame-hang-timeout 2m`: 29 pass/0 fail/0 skip (13 hồi quy + 16 nghiệm thu); dòng Verify lượt 7 chép nguyên từ R-011, CurrentStep=Verify, LatestError=KHÔNG ĐẠT. |
-| Chọn dự án/yêu cầu/task, 404 | [A]: các ca Selection/Forged/Unknown pass; test nghiệm thu không sửa. |
-| Mặc định Việc/chín bước/giờ/người/lỗi | [A]: Default/Selection/Latest_failure pass; hồi quy kiểm giờ 12:50, bước Verify Failed và RecentEvents mới nhất. |
-| Rỗng/thiếu dữ liệu/lỗi nguồn an toàn | [A]: Empty/Request_without_tasks/Source_error pass. |
-| XSS/chỉ GET/liên kết duyệt | [A]: Long_untrusted_title và Default pass; giữ route /Approvals. |
-| CSS/chuỗi dài/xuống hàng | [A]: Work_css/Long_untrusted_title pass; giữ class current và overflow-wrap; không chạy app/chụp ảnh theo phân công. |
-| Giữ kế hoạch/lịch sử/menu chung | Không sửa PageModel/Razor/layout/CSS trong lượt này; 16 nghiệm thu W1-07 pass. |
-| File đổi/quyết định | WorkProgressParser.cs: lỗi/BLOCKED trước thành công, thêm KHÔNG ĐẠT/XONG, giữ từ trọn đầu kết quả; WorkProgressOutcomeRegressionTests.cs: hồi quy; task: báo cáo. Kiểm byte BOM parser/test mới và 3 file .cs/.cshtml trang đều True. |
-| Điều chưa chắc/bàn giao | W1-05 Results_use_explicit_prefix_not_substring đòi KHÔNG ĐẠT=Unknown trái yêu cầu mới Failed; giữ nguyên test để Claude quyết định. Chín lỗi Hub khác thuộc cấu hình/Map (Access denied). Không gọi git; hệ thống tự commit/push, chưa có commit được kiểm. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 660 pass/9 fail/0 skip; Core ít nhất 6 fail, chưa tổng kết; dừng trước 3 phút, exit 1. Chưa đạt. |
+| Chọn đúng dự án/yêu cầu/task, 404 | [A] `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests\|FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: 79 pass/0 fail/0 skip, gồm 16 ca W1-07. |
+| Mặc định Việc/chín bước/giờ/người/lỗi | [A]: Default/Selection/Latest_failure pass; giữ nguyên snapshot. |
+| Rỗng/thiếu dữ liệu/lỗi nguồn | [A]: Empty/Request_without_tasks/Source_error pass, không lộ lỗi riêng tư. |
+| XSS/chỉ GET/duyệt/CSS/giữ tab cũ | [A]: Long_untrusted_title/Work_css/Default pass; giữ nguyên PageModel/Razor/layout/CSS trong lượt này; không chạy app/chụp ảnh. |
+| Hồi quy W1-05 | [A]: Results_use_explicit_prefix_not_substring pass, KHÔNG ĐẠT=Unknown; hoàn tác nhận KHÔNG ĐẠT/XONG trong parser. |
+| Bộ đếm V8-02 | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceV802PipelineTests.Bo_dem_rieng_khong_reset_khong_fallback" --blame-hang-timeout 2m`: 9 pass/0 fail/0 skip, exit 0, 2 phút 25 giây. |
+| File đổi/phạm vi cần Claude quyết | Xóa file thêm WorkProgressOutcomeRegressionTests.cs; sửa WorkProgressParser.cs để hoàn tác hai tiền tố trên; giữ xử lý giờ legacy/chặn lỗi bước cũ từ lượt trước vì nghiệm thu W1-07 cần hiện 17:03/CẦN SỬA; xin Claude quyết phần parser ngoài phạm vi. Task: cập nhật báo cáo. |
+| BOM/test nghiệm thu | BOM parser, Project.cshtml.cs, Project.cshtml, _Layout.cshtml đều True; không sửa test nghiệm thu/fixture. |
+| Chưa xác minh/bàn giao | Toàn solution còn lỗi File.Replace Access denied (Hub), Git CreateFileMapping Win32 error 5 và test mutex (Core); không sửa ngoài phạm vi để né sandbox. Không gọi git; hệ thống tự commit/push, chưa có commit được kiểm. |
 ## Ghi nhận chuẩn bị (Codex)
 - Khung OnGet dùng NotImplementedException; chưa triển khai thân hàm hoặc markup/CSS.
 - Test nghiệm thu gọi HTTP/Razor thật qua HubTestHost; nguồn và cấu hình giả không ghi dữ liệu.
