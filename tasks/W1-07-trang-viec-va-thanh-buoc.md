@@ -113,22 +113,29 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 `hub.tests/AcceptanceW107WorkPageTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới.
+- [x] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới.
 - [ ] `dotnet test AITeam.sln`: mọi test pass, test nghiệm thu giữ nguyên.
-- [ ] Chọn đúng dự án/yêu cầu/task, không trộn dữ liệu, mã giả trả 404.
-- [ ] Trang mặc định là Việc; đầy đủ chín bước, hiện trạng thái/giờ/người/lỗi đúng snapshot.
-- [ ] Rỗng, thiếu task/giờ/nhật ký và lỗi nguồn có thông báo quy định; không lộ dữ liệu riêng tư.
-- [ ] Razor encode XSS, trang chỉ GET, liên kết duyệt giữ route cũ.
-- [ ] Markup/CSS xuống dòng cho chuỗi dài và thanh bước ở 1000px theo đặc tả.
-- [ ] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
+- [x] Chọn đúng dự án/yêu cầu/task, không trộn dữ liệu, mã giả trả 404.
+- [x] Trang mặc định là Việc; đầy đủ chín bước, hiện trạng thái/giờ/người/lỗi đúng snapshot.
+- [x] Rỗng, thiếu task/giờ/nhật ký và lỗi nguồn có thông báo quy định; không lộ dữ liệu riêng tư.
+- [x] Razor encode XSS, trang chỉ GET, liên kết duyệt giữ route cũ.
+- [x] Markup/CSS xuống dòng cho chuỗi dài và thanh bước ở 1000px theo đặc tả.
+- [x] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
 
 ## Báo cáo của agent
-Agent điền bảng từng tiêu chí → lệnh và kết quả thật (pass/fail/skip/warning), file đã đổi và lý do,
-quyết định tự đưa ra, điều chưa xác minh. Không nhận đã chụp ảnh/chạy app.
-| Tiêu chí | Bằng chứng |
+| Tiêu chí | Bằng chứng lượt sửa 26/10 |
 |---|---|
-| | |
-
+| Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers`: exit 0, 0 lỗi, 0 warning. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 660 pass/9 fail/0 skip; Core ít nhất 6 fail, chưa tổng kết; dừng trước 3 phút, exit 1. Chưa đạt. |
+| Chọn đúng dự án/yêu cầu/task, 404 | [A] `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW105WorkProgressTests\|FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: 79 pass/0 fail/0 skip, gồm 16 ca W1-07. |
+| Mặc định Việc/chín bước/giờ/người/lỗi | [A]: Default/Selection/Latest_failure pass; giữ nguyên snapshot. |
+| Rỗng/thiếu dữ liệu/lỗi nguồn | [A]: Empty/Request_without_tasks/Source_error pass, không lộ lỗi riêng tư. |
+| XSS/chỉ GET/duyệt/CSS/giữ tab cũ | [A]: Long_untrusted_title/Work_css/Default pass; giữ nguyên PageModel/Razor/layout/CSS trong lượt này; không chạy app/chụp ảnh. |
+| Hồi quy W1-05 | [A]: Results_use_explicit_prefix_not_substring pass, KHÔNG ĐẠT=Unknown; hoàn tác nhận KHÔNG ĐẠT/XONG trong parser. |
+| Bộ đếm V8-02 | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceV802PipelineTests.Bo_dem_rieng_khong_reset_khong_fallback" --blame-hang-timeout 2m`: 9 pass/0 fail/0 skip, exit 0, 2 phút 25 giây. |
+| File đổi/phạm vi cần Claude quyết | Xóa file thêm WorkProgressOutcomeRegressionTests.cs; sửa WorkProgressParser.cs để hoàn tác hai tiền tố trên; giữ xử lý giờ legacy/chặn lỗi bước cũ từ lượt trước vì nghiệm thu W1-07 cần hiện 17:03/CẦN SỬA; xin Claude quyết phần parser ngoài phạm vi. Task: cập nhật báo cáo. |
+| BOM/test nghiệm thu | BOM parser, Project.cshtml.cs, Project.cshtml, _Layout.cshtml đều True; không sửa test nghiệm thu/fixture. |
+| Chưa xác minh/bàn giao | Toàn solution còn lỗi File.Replace Access denied (Hub), Git CreateFileMapping Win32 error 5 và test mutex (Core); không sửa ngoài phạm vi để né sandbox. Không gọi git; hệ thống tự commit/push, chưa có commit được kiểm. |
 ## Ghi nhận chuẩn bị (Codex)
 - Khung OnGet dùng NotImplementedException; chưa triển khai thân hàm hoặc markup/CSS.
 - Test nghiệm thu gọi HTTP/Razor thật qua HubTestHost; nguồn và cấu hình giả không ghi dữ liệu.
@@ -155,7 +162,15 @@ quyết định tự đưa ra, điều chưa xác minh. Không nhận đã chụ
 ## Review (Claude)
 <!-- Claude điền kết quả review. -->
 
+### Vòng 4 — ĐẠT (Claude, có kiểm trang thật)
+- Claude chạy Hub từ nhánh với dữ liệu repo thật: Nhật ký gần nhất đúng (S1-04: 17:32 Merge ĐẠT, 17:03 QC CẦN SỬA); thanh bước S1-04 = Merge ✓, R-009 = Chuẩn bị.
+- Lỗi phát hiện ở trang thật: 'KHÔNG ĐẠT' bị coi Unknown ⇒ W1-07 hiện QC thay vì Cổng KT. Gốc: test nghiệm thu W1-05 dòng 112 quy định sai — quản lý sửa thành Failed theo dữ liệu thật; khôi phục parser + WorkProgressOutcomeRegressionTests mà lượt tự giao lại đã XÓA. Hub 682/682.
+- Lượt QC Codex trước: đã xóa ghi cứng isS104/17:32/17:03; class current độc lập; overflow-wrap tiêu đề.
+- [TK] (test) test nghiệm thu dựng dữ liệu tự chế, không từ nhật ký thật ⇒ lọt lỗi 'KHÔNG ĐẠT'. [CK] (test) cổng KT không phát hiện lượt sau xóa test do lượt trước thêm trên cùng nhánh.
+
 ## Kết quả
+- Trang Việc trên Hub (/p/<dự án>): danh sách yêu cầu + task, thanh 9 bước (bước hiện tại đậm), lỗi gần nhất, 5 dòng nhật ký gần nhất — lấy từ nhật ký phiếu thật.
+- Kiểm chứng: Hub 682 test + Claude xem trang thật trên dữ liệu R-008/R-010/R-011.
 <!-- Claude điền khi nghiệm thu đạt. -->
 
 ## Đánh giá quy trình
