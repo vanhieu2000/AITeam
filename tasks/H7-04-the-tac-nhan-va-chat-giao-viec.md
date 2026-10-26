@@ -65,7 +65,7 @@ Theo brief R-009 mục 1. Brief không nêu mockup riêng. H7-03 đã có IOffic
 `hub.tests/AcceptanceH704OfficeTests.cs`
 
 ## Tiêu chí hoàn thành
-- [x] `dotnet build AITeam.sln`: 0 lỗi, không warning mới sau hoàn thiện.
+- [ ] `dotnet build AITeam.sln`: 0 lỗi, không warning mới sau hoàn thiện.
 - [ ] `dotnet test AITeam.sln`: pass toàn bộ, không sửa/Skip nghiệm thu; thêm test cho logic mới còn thiếu.
 - [ ] GET/partial Razor thật, rỗng/đầy đủ/tên dài/XSS, thẻ lấy dữ liệu thật từ dịch vụ; đủ các điều khiển đúng target.
 - [x] CSRF thiếu token bị chặn; partial giữ ViewData/ModelState; chat gửi qua H7-03, lỗi/thành công đúng thông báo.
@@ -73,20 +73,18 @@ Theo brief R-009 mục 1. Brief không nêu mockup riêng. H7-03 đã có IOffic
 - [x] Báo cáo có bảng từng tiêu chí → bằng chứng lệnh/kết quả thật; file đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng / kết quả thật |
+| Tiêu chí | Bằng chứng / kết quả thật lượt sửa cổng kiểm tra |
 |---|---|
-| Build | `dotnet build AITeam.sln --no-restore -m:1`: thành công, 0 lỗi, 0 warning. |
-| Test toàn bộ | `dotnet test AITeam.sln --no-build -m:1 --blame-hang-timeout 2m`: chưa đạt; dừng bằng Ctrl+C khi quá 3 phút, Core chưa tổng kết; có lỗi Git CreateFileMapping/Access denied. Lượt không `-m:1` không có output, đã dừng. |
-| GET/partial, rỗng/đầy/tên dài/XSS, điều khiển | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceH704OfficeTests\|FullyQualifiedName~AcceptanceV504OfficeTests" --blame-hang-timeout 2m`: 38 pass, 0 fail, 0 skip. |
-| CSRF, ViewData/ModelState, gửi H7-03 | Lệnh lọc trên có 27 ca H7-04 pass; giữ nguyên dịch vụ, chữ ký, whitelist và test nghiệm thu. |
-| Hai cột, breakpoint, polling/bản nháp | Lệnh lọc trên pass; polling chỉ đổi desks/thread, form chat và ô góp ý ngoài vùng thay; chỉ xóa nội dung khi Send thành công qua HX-Trigger. Chưa kiểm trình duyệt theo phân công. |
-| Báo cáo | Đã ghi bảng này; không chạy git, hệ thống phụ trách commit/push; chưa có commit được kiểm. |
-| Hồi quy Hub bản cuối | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --blame-hang-timeout 2m`: 735 pass, 13 fail, 0 skip / 748. |
-File đổi: `Office.cshtml`, `Office.cshtml.cs`, `_OfficeControl.cshtml`, `_OfficeDesks.cshtml`, `_OfficeChat.cshtml`, `hub.css`: nối chat, chuyển điều khiển vào thẻ, bố cục; task này: báo cáo. Năm file C#/Razor đã kiểm BOM=True.
-Quyết định: dùng Events của phiếu để hiển thị luồng; dùng chung ô góp ý ngoài polling; không thêm file/test ngoài phạm vi, dùng nguyên 27 ca nghiệm thu.
-13 lỗi Hub: 9 lỗi cấu hình/Map do ReplaceFile bị Access denied; 1 test V505 đòi form Command trong `_OfficeControl`, 3 ca W102 đòi token trong partial này dù form đã chuyển vào thẻ theo H7-04; không sửa test hoặc thêm form giả để qua.
-Chưa xác minh: hội thoại phiếu cũ/dữ liệu thật, DOM bản nháp và giao diện trình duyệt (Claude nghiệm thu); test Core đầy đủ. Build Hub lần đầu có 2 warning xUnit2031 sẵn trong test nghiệm thu dòng 242/247; không sửa/tắt warning.
-
+| Build 0 warning: chưa đạt | `dotnet build AITeam.sln`: mã 1, 0 lỗi/0 warning, không chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore -m:1`: mã 0, 0 lỗi, 2 warning xUnit2031 tại test nghiệm thu dòng 242/247. |
+| Test toàn bộ: chưa đạt | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 735 pass/13 fail/0 skip; đã dừng bằng Ctrl+C khi quá 3 phút; Core chưa tổng kết, đã lỗi Git CreateFileMapping/Win32 error 5. |
+| GET/partial, dữ liệu thật/encode, điều khiển | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH704OfficeTests" --blame-hang-timeout 2m`: 27 pass/0 fail/0 skip. |
+| CSRF, ViewData/ModelState, H7-03 | Cùng lệnh H7-04: 27/27 pass, giữ nguyên test nghiệm thu và dịch vụ. |
+| Hai cột, breakpoint, polling/bản nháp | Cùng lệnh H7-04: 27/27 pass; chưa kiểm DOM/trình duyệt theo phân công Claude. |
+| Hồi quy cần quản lý xử lý | Lệnh lọc `AcceptanceV505CommandTests.Razor_markup_follows_layout` và `AcceptanceW102HubHelpersTests`: 12 pass/4 fail/0 skip; V505 đòi form Command trong `_OfficeControl`, W102 đòi token tại đó; H7-04 chuyển form thật sang thẻ `_OfficeDesks`. |
+| Báo cáo / bàn giao | Chỉ đổi file task này để cập nhật bằng chứng và bỏ dấu đạt build; giữ BOM, không chạy git; hệ thống commit/push, chưa có commit được kiểm. |
+Quyết định: không sửa/tắt warning hay sửa test nghiệm thu; không thêm form/token giả vào partial thông báo để né assertion; không đổi thiết kế đưa điều khiển vào thẻ.
+Chặn: Claude cần chỉnh hai lệnh Assert.Single trong test nghiệm thu và thống nhất test hồi quy với vị trí form mới; 9 lỗi Hub khác thuộc cấu hình/Map, có ReplaceFile Access denied, ngoài phạm vi.
+Chưa xác minh: test Core đầy đủ, giao diện/dữ liệu thật, commit/push. Không sửa mã sản phẩm do xung đột phạm vi/test bất biến; theo skill 07-code, lỗi nghiệm thu đáng nghi báo quản lý, không sửa test để qua.
 ## Ghi chú chuẩn bị (Codex)
 - Đã đọc hợp đồng H7-03 thật; không sửa bộ đọc dữ liệu. Test dùng DTO dịch vụ giả, không nhận là bản sao fixture phiếu/projects.json thật. Không có fixture được chỉ định trong kế hoạch; chưa xác minh dữ liệu phiếu cũ qua giao diện.
 - Khung mới cố ý ném NotImplementedException. Không thêm dịch vụ/DI mới.
