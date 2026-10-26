@@ -18,6 +18,6 @@ public sealed class ProjectsModel(ITeamConfigService config) : PageModel
     /// </summary>
     public void OnGet()
     {
-        throw new NotImplementedException(); // TODO(agent)
+        Projects = config.GetProjects();
     }
 }

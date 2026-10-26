@@ -1,38 +1,20 @@
-﻿@inject AITeam.Hub.Services.ITeamConfigService ConfigService
-@inject AITeam.Hub.Services.ITaskBoardService TaskBoardService
-@inject AITeam.Hub.Services.IAgentRunService AgentRunService
-@inject AITeam.Hub.Services.IApprovalService ApprovalService
+﻿@inject AITeam.Hub.Services.IApprovalService ApprovalService
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-    var isOfficeActive = currentPage == "/Office" || string.IsNullOrEmpty(currentPage) || currentPage == "/";
-    var isHomeActive = currentPage == "/Index";
-    var currentProject = ViewContext.RouteData.Values["name"]?.ToString() ?? "";
-    var isAgentsActive = currentPage.Equals("/Agents", StringComparison.OrdinalIgnoreCase);
-    var isInboxActive = currentPage.Equals("/Inbox", StringComparison.OrdinalIgnoreCase);
-    var isAccountsActive = currentPage.Equals("/Accounts", StringComparison.OrdinalIgnoreCase);
-    var isSecretsActive = currentPage.Equals("/Vault", StringComparison.OrdinalIgnoreCase) || currentPage.Equals("/Secrets", StringComparison.OrdinalIgnoreCase);
-    var isSettingsActive = currentPage.Equals("/Settings", StringComparison.OrdinalIgnoreCase);
+    var isOfficeActive = currentPage.Equals("/Office", StringComparison.OrdinalIgnoreCase)
+        || string.IsNullOrEmpty(currentPage)
+        || currentPage == "/";
     var isApprovalsActive = currentPage.Equals("/Approvals", StringComparison.OrdinalIgnoreCase);
-    var isTeamActive = currentPage.Equals("/Team", StringComparison.OrdinalIgnoreCase);
+    var isProjectsActive = currentPage.Equals("/Projects", StringComparison.OrdinalIgnoreCase)
+        || currentPage.Equals("/Project", StringComparison.OrdinalIgnoreCase);
+    var isPerformanceActive = currentPage.Equals("/Performance", StringComparison.OrdinalIgnoreCase);
     var isProcessActive = currentPage.Equals("/Process", StringComparison.OrdinalIgnoreCase);
-    var isRequestsActive = currentPage.Equals("/Requests", StringComparison.OrdinalIgnoreCase);
-    var isProvidersActive = currentPage.Equals("/Providers", StringComparison.OrdinalIgnoreCase);
-    var isResearchActive = currentPage.Equals("/Research", StringComparison.OrdinalIgnoreCase);
-    var isAiAccountsActive =currentPage.Equals("/AiAccounts", StringComparison.OrdinalIgnoreCase);
+    var isSettingsActive = currentPage.Equals("/Settings", StringComparison.OrdinalIgnoreCase);
+    var isAiActive = currentPage.Equals("/AI", StringComparison.OrdinalIgnoreCase);
+    var isMapActive = currentPage.Equals("/Map", StringComparison.OrdinalIgnoreCase);
+
     var pendingApprovals = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending);
-
     var reqTheme = Context.Request.Query["theme"].ToString();
-
-    var sidebarProjects = ConfigService.GetProjects();
-    var workUrl = !string.IsNullOrEmpty(currentProject)
-        ? $"/p/{currentProject}"
-        : (sidebarProjects.Count > 0 ? $"/p/{sidebarProjects[0].Name}" : "/Overview");
-    var isWorkActive = currentPage.Equals("/Project", StringComparison.OrdinalIgnoreCase);
-    var runningAgents = AgentRunService.GetRunning();
-    var runningCount = runningAgents.Count;
-
-    var recentRuns = AgentRunService.GetRecentRuns(20);
-    var agyStatus = AITeam.Hub.Services.AntigravityStatuses.From(recentRuns);
 }
 <!DOCTYPE html>
 <html lang="vi" @(reqTheme == "dark" ? "data-theme=\"dark\"" : "")>
@@ -67,82 +49,31 @@
                 </svg>
                 <span>Văn phòng</span>
             </a>
-            <a href="@workUrl" class="nav @(isWorkActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="2" width="12" height="12" rx="1.5"/>
-                    <path d="M5 5h6M5 8h6M5 11h4"/>
-                </svg>
-                <span>Việc</span>
-            </a>
-            <a href="/Overview" class="nav @(isHomeActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="2" width="5" height="5" rx="1"/>
-                    <rect x="9" y="2" width="5" height="5" rx="1"/>
-                    <rect x="2" y="9" width="5" height="5" rx="1"/>
-                    <rect x="9" y="9" width="5" height="5" rx="1"/>
-                </svg>
-                <span>Tổng quan</span>
-            </a>
-            <a href="/Requests" class="nav @(isRequestsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/>
-                </svg>
-                <span>Giao việc</span>
-            </a>            <a href="/Approvals" class="nav @(isApprovalsActive ? "on" : "")">
+            <a href="/Approvals" class="nav @(isApprovalsActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
                     <rect x="2.5" y="2" width="11" height="12" rx="1.5"/>
                     <path d="M5.5 8.2l1.8 1.8 3.4-3.6"/>
                 </svg>
-                <span>Cần anh duyệt</span>
+                <span>Đơn duyệt</span>
                 @if (pendingApprovals > 0)
                 {
                     <span class="cnt" style="background: var(--fix); color: #fff;">@pendingApprovals</span>
                 }
             </a>
-            <div class="grp">Dự án</div>
-            @foreach (var p in sidebarProjects)
-            {
-                var isProjectActive = string.Equals(currentProject, p.Name, StringComparison.OrdinalIgnoreCase);
-                var board = TaskBoardService.GetBoard(p.Name);
-                var assignedCount = board.Tasks.Count(t => t.State == AITeam.Hub.Models.TaskState.Assigned);
-                var needsFixCount = board.Tasks.Count(t => t.State == AITeam.Hub.Models.TaskState.NeedsFix);
-                var reviewCount = board.Tasks.Count(t => t.State == AITeam.Hub.Models.TaskState.Review);
-
-                string dotClass;
-                if (assignedCount > 0)
-                {
-                    dotClass = "dot run";
-                }
-                else if (needsFixCount > 0)
-                {
-                    dotClass = "dot fix";
-                }
-                else if (reviewCount > 0)
-                {
-                    dotClass = "dot rev";
-                }
-                else
-                {
-                    dotClass = "dot ok";
-                }
-
-                <a href="/p/@p.Name" class="nav @(isProjectActive ? "on" : "")" title="@p.Name">
-                    <span class="@dotClass"></span>
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@p.Name</span>
-                    @if (assignedCount > 0)
-                    {
-                        <span class="cnt">@assignedCount</span>
-                    }
-                </a>
-            }
-
-            <div class="grp">Team</div>
-            <a href="/Team" class="nav @(isTeamActive ? "on" : "")">
+            <a href="/Projects" class="nav @(isProjectsActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="11" cy="6" r="1.7"/>
-                    <path d="M1.8 13c.4-2.2 1.9-3.4 3.7-3.4s3.3 1.2 3.7 3.4M9.5 10.2c.5-.4 1-.6 1.6-.6 1.5 0 2.6 1 3 3"/>
+                    <rect x="2" y="2" width="12" height="12" rx="1.5"/>
+                    <path d="M5 5h6M5 8h6M5 11h4"/>
                 </svg>
-                <span>Đội ngũ</span>
+                <span>Dự án</span>
+            </a>
+
+            <div class="grp">Đánh giá</div>
+            <a href="/Performance" class="nav @(isPerformanceActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2 13.5h12M4 11V7M8 11V4M12 11V8.5"/>
+                </svg>
+                <span>Hiệu suất</span>
             </a>
             <a href="/Process" class="nav @(isProcessActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -150,60 +81,8 @@
                 </svg>
                 <span>Quy trình &amp; cải tiến</span>
             </a>
-            <a href="/Research" class="nav @(isResearchActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/>
-                </svg>
-                <span>Phòng nghiên cứu</span>
-            </a>            <a href="/Agents" class="nav @(isAgentsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="8" cy="5.5" r="2.5"/>
-                    <path d="M3 14c.6-2.6 2.7-4 5-4s4.4 1.4 5 4"/>
-                </svg>
-                <span>Agent</span>
-                @if (runningCount > 0)
-                {
-                    <span class="cnt">@runningCount</span>
-                }
-            </a>
-            <a href="/Inbox" class="nav @(isInboxActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2 9l2-6h8l2 6v4H2z"/>
-                    <path d="M2 9h3l1 2h4l1-2h3"/>
-                </svg>
-                <span>Hộp thư</span>
-            </a>
 
             <div class="grp">Hệ thống</div>
-            <a href="/Providers" class="nav @(isProvidersActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2.5" y="2.5" width="11" height="4" rx="1"/><rect x="2.5" y="9.5" width="11" height="4" rx="1"/>
-                    <path d="M5 4.5h.01M5 11.5h.01"/>
-                </svg>
-                <span>Provider AI</span>
-            </a>
-            <a href="/AiAccounts" class="nav @(isAiAccountsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="5" cy="6" r="2"/><circle cx="11" cy="6" r="2"/>
-                    <path d="M1.5 13c.5-2 1.8-3 3.5-3s3 1 3.5 3M7.5 13c.5-2 1.8-3 3.5-3s3 1 3.5 3"/>
-                </svg>
-                <span>Tài khoản AI</span>
-            </a>
-            <a href="/Accounts" class="nav @(isAccountsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="3" width="12" height="10" rx="1.5"/>
-                    <circle cx="6" cy="7" r="1.5"/>
-                    <path d="M4 11c.4-1 1.1-1.5 2-1.5s1.6.5 2 1.5M10 6h2M10 9h2"/>
-                </svg>
-                <span>Tài khoản</span>
-            </a>
-            <a href="/Secrets" class="nav @(isSecretsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="5.5" cy="10.5" r="2.5"/>
-                    <path d="M7.3 8.7L13 3M11 5l1.5 1.5"/>
-                </svg>
-                <span>Bí mật</span>
-            </a>
             <a href="/Settings" class="nav @(isSettingsActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="8" cy="8" r="2"/>
@@ -211,24 +90,20 @@
                 </svg>
                 <span>Cài đặt</span>
             </a>
-
-            <!-- Ô trạng thái Antigravity -->
-            @if (agyStatus.CreditsExhausted)
-            {
-                <a class="acct" href="/Accounts" title="Antigravity: Task @agyStatus.Task (@agyStatus.Project) bị hết credits lúc @agyStatus.At?.ToString("HH:mm:ss dd/MM/yyyy") — bấm để đổi tài khoản">
-                    <span class="dot err"></span>
-                    <span><b>Antigravity</b> · hết credits lúc @agyStatus.At?.ToString("HH:mm")</span>
-                    <span class="sw">Đổi</span>
-                </a>
-            }
-            else
-            {
-                <a class="acct" href="/Accounts" title="Antigravity hoạt động bình thường — bấm để xem hoặc đổi tài khoản">
-                    <span class="dot ok"></span>
-                    <span><b>Antigravity</b> · ổn</span>
-                    <span class="sw">Đổi</span>
-                </a>
-            }
+            <a href="/AI" class="nav @(isAiActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="5" cy="6" r="2"/><circle cx="11" cy="6" r="2"/>
+                    <path d="M1.5 13c.5-2 1.8-3 3.5-3s3 1 3.5 3M7.5 13c.5-2 1.8-3 3.5-3s3 1 3.5 3"/>
+                </svg>
+                <span>Tài khoản</span>
+            </a>
+            <a href="/Map" class="nav @(isMapActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polygon points="1 3 5 1 11 3 15 1 15 13 11 15 5 13 1 15"/>
+                    <path d="M5 1v12M11 3v12"/>
+                </svg>
+                <span>Map</span>
+            </a>
 
             <div class="foot">
                 <span>v2.0</span>

@@ -1,9 +1,8 @@
 ﻿@page
 @model AITeam.Hub.Pages.ApprovalsModel
 @using AITeam.Hub.Models
-@using AITeam.Hub.Services
 @{
-    ViewData["Title"] = "Cần anh duyệt";
+    ViewData["Title"] = "Đơn duyệt";
 }
 
 @if (!string.IsNullOrEmpty(Model.Message))
@@ -30,95 +29,77 @@
         <span class="tab" id="tab-btn-decided" onclick="switchApprovalTab('decided')">Đã quyết<span class="c">@Model.Decided.Count</span></span>
     </div>
 
-    <div id="tab-content-pending">
-        @if (Model.Pending.Count == 0)
-        {
-            <div class="empty">Không có việc nào chờ anh duyệt.</div>
-        }
-        else
-        {
-            @foreach (var a in Model.Pending)
+    @foreach (var group in new[] { (Key: "pending", Items: Model.Pending), (Key: "decided", Items: Model.Decided) })
+    {
+        <div id="tab-content-@group.Key" style="@(group.Key == "decided" ? "display: none;" : null)">
+            @if (group.Items.Count == 0)
             {
-                var (pillCls, pillText) = a.Kind switch { ApprovalKind.Merge => ("pill rev", "MERGE"), ApprovalKind.Decision => ("pill run", "QUYẾT ĐỊNH"), _ => ("pill fix", "CẢI TIẾN QUY TRÌNH") };
-                var commitShort = string.IsNullOrEmpty(a.Commit) ? null : (a.Commit.Length > 7 ? a.Commit[..7] : a.Commit);
-                <div class="panel" style="margin-bottom: 12px;">
-                    <div class="bd" style="display: grid; grid-template-columns: 1fr 260px; gap: 14px; align-items: start;">
-                        <div style="min-width: 0; overflow-wrap: anywhere;">
-                            <div class="row" style="gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                <span class="@pillCls">@pillText</span>
-                                <b style="overflow-wrap: anywhere;">@a.Title</b>
-                            </div>
-                            <div class="muted" style="font-size: 12px; margin-bottom: 8px;">
-                                @a.Id · @a.Project@if (!string.IsNullOrEmpty(a.Task)){<text> · @a.Task</text>}@if (!string.IsNullOrEmpty(commitShort)){<text> · @commitShort</text>} · @a.RequestedBy · @a.RequestedAt.ToString("HH:mm dd/MM")
-                            </div>
-                            <div>@MarkdownRenderer.Render(a.Detail)</div>
-                            @foreach (var link in a.Links)
-                            {
-                                <div><code>@link</code></div>
-                            }
-                        </div>
-                        <div>
-                            <form method="post" asp-page-handler="Decide">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@a.Id">
-                                <textarea class="inp" name="note" rows="3" maxlength="500" placeholder="Ghi chú (tùy chọn)" style="margin-bottom: 8px;"></textarea>
-                                <div class="row" style="gap: 8px;">
-                                    <button class="btn pri" name="decision" value="approve">Duyệt</button>
-                                    <button class="btn danger" name="decision" value="reject">Từ chối</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+                <div class="empty">@(group.Key == "pending" ? "Không có việc nào chờ anh duyệt." : "Chưa có quyết định nào.")</div>
             }
-        }
-    </div>
-
-    <div id="tab-content-decided" style="display: none;">
-        @if (Model.Decided.Count == 0)
-        {
-            <div class="empty">Chưa có quyết định nào.</div>
-        }
-        else
-        {
-            @foreach (var a in Model.Decided)
+            else
             {
-                var (pillCls, pillText) = a.Kind switch { ApprovalKind.Merge => ("pill rev", "MERGE"), ApprovalKind.Decision => ("pill run", "QUYẾT ĐỊNH"), _ => ("pill fix", "CẢI TIẾN QUY TRÌNH") };
-                var commitShort = string.IsNullOrEmpty(a.Commit) ? null : (a.Commit.Length > 7 ? a.Commit[..7] : a.Commit);
-                <div class="panel" style="margin-bottom: 12px;">
-                    <div class="bd" style="display: grid; grid-template-columns: 1fr 260px; gap: 14px; align-items: start;">
-                        <div style="min-width: 0; overflow-wrap: anywhere;">
-                            <div class="row" style="gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                <span class="@pillCls">@pillText</span>
-                                <b style="overflow-wrap: anywhere;">@a.Title</b>
-                            </div>
-                            <div class="muted" style="font-size: 12px; margin-bottom: 8px;">
-                                @a.Id · @a.Project@if (!string.IsNullOrEmpty(a.Task)){<text> · @a.Task</text>}@if (!string.IsNullOrEmpty(commitShort)){<text> · @commitShort</text>} · @a.RequestedBy · @a.RequestedAt.ToString("HH:mm dd/MM")
-                            </div>
-                            <div>@MarkdownRenderer.Render(a.Detail)</div>
-                            @foreach (var link in a.Links)
-                            {
-                                <div><code>@link</code></div>
-                            }
-                        </div>
-                        <div style="overflow-wrap: anywhere;">
-                            <div style="margin-bottom: 6px;">
-                                @if (a.Status == ApprovalStatus.Approved) { <span class="pill ok">ĐÃ DUYỆT</span> } else { <span class="pill err">ĐÃ TỪ CHỐI</span> }
-                            </div>
-                            @if (a.DecidedAt.HasValue)
-                            {
-                                <div class="muted" style="font-size: 12px; margin-bottom: 6px;">@a.DecidedAt.Value.ToString("HH:mm dd/MM")</div>
-                            }
-                            @if (!string.IsNullOrEmpty(a.Note))
-                            {
-                                <div style="white-space: pre-wrap; overflow-wrap: anywhere;">@a.Note</div>
-                            }
-                        </div>
-                    </div>
-                </div>
+                <table class="approvals-table">
+                    <colgroup>
+                        <col class="approval-id" /><col class="approval-kind" /><col class="approval-project" />
+                        <col class="approval-summary" /><col class="approval-time" /><col class="approval-status" />
+                    </colgroup>
+                    <thead>
+                        <tr><th>Mã</th><th>Loại</th><th>Dự án/task</th><th>Nội dung tóm tắt</th><th>Lúc tạo</th><th>Trạng thái</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in group.Items)
+                        {
+                            var (pillCls, pillText) = a.Kind switch { ApprovalKind.Merge => ("pill rev", "MERGE"), ApprovalKind.Decision => ("pill run", "QUYẾT ĐỊNH"), _ => ("pill fix", "CẢI TIẾN QUY TRÌNH") };
+                            var commitShort = string.IsNullOrEmpty(a.Commit) ? null : (a.Commit.Length > 7 ? a.Commit[..7] : a.Commit);
+                            <tr>
+                                <td>@a.Id</td>
+                                <td><span class="@pillCls">@pillText</span></td>
+                                <td>
+                                    <div>@a.Project</div>
+                                    @if (!string.IsNullOrEmpty(a.Task)) { <div>@a.Task</div> }
+                                </td>
+                                <td>
+                                    <b>@a.Title</b>
+                                    <details>
+                                        <summary>Chi tiết</summary>
+                                        <div class="approval-detail">@a.Detail</div>
+                                        <div class="muted">@a.RequestedBy</div>
+                                        @if (!string.IsNullOrEmpty(commitShort)) { <div><code>@commitShort</code></div> }
+                                        @foreach (var link in a.Links) { <div><code>@link</code></div> }
+                                    </details>
+                                </td>
+                                <td>@a.RequestedAt.ToString("HH:mm dd/MM")</td>
+                                <td>
+                                    @if (a.Status == ApprovalStatus.Pending)
+                                    {
+                                        <div class="pill rev">CHỜ DUYỆT</div>
+                                        <form method="post" asp-page-handler="Decide">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@a.Id" />
+                                            <textarea class="inp" name="note" rows="3" maxlength="500" placeholder="Ghi chú (tùy chọn)" aria-label="Ghi chú cho @a.Id"></textarea>
+                                            <div class="row">
+                                                <button class="btn pri" name="decision" value="approve">Duyệt</button>
+                                                <button class="btn danger" name="decision" value="reject">Từ chối</button>
+                                            </div>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        @if (a.Status == ApprovalStatus.Approved) { <span class="pill ok">ĐÃ DUYỆT</span> } else { <span class="pill err">ĐÃ TỪ CHỐI</span> }
+                                        @if (a.DecidedAt.HasValue)
+                                        {
+                                            <div class="muted">@a.DecidedAt.Value.ToString("HH:mm dd/MM")</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(a.Note)) { <div class="approval-detail">@a.Note</div> }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             }
-        }
-    </div>
+        </div>
+    }
 </section>
 
 <script>

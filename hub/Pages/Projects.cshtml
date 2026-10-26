@@ -2,5 +2,39 @@
 @model AITeam.Hub.Pages.ProjectsModel
 @{
     ViewData["Title"] = "Dự án";
-    // TODO(agent): danh sách liên kết mọi dự án; rỗng: Chưa có dự án.
 }
+
+<section class="screen on" id="s-projects" style="min-width: 0;">
+    <div class="row" style="margin-bottom: 16px; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600;">Dự án</h2>
+        <span class="muted" style="font-size: 13px;">@Model.Projects.Count dự án</span>
+    </div>
+
+    @if (Model.Projects.Count == 0)
+    {
+        <div class="empty">Chưa có dự án.</div>
+    }
+    else
+    {
+        <div class="grid projects-grid">
+            @foreach (var p in Model.Projects)
+            {
+                <div class="panel" style="display: flex; flex-direction: column; overflow-wrap: anywhere; min-width: 0;">
+                    <div class="hd project-heading">
+                        <a href="/p/@Uri.EscapeDataString(p.Name)" style="font-weight: 600; font-size: 15px; overflow-wrap: anywhere; word-break: break-word;">@p.Name</a>
+                        @if (!string.IsNullOrEmpty(p.Stack))
+                        {
+                            <span class="pill" style="font-size: 11px;">@p.Stack</span>
+                        }
+                    </div>
+                    <div class="bd" style="flex: 1; font-size: 13px; color: var(--muted); overflow-wrap: anywhere;">
+                        @if (!string.IsNullOrEmpty(p.Repo))
+                        {
+                            <div style="margin-bottom: 4px;"><code>@p.Repo</code></div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
