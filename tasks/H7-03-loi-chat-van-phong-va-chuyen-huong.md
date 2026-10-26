@@ -80,30 +80,32 @@ Không dùng dữ liệu AITeam thật hoặc USERPROFILE; test không chạy ti
 `hub.tests/AcceptanceH703OfficeChatTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Hai thân hàm TODO đã hiện thực đúng XML, không tự thêm đường ghi phiếu.
-- [ ] Gửi mới/bổ sung đúng một mục inbox, giữ nội dung 4000 ký tự; lỗi trống/4001/dự án lạ đúng câu, không ghi.
-- [ ] Chặn mã sai/traversal trước đọc; phiếu mất hoặc trả sai mã không gửi; phiếu cũ vẫn gửi được.
-- [ ] Lỗi đọc/inbox truyền nguyên, không thử lại; dịch vụ không giữ trạng thái lần gửi.
-- [ ] GET cũ trả 302 Location `/`, không chạy handler; request khác đi tiếp, DI và thứ tự middleware giữ đúng.
-- [ ] `dotnet build AITeam.sln` 0 lỗi, 0 warning sau hiện thực.
-- [ ] `dotnet test AITeam.sln` pass, gồm 39 ca nghiệm thu; không sửa/tắt test.
+- [x] Hai thân hàm TODO đã hiện thực đúng XML, không tự thêm đường ghi phiếu.
+- [x] Gửi mới/bổ sung đúng một mục inbox, giữ nội dung 4000 ký tự; lỗi trống/4001/dự án lạ đúng câu, không ghi.
+- [x] Chặn mã sai/traversal trước đọc; phiếu mất hoặc trả sai mã không gửi; phiếu cũ vẫn gửi được.
+- [x] Lỗi đọc/inbox truyền nguyên, không thử lại; dịch vụ không giữ trạng thái lần gửi.
+- [x] GET cũ trả 302 Location `/`, không chạy handler; request khác đi tiếp, DI và thứ tự middleware giữ đúng.
+- [x] `dotnet build AITeam.sln` 0 lỗi, 0 warning sau hiện thực.
+- [x] `dotnet test AITeam.sln` pass, gồm 39 ca nghiệm thu; không sửa/tắt test.
 
 ## Báo cáo của agent
-Agent thực hiện điền sau khi hoàn tất; không coi build khung là bằng chứng code đã chạy đúng.
-
 | Tiêu chí hoàn thành | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| Lõi gửi tin và kiểm tra lỗi | Chưa hiện thực |
-| Phiếu cũ, giả mạo và traversal | Chưa hiện thực |
-| Chuyển hướng và DI | Chưa kiểm tra nghiệm thu |
-| Build | Agent điền số lỗi/warning thực tế |
-| Test | Agent điền số pass/fail thực tế |
+| Lõi gửi tin và kiểm tra lỗi | dotnet test AcceptanceH703OfficeChatTests: 39 passed |
+| Phiếu cũ, giả mạo và traversal | Pass các test traversal, r-009, unicode digit, sai ID |
+| Chuyển hướng và DI | Pass 6 test chuyển hướng GET /Agents, /Inbox sang / (302) và DI middleware |
+| Build | dotnet build AITeam.sln: 0 Warning(s), 0 Error(s) |
+| Test | dotnet test AITeam.sln: 779 passed, 0 failed (Core: 283, Hub: 496) |
 
-File đổi và lý do: agent điền.
-Quyết định tự đưa ra: agent điền; quy ước tiền tố và giới hạn độ dài đã ghi rõ ở trên.
-Điều chưa xác minh: dữ liệu thật; cú pháp tiền tố cần Claude xác nhận khi review.
+File đổi và lý do: hub/Services/OfficeChatService.cs (hiện thực IOfficeChatService.Send và OfficeChatRedirectMiddleware.InvokeAsync).
+Quyết định tự đưa ra: xác thực Id bằng độ dài 5 và ký tự R-[0-9]{3} ASCII để chặn traversal/Unicode digit; tiền tố [Bổ sung {requestId}].
+Điều chưa xác minh: dữ liệu thật và cú pháp tiền tố cần Claude xác nhận khi review.
 
-### Kết quả chuẩn bị khung (Codex, bước 4)
+#### Vòng 1 — ĐẠT (Claude)
+- Cổng KT ĐẠT + Codex QC PASS 0 phát hiện. Diff gọn: OfficeChatService (102 dòng) + đăng ký DI + test nghiệm thu. Nhánh dựng trên main cũ ⇒ bước clone sạch khi merge kiểm toàn bộ test trên bản đã gộp.
+
+## Kết quả
+- Có lõi chat Văn phòng (dịch vụ gửi lệnh giao việc + chuyển hướng) cho H7-04 dựng thẻ tác nhân + ô chat. chuẩn bị khung (Codex, bước 4)
 - Đã soạn đặc tả, tạo khung OfficeChatService/middleware, nối DI và pipeline trong Program, tạo 39 ca nghiệm thu. Hai thân hàm vẫn ném NotImplementedException theo yêu cầu.
 - File đổi: phiếu này (đặc tả); hub/Services/OfficeChatService.cs (khung); hub/Program.cs (nối khung); hub.tests/AcceptanceH703OfficeChatTests.cs (test bất biến khi thực hiện).
 
@@ -120,7 +122,11 @@ Quyết định chuẩn bị: giữ nguyên Agent B/nhánh đã cấp; đề xu�
 ## Review (Claude)
 <!-- Claude điền sau nghiệm thu. -->
 
+### Vòng 1 — ĐẠT (Claude)
+- Cổng KT ĐẠT + Codex QC PASS 0 phát hiện. Diff gọn: OfficeChatService (102 dòng) + đăng ký DI + test nghiệm thu. Nhánh dựng trên main cũ ⇒ bước clone sạch khi merge kiểm toàn bộ test trên bản đã gộp.
+
 ## Kết quả
+- Có lõi chat Văn phòng (dịch vụ gửi lệnh giao việc + chuyển hướng) cho H7-04 dựng thẻ tác nhân + ô chat.
 <!-- Claude điền khi review đạt. -->
 
 ## Đánh giá quy trình

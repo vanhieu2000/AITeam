@@ -39,10 +39,12 @@ else
 }
 
 builder.Services.AddHubV3();
+builder.Services.AddSingleton<IOfficeChatService, OfficeChatService>();
 
 var app = builder.Build();
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.UseMiddleware<OfficeChatRedirectMiddleware>();
 app.MapRazorPages();
 app.Run();
 
