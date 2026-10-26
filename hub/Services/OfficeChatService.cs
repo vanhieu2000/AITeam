@@ -29,7 +29,50 @@ public sealed class OfficeChatService(
     /// <inheritdoc />
     public void Send(string project, string? text, string? requestId = null)
     {
-        throw new NotImplementedException(); // TODO(agent)
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("Nội dung yêu cầu không được để trống.");
+        }
+
+        if (text.Length > 4000)
+        {
+            throw new ArgumentException("Nội dung quá dài (tối đa 4000 ký tự).");
+        }
+
+        var projectInfo = config.FindProject(project);
+        if (projectInfo is null)
+        {
+            throw new ArgumentException("Dự án không hợp lệ.");
+        }
+
+        if (string.IsNullOrEmpty(requestId))
+        {
+            inbox.Add(projectInfo.Name, text.Trim());
+            return;
+        }
+
+        if (!IsValidRequestId(requestId))
+        {
+            throw new ArgumentException("Phiếu không hợp lệ.");
+        }
+
+        var thread = requests.Get(requestId);
+        if (thread is null || !string.Equals(thread.Id, requestId, StringComparison.Ordinal))
+        {
+            throw new ArgumentException("Phiếu không hợp lệ.");
+        }
+
+        inbox.Add(projectInfo.Name, $"[Bổ sung {requestId}] {text.Trim()}");
+    }
+
+    private static bool IsValidRequestId(string id)
+    {
+        return id.Length == 5 &&
+               id[0] == 'R' &&
+               id[1] == '-' &&
+               id[2] >= '0' && id[2] <= '9' &&
+               id[3] >= '0' && id[3] <= '9' &&
+               id[4] >= '0' && id[4] <= '9';
     }
 }
 
@@ -42,6 +85,18 @@ public sealed class OfficeChatRedirectMiddleware(RequestDelegate next)
     /// <summary>Áp dụng chuyển hướng theo hợp đồng của lớp, không ghi trạng thái ứng dụng.</summary>
     public Task InvokeAsync(HttpContext context)
     {
-        throw new NotImplementedException(); // TODO(agent)
+        if (HttpMethods.IsGet(context.Request.Method))
+        {
+            var path = context.Request.Path.Value;
+            if (string.Equals(path, "/Agents", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(path, "/Inbox", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.StatusCode = StatusCodes.Status302Found;
+                context.Response.Headers.Location = "/";
+                return Task.CompletedTask;
+            }
+        }
+
+        return next(context);
     }
 }
