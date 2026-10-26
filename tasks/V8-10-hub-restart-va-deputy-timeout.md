@@ -1,6 +1,6 @@
 # V8-10 · `team.ps1 hub -Restart` + giới hạn 45 phút cho `deputy`
 
-- **Agent:** A
+- **Agent:** B
 - **Nhánh:** `agent-a/V8-10-hub-restart-va-deputy-timeout`
 - **Ưu tiên:** cao
 - **Ngân sách:** ~70 dòng
