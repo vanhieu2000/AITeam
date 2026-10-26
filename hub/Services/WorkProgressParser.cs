@@ -29,7 +29,11 @@ public sealed record WorkProgressStep(
 /// <summary>Kết quả thuần: đúng chín bước; LatestError là nội dung lỗi đang hiệu lực hoặc null.
 /// IsMerged chỉ true khi có Merge đạt hoặc boardStatus chứa ✅; không suy diễn Acceptance Done.</summary>
 public sealed record WorkProgress(
-    WorkStep CurrentStep, IReadOnlyList<WorkProgressStep> Steps, string? LatestError, bool IsMerged);
+    WorkStep CurrentStep, IReadOnlyList<WorkProgressStep> Steps, string? LatestError, bool IsMerged)
+{
+    /// <summary>Tối đa năm sự kiện của task, mới nhất trước; giữ kết quả gốc mọi lượt.</summary>
+    public IReadOnlyList<WorkProgressEvent> RecentEvents { get; init; } = Array.Empty<WorkProgressEvent>();
+}
 
 /// <summary>Parser thuần, không I/O, không chạy lệnh, không trạng thái dùng chung; không đăng ký DI.</summary>
 public static class WorkProgressParser
@@ -53,7 +57,7 @@ public static class WorkProgressParser
     /// Sai số cột, task, lượt hoặc thao tác: bỏ dòng; sai/thiếu giờ: vẫn giữ sự kiện với Time=null.
     /// Giờ ISO có offset giữ nguyên; "HH:mm dd/MM/yyyy" dùng +07:00; chỉ HH:mm dùng ngày receivedAt
     /// tại +07:00, không có receivedAt thì null. Actor=null nếu nguồn không chỉ rõ người.
-    /// ĐẠT/PASS/PASSED (nguyên từ đầu kết quả) → Passed; CẦN SỬA/FAIL/FAILED/LỖI → Failed;
+    /// ĐẠT/PASS/PASSED/XONG (nguyên từ đầu kết quả) → Passed; KHÔNG ĐẠT/CẦN SỬA/FAIL/FAILED/LỖI → Failed;
     /// BLOCKED → Blocked; còn lại Unknown. Không coi "KHÔNG ĐẠT" là Passed.
     /// Loại dòng trùng hoàn toàn sau Trim; giữ thứ tự nguồn. Không đọc marker như lệnh hay HTML.
     /// </summary>
@@ -203,7 +207,16 @@ public static class WorkProgressParser
             return new WorkProgressStep(s, state, timeText[s], actorText[s]);
         }).ToArray();
 
-        return new WorkProgress(currentStep, stepList, latestError, isMerged);
+        return new WorkProgress(currentStep, stepList, latestError, isMerged)
+        {
+            RecentEvents = (events ?? Array.Empty<WorkProgressEvent>())
+                .Select((ev, index) => (Event: ev, Index: index))
+                .Where(x => string.Equals(x.Event.TaskId, taskId?.Trim(), StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(x.Event.TaskId))
+                .OrderByDescending(x => x.Event.Time)
+                .ThenByDescending(x => x.Index)
+                .Take(5).Select(x => x.Event).ToArray()
+        };
     }
 
     private static void SetMeta(
@@ -238,9 +251,10 @@ public static class WorkProgressParser
 
     private static WorkOutcome ParseOutcome(string text)
     {
-        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT")) return WorkOutcome.Passed;
-        if (HasPrefix(text, "CẦN SỬA") || HasPrefix(text, "FAILED") || HasPrefix(text, "FAIL") || HasPrefix(text, "LỖI")) return WorkOutcome.Failed;
-        return HasPrefix(text, "BLOCKED") ? WorkOutcome.Blocked : WorkOutcome.Unknown;
+        if (HasPrefix(text, "KHÔNG ĐẠT") || HasPrefix(text, "CẦN SỬA") || HasPrefix(text, "FAILED") || HasPrefix(text, "FAIL") || HasPrefix(text, "LỖI")) return WorkOutcome.Failed;
+        if (HasPrefix(text, "BLOCKED")) return WorkOutcome.Blocked;
+        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT") || HasPrefix(text, "XONG")) return WorkOutcome.Passed;
+        return WorkOutcome.Unknown;
     }
 
     private static bool HasPrefix(string text, string prefix) =>
@@ -258,6 +272,9 @@ public static class WorkProgressParser
             var d = receivedAt.Value.ToOffset(VnOffset);
             return new DateTimeOffset(d.Year, d.Month, d.Day, hm.Hour, hm.Minute, 0, VnOffset);
         }
+        // Nhật ký workflow cũ dùng dấu cách giữa ngày, giờ và offset.
+        if (DateTimeOffset.TryParseExact(raw, "yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out var legacy)) return legacy;
         return IsoTimeRegex.IsMatch(raw) && DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var iso)
             ? iso : null;
     }

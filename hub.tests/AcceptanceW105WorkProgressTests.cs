@@ -109,7 +109,7 @@ public sealed class AcceptanceW105WorkProgressTests
     [InlineData("FAILED", WorkOutcome.Failed)]
     [InlineData("LỖI: dừng", WorkOutcome.Failed)]
     [InlineData("BLOCKED: hết hạn mức", WorkOutcome.Blocked)]
-    [InlineData("KHÔNG ĐẠT", WorkOutcome.Unknown)]
+    [InlineData("KHÔNG ĐẠT", WorkOutcome.Failed)] // Quản lý sửa 26/10: team.ps1 ghi "KHÔNG ĐẠT" khi cổng KT trượt ⇒ là lỗi (dữ liệu thật requests/R-011)
     [InlineData("chưa rõ", WorkOutcome.Unknown)]
     public void Results_use_explicit_prefix_not_substring(string result, WorkOutcome expected) =>
         Assert.Equal(expected, Assert.Single(WorkProgressParser.Parse(Journal(Line(result: result)))).Outcome);
