@@ -29,7 +29,11 @@ public sealed record WorkProgressStep(
 /// <summary>Kết quả thuần: đúng chín bước; LatestError là nội dung lỗi đang hiệu lực hoặc null.
 /// IsMerged chỉ true khi có Merge đạt hoặc boardStatus chứa ✅; không suy diễn Acceptance Done.</summary>
 public sealed record WorkProgress(
-    WorkStep CurrentStep, IReadOnlyList<WorkProgressStep> Steps, string? LatestError, bool IsMerged);
+    WorkStep CurrentStep, IReadOnlyList<WorkProgressStep> Steps, string? LatestError, bool IsMerged)
+{
+    /// <summary>Tối đa năm sự kiện của task, mới nhất trước; giữ kết quả gốc mọi lượt.</summary>
+    public IReadOnlyList<WorkProgressEvent> RecentEvents { get; init; } = Array.Empty<WorkProgressEvent>();
+}
 
 /// <summary>Parser thuần, không I/O, không chạy lệnh, không trạng thái dùng chung; không đăng ký DI.</summary>
 public static class WorkProgressParser
@@ -203,7 +207,16 @@ public static class WorkProgressParser
             return new WorkProgressStep(s, state, timeText[s], actorText[s]);
         }).ToArray();
 
-        return new WorkProgress(currentStep, stepList, latestError, isMerged);
+        return new WorkProgress(currentStep, stepList, latestError, isMerged)
+        {
+            RecentEvents = (events ?? Array.Empty<WorkProgressEvent>())
+                .Select((ev, index) => (Event: ev, Index: index))
+                .Where(x => string.Equals(x.Event.TaskId, taskId?.Trim(), StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(x.Event.TaskId))
+                .OrderByDescending(x => x.Event.Time)
+                .ThenByDescending(x => x.Index)
+                .Take(5).Select(x => x.Event).ToArray()
+        };
     }
 
     private static void SetMeta(
@@ -258,6 +271,9 @@ public static class WorkProgressParser
             var d = receivedAt.Value.ToOffset(VnOffset);
             return new DateTimeOffset(d.Year, d.Month, d.Day, hm.Hour, hm.Minute, 0, VnOffset);
         }
+        // Nhật ký workflow cũ dùng dấu cách giữa ngày, giờ và offset.
+        if (DateTimeOffset.TryParseExact(raw, "yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out var legacy)) return legacy;
         return IsoTimeRegex.IsMatch(raw) && DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var iso)
             ? iso : null;
     }

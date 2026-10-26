@@ -196,6 +196,31 @@ else
                                     <p>@(Model.SelectedProgress?.LatestError ?? "CẦN SỬA")</p>
                                 </section>
                             }
+                            <section class="panel work-journal" aria-label="Nhật ký gần nhất">
+                                <h3 class="sectiontitle">Nhật ký gần nhất</h3>
+                                @{
+                                    var recentEvents = Model.SelectedTask?.RecentEvents ?? Model.SelectedProgress?.RecentEvents ?? [];
+                                }
+                                @if (recentEvents.Count == 0)
+                                {
+                                    <p class="muted">Chưa có dữ liệu</p>
+                                }
+                                else
+                                {
+                                    <ol class="work-timeline">
+                                        @foreach (var entry in recentEvents)
+                                        {
+                                            var eventStep = entry.Action switch
+                                            {
+                                                WorkAction.Prep => "Chuẩn bị", WorkAction.Assign => "Code",
+                                                WorkAction.Verify => "Cổng KT", WorkAction.Qc => "QC",
+                                                WorkAction.Merge => "Merge", _ => "Chưa có dữ liệu"
+                                            };
+                                            <li><time>@(entry.Time?.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm dd/MM", System.Globalization.CultureInfo.InvariantCulture) ?? "Chưa có dữ liệu")</time> · <b>@eventStep</b> · lượt @entry.Round · @entry.Text</li>
+                                        }
+                                    </ol>
+                                }
+                            </section>
                         </section>
                     }
                 </div>

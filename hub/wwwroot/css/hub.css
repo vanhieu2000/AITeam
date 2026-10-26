@@ -1357,3 +1357,29 @@ textarea.inp, textarea.form-control {
     display: none;
   }
 }
+.work-timeline {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.work-timeline li {
+  position: relative;
+  margin-left: 4px;
+  padding: 0 0 12px 15px;
+  border-left: 1px solid var(--line);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.work-timeline li:before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 5px;
+  width: 7px;
+  height: 7px;
+  background: var(--line-2);
+  border-radius: 50%;
+}
+.work-timeline li:first-child:before { background: var(--accent); }
+.work-timeline li:last-child { padding-bottom: 0; border-color: transparent; }
+.work-timeline time { color: var(--muted); font-variant-numeric: tabular-nums; }
