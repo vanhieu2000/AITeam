@@ -39,7 +39,7 @@ public sealed class TeamScript : IDisposable
             }
             else
             {
-                if (string.IsNullOrWhiteSpace(sourceRoot) || !Path.IsPathRooted(sourceRoot))
+                if (string.IsNullOrWhiteSpace(sourceRoot) || !Path.IsPathFullyQualified(sourceRoot))
                     throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
                 srcRoot = Path.GetFullPath(sourceRoot);
             }
@@ -254,7 +254,7 @@ $PSScriptRoot = $scriptDir
         sb.AppendLine(@"
 function Invoke-W101FakeCall($name, $callArgs, $code, $outStr, $errStr) {
     $argList = @()
-    if ($callArgs) {
+    if ($null -ne $callArgs) {
         foreach ($a in $callArgs) { $argList += [string]$a }
     }
     $callObj = [PSCustomObject]@{
@@ -276,11 +276,19 @@ function Invoke-W101FakeCall($name, $callArgs, $code, $outStr, $errStr) {
 }
 
 function global:agy { Invoke-W101FakeCall 'agy' $args $agyCode $agyOut $agyErr }
+function script:agy { Invoke-W101FakeCall 'agy' $args $agyCode $agyOut $agyErr }
 function global:agy.exe { Invoke-W101FakeCall 'agy' $args $agyCode $agyOut $agyErr }
+function script:agy.exe { Invoke-W101FakeCall 'agy' $args $agyCode $agyOut $agyErr }
+
 function global:codex { Invoke-W101FakeCall 'codex' $args $codexCode $codexOut $codexErr }
+function script:codex { Invoke-W101FakeCall 'codex' $args $codexCode $codexOut $codexErr }
 function global:codex.exe { Invoke-W101FakeCall 'codex' $args $codexCode $codexOut $codexErr }
+function script:codex.exe { Invoke-W101FakeCall 'codex' $args $codexCode $codexOut $codexErr }
+
 function global:git { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitErr }
+function script:git { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitErr }
 function global:git.exe { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitErr }
+function script:git.exe { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitErr }
 ");
 
         // 3. User script
@@ -340,5 +348,46 @@ function global:git.exe { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitE
         if (_disposed) return;
         _disposed = true;
         _repo.Dispose();
+    }
+}
+
+public sealed class TeamScriptCodexReviewTests
+{
+    [Fact]
+    public async Task Fake_captures_single_empty_string_argument()
+    {
+        using var sandbox = new TeamScript();
+        var r = await sandbox.RunAsync("team.ps1", ["Get-NextJournalRun"], "agy ''");
+        Assert.Equal(0, r.Process.Code);
+        Assert.Single(r.Calls);
+        Assert.Equal("agy", r.Calls[0].Name);
+        Assert.Equal([""], r.Calls[0].Arguments);
+    }
+
+    [Fact]
+    public async Task Fake_overrides_script_scope_when_function_name_matches()
+    {
+        using var source = new TempRepo(false);
+        RealFile.Copy("team.ps1", source.Root);
+        File.AppendAllText(Path.Combine(source.Root, "team.ps1"),
+            "\r\nfunction agy { param([string]$Value) Write-Output 'SELECTED_REAL_FUNCTION' }\r\n",
+            new UTF8Encoding(false));
+        using var sandbox = new TeamScript(source.Root);
+        var r = await sandbox.RunAsync("team.ps1", ["agy"], "agy 'test'");
+        Assert.Equal(0, r.Process.Code);
+        Assert.DoesNotContain("SELECTED_REAL_FUNCTION", r.Process.Output);
+        Assert.Single(r.Calls);
+        Assert.Equal("agy", r.Calls[0].Name);
+        Assert.Equal(["test"], r.Calls[0].Arguments);
+    }
+
+    [Theory]
+    [InlineData("D:fixture")]
+    [InlineData("\\fixture")]
+    [InlineData("/fixture")]
+    public void TeamScript_rejects_drive_relative_and_root_relative_source_roots(string invalidRoot)
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new TeamScript(invalidRoot));
+        Assert.Contains("Đường dẫn bản sao không hợp lệ.", ex.Message);
     }
 }
