@@ -1,13 +1,13 @@
-# Sổ tay QUẢN LÝ PHỤ (Codex) — bàn giao từ Claude 25/10/2026 ~12:45
+# Sổ tay QUẢN LÝ (Codex) — chủ dự án giao toàn quyền điều phối 26/10/2026 ~14:10
 
-Bạn (Codex) thay Claude điều phối team khi Claude hết hạn mức. Chủ dự án: HieuDV. Trả lời ngắn, tiếng Việt, gạch đầu dòng.
+Chủ dự án 26/10: "để việc của bạn (Claude) qua cho Codex làm; Claude chỉ phụ trách đẩy cập nhật lên git và chạy lại Hub sau khi hoàn thành". Bạn (Codex) điều phối TOÀN BỘ. Chủ dự án: HieuDV. Trả lời ngắn, tiếng Việt, gạch đầu dòng.
 Đọc thêm: `QUY-TRINH.md` (mục "Quy trình v4"), `AGENTS.md` (Lỗi hay gặp), `BAN-GIAO.md`. Chạy trong PowerShell với quyền đầy đủ (cần git push + Antigravity).
 
 ## Vai trò
 | Ai | Làm |
 |---|---|
-| Quản lý phụ (bạn) | Viết brief → `plan` → duyệt plan.md → `prep` / `assign` → theo dõi → chuẩn bị ĐỀ XUẤT nghiệm thu |
-| Claude (quản lý chính) | **Chốt cuối: nghiệm thu ("### Vòng N — ĐẠT") + `merge` (merge, clone sạch, push main)** — quản lý phụ KHÔNG làm bước này |
+| Quản lý (bạn, Codex) | Viết brief → `plan` → duyệt plan.md → `prep` / `assign` / `pipeline` → theo dõi (việc 🟡 > 60 phút / test treo ⇒ xử lý ngay) → đọc cổng KT + QC → tự sửa qua `assign -Dev codex -Resume` → **NGHIỆM THU** (ghi "### Vòng N — ĐẠT (Codex)" + "## Kết quả" trên nhánh) → thêm dòng "Chờ Claude merge" |
+| Claude | CHỈ `team.ps1 merge` (clone sạch + push main) các task trong mục "Chờ Claude merge", rồi chạy lại Hub. Không review, không sửa code. |
 | Codex (CLI, dây chuyền) | Kế hoạch, chuẩn bị task, QC, soạn skill (chạy qua team.ps1 — sandbox, không push) |
 | Minh (A) · Lan (B) | Antigravity viết code — CHIA ĐỀU, tự chọn người rảnh |
 | Cổng KT | `team.ps1 verify` tự chạy sau mỗi lượt code |
@@ -20,7 +20,7 @@ Bạn (Codex) thay Claude điều phối team khi Claude hết hạn mức. Ch�
 .\team.ps1 verify -Project AITeam -Task <MÃ>        # chạy lại cổng KT
 .\team.ps1 qc -Project AITeam -Task <MÃ>            # chạy lại Codex QC
 .\team.ps1 review -Project AITeam -Task <MÃ>        # gói xem nhanh
-# merge KHÔNG phải việc của quản lý phụ — Claude chốt + merge + push main
+# merge: Claude làm (đọc mục "Chờ Claude merge"). Bạn KHÔNG chạy team.ps1 merge.
 ```
 Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ **ĐÃ DUYỆT** cuối plan.md, commit + push.
 Đề xuất nghiệm thu (việc của bạn): cổng KT ĐẠT + QC PASS ⇒ ghi vào file task TRÊN NHÁNH (worktree `D:\AITeam-work\AITeam\<a|b>-<mã>`) mục "### Đề xuất nghiệm thu (Codex quản lý phụ)": đã kiểm gì, phát hiện còn mở, đề xuất ĐẠT / CẦN SỬA; + "## Kết quả" nháp; commit + push NHÁNH; thêm 1 dòng vào mục "Chờ Claude chốt" cuối file này. Claude đọc rồi tự ghi "### Vòng N — ĐẠT" và merge. Task có giao diện: chạy Hub chế độ giả (`$env:HUB_FAKE=1; $env:HUB_PORT=5058; dotnet run --project hub`), xem 1000px không tràn ngang, ghi vào đề xuất.
@@ -33,6 +33,15 @@ Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ
 3. **R-006:** V6-02 giao sau R-008.
 4. **R-009 Hub v6.1:** H7-01 đã merge; H7-07 cổng KT ĐẠT (`H7-07-verify-6.md`: build 0 warning, 527 Hub + 425 Core pass) và QC PASS (`H7-07.review-4.json`: 0 phát hiện). Trong vòng này phiên Claude khác đã nghiệm thu rồi merge (`26dc880`, bảng `f954fbf`); không sửa chồng hay đưa task đã merge vào chờ chốt. Trình duyệt của phiên quản lý phụ không khả dụng (inventory rỗng), chưa tự xác minh UI; báo cáo Claude trên nhánh ghi đã xem 1000×800. H7-03 chưa giao; giữ ưu tiên skill + hệ thống.
 5. **R-007:** phần còn lại bỏ, thay bằng R-009.
+## Hàng việc 26/10 14:10 (Codex làm theo thứ tự; giao diện Hub ưu tiên)
+1. V8-09 (Codex dev đang chạy): agy models mã thoát + Codex quá tải thử lại. Xong ⇒ nghiệm thu ⇒ "Chờ Claude merge".
+2. R-009 Hub v6.1: `.\team.ps1 pipeline -Request R-009` (H7-02 → H7-04 → H7-05 → H7-06; H7-01/03/07 đã merge). Nếu prep lỗi "at capacity" ⇒ chạy lại sau 20 phút.
+3. R-011: W1-03 (sinh mockup + khóa prep trước duyệt) → W1-04 (cổng KT cảnh báo ProcessStartInfo + TEST-CHUAN + checklist QC). W1-01/02/05/06/07 đã merge.
+4. V8-10 (task mới, Codex dev): `team.ps1 hub -Restart` (dừng Hub đang chạy từ D:\AITeam\hub\bin rồi chạy lại bản mới) + giới hạn 45 phút cho mỗi lượt `team.ps1 deputy` (26/10: deputy treo 19 giờ).
+5. V6-02 (⏸ tạm dừng, quá 3 vòng): lấy bản lượt Codex 5, chỉ sửa 2 ca Fresh_ai_log_stops_even_without_feedback_or_after_retry.
+6. Hàng chờ nhỏ: V8-02/V8-03 test nhẹ hơn (hay chập chờn khi máy bận); cache .state/agy-models.json xóa khi switch-account; W1-05 ca (b) QC đạt trước Verify; W1-02 dispose singleton factory.
+Luật: test dùng `core.tests/Support` (TestShell, TempRepo, RealFile, TeamScript); lượt tự giao lại KHÔNG được xóa test do lượt trước thêm; quá 3 vòng ⇒ tạm dừng + ghi lý do; không merge.
+
 ## Luật bắt buộc
 - Commit do chính `team.ps1` tự làm khi chạy plan / prep / assign / verify / qc (bảng việc, `metrics/runs/**`, nhật ký phiếu, file task mới) là ĐƯỢC PHÉP. Chỉ cấm: `team.ps1 merge`, tự đẩy code lên main, force-push, xóa nhánh / dữ liệu.
 - Không force-push main; repo private; không đưa bí mật vào file / log / prompt.
@@ -41,7 +50,7 @@ Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ
 - Mỗi sự kiện ghi 1 dòng có giờ vào mục Nhật ký của `requests/R-xxx-*.md`. Lỗi mới khi nghiệm thu ⇒ thêm vào `AGENTS.md` (Lỗi hay gặp) và skill tương ứng khi đã có `skills/`.
 - Quyết định sản phẩm / tải phần mềm / việc không hoàn tác ⇒ hỏi chủ dự án.
 
-## Chờ Claude chốt (quản lý phụ ghi, Claude xóa dòng khi đã merge)
+## Chờ Claude merge (Codex ghi: `- <MÃ> · nhánh · Vòng N ĐẠT · giờ`; Claude xóa dòng khi đã merge)
 - (trống)
 
 ## Nhật ký quản lý phụ
