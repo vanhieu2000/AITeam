@@ -63,6 +63,9 @@ Sự kiện cần ghi:
 - 2026-10-26 07:41:15 +07:00 | V8-06 | Verify | lượt 1 | ĐẠT <!-- workflow:V8-06:Verify:1 -->
 - 2026-10-26 07:41:22 +07:00 | V8-06 | Qc | lượt 1 | BLOCKED <!-- workflow:V8-06:Qc:1 -->
 - 2026-10-26 07:41:36 +07:00 | V8-06 | Assign | lượt 1 | ĐẠT <!-- workflow:V8-06:Assign:1 -->
+- 2026-10-26 11:20:30 +07:00 | V8-07 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-07:Verify:1 -->
+- 2026-10-26 11:20:38 +07:00 | V8-07 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:V8-07:Assign:1 -->
+- 2026-10-26 11:36:59 +07:00 | V8-07 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:V8-07:Verify:2 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-008`, rồi điền:
 
