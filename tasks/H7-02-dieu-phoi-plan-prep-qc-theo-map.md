@@ -75,19 +75,19 @@ Theo brief R-009 mục 6; H7-01 đã có trong WorkflowRolesService. Hiện plan
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceH702WorkflowDispatchTests --blame-hang-timeout 2m`: 68 pass/0 fail/0 skip (lượt sửa cổng KT 26/10).
-| Tiêu chí | Bằng chứng / kết quả thật |
+T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH702WorkflowDispatchTests|FullyQualifiedName~AcceptanceS104SkillPromptsTests.ProviderGiaNhanPromptThat_MoiNhanh" --blame-hang-timeout 2m`: 71 pass/2 fail/0 skip, 43 giây.
+| Tiêu chí | Bằng chứng / kết quả thật lượt 26/10 |
 |---|---|
-| Nối plan/prep/AutoReview/QC/CLI | T: 68/68; các ca entrypoint/CLI đạt. |
-| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T: 68/68; giữ nguyên triển khai và test nghiệm thu. |
-| Provider/chỉ đọc/khóa/tham số | T: 68/68; các ca stub/khóa/tham số đạt. |
-| QC chặn tự duyệt/cấu hình/lỗi, không fallback | T: 68/68; các ca QC cố định đạt. |
-| Build/BOM | `dotnet build AITeam.sln --no-restore -m:1 -nr:false`: 0 lỗi/0 warning; 4 file mã H7-02 có BOM; parser PowerShell 0 lỗi. |
-| Lỗi quản lý giao lại | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter 'FullyQualifiedName~AcceptanceS104SkillPromptsTests.ProviderGiaNhanPromptThat_MoiNhanh|FullyQualifiedName~AcceptanceV801WorkflowTests.KhoaChanTienTrinhKhacVaTimeout' --blame-hang-timeout 2m`: 4 pass/2 fail/0 skip; V8-01 pass, hai ca S1-04 báo không tìm thấy Resolve-WorkflowAssignment. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, dừng gần 3 phút theo giới hạn; Hub 712 pass/9 fail/0 skip, Core chưa tổng kết; có lỗi Git CreateFileMapping Win32 error 5 và S1-04. |
-| Báo cáo/bàn giao | Chỉ cập nhật báo cáo trong task; không đổi mã/test/fixture; hệ thống tự commit/push, chưa xác minh commit. |
-Điểm chặn: harness S1-04 không nạp helper mới; AGENTS.md cấm sửa test nghiệm thu và mã nhận biết test, yêu cầu báo cáo rồi dừng khi test sai. Cần Claude cập nhật harness nạp phụ thuộc điều phối, không bỏ wiring Map trong sản phẩm.
-Quyết định: không sửa ngoài phạm vi; 9 lỗi Hub tại File.Replace/Map và lỗi quyền Git cần chạy lại ngoài sandbox. Chưa xác minh toàn solution pass, provider/Map thật và toàn giao dịch prep; lỗi V8-01 không tái hiện ở lượt lọc.
+| Nối plan/prep/AutoReview/QC/CLI | T: H7-02 68/68 pass; gỡ 2 xung đột merge tại AutoReview/prep, giữ điều phối Map. |
+| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T: H7-02 68/68 pass; không sửa test nghiệm thu H7-02/fixture. |
+| Provider/chỉ đọc/khóa/tham số | T: H7-02 68/68 pass, giữ nguyên hợp đồng. |
+| QC chặn tự duyệt/cấu hình/lỗi, không fallback | T: H7-02 68/68 pass. |
+| Build/BOM/parser | `dotnet build AITeam.sln --no-restore -m:1 -nr:false`: 0 lỗi/0 warning; 5 file mã đã kiểm có BOM; parser `team.ps1`: 0 lỗi. Lệnh build mặc định ban đầu mã 1, không có chẩn đoán. |
+| Sửa harness được quản lý cho phép | Chỉ thêm Resolve-WorkflowAssignment, Invoke-WorkflowRoleRun vào `$names`; T: S1-04 3 pass/2 fail, stub đọc nhầm file `workflow-role`. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, dừng gần 3 phút; Hub 712 pass/9 fail/0 skip; Core chưa tổng kết, có lỗi Git CreateFileMapping Win32 error 5 và 2 lỗi stub S1-04. |
+| Báo cáo/file đổi | `team.ps1`: gỡ xung đột; `core.tests/AcceptanceS104SkillPromptsTests.cs`: thêm tên hàm; task này: báo cáo. |
+Quyết định/điểm chặn: không sửa stub S1-04 ngoài `$names` theo giới hạn quản lý; cần Claude cập nhật stub trả JSON cho `workflow-role`. Không có `logs/` và Review còn trống nên không có feedback/log mới để đọc.
+Chưa xác minh: toàn solution pass, provider/Map thật; không chạy app/chụp ảnh/git. Hệ thống tự commit/push, chưa có commit được kiểm.
 ## Review (Claude)
 <!-- Claude điền. -->
 

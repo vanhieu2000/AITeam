@@ -151,6 +151,7 @@ function Get-AgyModels($cfg) {
         $out = Join-Path (Split-Path $cache) ('models-' + [guid]::NewGuid().ToString('N') + '.out')
         $err = $out + '.err'
         $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList 'models' -PassThru -NoNewWindow -RedirectStandardOutput $out -RedirectStandardError $err
+        $null = $proc.Handle
         try {
             if (-not $proc.WaitForExit(60000)) { $proc.Kill(); throw 'agy models quá 60 giây.' }
             $proc.WaitForExit()
@@ -756,6 +757,31 @@ function Get-AITeamExe {
     if (Test-Path $exe) { $exe } else { $null }
 }
 
+# Thử lại trên cùng worktree; hạn mức thật cần chờ người quản lý xử lý.
+function Invoke-CodexRetry($exe, [string[]]$arguments, [string]$out) {
+    $fallback = @((Get-Config).codex.modelFallback | Where-Object { $_ } | Select-Object -First 1)
+    $current = $arguments
+    for ($attempt = 0; $attempt -lt 3; $attempt++) {
+        if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out }
+        $lines = @(& $exe @current 2>&1)
+        $code = $LASTEXITCODE
+        $lines | ForEach-Object { Say "  $_" }
+        $text = ($lines -join "`n")
+        if (Test-Path -LiteralPath $out) { $text += "`n" + [IO.File]::ReadAllText($out) }
+        $quota = $text -match '(?i)usage.?limit|\bquota\b|insufficient_quota|credits? balance|out of credits'
+        $overload = $text -match '(?i)at capacity|overloaded|\b429\b'
+        if ($code -eq 0 -or $quota -or -not $overload -or $attempt -eq 2) { break }
+        if ($attempt -eq 0) {
+            Say 'Codex quá tải ⇒ thử lại sau 60 giây…' Yellow
+            Start-Sleep -Seconds 60
+        } elseif ($fallback.Count) {
+            Say "Codex quá tải ⇒ thử lại với model $($fallback[0])…" Yellow
+            $current = @($arguments) + @('--model', [string]$fallback[0])
+        } else { break }
+    }
+    $global:LASTEXITCODE = $code
+}
+
 # R-004: Codex viết code trong worktree qua `aiteam run`. Codex KHÔNG ghi được .git (sandbox — thử thật 24/10) ⇒ commit + push ở đây.
 # Ghi $logFile cùng định dạng log agy (status / usage / duration_seconds) để số đo, Hub, báo cáo dùng lại được.
 function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin) {
@@ -767,7 +793,7 @@ function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$bran
     $out = $logFile -replace '\.json$', '.codex.json'
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Say "[$(Get-Date -Format HH:mm:ss)] $TaskName → Codex (aiteam run), thư mục $work" Cyan
-    & $exe run --provider codex --workdir $work --prompt-file $pf --logdir (Join-Path $r.Logs "$TaskName.codex") --timeout-min $maxMin --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
+    Invoke-CodexRetry $exe @("run", "--provider", "codex", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$TaskName.codex"), "--timeout-min", $maxMin, "--out", $out, "--root", $Root) $out
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
     $in = if ($j -and $j.inputTokens -ge 0) { [long]$j.inputTokens } else { 0 }

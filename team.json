@@ -11,6 +11,7 @@
     "model": "",
     "accounts": [ "Antigravity Pro 1", "Antigravity Pro 2" ]
   },
+  "codex": { "modelFallback": [] },
   "developers": [
     { "id": "A", "name": "Agent A", "focus": "Nền tảng: kiến trúc, build, đóng gói, CSDL, hạ tầng" },
     { "id": "B", "name": "Agent B", "focus": "Tính năng: module, màn hình, nghiệp vụ" },
