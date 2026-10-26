@@ -64,7 +64,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 14:22 26/10/2026 |
 | [V8-10 · `team.ps1 hub -Restart` + giới hạn 45 phút cho `deputy`](V8-10-hub-restart-va-deputy-timeout.md) | B | `agent-a/V8-10-hub-restart-va-deputy-timeout` | 🔵 Chờ review · cổng KT ĐẠT · AI review BLOCKED (Claude review) |
 | [H7-02 Điều phối plan/prep/QC theo Map](H7-02-dieu-phoi-plan-prep-qc-theo-map.md) | B | `agent-b/H7-02-dieu-phoi-plan-prep-qc-theo-map` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 15:09 26/10/2026 |
-| [H7-04 Thẻ tác nhân và chat giao việc](H7-04-the-tac-nhan-va-chat-giao-viec.md) | B | `agent-b/H7-04-the-tac-nhan-va-chat-giao-viec` | ⬜ Chưa giao |
+| [H7-04 Thẻ tác nhân và chat giao việc](H7-04-the-tac-nhan-va-chat-giao-viec.md) | B | `agent-b/H7-04-the-tac-nhan-va-chat-giao-viec` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 15:12 26/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
