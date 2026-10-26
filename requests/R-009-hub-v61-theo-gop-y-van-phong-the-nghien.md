@@ -20,6 +20,7 @@
 Mỗi file task phải có dòng `- **Yêu cầu:** R-009` để `team.ps1 request-report` gom số liệu.
 
 ## 3. Nhật ký (ghi ngay khi xảy ra, giờ:phút)
+- 18:16 26/10/2026 (Codex quản lý phụ): H7-02 có lượt 8 từ phiên khác lúc 18:15, PID 13208 đang chạy, worktree còn xung đột team.ps1; không giao trùng, không verify/QC đồng thời. H7-04/H7-06 lượt mới chỉ Resting; chưa có ĐẠT + QC PASS để đề xuất nghiệm thu.
 - 16:46 26/10/2026: Codex quản lý phụ kiểm H7-06 lượt 6: cổng KT KHÔNG ĐẠT, build 0 warning, Core 690 pass, Hub 739 pass/24 fail; NullReferenceException Projects.cshtml:4 vẫn còn sau thử lại. QC chưa chạy; tạm dừng vì quá 3 lượt, không giao lượt 7. Chưa có đề xuất nghiệm thu mới.
 - 16:16 26/10/2026: Codex quản lý phụ tạm dừng H7-02 sau lượt 4, H7-04 vướng warning test nghiệm thu bất biến và hồi quy V5-05/W1-02. Giao H7-06 chạy nền với -Dev codex -Resume sau lỗi quá tải, PID 32068; log H7-06.deputy-20261026-161620.out.txt/.err.txt. Chưa có task mới đủ ĐẠT/PASS để đề xuất nghiệm thu.
 | Giờ | Sự kiện | Ghi chú |
