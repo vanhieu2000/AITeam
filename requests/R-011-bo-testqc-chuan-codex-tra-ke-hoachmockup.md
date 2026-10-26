@@ -68,6 +68,8 @@ Sự kiện cần ghi:
 - 2026-10-26 01:29:02 +07:00 | W1-06 | Verify | lượt 6 | ĐẠT <!-- workflow:W1-06:Verify:6 -->
 - 2026-10-26 01:45:01 +07:00 | W1-06 | Verify | lượt 7 | KHÔNG ĐẠT <!-- workflow:W1-06:Verify:7 -->
 - 2026-10-26 07:34:45 +07:00 | W1-07 | Prep | lượt 1 | ĐẠT <!-- workflow:W1-07:Prep:1 -->
+- 2026-10-26 11:01:25 +07:00 | W1-07 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:W1-07:Verify:1 -->
+- 2026-10-26 11:01:33 +07:00 | W1-07 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:W1-07:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-011`, rồi điền:
 
