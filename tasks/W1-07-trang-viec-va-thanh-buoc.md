@@ -123,20 +123,19 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 - [x] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng lượt sửa phạm vi 26/10 |
+| Tiêu chí | Bằng chứng lượt sửa KHÔNG ĐẠT 26/10 |
 |---|---|
-| Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers`: exit 0, 0 lỗi/0 warning. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: exit 1; Hub 660 pass/9 fail/0 skip (Access denied khi lưu cấu hình, hai ca Map); Core chưa tổng kết, ít nhất 6 fail (Git Win32 error 5, S106); chủ động dừng trước 3 phút theo giới hạn. Chưa đạt. |
-| Nghiệm thu [A] | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: exit 0, 16 pass/0 fail/0 skip; không sửa test/fixture. |
-| Chọn dự án/yêu cầu/task, mã giả 404 | [A]: các ca Selection/Forged/Unknown đạt, nguồn được gọi đúng một lần. |
-| Mặc định Việc/chín bước/giờ/người/lỗi | [A]: Default/Selection/Latest_failure đạt, gồm giờ 17:03 và 17:32 từ fixture thật. |
-| Rỗng/thiếu dữ liệu/lỗi nguồn an toàn | [A]: Empty/Request_without_tasks/Source_error đạt. |
-| XSS/chỉ GET/liên kết duyệt | [A]: Long_untrusted_title và Default đạt; giữ link /Approvals. |
-| CSS/chuỗi dài/xuống hàng 1000px | [A]: Work_css và Long_untrusted_title đạt; không chạy app/chụp ảnh theo phân công. |
-| Kế hoạch/lịch sử/menu chung | Giữ nguyên các tab, PageModel và layout trong lượt này; [A] đạt, chưa nghiệm thu giao diện thật. |
-| File đổi/hoàn tác | WorkProgressService.cs: bỏ property chuyển tiếp RecentEvents, trả record về dạng ban đầu; Project.cshtml: đọc SelectedProgress.RecentEvents trực tiếp; task: báo cáo. BOM 5 file .cs/.cshtml kiểm bằng byte đều True. |
-| Ngoài phạm vi cần Claude quyết định | Giữ WorkProgressParser.cs vì fixture dùng yyyy-MM-dd HH:mm:ss zzz, test bất biến gọi parser trực tiếp và đòi 17:03/17:32; RecentEvents cung cấp nhật ký của mockup qua snapshot, tránh đọc/parse file trong PageModel/Razor. Hoàn tác sẽ mất dữ liệu bắt buộc; không mở rộng thêm trong lượt này. |
-| Giới hạn/bàn giao | Chưa xác minh toàn solution xanh và commit; không gọi git theo chỉ thị Codex, hệ thống tự commit/push. Ngoại lệ phạm vi parser chờ Claude review, không tự coi đã được duyệt. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers`: exit 0, 0 lỗi, 0 warning. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 672 pass/10 fail/0 skip; Core ít nhất 5 fail Git Win32 error 5, chưa tổng kết; dừng trước 3 phút, exit 1. Chưa đạt. |
+| Hồi quy dòng thật/Cổng KT/lỗi | [A] `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter 'FullyQualifiedName~WorkProgressOutcomeRegressionTests\|FullyQualifiedName~AcceptanceW107WorkPageTests' --blame-hang-timeout 2m`: 29 pass/0 fail/0 skip (13 hồi quy + 16 nghiệm thu); dòng Verify lượt 7 chép nguyên từ R-011, CurrentStep=Verify, LatestError=KHÔNG ĐẠT. |
+| Chọn dự án/yêu cầu/task, 404 | [A]: các ca Selection/Forged/Unknown pass; test nghiệm thu không sửa. |
+| Mặc định Việc/chín bước/giờ/người/lỗi | [A]: Default/Selection/Latest_failure pass; hồi quy kiểm giờ 12:50, bước Verify Failed và RecentEvents mới nhất. |
+| Rỗng/thiếu dữ liệu/lỗi nguồn an toàn | [A]: Empty/Request_without_tasks/Source_error pass. |
+| XSS/chỉ GET/liên kết duyệt | [A]: Long_untrusted_title và Default pass; giữ route /Approvals. |
+| CSS/chuỗi dài/xuống hàng | [A]: Work_css/Long_untrusted_title pass; giữ class current và overflow-wrap; không chạy app/chụp ảnh theo phân công. |
+| Giữ kế hoạch/lịch sử/menu chung | Không sửa PageModel/Razor/layout/CSS trong lượt này; 16 nghiệm thu W1-07 pass. |
+| File đổi/quyết định | WorkProgressParser.cs: lỗi/BLOCKED trước thành công, thêm KHÔNG ĐẠT/XONG, giữ từ trọn đầu kết quả; WorkProgressOutcomeRegressionTests.cs: hồi quy; task: báo cáo. Kiểm byte BOM parser/test mới và 3 file .cs/.cshtml trang đều True. |
+| Điều chưa chắc/bàn giao | W1-05 Results_use_explicit_prefix_not_substring đòi KHÔNG ĐẠT=Unknown trái yêu cầu mới Failed; giữ nguyên test để Claude quyết định. Chín lỗi Hub khác thuộc cấu hình/Map (Access denied). Không gọi git; hệ thống tự commit/push, chưa có commit được kiểm. |
 ## Ghi nhận chuẩn bị (Codex)
 - Khung OnGet dùng NotImplementedException; chưa triển khai thân hàm hoặc markup/CSS.
 - Test nghiệm thu gọi HTTP/Razor thật qua HubTestHost; nguồn và cấu hình giả không ghi dữ liệu.
