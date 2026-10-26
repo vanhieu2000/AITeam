@@ -1,3 +1,24 @@
 ﻿@model AITeam.Hub.Pages.OfficeModel
-@{ throw new NotImplementedException(); // TODO(agent)
-}
+<div id="office-chat-thread" hx-get="/?handler=Chat" hx-include="#office-request-select" hx-trigger="every 10s" hx-swap="outerHTML">
+    @if (!string.IsNullOrEmpty(Model.ChatNotice))
+    {
+        <div class="alert alert-success">@Model.ChatNotice</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ChatError))
+    {
+        <div class="alert alert-danger">@Model.ChatError</div>
+    }
+    @if (Model.SelectedThread is { } thread)
+    {
+        <h4>@thread.Id · @thread.Title</h4>
+        <p class="muted">@thread.Status</p>
+        @foreach (var entry in thread.Events)
+        {
+            <p><b>@entry.Time</b> <span class="office-message">@entry.Text</span></p>
+        }
+    }
+    else
+    {
+        <p class="muted">Chọn phiếu để xem hội thoại hoặc tạo yêu cầu mới cho Claude.</p>
+    }
+</div>

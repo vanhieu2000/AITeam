@@ -65,15 +65,27 @@ Theo brief R-009 mục 1. Brief không nêu mockup riêng. H7-03 đã có IOffic
 `hub.tests/AcceptanceH704OfficeTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln`: 0 lỗi, không warning mới sau hoàn thiện.
+- [x] `dotnet build AITeam.sln`: 0 lỗi, không warning mới sau hoàn thiện.
 - [ ] `dotnet test AITeam.sln`: pass toàn bộ, không sửa/Skip nghiệm thu; thêm test cho logic mới còn thiếu.
 - [ ] GET/partial Razor thật, rỗng/đầy đủ/tên dài/XSS, thẻ lấy dữ liệu thật từ dịch vụ; đủ các điều khiển đúng target.
-- [ ] CSRF thiếu token bị chặn; partial giữ ViewData/ModelState; chat gửi qua H7-03, lỗi/thành công đúng thông báo.
-- [ ] Hai cột theo markup/CSS; breakpoint 1000px đưa chat xuống dưới; polling không thay form và bản nháp.
-- [ ] Báo cáo có bảng từng tiêu chí → bằng chứng lệnh/kết quả thật; file đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
+- [x] CSRF thiếu token bị chặn; partial giữ ViewData/ModelState; chat gửi qua H7-03, lỗi/thành công đúng thông báo.
+- [x] Hai cột theo markup/CSS; breakpoint 1000px đưa chat xuống dưới; polling không thay form và bản nháp.
+- [x] Báo cáo có bảng từng tiêu chí → bằng chứng lệnh/kết quả thật; file đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
 
 ## Báo cáo của agent
-Antigravity điền sau triển khai.
+| Tiêu chí | Bằng chứng / kết quả thật |
+|---|---|
+| Build | `dotnet build AITeam.sln --no-restore -m:1`: thành công, 0 lỗi, 0 warning. |
+| Test toàn bộ | `dotnet test AITeam.sln --no-build -m:1 --blame-hang-timeout 2m`: chưa đạt; dừng bằng Ctrl+C khi quá 3 phút, Core chưa tổng kết; có lỗi Git CreateFileMapping/Access denied. Lượt không `-m:1` không có output, đã dừng. |
+| GET/partial, rỗng/đầy/tên dài/XSS, điều khiển | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceH704OfficeTests\|FullyQualifiedName~AcceptanceV504OfficeTests" --blame-hang-timeout 2m`: 38 pass, 0 fail, 0 skip. |
+| CSRF, ViewData/ModelState, gửi H7-03 | Lệnh lọc trên có 27 ca H7-04 pass; giữ nguyên dịch vụ, chữ ký, whitelist và test nghiệm thu. |
+| Hai cột, breakpoint, polling/bản nháp | Lệnh lọc trên pass; polling chỉ đổi desks/thread, form chat và ô góp ý ngoài vùng thay; chỉ xóa nội dung khi Send thành công qua HX-Trigger. Chưa kiểm trình duyệt theo phân công. |
+| Báo cáo | Đã ghi bảng này; không chạy git, hệ thống phụ trách commit/push; chưa có commit được kiểm. |
+| Hồi quy Hub bản cuối | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --blame-hang-timeout 2m`: 735 pass, 13 fail, 0 skip / 748. |
+File đổi: `Office.cshtml`, `Office.cshtml.cs`, `_OfficeControl.cshtml`, `_OfficeDesks.cshtml`, `_OfficeChat.cshtml`, `hub.css`: nối chat, chuyển điều khiển vào thẻ, bố cục; task này: báo cáo. Năm file C#/Razor đã kiểm BOM=True.
+Quyết định: dùng Events của phiếu để hiển thị luồng; dùng chung ô góp ý ngoài polling; không thêm file/test ngoài phạm vi, dùng nguyên 27 ca nghiệm thu.
+13 lỗi Hub: 9 lỗi cấu hình/Map do ReplaceFile bị Access denied; 1 test V505 đòi form Command trong `_OfficeControl`, 3 ca W102 đòi token trong partial này dù form đã chuyển vào thẻ theo H7-04; không sửa test hoặc thêm form giả để qua.
+Chưa xác minh: hội thoại phiếu cũ/dữ liệu thật, DOM bản nháp và giao diện trình duyệt (Claude nghiệm thu); test Core đầy đủ. Build Hub lần đầu có 2 warning xUnit2031 sẵn trong test nghiệm thu dòng 242/247; không sửa/tắt warning.
 
 ## Ghi chú chuẩn bị (Codex)
 - Đã đọc hợp đồng H7-03 thật; không sửa bộ đọc dữ liệu. Test dùng DTO dịch vụ giả, không nhận là bản sao fixture phiếu/projects.json thật. Không có fixture được chỉ định trong kế hoạch; chưa xác minh dữ liệu phiếu cũ qua giao diện.

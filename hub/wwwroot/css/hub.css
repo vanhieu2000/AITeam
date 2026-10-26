@@ -1383,3 +1383,25 @@ textarea.inp, textarea.form-control {
 .work-timeline li:first-child:before { background: var(--accent); }
 .work-timeline li:last-child { padding-bottom: 0; border-color: transparent; }
 .work-timeline time { color: var(--muted); font-variant-numeric: tabular-nums; }
+/* Văn phòng: thẻ tác nhân và chat giao việc. */
+.office-workspace {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 16px;
+  align-items: start;
+}
+.office-agents, .office-chat, .office-desk { min-width: 0; overflow-wrap: anywhere; }
+.office-desk-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; }
+.office-chat { padding: 14px; }
+.office-workspace form { display: grid; gap: 8px; margin: 0; min-width: 0; }
+.office-workspace input, .office-workspace select, .office-workspace textarea {
+  min-width: 0; max-width: 100%; box-sizing: border-box;
+}
+.office-workspace .row { flex-wrap: wrap; }
+.office-workspace .pill { white-space: normal; height: auto; min-height: 20px; }
+.office-workspace td, .office-workspace th { white-space: normal; overflow-wrap: anywhere; }
+.office-workspace table { table-layout: fixed; }
+.office-message { white-space: pre-wrap; }
+@media (max-width:1000px) {
+  .office-workspace { grid-template-columns:1fr; }
+}

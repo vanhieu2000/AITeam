@@ -19,13 +19,43 @@
     </div>
 }
 
-<div hx-get="?handler=Desks" hx-trigger="every 10s" hx-swap="outerHTML">
-    <partial name="_OfficeDesks" model="Model" />
+<div class="office-workspace">
+    <section class="office-agents" hx-get="?handler=Desks" hx-trigger="every 10s" hx-target="#office-desks" hx-swap="outerHTML">
+        <partial name="_OfficeDesks" model="Model" />
+        @if (Model.ControlsEnabled)
+        {
+            <label for="office-feedback">Góp ý khi giao lại</label>
+            <textarea id="office-feedback" class="inp" name="feedback" rows="3" maxlength="2000" placeholder="Nhập góp ý trước khi bấm Giao lại trên thẻ"></textarea>
+            <partial name="_OfficeControl" model="Model" />
+        }
+    </section>
+    <section class="office-chat panel">
+        <h3>Chat giao việc</h3>
+        <partial name="_OfficeChat" model="Model" />
+        <form method="post" asp-page-handler="Chat" hx-post="/?handler=Chat" hx-target="#office-chat-thread" hx-swap="outerHTML"
+              hx-on::after-request="if(event.detail.xhr.getResponseHeader('HX-Trigger') === 'office-chat-sent') this.elements.text.value = ''">
+            <label for="office-request-select">Phiếu</label>
+            <select id="office-request-select" class="inp" name="requestId" hx-get="/?handler=Chat" hx-trigger="change" hx-target="#office-chat-thread" hx-swap="outerHTML">
+                <option value="">Tạo yêu cầu mới</option>
+                @if (!string.IsNullOrEmpty(Model.RequestId) && Model.SelectedThread == null)
+                {
+                    <option value="@Model.RequestId" selected>Phiếu không hợp lệ</option>
+                }
+                @foreach (var thread in Model.Threads)
+                {
+                    <option value="@thread.Id" selected="@(thread.Id == Model.RequestId)">@thread.Id · @thread.Title</option>
+                }
+            </select>
+            <label for="office-project">Dự án</label>
+            <select id="office-project" class="inp" name="project">
+                @foreach (var project in Model.ChatProjects)
+                {
+                    <option value="@project.Name">@project.Name</option>
+                }
+            </select>
+            <label for="office-text">Nội dung gửi Claude</label>
+            <textarea id="office-text" class="inp" name="text" rows="5" maxlength="4000"></textarea>
+            <button type="submit" class="btn pri" disabled="@(Model.ChatProjects.Count == 0)">Gửi yêu cầu</button>
+        </form>
+    </section>
 </div>
-
-@if (Model.ControlsEnabled)
-{
-    <div style="margin-top:16px">
-        <partial name="_OfficeControl" model="Model" />
-    </div>
-}
