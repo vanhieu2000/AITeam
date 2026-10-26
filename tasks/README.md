@@ -61,7 +61,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-07 Trang Việc và thanh bước](W1-07-trang-viec-va-thanh-buoc.md) | B | `agent-b/W1-07-trang-viec-va-thanh-buoc` | ✅ Đã merge (vòng 4) |
 | [W1-01 Helper nguồn thật và sandbox PowerShell](W1-01-helper-nguon-that-va-sandbox-powershell.md) | A | `agent-a/W1-01-helper-nguon-that-va-sandbox-powershell` | ✅ Đã merge (vòng 2) |
 | [V8-09 · Sửa đọc mã thoát `agy models` + Codex quá tải tự thử lại](V8-09-agy-models-va-codex-qua-tai.md) | A | `agent-a/V8-09-agy-models-va-codex-qua-tai` | ✅ Đã merge (vòng 2) |
-| [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | 🔴 Cần sửa · cổng KT KHÔNG ĐẠT |
+| [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | ⏸ Tạm dừng · lượt 6, cổng KT KHÔNG ĐẠT (24 lỗi Hub), quá 3 lượt |
 | [V8-10 · `team.ps1 hub -Restart` + giới hạn 45 phút cho `deputy`](V8-10-hub-restart-va-deputy-timeout.md) | B | `agent-a/V8-10-hub-restart-va-deputy-timeout` | ✅ Đã merge (vòng 1) |
 | [H7-02 Điều phối plan/prep/QC theo Map](H7-02-dieu-phoi-plan-prep-qc-theo-map.md) | B | `agent-b/H7-02-dieu-phoi-plan-prep-qc-theo-map` | ⏸ Tạm dừng · quá 3 lượt; còn lỗi harness S1-04 |
 | [H7-04 Thẻ tác nhân và chat giao việc](H7-04-the-tac-nhan-va-chat-giao-viec.md) | B | `agent-b/H7-04-the-tac-nhan-va-chat-giao-viec` | ⏸ Tạm dừng · warning test bất biến và hồi quy V5-05/W1-02 |

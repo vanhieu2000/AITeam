@@ -20,6 +20,7 @@
 Mỗi file task phải có dòng `- **Yêu cầu:** R-011` để `team.ps1 request-report` gom số liệu.
 
 ## 3. Nhật ký (ghi ngay khi xảy ra, giờ:phút)
+- 16:46 26/10/2026: Codex quản lý phụ chuyển sang W1-03 theo kế hoạch đã duyệt, W1-01 đã merge. Chạy nền team.ps1 prep -Request R-011 -Task W1-03, PID 39704; log W1-03.deputy-20261026-164647.out.txt/.err.txt. Vòng sau kiểm tra kết quả, không giao trùng; W1-04 chờ W1-03.
 | Giờ | Sự kiện | Ghi chú |
 |---|---|---|
 | | Nhận yêu cầu | |
