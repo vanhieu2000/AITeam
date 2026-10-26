@@ -11,11 +11,7 @@ public sealed record WorkProgressLog(string Name, string Content);
 
 /// <summary>Task nối bằng metadata Yêu cầu; Agent từ metadata Agent; Progress theo W1-05.</summary>
 public sealed record WorkTaskProgress(string Id, string Title, string Agent, WorkProgress Progress,
-    IReadOnlyList<WorkProgressLog> Logs)
-{
-    /// <summary>Nhật ký đã lọc theo task từ dữ liệu W1-05, không phụ thuộc log ngoài.</summary>
-    public IReadOnlyList<WorkProgressEvent> RecentEvents => Progress.RecentEvents;
-}
+    IReadOnlyList<WorkProgressLog> Logs);
 
 /// <summary>Yêu cầu luôn hiện kể cả chưa có task. StepCounts đủ chín khóa, đếm task theo CurrentStep.
 /// Progress lấy task chưa merge đầu tiên theo Id, hoặc task đầu nếu tất cả merge;

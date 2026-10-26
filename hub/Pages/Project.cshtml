@@ -199,7 +199,7 @@ else
                             <section class="panel work-journal" aria-label="Nhật ký gần nhất">
                                 <h3 class="sectiontitle">Nhật ký gần nhất</h3>
                                 @{
-                                    var recentEvents = Model.SelectedTask?.RecentEvents ?? Model.SelectedProgress?.RecentEvents ?? [];
+                                    var recentEvents = Model.SelectedProgress?.RecentEvents ?? [];
                                 }
                                 @if (recentEvents.Count == 0)
                                 {

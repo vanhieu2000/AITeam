@@ -123,20 +123,20 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 - [x] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng lượt sửa 26/10 |
+| Tiêu chí | Bằng chứng lượt sửa phạm vi 26/10 |
 |---|---|
-| Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers`: đạt, 0 lỗi/0 warning, 7,25 giây. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 660 pass/9 fail/0 skip; Core chưa tổng kết, có lỗi Git Win32 error 5 và PowerShell timeout; dừng sau 178 giây, chưa đạt. |
-| Chọn đúng dự án/yêu cầu/task, mã giả 404 | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: 16 pass/0 fail/0 skip; các ca chọn/404 đạt. |
-| Chín bước, giờ/người/lỗi, nhật ký | Cùng lệnh nghiệm thu: cả Selection_uses_requested_project_and_task và Latest_failure_from_real_legacy_journal_is_visible đạt; RecentEvents lọc đúng task, tối đa 5 dòng, mọi lượt, mới nhất trước, giữ kết quả gốc. |
-| Rỗng/thiếu dữ liệu/lỗi nguồn | Các ca nghiệm thu tương ứng đạt trong 16 test; giữ thông báo an toàn. |
-| XSS/chỉ GET/link duyệt | Ca encode/chỉ đọc/link Approvals đạt trong 16 test; nhật ký dùng biểu thức Razor encode, không tạo link từ nội dung. |
-| CSS/chuỗi dài/thanh bước | Ca CSS và tiêu đề dài đạt; giữ class current + overflow-wrap, thêm timeline theo mockup. |
-| Kế hoạch/lịch sử/menu dự án | Giữ nguyên PageModel, layout, hai tab cũ; test trang mặc định và link duyệt đạt. |
-| Toàn bộ Hub | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: 660 pass/9 fail/0 skip; 7 lỗi Access denied khi thay file cấu hình, 2 ca Map thiếu thông báo lưu; ngoài phạm vi. |
-| File đổi/lý do | WorkProgressService.cs: expose RecentEvents; WorkProgressParser.cs: model RecentEvents, giữ sự kiện từ Calculate và đọc giờ workflow cũ có dấu cách theo fixture; Project.cshtml + hub.css: khối nhật ký; task: tiêu chí/báo cáo. |
-| Quyết định/giới hạn | Giữ chữ ký constructor và cách tính bước/lượt; truyền nhật ký qua Progress để snapshot gọi parser trực tiếp cũng giữ dữ liệu, không hardcode. BOM 5 file .cs/.cshtml kiểm=True; không sửa test/fixture, không chạy app/chụp ảnh. |
-| Bàn giao/chưa xác minh | Không chạy lệnh git theo chỉ thị; hệ thống tự commit/push, chưa có commit được kiểm. Toàn solution chưa xanh; giao diện thật và ca riêng giới hạn 5/encode nhật ký chưa nghiệm thu bổ sung. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1 --disable-build-servers`: exit 0, 0 lỗi/0 warning. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: exit 1; Hub 660 pass/9 fail/0 skip (Access denied khi lưu cấu hình, hai ca Map); Core chưa tổng kết, ít nhất 6 fail (Git Win32 error 5, S106); chủ động dừng trước 3 phút theo giới hạn. Chưa đạt. |
+| Nghiệm thu [A] | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: exit 0, 16 pass/0 fail/0 skip; không sửa test/fixture. |
+| Chọn dự án/yêu cầu/task, mã giả 404 | [A]: các ca Selection/Forged/Unknown đạt, nguồn được gọi đúng một lần. |
+| Mặc định Việc/chín bước/giờ/người/lỗi | [A]: Default/Selection/Latest_failure đạt, gồm giờ 17:03 và 17:32 từ fixture thật. |
+| Rỗng/thiếu dữ liệu/lỗi nguồn an toàn | [A]: Empty/Request_without_tasks/Source_error đạt. |
+| XSS/chỉ GET/liên kết duyệt | [A]: Long_untrusted_title và Default đạt; giữ link /Approvals. |
+| CSS/chuỗi dài/xuống hàng 1000px | [A]: Work_css và Long_untrusted_title đạt; không chạy app/chụp ảnh theo phân công. |
+| Kế hoạch/lịch sử/menu chung | Giữ nguyên các tab, PageModel và layout trong lượt này; [A] đạt, chưa nghiệm thu giao diện thật. |
+| File đổi/hoàn tác | WorkProgressService.cs: bỏ property chuyển tiếp RecentEvents, trả record về dạng ban đầu; Project.cshtml: đọc SelectedProgress.RecentEvents trực tiếp; task: báo cáo. BOM 5 file .cs/.cshtml kiểm bằng byte đều True. |
+| Ngoài phạm vi cần Claude quyết định | Giữ WorkProgressParser.cs vì fixture dùng yyyy-MM-dd HH:mm:ss zzz, test bất biến gọi parser trực tiếp và đòi 17:03/17:32; RecentEvents cung cấp nhật ký của mockup qua snapshot, tránh đọc/parse file trong PageModel/Razor. Hoàn tác sẽ mất dữ liệu bắt buộc; không mở rộng thêm trong lượt này. |
+| Giới hạn/bàn giao | Chưa xác minh toàn solution xanh và commit; không gọi git theo chỉ thị Codex, hệ thống tự commit/push. Ngoại lệ phạm vi parser chờ Claude review, không tự coi đã được duyệt. |
 ## Ghi nhận chuẩn bị (Codex)
 - Khung OnGet dùng NotImplementedException; chưa triển khai thân hàm hoặc markup/CSS.
 - Test nghiệm thu gọi HTTP/Razor thật qua HubTestHost; nguồn và cấu hình giả không ghi dữ liệu.
