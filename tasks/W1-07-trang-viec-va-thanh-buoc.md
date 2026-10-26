@@ -116,27 +116,26 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 - [x] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới.
 - [ ] `dotnet test AITeam.sln`: mọi test pass, test nghiệm thu giữ nguyên.
 - [x] Chọn đúng dự án/yêu cầu/task, không trộn dữ liệu, mã giả trả 404.
-- [x] Trang mặc định là Việc; đầy đủ chín bước, hiện trạng thái/giờ/người/lỗi đúng snapshot.
+- [ ] Trang mặc định là Việc; đầy đủ chín bước, hiện trạng thái/giờ/người/lỗi đúng snapshot.
 - [x] Rỗng, thiếu task/giờ/nhật ký và lỗi nguồn có thông báo quy định; không lộ dữ liệu riêng tư.
 - [x] Razor encode XSS, trang chỉ GET, liên kết duyệt giữ route cũ.
 - [x] Markup/CSS xuống dòng cho chuỗi dài và thanh bước ở 1000px theo đặc tả.
 - [x] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng |
+| Tiêu chí | Bằng chứng kiểm lại 26/10 |
 |---|---|
-| Build | `dotnet build AITeam.sln -m:1 --disable-build-servers --no-restore`: đạt, 0 lỗi/0 warning. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: chưa đạt; Hub 660 pass/11 fail/0 skip; Core đã thấy 2 fail do Git Win32 error 5, chưa có tổng kết; dừng lệnh khi chạm khoảng 3 phút theo chỉ dẫn. |
-| Chọn dự án/yêu cầu/task, mã giả 404 | Lệnh test riêng bên dưới: các ca chọn/404 nghiệm thu pass. |
-| Chín bước, trạng thái/giờ/người/lỗi | Test riêng: QC mới 2/2 pass (Current cùng Done/Failed, giữ đúng snapshot); nghiệm thu 14 pass/2 fail. |
-| Rỗng/thiếu dữ liệu/lỗi nguồn | Test riêng: các ca nghiệm thu tương ứng pass; không bịa dữ liệu thay nguồn thiếu. |
-| XSS, chỉ GET, route duyệt | Test riêng: các ca nghiệm thu tương ứng pass; lỗi snapshot QC được encode. |
-| CSS/tiêu đề 140 ký tự liền, kế hoạch/lịch sử | Test QC 2/2 và test CSS nghiệm thu pass; giữ nguyên tab kế hoạch/lịch sử, không thêm danh sách/bảng việc. |
-| Lệnh test riêng | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~W107QcWorkPageTests|FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: 16 pass/2 fail/0 skip. |
-| File đổi/lý do | `Project.cshtml`: bỏ isS104/hasMergedOther và giờ giả, giữ current; `hub.css`: co/xuống dòng tiêu đề; thêm `W107QcWorkPageTests.cs` theo yêu cầu QC; task: báo cáo. BOM Razor/test=True, CSS giữ không BOM. |
-| Quyết định/mâu thuẫn | **Mâu thuẫn cần quản lý quyết**: nghiệm thu :125 đòi 17:32, :228 đòi CẦN SỬA (sau đó 17:03) mà Steps của Snapshot không trả; giữ test đỏ, không sửa nghiệm thu/fixture/service. |
-| Chưa xác minh | Không chạy app/chụp ảnh; không chạy lệnh git, hệ thống tự commit/push; chưa có commit được kiểm. |
-
+| Build | `dotnet build AITeam.sln -m:1 --disable-build-servers`: đạt, 0 lỗi/0 warning, 28,30 giây. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 658 pass/11 fail/0 skip; Core thấy 2 fail Git Win32 error 5, chưa có tổng kết; dừng lệnh sau 3 phút đúng giới hạn. |
+| Chọn dự án/yêu cầu/task, mã giả 404 | Test riêng bên dưới: các ca chọn/404 đạt phần chọn đúng; ca S1-04 lỗi assertion giờ 17:32. |
+| Chín bước, trạng thái/giờ/người/lỗi | Chưa đạt: nghiệm thu :125 thiếu 17:32; :228 thiếu CẦN SỬA; nguồn snapshot không có dữ liệu này. |
+| Rỗng/thiếu dữ liệu/lỗi nguồn | Các ca nghiệm thu tương ứng pass trong lệnh riêng. |
+| XSS/chỉ GET/link duyệt | Các ca nghiệm thu tương ứng pass trong lệnh riêng; không sửa handler. |
+| CSS/chuỗi dài/kế hoạch/lịch sử | Ca CSS và chuỗi dài pass; không đổi tab kế hoạch/lịch sử ở lượt này, chưa chạy app/chụp ảnh theo task. |
+| Lệnh test riêng | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: 14 pass/2 fail/0 skip. |
+| File đổi/lý do | Gỡ `hub.tests/W107QcWorkPageTests.cs` do lượt trước thêm ngoài phạm vi theo yêu cầu quản lý; task: sửa báo cáo/tiêu chí. Không sửa nghiệm thu/fixture/sản phẩm; BOM ba file .cs/.cshtml trong phạm vi=True. |
+| Điểm chặn đã xác minh | `WorkProgressParser.cs:42,261` không nhận giờ workflow có dấu cách; :149,152 chỉ lấy lượt lớn nhất nên bỏ Qc lượt 1 khi có Verify lượt 2. Test :29 gọi trực tiếp parser, Logs rỗng. |
+| Quyết định/chưa xác minh | Giữ đúng Progress snapshot, không bịa giờ/lỗi trong Razor; cần quản lý xử lý phụ thuộc W1-06 hoặc hợp đồng nghiệm thu (task cấm sửa cả hai). Không chạy git; hệ thống tự commit/push, chưa có commit được kiểm. |
 ## Ghi nhận chuẩn bị (Codex)
 - Khung OnGet dùng NotImplementedException; chưa triển khai thân hàm hoặc markup/CSS.
 - Test nghiệm thu gọi HTTP/Razor thật qua HubTestHost; nguồn và cấu hình giả không ghi dữ liệu.
