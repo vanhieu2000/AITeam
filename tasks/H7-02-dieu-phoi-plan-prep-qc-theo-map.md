@@ -75,19 +75,19 @@ Theo brief R-009 mục 6; H7-01 đã có trong WorkflowRolesService. Hiện plan
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH702WorkflowDispatchTests|FullyQualifiedName~AcceptanceS104SkillPromptsTests.ProviderGiaNhanPromptThat_MoiNhanh" --blame-hang-timeout 2m`: 71 pass/2 fail/0 skip, 43 giây.
-| Tiêu chí | Bằng chứng / kết quả thật lượt 26/10 |
+T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH702WorkflowDispatchTests|FullyQualifiedName~AcceptanceS104SkillPromptsTests.ProviderGiaNhanPromptThat_MoiNhanh" --blame-hang-timeout 2m`: 71 pass/2 fail/0 skip (2m19s).
+| Tiêu chí | Bằng chứng thật lượt sửa cổng kiểm tra 26/10 |
 |---|---|
-| Nối plan/prep/AutoReview/QC/CLI | T: H7-02 68/68 pass; gỡ 2 xung đột merge tại AutoReview/prep, giữ điều phối Map. |
-| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T: H7-02 68/68 pass; không sửa test nghiệm thu H7-02/fixture. |
-| Provider/chỉ đọc/khóa/tham số | T: H7-02 68/68 pass, giữ nguyên hợp đồng. |
+| Nối plan/prep/AutoReview/QC/CLI | T: H7-02 68/68 pass; không đổi mã sản phẩm lượt này. |
+| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T: H7-02 68/68 pass; giữ nguyên test H7-02 và fixture. |
+| Provider/chỉ đọc/khóa/tham số | T: H7-02 68/68 pass. |
 | QC chặn tự duyệt/cấu hình/lỗi, không fallback | T: H7-02 68/68 pass. |
-| Build/BOM/parser | `dotnet build AITeam.sln --no-restore -m:1 -nr:false`: 0 lỗi/0 warning; 5 file mã đã kiểm có BOM; parser `team.ps1`: 0 lỗi. Lệnh build mặc định ban đầu mã 1, không có chẩn đoán. |
-| Sửa harness được quản lý cho phép | Chỉ thêm Resolve-WorkflowAssignment, Invoke-WorkflowRoleRun vào `$names`; T: S1-04 3 pass/2 fail, stub đọc nhầm file `workflow-role`. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, dừng gần 3 phút; Hub 712 pass/9 fail/0 skip; Core chưa tổng kết, có lỗi Git CreateFileMapping Win32 error 5 và 2 lỗi stub S1-04. |
-| Báo cáo/file đổi | `team.ps1`: gỡ xung đột; `core.tests/AcceptanceS104SkillPromptsTests.cs`: thêm tên hàm; task này: báo cáo. |
-Quyết định/điểm chặn: không sửa stub S1-04 ngoài `$names` theo giới hạn quản lý; cần Claude cập nhật stub trả JSON cho `workflow-role`. Không có `logs/` và Review còn trống nên không có feedback/log mới để đọc.
-Chưa xác minh: toàn solution pass, provider/Map thật; không chạy app/chụp ảnh/git. Hệ thống tự commit/push, chưa có commit được kiểm.
+| Build/BOM/parser | `dotnet build AITeam.sln`: mã 1, 0 lỗi/0 warning, không chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore -m:1 -nr:false`: đạt 0 lỗi/0 warning (34,89s); 5 file mã có BOM, parser team.ps1 0 lỗi. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, dừng ở ngưỡng 3 phút; Hub 712 pass/9 fail/0 skip (File.Replace Access denied và lưu Map lỗi); Core chưa tổng kết, có Git CreateFileMapping Win32 error 5. |
+| Hoàn tác ngoài phạm vi/file đổi | `core.tests/AcceptanceS104SkillPromptsTests.cs`: chỉ hoàn tác hai tên hàm đã thêm vào `$names`, giữ BOM; task này: cập nhật báo cáo. Không sửa assertion/stub/test nghiệm thu. |
+| Điểm chặn S1-04 | T: 3 pass/2 fail; harness gốc không nạp Resolve-WorkflowAssignment; bản thêm tên hàm trước đó lại thiếu stub workflow-role trả JSON. Claude cần cập nhật harness/stub và khóa giả; không thêm nhánh nhận diện test trong sản phẩm. |
+Quyết định: tuân thủ lệnh hoàn tác test ngoài phạm vi; không sửa Hub/harness để né kiểm tra. Theo AGENTS.md, test sai thì báo cáo và dừng; Review (Claude) hiện trống.
+Chưa xác minh: toàn solution pass, Map/provider thật, commit được kiểm; không chạy app/chụp ảnh/lệnh git. Hệ thống tự commit/push.
 ## Review (Claude)
 <!-- Claude điền. -->
 
