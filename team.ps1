@@ -1021,7 +1021,97 @@ function Invoke-Models {
 # /// Cấm mã chạy, handler on*, URL ngoài, CSS url/@import, iframe/object/embed/form,
 # /// base/meta refresh, SVG/MathML; lỗi: "Mockup không hợp lệ.". Không ghi/chạy file.</summary>
 function Read-PlanMockup([string]$PlanText) {
-    throw [System.NotImplementedException]::new() # TODO(agent): điền phần thân
+    $invalid = 'Mockup không hợp lệ.'
+    $unknown = 'Chưa xác định loại task; cần bổ sung Giao diện: Có/Không.'
+    $plain = New-Object 'Collections.Generic.List[string]'
+    $blocks = New-Object 'Collections.Generic.List[object]'
+    $content = New-Object 'Collections.Generic.List[string]'
+    $fence = ''; $section = ''; $isHtml = $false; $mockups = 0
+    foreach ($line in ($PlanText -split '\r\n|\n|\r')) {
+        if ($fence) {
+            if ($line -match ('^ {0,3}' + [regex]::Escape($fence[0]) + '{' + $fence.Length + ',}\s*$')) {
+                if ($isHtml) { $blocks.Add(@{ Section = $section; Lines = @($content.ToArray()) }) }
+                $fence = ''; $content.Clear()
+            } else { $content.Add($line) }
+            continue
+        }
+        if ($line -match '^ {0,3}(`{3,}|~{3,})([^\r\n]*)$') {
+            $fence = $Matches[1]; $isHtml = $Matches[2].Trim() -ieq 'html'
+            continue
+        }
+        $plain.Add($line)
+        if ($line -match '^##[ \t]+(.+?)\s*$') {
+            $section = $Matches[1]
+            if ($section -ceq 'Mockup') { $mockups++ }
+        }
+    }
+    if ($fence) { throw $invalid }
+    $text = [regex]::Replace(($plain -join "`n"), '(?s)<!--.*?(?:-->|\z)', '')
+    $tasks = [regex]::Matches($text, '(?ms)^###[ \t]+[A-Za-z0-9]+-\d+[a-z]?[ \t]*[·:-][^\n]*\n(?<body>.*?)(?=^#{2,3}[ \t]|\z)')
+    if ($tasks.Count -eq 0) { throw $unknown }
+    $hasUi = $false
+    foreach ($taskSection in $tasks) {
+        $types = [regex]::Matches($taskSection.Groups['body'].Value, '(?m)^-[ \t]+\*\*Giao diện:\*\*[ \t]*(?<type>[^\n]*)$')
+        if ($types.Count -ne 1 -or $types[0].Groups['type'].Value.Trim() -cnotmatch '^(Có|Không)$') { throw $unknown }
+        if ($types[0].Groups['type'].Value.Trim() -ceq 'Có') { $hasUi = $true }
+    }
+    # Có Mockup thì vẫn kiểm UI để không lách guard bằng khai báo Không.
+    if (-not $hasUi -and $mockups -eq 0) { return [pscustomobject]@{ HasUi = $false; Html = '' } }
+    if ($mockups -ne 1 -or $blocks.Count -ne 1 -or $blocks[0].Section -cne 'Mockup') { throw $invalid }
+    $lines = $blocks[0].Lines
+    if ($lines.Count -lt 1 -or $lines.Count -gt 120) { throw $invalid }
+    $html = $lines -join "`r`n"
+    if ([string]::IsNullOrWhiteSpace($html)) { throw $invalid }
+    # Whitelist cú pháp nhỏ, không làm sạch rồi xuất lại nội dung nguy hiểm.
+    $checkCss = {
+        param([string]$css)
+        $css = [Net.WebUtility]::HtmlDecode($css)
+        $css = [regex]::Replace($css, '(?s)/\*.*?\*/', '')
+        if ($css -match '[\\@\x00-\x08\x0b\x0c\x0e-\x1f<>]' -or $css -match '(?i)(url|expression)\s*\(|(?:javascript|data|https?|file)\s*:|//') { throw $invalid }
+    }
+    # Comment sai cú pháp có thể kết thúc sớm trong trình duyệt và lộ mã chủ động.
+    foreach ($comment in [regex]::Matches($html, '(?s)<!--(?<body>.*?)-->')) {
+        if ($comment.Groups['body'].Value -match '[<>]|--') { throw $invalid }
+    }
+    $scan = [regex]::Replace($html, '(?s)<!--.*?-->', '')
+    foreach ($style in [regex]::Matches($scan, '(?is)<style\s*>(?<css>.*?)</style\s*>')) { & $checkCss $style.Groups['css'].Value }
+    $scan = [regex]::Replace($scan, '(?is)<style\s*>.*?</style\s*>', '<style></style>')
+    $tagPattern = '(?is)<!doctype\s+html\s*>|</?[a-z][a-z0-9]*(?:\s+[^<>]*?)?\s*/?>'
+    if ([regex]::Replace($scan, $tagPattern, '') -match '[<>]') { throw $invalid }
+    foreach ($token in [regex]::Matches($scan, $tagPattern)) {
+        if ($token.Value -match '(?i)^<!doctype\s+html\s*>$') { continue }
+        $tag = [regex]::Match($token.Value, '(?is)^<(?<close>/)?(?<name>[a-z][a-z0-9]*)(?<attrs>.*?)\s*/?>$')
+        $name = $tag.Groups['name'].Value.ToLowerInvariant()
+        if ($name -notmatch '^(html|head|body|title|meta|link|style|main|nav|header|footer|section|article|aside|div|span|p|a|b|strong|em|i|small|h[1-6]|ol|ul|li|br|hr|table|thead|tbody|tfoot|tr|th|td|caption|button|label|pre|code|dl|dt|dd)$') { throw $invalid }
+        $attrs = $tag.Groups['attrs'].Value
+        if ($tag.Groups['close'].Success) {
+            if ($attrs.Trim()) { throw $invalid }
+            continue
+        }
+        $attrPattern = '\s+(?<name>[a-zA-Z][a-zA-Z0-9-]*)\s*=\s*(?:"(?<value>[^"<>]*)"|''(?<value>[^''<>]*)'')'
+        if ([regex]::Replace($attrs, $attrPattern, '').Trim()) { throw $invalid }
+        $seen = @{}
+        foreach ($attr in [regex]::Matches($attrs, $attrPattern)) {
+            $key = $attr.Groups['name'].Value.ToLowerInvariant()
+            $value = [Net.WebUtility]::HtmlDecode($attr.Groups['value'].Value)
+            if ($seen.ContainsKey($key)) { throw $invalid }; $seen[$key] = $value
+            if ($key -notmatch '^(class|id|title|lang|style|role|aria-(current|label|hidden|selected)|charset|rel|href|type|colspan|rowspan)$') { throw $invalid }
+            if ($value -match '[\x00-\x1f\x7f]' -or $value -match '(?i)(javascript|data)\s*:') { throw $invalid }
+            switch ($key) {
+                'style' { & $checkCss $value }
+                'href' {
+                    if (-not (($name -eq 'a' -and $value -ceq '#') -or ($name -eq 'link' -and $value -ceq '../../hub/wwwroot/css/hub.css'))) { throw $invalid }
+                    if ($name -eq 'link' -and $attr.Groups['value'].Value -cne $value) { throw $invalid }
+                }
+                'rel' { if ($name -ne 'link' -or $value -cne 'stylesheet') { throw $invalid } }
+                'charset' { if ($name -ne 'meta' -or $value -ine 'utf-8') { throw $invalid } }
+                'type' { if ($name -ne 'button' -or $value -cne 'button') { throw $invalid } }
+            }
+        }
+        if ($name -eq 'link' -and ($seen['rel'] -cne 'stylesheet' -or $seen['href'] -cne '../../hub/wwwroot/css/hub.css')) { throw $invalid }
+        if ($name -eq 'meta' -and ($seen.Count -ne 1 -or $seen['charset'] -ine 'utf-8')) { throw $invalid }
+    }
+    return [pscustomobject]@{ HasUi = $true; Html = $html }
 }
 
 # /// <summary>Kiểm Request ^R-\d{3}$; sai: "Đường dẫn mockup không hợp lệ.".
@@ -1031,7 +1121,34 @@ function Read-PlanMockup([string]$PlanText) {
 # /// ở file và mọi cha trước ghi; lỗi đường dẫn như trên. Trả { Path; Fingerprint }
 # /// với Fingerprint SHA-256 hex thường của toàn bộ byte file. Không tự ghi duyệt.</summary>
 function Write-PlanMockup([string]$RequestId, [string]$PlanText) {
-    throw [System.NotImplementedException]::new() # TODO(agent): điền phần thân
+    $pathError = 'Đường dẫn mockup không hợp lệ.'
+    if ($RequestId -cnotmatch '^R-[0-9]{3}$') { throw $pathError }
+    $mockup = Read-PlanMockup $PlanText
+    if (-not $mockup.HasUi) { return $null }
+    try {
+        $rootPath = [IO.Path]::GetFullPath($Root)
+        $path = [IO.Path]::GetFullPath((Join-Path $rootPath "docs/design/$RequestId-mockup.html"))
+        $cssPath = [IO.Path]::GetFullPath((Join-Path $rootPath 'hub/wwwroot/css/hub.css'))
+        if (-not $path.StartsWith($rootPath.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw $pathError }
+        foreach ($candidate in @($path, $cssPath)) {
+            for ($current = $candidate; $current; $current = [IO.Path]::GetDirectoryName($current)) {
+                try { $attributes = [IO.File]::GetAttributes($current) }
+                catch [IO.FileNotFoundException] { continue }
+                catch [IO.DirectoryNotFoundException] { continue }
+                if (($attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw $pathError }
+            }
+        }
+        $uri = [Net.WebUtility]::HtmlEncode(([uri]$cssPath).AbsoluteUri)
+        $html = [regex]::Replace($mockup.Html, '(?i)(\bhref\s*=\s*["''])\.\./\.\./hub/wwwroot/css/hub\.css(["''])', ('${1}' + $uri.Replace('$', '$$') + '${2}'))
+        $encoding = New-Object Text.UTF8Encoding $true
+        [byte[]]$bytes = $encoding.GetPreamble() + $encoding.GetBytes($html + "`r`n")
+        $null = [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))
+        [IO.File]::WriteAllBytes($path, $bytes)
+    } catch { throw $pathError }
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { $hash = [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+    return [pscustomobject]@{ Path = $path; Fingerprint = $hash }
 }
 
 # /// <summary>Chỉ đọc, không fetch/worktree/provider/ghi file. Loại comment HTML và
@@ -1043,7 +1160,63 @@ function Write-PlanMockup([string]$RequestId, [string]$PlanText) {
 # /// "Mockup chưa được duyệt hoặc đã thay đổi.". Không tin dấu duyệt trong comment/code.
 # /// Lõi mới cần khai báo Không; chưa rõ báo lỗi loại task như Read-PlanMockup.</summary>
 function Assert-PrepPlanApproval([string]$RequestId, [string]$PlanText) {
-    throw [System.NotImplementedException]::new() # TODO(agent): điền phần thân
+    # Bỏ ví dụ trong comment và hàng rào Markdown trước khi tìm quyết định.
+    $clean = [regex]::Replace($PlanText, '(?s)<!--.*?(?:-->|\z)', '')
+    $plain = New-Object 'Collections.Generic.List[string]'
+    $fence = ''
+    foreach ($line in ($clean -split '\r\n|\n|\r')) {
+        if ($fence) {
+            if ($line -match ('^ {0,3}' + [regex]::Escape($fence[0]) + '{' + $fence.Length + ',}\s*$')) { $fence = '' }
+            continue
+        }
+        if ($line -match '^ {0,3}(`{3,}|~{3,})') { $fence = $Matches[1]; continue }
+        $plain.Add($line)
+    }
+    $clean = $plain -join "`n"
+    $decisions = [regex]::Matches($clean, '(?ms)^##[ \t]+Quyết định của quản lý(?:[ \t]+[^\n]*)?\n(?<body>.*?)(?=^##[ \t]|\z)')
+    if ($decisions.Count -ne 1 -or $decisions[0].Groups['body'].Value -cnotmatch '(?m)^- ĐÃ DUYỆT\.[^\n]*$') { throw 'Kế hoạch chưa được duyệt.' }
+    $decision = $decisions[0].Groups['body'].Value
+    $hasType = $clean -match '(?m)^-[ \t]+\*\*Giao diện:\*\*'
+    $hasMockup = $clean -match '(?m)^##[ \t]+Mockup[ \t]*$'
+    if (-not $hasType -and -not $hasMockup) { return }
+    $currentPlan = $PlanText
+    if (-not $hasType) {
+        # Plan UI cũ vẫn kiểm nội dung/hash, chỉ bổ sung phân loại trong bộ nhớ.
+        $currentPlan = [regex]::Replace($PlanText, '(?m)^(### [^\r\n]+)\r?$', ('$1' + "`r`n- **Giao diện:** Có"))
+    }
+    try { $mockup = Read-PlanMockup $currentPlan }
+    catch {
+        if ($_.Exception.Message -eq 'Chưa xác định loại task; cần bổ sung Giao diện: Có/Không.') { throw }
+        throw 'Mockup chưa được duyệt hoặc đã thay đổi.'
+    }
+    if (-not $mockup.HasUi) { return }
+    try {
+        if ($RequestId -cnotmatch '^R-[0-9]{3}$') { throw 'Sai mã yêu cầu.' }
+        $hashes = [regex]::Matches($decision, '(?m)^- Mockup SHA256: ([a-fA-F0-9]{64})[ \t]*$')
+        if ($hashes.Count -ne 1) { throw 'Thiếu hash.' }
+        $rootPath = [IO.Path]::GetFullPath($Root)
+        $path = [IO.Path]::GetFullPath((Join-Path $rootPath "docs/design/$RequestId-mockup.html"))
+        $cssPath = [IO.Path]::GetFullPath((Join-Path $rootPath 'hub/wwwroot/css/hub.css'))
+        if (-not $path.StartsWith($rootPath.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Sai đường dẫn.' }
+        foreach ($candidate in @($path, $cssPath)) {
+            for ($current = $candidate; $current; $current = [IO.Path]::GetDirectoryName($current)) {
+                try { $attributes = [IO.File]::GetAttributes($current) }
+                catch [IO.FileNotFoundException] { continue }
+                catch [IO.DirectoryNotFoundException] { continue }
+                if (($attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Reparse point.' }
+            }
+        }
+        $uri = [Net.WebUtility]::HtmlEncode(([uri]$cssPath).AbsoluteUri)
+        $html = [regex]::Replace($mockup.Html, '(?i)(\bhref\s*=\s*["''])\.\./\.\./hub/wwwroot/css/hub\.css(["''])', ('${1}' + $uri.Replace('$', '$$') + '${2}'))
+        $encoding = New-Object Text.UTF8Encoding $true
+        [byte[]]$expected = $encoding.GetPreamble() + $encoding.GetBytes($html + "`r`n")
+        [byte[]]$actual = [IO.File]::ReadAllBytes($path)
+        if ([Convert]::ToBase64String($actual) -cne [Convert]::ToBase64String($expected)) { throw 'Nội dung đã đổi.' }
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try { $hash = [BitConverter]::ToString($sha.ComputeHash($actual)).Replace('-', '').ToLowerInvariant() }
+        finally { $sha.Dispose() }
+        if ($hash -ine $hashes[0].Groups[1].Value) { throw 'Hash đã đổi.' }
+    } catch { throw 'Mockup chưa được duyệt hoặc đã thay đổi.' }
 }
 
 function Get-PlanDir([string]$req) {

@@ -24,7 +24,7 @@ Trả lời bằng DUY NHẤT nội dung file `plan.md` (markdown tiếng Việt
 - **Test nghiệm thu:** các ca cần có (biên, lỗi, bảo mật, dữ liệu cũ) — chỉ mô tả
 - **Phụ thuộc:** — | {PREFIX}-0x
 ## Mockup
-(Task có giao diện: đúng một khối html tĩnh trong hàng rào ```html, 1–120 dòng nội dung, dùng ../../hub/wwwroot/css/hub.css hoặc CSS nội tuyến. Không script/on*/URL ngoài/tài nguyên ngoài/CSS url hoặc @import/form/nội dung nhúng chủ động. Liên kết khác chỉ href="#". Lõi bỏ mục này. Chưa rõ loại task: yêu cầu bổ sung.)
+(Task có giao diện: đúng một khối html tĩnh trong hàng rào ```html, 1–120 dòng nội dung, dùng ../../hub/wwwroot/css/hub.css hoặc CSS nội tuyến. Không script/on*/URL ngoài/tài nguyên ngoài/CSS url hoặc @import/form/nội dung nhúng chủ động; không mã hóa href CSS Hub, không comment HTML sai cú pháp. Liên kết khác chỉ href="#". Lõi bỏ mục này. Chưa rõ loại task: yêu cầu bổ sung.)
 ## Câu hỏi cho quản lý
 (chỉ khi thật sự cần quyết định; không có thì ghi "—")
 

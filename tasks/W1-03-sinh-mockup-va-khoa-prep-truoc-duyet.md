@@ -64,27 +64,18 @@ Theo brief R-011 mục 2; phụ thuộc W1-01 đã có helper. Ba hàm PowerShel
 - [ ] Báo cáo từng tiêu chí → lệnh/kết quả thật, file/lý do, quyết định tự đưa ra, điều chưa xác minh.
 
 ## Báo cáo của agent
-Agent triển khai điền sau, chưa coi khung là tính năng hoàn thành.
-
 | Tiêu chí | Bằng chứng |
 |---|---|
-| Triển khai | Chưa làm; ba thân hàm ném NotImplementedException. |
-| Build lần 1 | `dotnet build AITeam.sln`: mã 1, Build FAILED, 0 Warning(s), 0 Error(s), không có chẩn đoán. |
-| Build lần 2 | `dotnet build AITeam.sln -m:1 -nr:false -p:UseSharedCompilation=false -v:normal`: mã 1, 8 warning NU1900 (không truy cập NuGet), 4 lỗi CS1009 cùng dòng 186 của test. Đã sửa chuỗi thành verbatim; chưa build lại do giới hạn tối đa 2 lần. |
-| Test | 47 ca xUnit (45 InlineData + 2 Fact), chưa chạy do build chưa đạt. Chưa có số pass/fail/skip thực thi; dự kiến đỏ ở ba hàm chưa triển khai. |
-| Kiểm tĩnh | Parser.ParseFile(team.ps1): 0 lỗi AST; cả 5 file chuẩn bị có UTF-8 BOM. Chưa xác nhận biên dịch C# sau sửa escape. |
-
-### File chuẩn bị và quyết định
-- `team.ps1`: ba hàm khung và hai điểm nối luồng, không viết thân; giữ catch CLI hiện có.
-- Hai mẫu `templates/codex-plan.md`, `templates/codex-prep.md`: hợp đồng khai báo UI/Mockup và khóa duyệt.
-- `core.tests/AcceptanceW103PlanApprovalTests.cs`: test nghiệm thu bất biến; RealFile.Copy plan/CSS thật, TeamScript giả git/AI và TestShell tạo junction tạm. Không có ProcessStartInfo riêng, không chạy git/AI thật trong test.
-- File task này: đặc tả và bằng chứng chuẩn bị. Dòng Agent/Nhánh/Yêu cầu/Review AI giữ nguyên.
-- Tự quyết định: dùng dòng `- Mockup SHA256: ...` trong mục quyết định, hash mọi byte file xuất và so với nội dung HTML hiện tại; không thêm file trạng thái. Khi snapshot bỏ riêng thư mục `.w101-shims-*` do helper chung tạo, vẫn kiểm toàn bộ file sản phẩm còn lại.
-
-### Điều chưa chắc khi chuẩn bị
-- `agy models` mã 1, chưa đăng nhập/không kết nối được xác thực. Chưa xác minh model khả dụng; giữ `gemini-4-argon-high` theo brief và quyết định thật, quản lý kiểm trước giao.
-- Chưa nghiệm thu mở file trên máy chủ dự án; test chỉ dùng sandbox, không provider thật.
-
+| Lõi/UI/phân loại; HTML 120/121; CSS tại máy | Ba helper và hai điểm nối có đủ phần thân; `Read-PlanMockup` với HTML plan R-011 thật: đạt; giới hạn dòng chưa có kết quả xUnit cuối. |
+| Chặn mã chủ động/duyệt giả/sửa sau duyệt | Kiểm PowerShell trực tiếp: 3/3 ca comment HTML sai, href CSS mã hóa, CSS escape bị từ chối; AST 0 lỗi. Test nghiệm thu không sửa. |
+| Guard trước tác dụng phụ; lõi cũ | Đối chiếu `Invoke-Prep`: guard ngay sau đọc plan, trước Select-FreeAgent/logs/fetch/resume; chưa xác minh xUnit cuối. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1 -nr:false -p:UseSharedCompilation=false`: thiếu assets, 5 lỗi; chạy lại có restore, thêm `-p:NuGetAudit=false --ignore-failed-sources`: đạt, 0 lỗi/0 warning. |
+| Test toàn solution | `dotnet test AITeam.sln --blame-hang-timeout 2m --no-restore -m:1 -nr:false -p:UseSharedCompilation=false`: Hub 712 đạt/9 lỗi/0 bỏ qua; Core quá 3 phút đã dừng, chưa có tổng kết. |
+| Test riêng W1-03 | Hai lượt `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceW103PlanApprovalTests --blame-hang-timeout 2m` chưa ra kết quả trong 3 phút, đã dừng; chạy DLL bằng `dotnet vstest` cũng vượt 3 phút, đã gửi lệnh dừng; chưa có số pass/fail W1-03. |
+| Không chạy app/chụp ảnh | Đã tuân thủ; Claude nghiệm thu mockup thật bước 7. |
+| File/lý do | `team.ps1`: bổ sung whitelist comment/href; `templates/codex-plan.md`: hướng dẫn tương ứng; file task: báo cáo. Mẫu prep đã có guard/helper/cấm git, giữ nguyên. |
+| Tự quyết/giới hạn | Không sửa phần Hub ngoài phạm vi: lỗi lưu cấu hình/phân vai báo UnauthorizedAccessException tại File.Replace; sandbox còn làm chậm cả lệnh đơn giản. BOM team.ps1/hai mẫu/test: đều có. |
+| Bàn giao | Không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa có commit được kiểm. Chưa xác minh toàn bộ xUnit và mở mockup trên máy. |
 ## Review (Claude)
 <!-- Claude điền. -->
 
