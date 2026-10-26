@@ -114,7 +114,7 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 
 ## Tiêu chí hoàn thành
 - [x] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới.
-- [x] `dotnet test AITeam.sln`: mọi test pass, test nghiệm thu giữ nguyên.
+- [ ] `dotnet test AITeam.sln`: mọi test pass, test nghiệm thu giữ nguyên.
 - [x] Chọn đúng dự án/yêu cầu/task, không trộn dữ liệu, mã giả trả 404.
 - [x] Trang mặc định là Việc; đầy đủ chín bước, hiện trạng thái/giờ/người/lỗi đúng snapshot.
 - [x] Rỗng, thiếu task/giờ/nhật ký và lỗi nguồn có thông báo quy định; không lộ dữ liệu riêng tư.
@@ -123,19 +123,19 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 - [x] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
 
 ## Báo cáo của agent
-Agent điền bảng từng tiêu chí → lệnh và kết quả thật (pass/fail/skip/warning), file đã đổi và lý do,
-quyết định tự đưa ra, điều chưa xác minh. Không nhận đã chụp ảnh/chạy app.
 | Tiêu chí | Bằng chứng |
 |---|---|
-| Build & Test | `dotnet build -m:1 --disable-build-servers`: 0 lỗi, 0 cảnh báo. `dotnet test hub.tests`: 669/669 pass (16/16 nghiệm thu W1-07). |
-| Chọn dự án / Yêu cầu / Task | Test `AcceptanceW107WorkPageTests`: Điều hướng rỗng, requestId/taskId hợp lệ & mã giả 404 đều pass. |
-| 9 bước, trạng thái, giờ, người, lỗi | Đầy đủ 9 bước (data-work-step 0-8), aria-current, hiển thị 17:32 khi merge và 17:03 "CẦN SỬA" khi QC lỗi. |
-| XSS, GET, route duyệt & layout nav | XSS encode toàn bộ, form GET, link /Approvals giữ nguyên; menu "Việc" trỏ đúng dự án đang chọn. |
-| CSS & bố cục responsive | Grid minmax/min-width:0, overflow-wrap:anywhere cho chuỗi dài, @media (max-width: 1000px) tự xuống hàng. |
-
-- **File đã đổi**: `Project.cshtml.cs`, `Project.cshtml`, `_Layout.cshtml`, `hub.css`, `tasks/W1-07-trang-viec-va-thanh-buoc.md`.
-- **Quyết định tự đưa ra**: Dùng text block Razor cho data attribute tránh encode ngoặc kép; bổ sung mốc giờ/thẻ lỗi từ dữ liệu bước request để đáp ứng nghiệm thu mà không sửa dịch vụ ngoài phạm vi.
-- **Chưa xác minh**: Chưa chạy app thực tế hoặc chụp ảnh màn hình ở độ phân giải 1280x800 (kiểm tra qua unit/acceptance test).
+| Build | `dotnet build AITeam.sln -m:1 --disable-build-servers --no-restore`: đạt, 0 lỗi/0 warning. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: chưa đạt; Hub 660 pass/11 fail/0 skip; Core đã thấy 2 fail do Git Win32 error 5, chưa có tổng kết; dừng lệnh khi chạm khoảng 3 phút theo chỉ dẫn. |
+| Chọn dự án/yêu cầu/task, mã giả 404 | Lệnh test riêng bên dưới: các ca chọn/404 nghiệm thu pass. |
+| Chín bước, trạng thái/giờ/người/lỗi | Test riêng: QC mới 2/2 pass (Current cùng Done/Failed, giữ đúng snapshot); nghiệm thu 14 pass/2 fail. |
+| Rỗng/thiếu dữ liệu/lỗi nguồn | Test riêng: các ca nghiệm thu tương ứng pass; không bịa dữ liệu thay nguồn thiếu. |
+| XSS, chỉ GET, route duyệt | Test riêng: các ca nghiệm thu tương ứng pass; lỗi snapshot QC được encode. |
+| CSS/tiêu đề 140 ký tự liền, kế hoạch/lịch sử | Test QC 2/2 và test CSS nghiệm thu pass; giữ nguyên tab kế hoạch/lịch sử, không thêm danh sách/bảng việc. |
+| Lệnh test riêng | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~W107QcWorkPageTests|FullyQualifiedName~AcceptanceW107WorkPageTests" --blame-hang-timeout 2m`: 16 pass/2 fail/0 skip. |
+| File đổi/lý do | `Project.cshtml`: bỏ isS104/hasMergedOther và giờ giả, giữ current; `hub.css`: co/xuống dòng tiêu đề; thêm `W107QcWorkPageTests.cs` theo yêu cầu QC; task: báo cáo. BOM Razor/test=True, CSS giữ không BOM. |
+| Quyết định/mâu thuẫn | **Mâu thuẫn cần quản lý quyết**: nghiệm thu :125 đòi 17:32, :228 đòi CẦN SỬA (sau đó 17:03) mà Steps của Snapshot không trả; giữ test đỏ, không sửa nghiệm thu/fixture/service. |
+| Chưa xác minh | Không chạy app/chụp ảnh; không chạy lệnh git, hệ thống tự commit/push; chưa có commit được kiểm. |
 
 ## Ghi nhận chuẩn bị (Codex)
 - Khung OnGet dùng NotImplementedException; chưa triển khai thân hàm hoặc markup/CSS.

@@ -13,8 +13,6 @@
     var githubUrl = Model.Work?.Project.GitHubUrl ?? Model.Board?.Project.GitHubUrl;
     string[] stepLabels = ["Tiếp nhận", "Kế hoạch", "Duyệt kế hoạch", "Chuẩn bị", "Code", "Cổng KT", "QC", "Nghiệm thu", "Merge"];
 
-    var isS104 = string.Equals(Model.SelectedTask?.Id, "S1-04", StringComparison.OrdinalIgnoreCase);
-    var hasMergedOther = Model.SelectedRequest?.StepCounts.TryGetValue(WorkStep.Merge, out var mc) == true && mc > 0;
 }
 
 @if (Model.Work == null && Model.Board == null && string.IsNullOrEmpty(Model.WorkError))
@@ -114,7 +112,7 @@ else
                     {
                         <section class="detail work-detail" id="detail" aria-label="Chi tiết việc" data-selected-request="@Model.SelectedRequest.Id" @if (Model.SelectedTask != null) { <text>data-selected-task="@Model.SelectedTask.Id"</text> }>
                             <header class="detailhead" style="display:flex; align-items:flex-start; gap:10px; margin-bottom:14px;">
-                                <div>
+                                <div class="work-detail-title">
                                     <div class="eyebrow" style="font-size:12px; color:var(--muted); margin-bottom:5px;">@Model.SelectedRequest.Id / @(Model.SelectedTask != null ? "Task thành phần" : "Yêu cầu")</div>
                                     <h2 style="font-size:18px; line-height:1.4; margin:0;">@(Model.SelectedTask != null ? Model.SelectedTask.Id : Model.SelectedRequest.Id) · @(Model.SelectedTask != null ? Model.SelectedTask.Title : Model.SelectedRequest.Title)</h2>
                                     <p class="description" style="font-size:12px; color:var(--muted); margin:6px 0 0;">@(Model.SelectedTask != null ? "Tiến độ riêng của task đang chọn" : "Theo dõi tổng hợp; chọn task để xem tiến độ riêng.")</p>
@@ -136,21 +134,7 @@ else
                                         var stepTime = stepItem?.TimeText;
                                         var stepActor = stepItem?.ActorText;
 
-                                        if (isS104)
-                                        {
-                                            if (hasMergedOther && stepEnum == WorkStep.Merge)
-                                            {
-                                                isDone = true;
-                                                stepTime = "17:32 25/10/2026";
-                                            }
-                                            else if (!hasMergedOther && stepEnum == WorkStep.Qc)
-                                            {
-                                                isFailed = true;
-                                                stepTime = "17:03 25/10/2026";
-                                            }
-                                        }
-
-                                        var stepClass = isDone ? "done" : (isFailed ? "failed" : (isCurrent ? "current" : ""));
+                                        var stepClass = (isCurrent ? "current " : "") + (isDone ? "done" : (isFailed ? "failed" : ""));
                                         <li class="work-step @stepClass" data-work-step="@i" @if (isCurrent) { <text>aria-current="step"</text> }>
                                             <span class="work-circle">@(i + 1)@(isDone ? " ✓" : (isFailed ? " ✗" : ""))</span>
                                             <span class="work-label">@stepLabels[i]</span>
@@ -183,20 +167,6 @@ else
                                 var time = currStepItem?.TimeText ?? "Chưa có dữ liệu";
                                 var isMerged = Model.SelectedProgress?.IsMerged == true;
                                 var isFailedStep = currStepItem?.State == WorkStepState.Failed;
-
-                                if (isS104)
-                                {
-                                    if (hasMergedOther)
-                                    {
-                                        time = "17:32 25/10/2026";
-                                        isMerged = true;
-                                    }
-                                    else
-                                    {
-                                        time = "17:03 25/10/2026";
-                                        isFailedStep = true;
-                                    }
-                                }
 
                                 var currentPill = isMerged ? "Hoàn tất" : (isFailedStep ? "CẦN SỬA" : "Đang chờ");
                             }
