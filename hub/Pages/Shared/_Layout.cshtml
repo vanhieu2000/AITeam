@@ -24,6 +24,10 @@
     var reqTheme = Context.Request.Query["theme"].ToString();
 
     var sidebarProjects = ConfigService.GetProjects();
+    var workUrl = !string.IsNullOrEmpty(currentProject)
+        ? $"/p/{currentProject}"
+        : (sidebarProjects.Count > 0 ? $"/p/{sidebarProjects[0].Name}" : "/Overview");
+    var isWorkActive = currentPage.Equals("/Project", StringComparison.OrdinalIgnoreCase);
     var runningAgents = AgentRunService.GetRunning();
     var runningCount = runningAgents.Count;
 
@@ -62,6 +66,13 @@
                     <path d="M2 14V6.5L8 2l6 4.5V14M6 14v-4h4v4"/>
                 </svg>
                 <span>Văn phòng</span>
+            </a>
+            <a href="@workUrl" class="nav @(isWorkActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="2" width="12" height="12" rx="1.5"/>
+                    <path d="M5 5h6M5 8h6M5 11h4"/>
+                </svg>
+                <span>Việc</span>
             </a>
             <a href="/Overview" class="nav @(isHomeActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">

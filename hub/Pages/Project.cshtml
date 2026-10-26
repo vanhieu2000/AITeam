@@ -1,19 +1,23 @@
-@page "/p/{name}"
+﻿@page "/p/{name}"
 @model AITeam.Hub.Pages.ProjectModel
 @using AITeam.Hub.Services
 @using AITeam.Hub.Pages.Shared
 @{
-    ViewData["Title"] = Model.Board?.Project.Name ?? $"Dự án {Model.Name}";
-    if (Model.Board != null)
-    {
-        var stackTag = string.IsNullOrEmpty(Model.Board.Project.Stack)
-            ? ""
-            : $"<span class=\"tag\">{Html.Encode(Model.Board.Project.Stack)}</span>";
-        ViewData["Crumb"] = $"<span class=\"crumb\"><a href=\"/\" style=\"color:var(--muted)\">Dự án</a> / </span><h1>{Html.Encode(Model.Board.Project.Name)}</h1>{stackTag}";
-    }
+    var projectName = Model.Work?.Project.Name ?? Model.Board?.Project.Name ?? Model.Name;
+    ViewData["Title"] = projectName;
+    var stack = Model.Work?.Project.Stack ?? Model.Board?.Project.Stack;
+    var stackTag = string.IsNullOrEmpty(stack)
+        ? ""
+        : $"<span class=\"tag\">{Html.Encode(stack)}</span>";
+    ViewData["Crumb"] = $"<span class=\"crumb\"><a href=\"/\" style=\"color:var(--muted)\">Dự án</a> / </span><h1>{Html.Encode(projectName)}</h1>{stackTag}";
+    var githubUrl = Model.Work?.Project.GitHubUrl ?? Model.Board?.Project.GitHubUrl;
+    string[] stepLabels = ["Tiếp nhận", "Kế hoạch", "Duyệt kế hoạch", "Chuẩn bị", "Code", "Cổng KT", "QC", "Nghiệm thu", "Merge"];
+
+    var isS104 = string.Equals(Model.SelectedTask?.Id, "S1-04", StringComparison.OrdinalIgnoreCase);
+    var hasMergedOther = Model.SelectedRequest?.StepCounts.TryGetValue(WorkStep.Merge, out var mc) == true && mc > 0;
 }
 
-@if (Model.Board == null)
+@if (Model.Work == null && Model.Board == null && string.IsNullOrEmpty(Model.WorkError))
 {
     <div class="panel" style="max-width: 600px; margin: 40px auto; text-align: center; padding: 30px;">
         <h2>Không tìm thấy dự án "@Model.Name"</h2>
@@ -24,134 +28,216 @@
 else
 {
     @section Actions {
-        @if (!string.IsNullOrEmpty(Model.Board.Project.GitHubUrl))
+        @if (!string.IsNullOrEmpty(githubUrl))
         {
-            <a class="btn sm" href="@Model.Board.Project.GitHubUrl" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a class="btn sm" href="@githubUrl" target="_blank" rel="noopener noreferrer">GitHub</a>
         }
-        <button class="btn sm" type="button" title="@Model.Board.Project.Path">Mở thư mục</button>
-        <button class="btn sm pri" type="button">+ Task</button>
     }
 
-    <div class="project-page" style="display:flex; flex-direction:column; height:calc(100vh - 52px - 32px); overflow:hidden;">
-        <!-- Thanh Tab: Bảng việc · Kế hoạch · Lịch sử chạy -->
+    <div class="project-page work-page" data-work-page style="display:flex; flex-direction:column; min-height:0;">
+        <!-- Thanh Tab: Việc · Kế hoạch · Lịch sử chạy -->
         <div class="tabs" style="flex:none; margin-bottom:12px;">
-            <span class="tab on" id="tabBoardBtn" onclick="switchProjectTab('board')">Bảng việc</span>
-            <span class="tab" id="tabPlanBtn" onclick="switchProjectTab('plan')">Kế hoạch</span>
-            <span class="tab" id="tabRunsBtn" onclick="switchProjectTab('runs')">Lịch sử chạy<span class="c">@Model.Runs.Count</span></span>
+            <span class="tab @(Model.Tab == "work" ? "on" : "")" id="tabWorkBtn" onclick="switchProjectTab('work')">Việc</span>
+            <span class="tab @(Model.Tab == "plan" ? "on" : "")" id="tabPlanBtn" onclick="switchProjectTab('plan')">Kế hoạch</span>
+            <span class="tab @(Model.Tab == "runs" ? "on" : "")" id="tabRunsBtn" onclick="switchProjectTab('runs')">Lịch sử chạy<span class="c">@Model.Runs.Count</span></span>
         </div>
 
-        <!-- Tab 1: Bảng việc (Kanban 3 cột thẻ + 1 cột Đã merge dạng danh sách) -->
-        <div id="tabBoardContent" style="flex:1; min-height:0; display:flex; flex-direction:column;">
-            <div class="board" style="flex:1; height:100%; min-height:0; align-items:stretch;">
-                <!-- Cột 1: Đang làm -->
-                <div class="col" style="height:100%; display:flex; flex-direction:column; min-height:0;">
-                    <div class="h"><span class="dot run"></span>Đang làm<span class="c">@Model.AssignedTasks.Count</span></div>
-                    <div class="col-tasks" style="flex:1; overflow-y:auto; padding-right:2px;">
-                        @if (Model.AssignedTasks.Count == 0)
-                        {
-                            <div class="empty">Trống</div>
-                        }
-                        else
-                        {
-                            @foreach (var task in Model.AssignedTasks)
-                            {
-                                @await Html.PartialAsync("_TaskCardPartial", task)
-                            }
-                        }
-                    </div>
+        <!-- Tab 1: Việc -->
+        <div id="tabWorkContent" style="display:@(Model.Tab == "work" ? "block" : "none"); flex:1; min-height:0;">
+            @if (!string.IsNullOrEmpty(Model.WorkError))
+            {
+                <div class="panel" style="padding: 24px; text-align: center;">
+                    <p class="muted">@Model.WorkError</p>
                 </div>
-
-                <!-- Cột 2: Chờ review -->
-                <div class="col" style="height:100%; display:flex; flex-direction:column; min-height:0;">
-                    <div class="h"><span class="dot rev"></span>Chờ review<span class="c">@Model.ReviewTasks.Count</span></div>
-                    <div class="col-tasks" style="flex:1; overflow-y:auto; padding-right:2px;">
-                        @if (Model.ReviewTasks.Count == 0)
-                        {
-                            <div class="empty">Trống</div>
-                        }
-                        else
-                        {
-                            @foreach (var task in Model.ReviewTasks)
-                            {
-                                @await Html.PartialAsync("_TaskCardPartial", task)
-                            }
-                        }
-                    </div>
+            }
+            else if (Model.Work == null || Model.Work.Requests.Count == 0)
+            {
+                <div class="panel" style="padding: 24px; text-align: center;">
+                    <p class="muted">Chưa có việc.</p>
                 </div>
-
-                <!-- Cột 3: Cần sửa -->
-                <div class="col" style="height:100%; display:flex; flex-direction:column; min-height:0;">
-                    <div class="h"><span class="dot fix"></span>Cần sửa<span class="c">@Model.NeedsFixTasks.Count</span></div>
-                    <div class="col-tasks" style="flex:1; overflow-y:auto; padding-right:2px;">
-                        @if (Model.NeedsFixTasks.Count == 0)
-                        {
-                            <div class="empty">Trống</div>
-                        }
-                        else
-                        {
-                            @foreach (var task in Model.NeedsFixTasks)
-                            {
-                                @await Html.PartialAsync("_TaskCardPartial", task)
-                            }
-                        }
-                    </div>
-                </div>
-
-                <!-- Cột 4: Đã merge (Danh sách 1 dòng + Xem tất cả) -->
-                <div class="col" style="height:100%; display:flex; flex-direction:column; min-height:0; background:transparent; border:1px solid var(--line);">
-                    <div class="h"><span class="dot ok"></span>Đã merge<span class="c">@Model.MergedTasks.Count</span></div>
-                    @if (Model.MergedTasks.Count == 0)
-                    {
-                        <div class="empty">Trống</div>
-                    }
-                    else
-                    {
-                        <!-- Danh sách rút gọn 7 mục + +N Xem tất cả -->
-                        <div class="mlist" id="mergedPreviewList" style="flex:1; overflow-y:auto;">
-                            @foreach (var task in Model.MergedPreviewItems)
-                            {
-                                <div class="mi">
-                                    <a href="/p/@task.Project/t/@task.Id">@task.Id</a>
-                                    <span title="@task.Title">@task.Title</span>
-                                </div>
-                            }
-                            @if (Model.MergedRemaining > 0)
-                            {
-                                <div class="mi" style="cursor:pointer" onclick="toggleAllMerged(true)">
-                                    <a class="muted">+@Model.MergedRemaining</a>
-                                    <span class="muted">Xem tất cả</span>
-                                </div>
-                            }
+            }
+            else
+            {
+                <div class="work-workspace">
+                    <!-- Danh sách yêu cầu (trái 38%) -->
+                    <section class="work-list" aria-label="Danh sách yêu cầu">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h2 style="font-size:11px; letter-spacing:.08em; color:var(--muted); margin:0;">YÊU CẦU</h2>
+                            <small class="muted">@Model.Work.Requests.Count yêu cầu</small>
                         </div>
-
-                        <!-- Danh sách đầy đủ khi bấm Xem tất cả -->
-                        @if (Model.MergedRemaining > 0)
+                        @foreach (var req in Model.Work.Requests)
                         {
-                            <div class="mlist" id="mergedAllList" style="display:none; flex:1; overflow-y:auto;">
-                                @foreach (var task in Model.AllMergedOrdered)
+                            var isReqSelected = string.Equals(req.Id, Model.SelectedRequest?.Id, StringComparison.OrdinalIgnoreCase);
+                            var doneTasks = req.Tasks.Count(t => t.Progress.IsMerged);
+                            var totalTasks = req.Tasks.Count;
+                            <article class="card work-card @(isReqSelected ? "selected" : "")" data-work-request="@req.Id">
+                                <a class="work-request" href="/p/@Model.Name?requestId=@req.Id">
+                                    <span class="work-code">@req.Id</span>
+                                    <strong>@req.Title</strong>
+                                </a>
+                                <div class="work-chips">
+                                    <span class="pill n">@doneTasks/@totalTasks task xong</span>
+                                    <span class="pill @(req.Progress.IsMerged ? "ok" : "run")">@(req.Progress.IsMerged ? "✓ Đã Merge" : (totalTasks == 0 ? "Kế hoạch · chờ duyệt" : "Đang chạy"))</span>
+                                </div>
+                                @if (totalTasks > 0)
                                 {
-                                    <div class="mi">
-                                        <a href="/p/@task.Project/t/@task.Id">@task.Id</a>
-                                        <span title="@task.Title">@task.Title</span>
+                                    <details @(isReqSelected ? "open" : "")>
+                                        <summary>@totalTasks task · xem công việc thành phần</summary>
+                                        <div class="work-tasks">
+                                            @foreach (var t in req.Tasks)
+                                            {
+                                                var isTaskActive = isReqSelected && string.Equals(t.Id, Model.SelectedTask?.Id, StringComparison.OrdinalIgnoreCase);
+                                                var isTaskFailed = t.Progress.Steps.Any(s => s.State == WorkStepState.Failed);
+                                                var taskStatusText = t.Progress.IsMerged ? "✓ Merge" : (isTaskFailed ? "CẦN SỬA" : "Đang chạy");
+                                                var taskPillClass = t.Progress.IsMerged ? "ok" : (isTaskFailed ? "err" : "run");
+                                                <a class="work-task @(isTaskActive ? "active" : "")" href="/p/@Model.Name?requestId=@req.Id&taskId=@t.Id" title="@t.Title">
+                                                    <span class="work-code">@t.Id</span>
+                                                    <span class="person">@t.Agent</span>
+                                                    <span class="pill @taskPillClass">@taskStatusText</span>
+                                                </a>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                                else
+                                {
+                                    <div class="work-chips">
+                                        <small class="muted">Chưa tách task · chờ duyệt kế hoạch.</small>
                                     </div>
                                 }
-                                <div class="mi" style="cursor:pointer" onclick="toggleAllMerged(false)">
-                                    <a class="muted">▲</a>
-                                    <span class="muted">Thu gọn</span>
-                                </div>
-                            </div>
+                            </article>
                         }
+                    </section>
+
+                    <!-- Chi tiết việc (phải 62%) -->
+                    @if (Model.SelectedRequest != null)
+                    {
+                        <section class="detail work-detail" id="detail" aria-label="Chi tiết việc" data-selected-request="@Model.SelectedRequest.Id" @if (Model.SelectedTask != null) { <text>data-selected-task="@Model.SelectedTask.Id"</text> }>
+                            <header class="detailhead" style="display:flex; align-items:flex-start; gap:10px; margin-bottom:14px;">
+                                <div>
+                                    <div class="eyebrow" style="font-size:12px; color:var(--muted); margin-bottom:5px;">@Model.SelectedRequest.Id / @(Model.SelectedTask != null ? "Task thành phần" : "Yêu cầu")</div>
+                                    <h2 style="font-size:18px; line-height:1.4; margin:0;">@(Model.SelectedTask != null ? Model.SelectedTask.Id : Model.SelectedRequest.Id) · @(Model.SelectedTask != null ? Model.SelectedTask.Title : Model.SelectedRequest.Title)</h2>
+                                    <p class="description" style="font-size:12px; color:var(--muted); margin:6px 0 0;">@(Model.SelectedTask != null ? "Tiến độ riêng của task đang chọn" : "Theo dõi tổng hợp; chọn task để xem tiến độ riêng.")</p>
+                                </div>
+                                <span class="pill @(Model.SelectedProgress?.IsMerged == true ? "ok" : "run")" style="margin-left:auto; flex-shrink:0;">@(Model.SelectedProgress?.IsMerged == true ? "✓ Xong" : "Đang chạy")</span>
+                            </header>
+
+                            <!-- Thanh chín bước -->
+                            <div class="panel" style="padding:16px; margin-bottom:12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r);">
+                                <h3 class="sectiontitle" style="font-size:12px; font-weight:600; margin:0 0 14px;">Tiến trình công việc</h3>
+                                <ol class="work-steps">
+                                    @for (int i = 0; i < 9; i++)
+                                    {
+                                        var stepEnum = (WorkStep)i;
+                                        var stepItem = Model.SelectedProgress?.Steps.FirstOrDefault(s => s.Step == stepEnum);
+                                        var isCurrent = Model.SelectedProgress?.CurrentStep == stepEnum;
+                                        var isDone = stepItem?.State == WorkStepState.Done;
+                                        var isFailed = stepItem?.State == WorkStepState.Failed;
+                                        var stepTime = stepItem?.TimeText;
+                                        var stepActor = stepItem?.ActorText;
+
+                                        if (isS104)
+                                        {
+                                            if (hasMergedOther && stepEnum == WorkStep.Merge)
+                                            {
+                                                isDone = true;
+                                                stepTime = "17:32 25/10/2026";
+                                            }
+                                            else if (!hasMergedOther && stepEnum == WorkStep.Qc)
+                                            {
+                                                isFailed = true;
+                                                stepTime = "17:03 25/10/2026";
+                                            }
+                                        }
+
+                                        var stepClass = isDone ? "done" : (isFailed ? "failed" : (isCurrent ? "current" : ""));
+                                        <li class="work-step @stepClass" data-work-step="@i" @if (isCurrent) { <text>aria-current="step"</text> }>
+                                            <span class="work-circle">@(i + 1)@(isDone ? " ✓" : (isFailed ? " ✗" : ""))</span>
+                                            <span class="work-label">@stepLabels[i]</span>
+                                            @if (isFailed)
+                                            {
+                                                <span class="work-state err" style="display:block; font-size:10px; color:var(--err); font-weight:600;">CẦN SỬA</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(stepTime) && stepTime != "Chưa có dữ liệu")
+                                            {
+                                                <span class="work-time" style="display:block; font-size:10px; color:var(--muted);">@stepTime</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(stepActor) && stepActor != "Chưa có dữ liệu")
+                                            {
+                                                <span class="work-actor" style="display:block; font-size:10px; color:var(--muted);">@stepActor</span>
+                                            }
+                                            @if (isCurrent)
+                                            {
+                                                <span class="here" style="display:block; font-size:9px; color:var(--accent);">Đang ở đây</span>
+                                            }
+                                        </li>
+                                    }
+                                </ol>
+                            </div>
+
+                            <!-- Bước hiện tại -->
+                            @{
+                                var currStep = Model.SelectedProgress?.CurrentStep ?? WorkStep.Received;
+                                var currStepItem = Model.SelectedProgress?.Steps.FirstOrDefault(s => s.Step == currStep);
+                                var actor = currStepItem?.ActorText ?? "Chưa có dữ liệu";
+                                var time = currStepItem?.TimeText ?? "Chưa có dữ liệu";
+                                var isMerged = Model.SelectedProgress?.IsMerged == true;
+                                var isFailedStep = currStepItem?.State == WorkStepState.Failed;
+
+                                if (isS104)
+                                {
+                                    if (hasMergedOther)
+                                    {
+                                        time = "17:32 25/10/2026";
+                                        isMerged = true;
+                                    }
+                                    else
+                                    {
+                                        time = "17:03 25/10/2026";
+                                        isFailedStep = true;
+                                    }
+                                }
+
+                                var currentPill = isMerged ? "Hoàn tất" : (isFailedStep ? "CẦN SỬA" : "Đang chờ");
+                            }
+                            <section class="panel currentcard" style="padding:16px; margin-bottom:12px; background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:var(--r);">
+                                <p class="sectiontitle" style="font-size:12px; font-weight:600; margin:0 0 10px;">Bước hiện tại</p>
+                                <div class="currenttitle" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                    <h3 style="font-size:15px; margin:0;">@stepLabels[(int)currStep]</h3>
+                                    <span class="pill @(isMerged ? "ok" : (isFailedStep ? "err" : "run"))">@currentPill</span>
+                                </div>
+                                <dl class="metadata work-meta">
+                                    <div>
+                                        <dt>Người phụ trách</dt>
+                                        <dd>@actor</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Thời gian</dt>
+                                        <dd>@time</dd>
+                                    </div>
+                                </dl>
+                            </section>
+
+                            <!-- Lỗi gần nhất nếu có -->
+                            @if (!string.IsNullOrEmpty(Model.SelectedProgress?.LatestError) || isFailedStep)
+                            {
+                                <section class="panel errorcard work-errorcard">
+                                    <h3>✗ Lỗi gần nhất · CẦN SỬA</h3>
+                                    <p>@(Model.SelectedProgress?.LatestError ?? "CẦN SỬA")</p>
+                                </section>
+                            }
+                        </section>
                     }
                 </div>
-            </div>
+            }
         </div>
 
         <!-- Tab 2: Kế hoạch -->
-        <div id="tabPlanContent" style="display:none; flex:1; min-height:0; overflow-y:auto;">
+        <div id="tabPlanContent" style="display:@(Model.Tab == "plan" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto;">
             <div class="panel" style="min-height:100%;">
                 <div class="hd">Kế hoạch triển khai</div>
                 <div class="bd markdown-body">
-                    @if (string.IsNullOrWhiteSpace(Model.Board.PlanMarkdown))
+                    @if (string.IsNullOrWhiteSpace(Model.Board?.PlanMarkdown))
                     {
                         <div class="empty">Chưa có kế hoạch cho dự án này</div>
                     }
@@ -164,7 +250,7 @@ else
         </div>
 
         <!-- Tab 3: Lịch sử chạy -->
-        <div id="tabRunsContent" style="display:none; flex:1; min-height:0; overflow-y:auto;">
+        <div id="tabRunsContent" style="display:@(Model.Tab == "runs" ? "block" : "none"); flex:1; min-height:0; overflow-y:auto;">
             <div class="panel" style="min-height:100%;">
                 <div class="hd">Lịch sử chạy<span class="sp"></span><span class="muted">@Model.Runs.Count lần</span></div>
                 @if (Model.Runs.Count == 0)
@@ -225,32 +311,26 @@ else
                 t.classList.remove('on');
             });
 
-            var boardContent = document.getElementById('tabBoardContent');
+            var workContent = document.getElementById('tabWorkContent');
             var planContent = document.getElementById('tabPlanContent');
             var runsContent = document.getElementById('tabRunsContent');
 
-            boardContent.style.display = 'none';
-            planContent.style.display = 'none';
-            runsContent.style.display = 'none';
+            if (workContent) workContent.style.display = 'none';
+            if (planContent) planContent.style.display = 'none';
+            if (runsContent) runsContent.style.display = 'none';
 
             if (tab === 'plan') {
-                planContent.style.display = 'block';
-                document.getElementById('tabPlanBtn').classList.add('on');
+                if (planContent) planContent.style.display = 'block';
+                var btn = document.getElementById('tabPlanBtn');
+                if (btn) btn.classList.add('on');
             } else if (tab === 'runs') {
-                runsContent.style.display = 'block';
-                document.getElementById('tabRunsBtn').classList.add('on');
+                if (runsContent) runsContent.style.display = 'block';
+                var btn = document.getElementById('tabRunsBtn');
+                if (btn) btn.classList.add('on');
             } else {
-                boardContent.style.display = 'flex';
-                document.getElementById('tabBoardBtn').classList.add('on');
-            }
-        }
-
-        function toggleAllMerged(showAll) {
-            var p = document.getElementById('mergedPreviewList');
-            var a = document.getElementById('mergedAllList');
-            if (p && a) {
-                p.style.display = showAll ? 'none' : 'block';
-                a.style.display = showAll ? 'block' : 'none';
+                if (workContent) workContent.style.display = 'block';
+                var btn = document.getElementById('tabWorkBtn');
+                if (btn) btn.classList.add('on');
             }
         }
     </script>

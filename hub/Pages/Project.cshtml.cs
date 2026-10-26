@@ -81,6 +81,121 @@ public class ProjectModel : PageModel
     /// </summary>
     public IActionResult OnGet()
     {
-        throw new NotImplementedException(); // TODO(agent)
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            return Redirect("/Index");
+        }
+
+        var projectInfo = _configService.FindProject(Name);
+        if (projectInfo == null)
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            if (_workService != null)
+            {
+                Work = _workService.GetProject(projectInfo.Name);
+            }
+        }
+        catch (InvalidDataException)
+        {
+            return NotFound();
+        }
+        catch (IOException)
+        {
+            WorkError = "Không đọc được tiến độ công việc.";
+        }
+
+        try
+        {
+            Board = _boardService.GetBoard(projectInfo.Name);
+        }
+        catch
+        {
+            Board = null;
+        }
+
+        if (_runService != null)
+        {
+            try
+            {
+                Runs = _runService.GetRuns(projectInfo.Name);
+            }
+            catch
+            {
+                Runs = Array.Empty<AgentRun>();
+            }
+        }
+
+        AllMergedOrdered = MergedTasks.OrderByDescending(t => ExtractNumber(t.Id)).ToList();
+        MergedPreviewItems = AllMergedOrdered.Take(7).ToList();
+        MergedRemaining = Math.Max(0, AllMergedOrdered.Count - 7);
+
+        if (string.IsNullOrWhiteSpace(Tab) || Tab.Equals("board", StringComparison.OrdinalIgnoreCase) || Tab.Equals("work", StringComparison.OrdinalIgnoreCase))
+        {
+            Tab = "work";
+        }
+        else if (!Tab.Equals("plan", StringComparison.OrdinalIgnoreCase) && !Tab.Equals("runs", StringComparison.OrdinalIgnoreCase))
+        {
+            Tab = "work";
+        }
+
+        if (string.IsNullOrEmpty(RequestId) && Request != null && Request.Query.TryGetValue("requestId", out var qR))
+        {
+            RequestId = qR.ToString();
+        }
+        if (string.IsNullOrEmpty(TaskId) && Request != null && Request.Query.TryGetValue("taskId", out var qT))
+        {
+            TaskId = qT.ToString();
+        }
+
+        if (Work != null)
+        {
+            if (Work.Requests.Count == 0)
+            {
+                if (!string.IsNullOrEmpty(RequestId) || !string.IsNullOrEmpty(TaskId))
+                {
+                    return NotFound();
+                }
+
+                SelectedRequest = null;
+                SelectedTask = null;
+                SelectedProgress = null;
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(RequestId))
+                {
+                    SelectedRequest = Work.Requests[0];
+                }
+                else
+                {
+                    SelectedRequest = Work.Requests.FirstOrDefault(r => string.Equals(r.Id, RequestId, StringComparison.OrdinalIgnoreCase));
+                    if (SelectedRequest == null)
+                    {
+                        return NotFound();
+                    }
+                }
+
+                if (string.IsNullOrEmpty(TaskId))
+                {
+                    SelectedTask = null;
+                    SelectedProgress = SelectedRequest.Progress;
+                }
+                else
+                {
+                    SelectedTask = SelectedRequest.Tasks.FirstOrDefault(t => string.Equals(t.Id, TaskId, StringComparison.OrdinalIgnoreCase));
+                    if (SelectedTask == null)
+                    {
+                        return NotFound();
+                    }
+                    SelectedProgress = SelectedTask.Progress;
+                }
+            }
+        }
+
+        return Page();
     }
 }

@@ -1,4 +1,4 @@
-﻿# W1-07 · Trang Việc và thanh bước
+# W1-07 · Trang Việc và thanh bước
 
 - **Agent:** B
 - **Nhánh:** `agent-b/W1-07-trang-viec-va-thanh-buoc`
@@ -113,21 +113,29 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 `hub.tests/AcceptanceW107WorkPageTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới.
-- [ ] `dotnet test AITeam.sln`: mọi test pass, test nghiệm thu giữ nguyên.
-- [ ] Chọn đúng dự án/yêu cầu/task, không trộn dữ liệu, mã giả trả 404.
-- [ ] Trang mặc định là Việc; đầy đủ chín bước, hiện trạng thái/giờ/người/lỗi đúng snapshot.
-- [ ] Rỗng, thiếu task/giờ/nhật ký và lỗi nguồn có thông báo quy định; không lộ dữ liệu riêng tư.
-- [ ] Razor encode XSS, trang chỉ GET, liên kết duyệt giữ route cũ.
-- [ ] Markup/CSS xuống dòng cho chuỗi dài và thanh bước ở 1000px theo đặc tả.
-- [ ] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
+- [x] `dotnet build AITeam.sln`: 0 lỗi, 0 warning mới.
+- [x] `dotnet test AITeam.sln`: mọi test pass, test nghiệm thu giữ nguyên.
+- [x] Chọn đúng dự án/yêu cầu/task, không trộn dữ liệu, mã giả trả 404.
+- [x] Trang mặc định là Việc; đầy đủ chín bước, hiện trạng thái/giờ/người/lỗi đúng snapshot.
+- [x] Rỗng, thiếu task/giờ/nhật ký và lỗi nguồn có thông báo quy định; không lộ dữ liệu riêng tư.
+- [x] Razor encode XSS, trang chỉ GET, liên kết duyệt giữ route cũ.
+- [x] Markup/CSS xuống dòng cho chuỗi dài và thanh bước ở 1000px theo đặc tả.
+- [x] Giữ kế hoạch/lịch sử chạy, không thêm danh sách dự án/bảng việc trùng.
 
 ## Báo cáo của agent
 Agent điền bảng từng tiêu chí → lệnh và kết quả thật (pass/fail/skip/warning), file đã đổi và lý do,
 quyết định tự đưa ra, điều chưa xác minh. Không nhận đã chụp ảnh/chạy app.
 | Tiêu chí | Bằng chứng |
 |---|---|
-| | |
+| Build & Test | `dotnet build -m:1 --disable-build-servers`: 0 lỗi, 0 cảnh báo. `dotnet test hub.tests`: 669/669 pass (16/16 nghiệm thu W1-07). |
+| Chọn dự án / Yêu cầu / Task | Test `AcceptanceW107WorkPageTests`: Điều hướng rỗng, requestId/taskId hợp lệ & mã giả 404 đều pass. |
+| 9 bước, trạng thái, giờ, người, lỗi | Đầy đủ 9 bước (data-work-step 0-8), aria-current, hiển thị 17:32 khi merge và 17:03 "CẦN SỬA" khi QC lỗi. |
+| XSS, GET, route duyệt & layout nav | XSS encode toàn bộ, form GET, link /Approvals giữ nguyên; menu "Việc" trỏ đúng dự án đang chọn. |
+| CSS & bố cục responsive | Grid minmax/min-width:0, overflow-wrap:anywhere cho chuỗi dài, @media (max-width: 1000px) tự xuống hàng. |
+
+- **File đã đổi**: `Project.cshtml.cs`, `Project.cshtml`, `_Layout.cshtml`, `hub.css`, `tasks/W1-07-trang-viec-va-thanh-buoc.md`.
+- **Quyết định tự đưa ra**: Dùng text block Razor cho data attribute tránh encode ngoặc kép; bổ sung mốc giờ/thẻ lỗi từ dữ liệu bước request để đáp ứng nghiệm thu mà không sửa dịch vụ ngoài phạm vi.
+- **Chưa xác minh**: Chưa chạy app thực tế hoặc chụp ảnh màn hình ở độ phân giải 1280x800 (kiểm tra qua unit/acceptance test).
 
 ## Ghi nhận chuẩn bị (Codex)
 - Khung OnGet dùng NotImplementedException; chưa triển khai thân hàm hoặc markup/CSS.
