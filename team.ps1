@@ -1102,6 +1102,22 @@ function Invoke-Qc {
 }
 
 # Bước 2: plans/R-xxx/brief.md (Claude viết, ≤ 20 dòng) ⇒ Codex đọc repo CHỈ ĐỌC ⇒ plans/R-xxx/plan.md. -Name = tiền tố mã task (vd. V6).
+# /// <summary>Đọc quyết định qua aiteam workflow-role --root $Root --role $Role; JSON camelCase.
+# /// CLI lỗi hoặc JSON không hợp lệ phải throw, không trả mặc định; không ghi team.json.</summary>
+function Resolve-WorkflowAssignment([string]$Role) {
+    throw [System.NotImplementedException]::new() # TODO(agent)
+}
+
+# /// <summary>Chạy đúng Assignment bằng $Exe với mảng Arguments; không Invoke-Expression.
+# /// Manual => throw "Tác nhân được gán cần thực hiện thủ công." trước gọi exe.
+# /// run: thêm --provider đúng người; plan thêm --read-only, prep không thêm; review: thêm
+# /// --reviewer-provider khi IsExplicit, QC cũ không thêm. Giữ mã LASTEXITCODE.
+# /// Chỉ bọc Invoke-WorkflowCodexLock khi ProviderId=codex; không khóa agy/thủ công.
+# /// Không fallback; không đổi --out/--root/timeout hay cờ khác trong Arguments.</summary>
+function Invoke-WorkflowRoleRun($Assignment, [string]$Exe, [string[]]$Arguments) {
+    throw [System.NotImplementedException]::new() # TODO(agent)
+}
+
 function Invoke-Plan {
     $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
     $dir = Get-PlanDir $Request

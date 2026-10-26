@@ -72,6 +72,16 @@ public sealed class ReviewRunner
         }
     }
 
+    /// <summary>
+    /// QC đã gán: chỉ dùng providerId (không phân biệt hoa thường khi đối chiếu settings), không gọi router/fallback.
+    /// Thiếu/tắt/không có vai Reviewer => ExitConfig=2; tự duyệt hoặc đang nghỉ => ExitBlocked=3;
+    /// không gọi factory trong các trường hợp này. Provider lỗi/timeout/quota => Blocked, chỉ thử một lần.
+    /// Tái dùng ReviewService để giữ ReadOnly, schema, hash, JSON và ghi state; lỗi bất ngờ => Blocked có lý do.
+    /// </summary>
+    public Task<ReviewRunOutcome> RunAssignedAsync(ReviewRunInput input, string providerId, CancellationToken ct)
+    {
+        throw new NotImplementedException(); // TODO(agent)
+    }
     private async Task<ReviewRunOutcome> RunCoreAsync(ReviewRunInput input, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(input.TaskFile) || !File.Exists(input.TaskFile))

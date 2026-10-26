@@ -17,6 +17,7 @@ try
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
         "review" => await Review(),
+        "workflow-role" => WorkflowRole(),
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
@@ -335,4 +336,11 @@ static ReviewRunInput CreateReviewInput(string taskFile, string diffFile, string
     string workDir, string logDir, string dev, int timeoutMin, string root)
 {
     return new ReviewRunInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, TimeSpan.FromMinutes(timeoutMin), root);
+}
+/// <summary>workflow-role --role plan|prep|qc --root d: Resolve(team.json), JSON camelCase duy nhất trên stdout,
+/// mã 0. Thiếu/sai role: stderr "LỖI: thiếu hoặc sai --role (plan, prep, qc).", mã 2.
+/// Lỗi đọc/schema: Main bắt, mã khác 0; khung chưa làm: "LỖI: chưa làm", mã 1.</summary>
+int WorkflowRole()
+{
+    throw new NotImplementedException(); // TODO(agent)
 }
