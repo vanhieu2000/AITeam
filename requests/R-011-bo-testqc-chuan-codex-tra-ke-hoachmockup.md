@@ -20,6 +20,7 @@
 Mỗi file task phải có dòng `- **Yêu cầu:** R-011` để `team.ps1 request-report` gom số liệu.
 
 ## 3. Nhật ký (ghi ngay khi xảy ra, giờ:phút)
+- 18:16 26/10/2026 (Codex quản lý phụ): W1-03 prep thành công lúc 16:55, code dừng QuotaExhausted lúc 17:00; không prep lại. Chờ H7-02 kết thúc để tránh vượt giới hạn 1 lượt Codex và sửa đồng thời team.ps1; W1-04 còn phụ thuộc W1-03. Chưa có cổng KT/QC mới.
 - 16:46 26/10/2026: Codex quản lý phụ chuyển sang W1-03 theo kế hoạch đã duyệt, W1-01 đã merge. Chạy nền team.ps1 prep -Request R-011 -Task W1-03, PID 39704; log W1-03.deputy-20261026-164647.out.txt/.err.txt. Vòng sau kiểm tra kết quả, không giao trùng; W1-04 chờ W1-03.
 | Giờ | Sự kiện | Ghi chú |
 |---|---|---|
@@ -90,6 +91,9 @@ Sự kiện cần ghi:
 - 2026-10-26 14:00:37 +07:00 | W1-01 | Merge | lượt 2 | ĐẠT <!-- workflow:W1-01:Merge:2 -->
 - 2026-10-26 16:56:14 +07:00 | W1-03 | Prep | lượt 1 | ĐẠT <!-- workflow:W1-03:Prep:1 -->
 - 2026-10-26 17:00:35 +07:00 | W1-03 | Assign | lượt 1 | LỖI <!-- workflow:W1-03:Assign:1 -->
+
+- 18:52 26/10/2026: Codex quản lý phụ giao tiếp W1-03 bằng assign -Dev codex -Resume sau khi lượt H7-02 kết thúc; chạy nền PID 11172, log W1-03.deputy-20261026-185137.out.txt/.err.txt. Không prep lại; vòng sau kiểm tra cổng KT/QC, W1-04 tiếp tục chờ.
+
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-011`, rồi điền:
 
