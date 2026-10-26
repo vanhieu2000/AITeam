@@ -37,17 +37,15 @@
 
 ## Báo cáo của agent
 
-| Tiêu chí | Lệnh / bằng chứng thật lượt sửa QC |
+| Tiêu chí | Lệnh / bằng chứng thật lượt sửa verify-2 |
 |---|---|
-| Build 0 warning: ĐẠT | `dotnet build AITeam.sln --no-restore -m:1 --nologo`: 0 lỗi, 0 warning; 17,11 giây. |
-| agy mã 0/1; Codex retry/fallback/quota, giữ phần dở: ĐẠT | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceV809RetryTests --blame-hang-timeout 2m`: 7 pass, 0 fail, 0 skip. |
-| Lỗi QC S104: CHƯA ĐẠT | Cùng lệnh test riêng với filter `FullyQualifiedName~AcceptanceS104SkillPromptsTests.ProviderGiaNhanPromptThat_MoiNhanh`: 2 pass, 3 fail; không tìm thấy `Invoke-CodexRetry`. |
-| Test toàn solution: CHƯA ĐẠT | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 712 pass/9 fail (File.Replace bị từ chối quyền); Core chưa tổng kết, đã có lỗi S104 và Git; dừng tiến trình test sau 175 giây bằng Stop-Process (taskkill bị sandbox từ chối). |
-| Cổng verify: CHƯA ĐẠT | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: 2 kiểm tra tĩnh đạt; kịch bản 1 lỗi Git CreateFileMapping, Win32 error 5 (sandbox). |
-- Chỉ đổi phiếu này để cập nhật bằng chứng; giữ nguyên mã sản phẩm, test nghiệm thu và mã hóa/BOM ban đầu.
-- Chặn: TeamScript chỉ nạp hàm được chọn, không tự nạp phụ thuộc; bộ test S104 chưa nạp `Invoke-CodexRetry`. Cần Claude sửa danh sách phụ thuộc của test; không đổi test hoặc viết mã nhận ra test để né lỗi (AGENTS.md, dòng cuối).
-- Quyết định: dừng sửa mã theo quy tắc “Test sai thì ghi vào báo cáo và dừng”; không mở rộng phạm vi sang harness/test cũ. Chưa xác minh hết lỗi V802/V803 do giới hạn thời gian và sandbox Git.
-- Không chạy lệnh git trực tiếp; hệ thống tự commit/push. Chưa có commit được kiểm; không chạy app/chụp ảnh theo phân công.
+| Build 0 warning: ĐẠT | `dotnet build AITeam.sln --no-restore -m:1 --nologo`: 0 lỗi, 0 warning, 19,15 giây. |
+| S104 + V809: ĐẠT | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS104SkillPromptsTests\|FullyQualifiedName~AcceptanceV809RetryTests" --blame-hang-timeout 2m --nologo`: 30 pass, 0 fail, 0 skip. |
+| Test toàn solution: CHƯA ĐẠT | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo`: Hub 712 pass/9 fail (các luồng lưu cấu hình, có lỗi File.Replace bị từ chối quyền); Core chưa tổng kết, đã có lỗi Git CreateFileMapping, Win32 error 5; đã dừng bằng Ctrl+C theo giới hạn 3 phút, exit 1. |
+| Cổng verify: CHƯA ĐẠT | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: 2 kiểm tra tĩnh đạt; kịch bản 1 dừng vì Git CreateFileMapping, Win32 error 5. |
+- Đổi `core.tests/AcceptanceS104SkillPromptsTests.cs`: chỉ thêm `Invoke-CodexRetry` vào `$names` theo quyền quản lý cấp; giữ nguyên assertion và BOM UTF-8; không đổi mã sản phẩm/V809.
+- Đổi phiếu này để cập nhật bằng chứng; không mở rộng sửa các lỗi ngoài phạm vi. Build Core mặc định từng trả exit 1, 0 lỗi/0 warning; chạy lại tuần tự `-m:1` đạt.
+- Chưa xác minh toàn bộ test đạt trong môi trường đủ quyền; không chạy app/chụp ảnh. Không chạy lệnh git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
 ## Review (Claude)
 
 ## Kết quả
