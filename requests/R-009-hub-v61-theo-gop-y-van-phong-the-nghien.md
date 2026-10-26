@@ -46,6 +46,7 @@ Sự kiện cần ghi:
 - 2026-10-26 14:06:54 +07:00 | H7-02 | Prep | lượt 1 | KHÔNG ĐẠT <!-- workflow:H7-02:Prep:1 -->
 - 2026-10-26 14:14:29 +07:00 | H7-04 | Prep | lượt 1 | KHÔNG ĐẠT <!-- workflow:H7-04:Prep:1 -->
 - 2026-10-26 14:22:15 +07:00 | H7-06 | Prep | lượt 1 | ĐẠT <!-- workflow:H7-06:Prep:1 -->
+- 2026-10-26 15:07:39 +07:00 | H7-02 | Assign | lượt 1 | LỖI <!-- workflow:H7-02:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-009`, rồi điền:
 
