@@ -71,17 +71,15 @@
 ## Báo cáo của agent
 | Tiêu chí | Bằng chứng / kết quả thật |
 |---|---|
-| Ba helper, Resume, giới hạn | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceV602ReviewGateTests --blame-hang-timeout 2m -m:1`: 21 pass, 3 fail, 0 skip / 24. |
-| Log AI, feedback/retry, lỗi CLI/mã task | Lỗi CLI/mã task đạt; 2 ca Fresh_ai_log thất bại: test chạy switch riêng nhưng không gán `$work`, `$taskFile` để dựng đường dẫn theo đặc tả; không sửa test/không thêm mã nhận diện test. |
-| Kịch bản 20, decision/bảng thật | Có sẵn trong `tools/test-verify.ps1`, giữ nguyên; ca repo tạm thất bại ở git push: `couldn't create signal pipe, Win32 error 5`, trước khi gọi hành vi cần thử. |
-| Giữ kịch bản/test bất biến | Không sửa test, fixture hay script verify; chỉ đổi `team.ps1` và báo cáo task. |
-| Build | `dotnet build AITeam.sln` mã 1 dù 0 lỗi/0 warning; chạy lại `dotnet build AITeam.sln --no-restore -m:1`: đạt, 0 lỗi, 0 warning. |
-| Test toàn solution | Đã chạy `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`; chưa có kết quả, đã gửi Ctrl+C; lần `-m:1` đã hủy (mã 1): tổng kết tạm 644 pass, 9 fail, 0 skip/653; 12 lỗi, 2 warning (có MSB5021 do hủy); chưa chạy hết Core. |
-| Script verify | `powershell -NoProfile -File tools/test-verify.ps1`: mã 1 tại kịch bản 1, git clone repo tạm bị Win32 error 5; hai kiểm tra tĩnh đầu đạt. |
-| File / mã hóa | `team.ps1`: nối chốt, gọi CLI bằng đối số rời tương thích PS 5.1, tái dùng decision, khôi phục biến bằng finally; parser 0 lỗi; BOM/CRLF giữ nguyên. |
-| Quyết định / giới hạn | Giữ đường dẫn task trong worktree đúng đặc tả; dừng sửa khi phát hiện test nghi sai theo AGENTS.md; chưa đối chiếu log thật, chưa nghiệm thu toàn bộ. |
-| Bàn giao | Không chạy lệnh git trực tiếp; các lệnh git phát sinh từ test ở thư mục tạm; hệ thống tự commit/push, chưa có commit được kiểm. MCP aiteam không khả dụng. |
-
+| Ba helper, Resume, ngưỡng | Giữ mã hiện có; parser `team.ps1`: 0 lỗi; chưa chứng minh đạt toàn bộ nghiệm thu. |
+| Log AI, feedback/retry | 2 ca `Fresh_ai_log` thất bại: khung test chạy switch riêng nhưng thiếu `$work`, `$taskFile`, trong khi đặc tả bắt dùng task trong worktree; không sửa test hoặc thêm mã nhận diện test. |
+| Hồi quy S1-04 | Lệnh test lọc `AcceptanceV602ReviewGateTests.Fresh_ai_log\|AcceptanceS104SkillPromptsTests`, `--no-build --blame-hang-timeout 2m`: 19 pass, 6 fail, 0 skip/25; 4 ca assign báo thiếu hàm `Stop-ReviewReassignment` trong khung test. |
+| Kịch bản 20 / test bất biến | Không sửa test, fixture hay `tools/test-verify.ps1` trong lượt này; chưa khôi phục được thay đổi script mà cổng báo vì không có bản gốc trong nguồn được phép đọc, không dùng git. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1`: mã 0, 0 lỗi, 0 warning. |
+| Test solution | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m -m:1`: đã dừng bằng Ctrl+C, mã 1, Core chưa có tổng kết; Hub 644 pass, 9 fail, 0 skip/653 (lỗi quyền File.Replace); Core đã có lỗi git Win32 5, timeout và hai ca Fresh_ai_log. |
+| Script verify | `powershell -NoProfile -File tools/test-verify.ps1`: mã 1; 2 kiểm tra tĩnh đạt; dừng kịch bản 1 do git clone repo tạm không tạo được signal pipe (Win32 5). |
+| File đổi / quyết định | Chỉ cập nhật báo cáo task, giữ BOM/CRLF; dừng sửa mã theo AGENTS.md: test sai thì báo và dừng; cần quản lý sửa khung nghiệm thu và cung cấp bản script gốc. |
+| Giới hạn / bàn giao | Chưa đối chiếu log thật; MCP aiteam không khả dụng; không chạy git trực tiếp, không commit/push (hệ thống đảm nhiệm), chưa có commit được kiểm. |
 ## Điều chưa chắc khi chuẩn bị
 - `agy models` đã chạy nhưng thất bại do chưa đăng nhập/mạng bị chặn; chưa xác minh model có trong danh sách tài khoản. Model ghi theo kế hoạch được duyệt, không tự thay mã.
 - Chưa có mẫu log thật trong danh sách được phép đọc; dùng hợp đồng verdict của code, không nhận đã xác minh log thật.
