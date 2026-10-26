@@ -197,8 +197,6 @@ function Test-AgentTouchedMain { }; function Get-RunRecord { }; function Save-Ru
 function Test-QuotaExhausted { $x.mode -eq 'fallback' }
 $script:captured=$null; $script:calls=0; $script:ro=$false; $script:cwd=$repo
 function FakeProvider {
-    # CLI đếm review giả trả 0 vòng; không tính là lời gọi provider AI.
-    if ($args[0] -eq 'review-rounds') { $global:LASTEXITCODE=0; return 0 }
     $script:calls++; $a=@($args); $pf=$a[[Array]::IndexOf($a,'--prompt-file')+1]
     $script:captured=[IO.File]::ReadAllText($pf); $script:ro=$a -contains '--read-only'
     $script:cwd=$a[[Array]::IndexOf($a,'--workdir')+1]

@@ -71,16 +71,17 @@
 ## Báo cáo của agent
 | Tiêu chí | Bằng chứng / kết quả thật |
 |---|---|
-| Ba helper, Resume, ngưỡng | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceV602ReviewGateTests --blame-hang-timeout 2m`: 21 pass, 3 fail, 0 skip/24; các ca 0/2/3/4, cấu hình và lỗi CLI đạt. |
-| AI mới, feedback/retry | 2 ca `Fresh_ai_log` fail: chạy nguyên setup/body từ test cho stderr `Join-Path: Cannot bind argument to parameter 'Path' because it is null` tại `$work`; harness trích switch nhưng thiếu `$work` và `$taskFile`. Không sửa test bất biến hoặc thêm mã nhận diện test. |
-| Kịch bản 20, decision/bảng thật | Ca `Resume_three_rounds...` fail trước Invoke-Assign: Git push remote tạm báo `CreateFileMapping ... Win32 error 5`; chưa xác minh lưu bảng/không nhân đôi. |
-| Giữ kịch bản/test nghiệm thu | Không sửa `tools/test-verify.ps1`, `AcceptanceV602ReviewGateTests.cs`, fixture hoặc assert; chỉ bổ sung fake CLI S1-04 theo quyền quản lý cấp. |
-| Build | `dotnet build AITeam.sln --no-restore -m:1`: đạt, 0 lỗi, 0 warning. |
-| Test toàn bộ | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m -m:1`: dừng Ctrl+C theo giới hạn 3 phút, mã 1; Hub 644 pass, 9 fail/653 (File.Replace/quyền ghi); Core có lỗi Git Win32 5 và 2 ca Fresh_ai_log, chưa có tổng kết. |
-| Script verify | `powershell -NoProfile -File tools/test-verify.ps1`: mã 1; 2 kiểm tra tĩnh đạt; kịch bản 1 dừng tại git clone remote tạm, Win32 error 5; chưa tới kịch bản 20. |
-| Hồi quy S1-04 | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceS104SkillPromptsTests --blame-hang-timeout 2m`: 23 pass, 0 fail, 0 skip; trước sửa 4 ca assign lỗi vì FakeProvider bắt lệnh review-rounds như lời gọi AI. |
-| File đổi, quyết định | `core.tests/AcceptanceS104SkillPromptsTests.cs`: fake ranh giới CLI trả 0 vòng/mã 0, không tăng bộ đếm gọi AI; file task: báo cáo. Giữ code sản phẩm dùng task trong worktree đúng hợp đồng; Claude cần bổ sung ngữ cảnh cho 2 ca Fresh_ai_log. |
-| Mã hóa, giới hạn, bàn giao | Kiểm byte: BOM UTF-8/CRLF còn nguyên ở S1-04, V6-02, team.ps1, test-verify.ps1; parser team.ps1 0 lỗi. Chưa đối chiếu log thật; chưa đạt nghiệm thu. Không chạy git trực tiếp; hệ thống commit/push, chưa có commit được kiểm. |
+| Ba helper, Resume, ngưỡng | Giữ code hiện tại trong `team.ps1`; parser PowerShell: 0 lỗi; lượt này chưa có kết quả tổng kết test xác nhận các ngưỡng. |
+| AI mới, feedback/retry | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceV602ReviewGateTests --blame-hang-timeout 2m`: quan sát 2 ca Fresh_ai_log fail (mã con 1); dừng Ctrl+C theo giới hạn 3 phút, mã 1, chưa có tổng pass/fail. |
+| Lỗi test cần Claude xử lý | Hai ca Fresh_ai_log chỉ trích switch, không khởi tạo `$work`/`$taskFile`; đặc tả bắt buộc `Join-Path $work tasks/<tên file>`. Giữ nguyên test và code sản phẩm, không thêm nhận diện harness để qua test (AGENTS.md). |
+| Kịch bản 20, decision/bảng thật | Chưa xác minh lần này; verify dừng trước kịch bản 20, lượt test riêng chưa có tổng kết. |
+| Test bất biến, phạm vi | Hoàn tác đúng 2 dòng fake review-rounds đã thêm ở `core.tests/AcceptanceS104SkillPromptsTests.cs`, giữ BOM/CRLF. Không sửa `AcceptanceV602ReviewGateTests.cs` hoặc fixture. |
+| Mâu thuẫn test-verify | Giữ nguyên `tools/test-verify.ps1` trong lượt này: task vừa yêu cầu thêm kịch bản 20 trong Phạm vi, vừa liệt kê file là test bất biến; cần Claude quyết định baseline, chưa xác minh hoàn tác so với main vì cấm git. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1`: thành công, 0 lỗi, 0 warning; chạy không `-m:1` trước đó mã 1 dù báo 0 lỗi/0 warning. |
+| Test toàn bộ | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m -m:1`: dừng Ctrl+C theo giới hạn 3 phút, mã 1; Hub 644 pass, 9 fail, 0 skip/653 (File.Replace/quyền ghi); Core chưa tổng kết. |
+| Hồi quy sau hoàn tác S1-04 | Lượt test toàn bộ quan sát 4 ca S1-04 fail: fake provider chưa hỗ trợ review-rounds, lỗi “Không xác định được số vòng review; dừng giao lại.”; cần Claude sửa fake test, không đổi sản phẩm để né lỗi CLI. |
+| Script verify | `powershell -NoProfile -File tools/test-verify.ps1`: mã 1; 2 kiểm tra tĩnh đạt; kịch bản 1 lỗi Git clone repo tạm, CreateFileMapping Win32 error 5 do sandbox. |
+| File đổi, mã hóa, bàn giao | Lượt này chỉ hoàn tác S1-04 và cập nhật báo cáo; kiểm byte 4 file team/test-verify/S1-04/V6-02: BOM UTF-8, CRLF nguyên. Chưa đối chiếu log thật; chưa đạt nghiệm thu; không chạy git trực tiếp, hệ thống commit/push, chưa có commit được kiểm. |
 ## Điều chưa chắc khi chuẩn bị
 - `agy models` đã chạy nhưng thất bại do chưa đăng nhập/mạng bị chặn; chưa xác minh model có trong danh sách tài khoản. Model ghi theo kế hoạch được duyệt, không tự thay mã.
 - Chưa có mẫu log thật trong danh sách được phép đọc; dùng hợp đồng verdict của code, không nhận đã xác minh log thật.
