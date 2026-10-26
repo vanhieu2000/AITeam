@@ -59,7 +59,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-06 Dịch vụ tổng hợp việc theo dự án](W1-06-dich-vu-tong-hop-viec-theo-du-an.md) | B | `agent-b/W1-06-dich-vu-tong-hop-viec-theo-du-an` | ✅ Đã merge (vòng 3) |
 | [V6-02 Chặn giao lại và xin quyết định](V6-02-chan-giao-lai-va-xin-quyet-dinh.md) | A | `agent-a/V6-02-chan-giao-lai-va-xin-quyet-dinh` | ⏸ Tạm dừng · quá 3 vòng (còn 2 ca Fresh_ai_log đỏ ở lượt Codex 5) |
 | [W1-07 Trang Việc và thanh bước](W1-07-trang-viec-va-thanh-buoc.md) | B | `agent-b/W1-07-trang-viec-va-thanh-buoc` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 12:25 26/10/2026 |
-| [W1-01 Helper nguồn thật và sandbox PowerShell](W1-01-helper-nguon-that-va-sandbox-powershell.md) | A | `agent-a/W1-01-helper-nguon-that-va-sandbox-powershell` | ⬜ Chưa giao |
+| [W1-01 Helper nguồn thật và sandbox PowerShell](W1-01-helper-nguon-that-va-sandbox-powershell.md) | A | `agent-a/W1-01-helper-nguon-that-va-sandbox-powershell` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 12:34 26/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
