@@ -94,19 +94,20 @@ File chuẩn bị: task này (đặc tả), RealFile.cs và TeamScript.cs (khung
 Quyết định: thêm sourceRoot tùy chọn để kiểm nguồn thiếu/reparse bằng thư mục tạm; fake toàn bộ git để không rò lệnh ra máy thật; giữ model mặc định vì task M không có các điều kiện bắt buộc đổi model.
 Điều chưa xác minh: hành vi triển khai chưa có; test timeout hiện đỏ ngay từ constructor TODO nên chưa chứng minh dừng tiến trình. Sandbox không bảo vệ trước mã test độc hại gọi exe bằng đường dẫn tường minh.
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng thật |
+| Tiêu chí | Bằng chứng thật lượt này |
 |---|---|
-| Sao chép byte/cây/tên, ghi đè, thiếu file, chặn đường dẫn | Nhóm W1-01: 43/43 pass, 0 fail/skip (lệnh bên dưới); test nghiệm thu giữ nguyên. |
-| Sandbox, cây tùy chọn, cô lập/dọn | Cùng nhóm 43/43 pass; thêm 3 ca tools/scripts/templates là liên kết tới file hoặc thư mục mất đích. |
-| AST, lỗi hàm/cú pháp, Unicode/BOM/CRLF | Cùng nhóm 43/43 pass; không sửa luồng nạp AST. |
-| Fake tiến trình con/alias/git, đối số/kết quả/log riêng | Cùng nhóm 43/43 pass; SkillNotes gọi git giả code 19; agy/codex/git.exe giữ đối số rỗng, Unicode, stderr/code. |
-| Timeout, lỗi sau fake, tham số, reparse | Cùng nhóm 43/43 pass; kiểm reparse trước Directory.Exists và từ cha xuống; chặn đường dẫn thiết bị Windows. |
-| Build | `dotnet build AITeam.sln --no-restore -m:1`: thành công, 0 warning, 0 error. Build riêng lần đầu mặc định trả 1 không chẩn đoán; dùng -m:1 thành công. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: chưa pass; Hub 673 pass/9 fail (File.Replace bị từ chối quyền); Core có lỗi git CreateFileMapping, mutex và timeout ngoài W1-01. |
-| Lệnh nhóm W1-01 | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW101HelperTests\|FullyQualifiedName~TeamScriptCodexReviewTests" --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: 43 pass, 0 fail/skip, 45 giây. Dấu \ trước ký tự phân cách trong bảng chỉ để hiển thị Markdown. |
-| File đổi/lý do, mã hóa | RealFile.cs: nhận reparse hỏng; TeamScript.cs: kiểm cây tùy chọn, shim exe + test QC; task: báo cáo. Kiểm byte: cả hai .cs và task có BOM EF BB BF. |
-Quyết định: biên dịch shim exe tạm bằng Add-Type, PATH chỉ chứa shim trong tiến trình sandbox; dùng junction đổi đích thành file do máy thiếu quyền symlink; không đổi test nghiệm thu.
-Chưa xác minh: toàn suite xanh trong môi trường đủ quyền; không chạy app/chụp ảnh; không chạy lệnh git trực tiếp, hệ thống tự commit/push nên chưa có commit được kiểm.
+| Sao chép byte/cây/tên, ghi đè, thiếu file, chặn đường dẫn | Đạt: nhóm W1-01 43/43 pass, 0 fail, 0 skip; test nghiệm thu không sửa. |
+| Sandbox, cây tùy chọn, cô lập/dọn | Đạt: cùng nhóm; 3 ca tools/scripts/templates từ chối junction hỏng/đích thành file, dữ liệu ngoài liên kết giữ nguyên. |
+| AST, lỗi cú pháp/hàm, Unicode/BOM/CRLF | Đạt: cùng nhóm 43/43 pass. |
+| Fake tiến trình con/alias/git, đối số/code/output/error/log | Đạt: SkillNotes gọi git giả code 19 giữ FakeCall; kiểm cả agy/codex/git và .exe, khác hoa thường, đối số rỗng/Unicode. |
+| Timeout, lỗi sau fake, tham số, reparse | Đạt: cùng nhóm; kiểm reparse trước Directory.Exists và từ cha xuống; timeout hữu hạn, lỗi vẫn giữ log. |
+| Build solution | `dotnet build AITeam.sln --no-restore -m:1`: thành công, 0 warning, 0 error, 29,44 giây. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: chưa đạt; Hub 673 pass/9 fail/0 skip; Core chưa có tổng kết, dừng bằng Ctrl+C khi tiến sát 3 phút, mã 1. |
+| Báo cáo và mã hóa | Đã cập nhật bảng bằng kết quả lượt này; RealFile.cs, TeamScript.cs, task và test nghiệm thu đều có BOM EF BB BF. |
+| Lệnh nhóm W1-01 | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceW101HelperTests\|FullyQualifiedName~TeamScriptCodexReviewTests" --blame-hang-timeout 2m --logger "console;verbosity=minimal"`: 43 pass/0 fail/0 skip, 23 giây; dấu \ trước ký tự phân cách chỉ để hiển thị bảng. |
+| File/lý do | Giữ phần sửa dang dở RealFile.cs và TeamScript.cs (shim PATH, kiểm reparse); lượt này bổ sung assertion alias tiến trình con và dữ liệu ngoài liên kết trong TeamScript.cs; task: báo cáo. |
+Quyết định: giữ shim exe tạm bằng Add-Type, PATH riêng của sandbox; dùng junction thay symlink cần đặc quyền; không sửa test nghiệm thu, không mở rộng phạm vi để sửa lỗi suite cũ.
+Chưa xác minh: toàn suite xanh; lỗi đã thấy ngoài W1-01 gồm File.Replace bị từ chối quyền, git CreateFileMapping Win32 error 5, timeout và assertion S106. Không chạy app/chụp ảnh/lệnh git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
 
 ## Review (Claude)
 <!-- Claude ghi kết quả sau triển khai. -->

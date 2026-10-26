@@ -424,7 +424,7 @@ public sealed class TeamScriptCodexReviewTests
     {
         using var sandbox = new TeamScript();
         var r = await sandbox.RunAsync("team.ps1", ["Get-NextJournalRun"], """
-            foreach ($name in @('AGY', 'codex.exe', 'git.exe')) {
+            foreach ($name in @('AGY', 'agy.exe', 'codex', 'CODEX.exe', 'git', 'GIT.exe')) {
                 $info = New-Object Diagnostics.ProcessStartInfo
                 $info.FileName = $name
                 $info.Arguments = '"hai từ" "" "a;b"'
@@ -446,7 +446,7 @@ public sealed class TeamScriptCodexReviewTests
         Assert.Equal(0, r.Process.Code);
         Assert.Contains("đầu ra", r.Process.Output);
         Assert.Contains("lỗi", r.Process.Error);
-        Assert.Equal(new[] { "agy", "codex", "git" }, r.Calls.Select(c => c.Name));
+        Assert.Equal(new[] { "agy", "agy", "codex", "codex", "git", "git" }, r.Calls.Select(c => c.Name));
         Assert.All(r.Calls, c =>
         {
             Assert.Equal(["hai từ", "", "a;b"], c.Arguments);
@@ -475,6 +475,8 @@ public sealed class TeamScriptCodexReviewTests
         {
             var ex = Assert.Throws<ArgumentException>(() => new TeamScript(source.Root));
             Assert.Contains("Đường dẫn bản sao không hợp lệ.", ex.Message);
+            if (fileLink) Assert.Equal("giữ nguyên", File.ReadAllText(target));
+            else Assert.False(Directory.Exists(target));
         }
         finally
         {
