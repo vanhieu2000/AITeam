@@ -63,6 +63,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V8-09 · Sửa đọc mã thoát `agy models` + Codex quá tải tự thử lại](V8-09-agy-models-va-codex-qua-tai.md) | A | `agent-a/V8-09-agy-models-va-codex-qua-tai` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 15:05 26/10/2026 |
 | [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 14:22 26/10/2026 |
 | [V8-10 · `team.ps1 hub -Restart` + giới hạn 45 phút cho `deputy`](V8-10-hub-restart-va-deputy-timeout.md) | B | `agent-a/V8-10-hub-restart-va-deputy-timeout` | 🔵 Chờ review · cổng KT ĐẠT · AI review BLOCKED (Claude review) |
+| [H7-02 Điều phối plan/prep/QC theo Map](H7-02-dieu-phoi-plan-prep-qc-theo-map.md) | B | `agent-b/H7-02-dieu-phoi-plan-prep-qc-theo-map` | ⬜ Chưa giao |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
