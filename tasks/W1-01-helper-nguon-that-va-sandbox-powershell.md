@@ -112,5 +112,9 @@ Chưa xác minh: toàn suite xanh; lỗi đã thấy ngoài W1-01 gồm File.Rep
 ## Review (Claude)
 <!-- Claude ghi kết quả sau triển khai. -->
 
+### Vòng 2 — ĐẠT (Claude)
+- Cổng KT ĐẠT: Hub 682, Core 680. QC Codex lượt 1 (2 required) đã sửa: shim PATH chặn agy/codex/git kể cả ProcessStartInfo (TeamScript.cs:296,335); kiểm reparse tools/scripts/templates trước Exists (dòng 62). Lượt Codex sửa bị gián đoạn 'model at capacity' — phần dở được commit giữ lại.
+
 ## Kết quả
+- Có `RealFile.Copy` (chép file thật giữ nguyên byte) và `TeamScript` (sandbox chạy hàm team.ps1 với agy/codex/git giả) trong `core.tests/Support` — task sau dùng lại, không tự dựng harness.
 <!-- Claude điền sau review đạt. -->
