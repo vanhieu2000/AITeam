@@ -53,4 +53,9 @@
 
 ## Review (Claude)
 
+### Vòng 1 — ĐẠT (Claude nghiệm thu, Codex code)
+- Cổng KT ĐẠT (V8-04 chạy lại 1 test V8-02 chập chờn). Đọc diff: Resolve-AgyModel thuần, ConvertFrom-AgyModels đọc output tab-separated thật, cache 1 giờ, agy models lỗi/quá 60s ⇒ giữ model cũ.
+- Optional (hàng chờ): xóa cache `.state/agy-models.json` khi agy báo invalid model / sau switch-account.
+
 ## Kết quả
+- Task ghi model không có trên tài khoản Antigravity đang đăng nhập ⇒ tự chọn model mạnh nhất đang có, ghi 1 dòng thông báo; đổi tài khoản không còn làm task chết.
