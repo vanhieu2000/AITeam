@@ -368,7 +368,33 @@ function Select-FreeAgent($r, [string]$suggested) {
     }
 }
 
+# /// Trả ngưỡng từ cấu hình hợp nhất cfg.review.maxRounds; thiếu/không nguyên dương => 3.
+function Get-ReviewRoundLimit($cfg) {
+    throw [NotImplementedException]::new() # TODO(agent)
+}
+
+# /// Chỉ gọi CLI V6-01 review-rounds --task-file <taskFile> --logs <r.Logs> --task <taskId>.
+# /// Dùng Get-AITeamExe, truyền đối số rời, không đếm lại bằng PowerShell.
+# /// Chỉ nhận mã 0 + đúng một số nguyên không âm; thiếu CLI/lỗi/output sai =>
+# /// ném lỗi "Không xác định được số vòng review; dừng giao lại."; không coi là 0.
+function Get-ReviewRoundCount($r, [string]$taskFile, [string]$taskId) {
+    throw [NotImplementedException]::new() # TODO(agent)
+}
+
+# /// Trả false dưới ngưỡng. Đạt ngưỡng => tái dùng decision pending cùng project/task
+# /// (đối chiếu title theo tiền tố task vì decision cũ có task=null), hoặc gọi
+# /// Invoke-ApprovalRequest -Kind decision qua biến script hiện có, khôi phục biến sau gọi.
+# /// Title: "Cần anh duyệt · <Task> · quá N vòng review".
+# /// Detail: dự án, task, "Tổng/ngưỡng: N/M", "giao tiếp", "Claude tự sửa", "bỏ task".
+# /// Ghi đúng "⏸ Chờ anh quyết · quá N vòng review", trả true; lỗi CLI cũng dừng,
+# /// báo đúng câu lỗi ở Get-ReviewRoundCount, không tạo decision sai, không chạy agent.
+# /// Không tự thực hiện lựa chọn. Lỗi ghi approval/bảng phải báo ra, không nuốt.
+function Stop-ReviewReassignment($r, [string]$taskFile, [string]$taskId, $cfg) {
+    throw [NotImplementedException]::new() # TODO(agent)
+}
+
 function Invoke-Assign {
+    # TODO(agent): kiểm mã task trước Find-TaskFile; -Resume gọi chốt trước mọi tác dụng phụ.
     $cfg = Get-Config
     $r = Resolve-Project $Project
     if (-not $Task) { throw "Thiếu -Task" }
@@ -599,6 +625,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         switch ($rv.Code) {
             0 { $boardText = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS" }
             1 {
+                # TODO(agent): gọi chốt với task trong $work và log AI vừa ghi; true => return trước điều kiện retry.
                 if (-not $script:ReviewRetried -and $rv.Json -and $rv.Json.feedback) {
                     $script:ReviewRetried = $true; $script:VerifyRetried = $false
                     Say "AI review CẦN SỬA → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi của reviewer." Yellow
