@@ -35,6 +35,18 @@
 
 ## Báo cáo của agent
 
+| Tiêu chí | Lệnh và bằng chứng thật |
+|---|---|
+| Restart đúng Hub, bỏ worktree khác; chưa có Hub thì chạy mới | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceV810HubRestartTests" --blame-hang-timeout 2m`: 3 pass, 0 fail, 0 skip (2 ca Hub, 1 ca deputy). |
+| Deputy quá hạn: dừng cây, nhật ký, bỏ khóa | Test trên pass; giới hạn mặc định 2700 giây, test truyền 1 giây; kiểm PID + `/T /F`, hai tiến trình giả đã dừng, nhật ký giữ BOM/nội dung cũ. |
+| Build 0 warning | `dotnet build AITeam.sln -m:1 --nologo -v minimal`: thành công, 0 lỗi nhưng 8 warning NU1900 vì không truy cập api.nuget.org; CHƯA ĐẠT 0 warning. |
+| Test toàn solution | `dotnet test AITeam.sln --no-restore -m:1 --blame-hang-timeout 2m --nologo -v minimal`: Hub 712 pass/9 fail/0 skip; Core chưa có tổng kết, đã dừng khi quá 3 phút; lỗi File.Replace bị từ chối, Git CreateFileMapping error 5 và test hook ngoài phạm vi. |
+| Cổng kiểm tra | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: exit 1, kiểm tra tĩnh ĐẠT, kịch bản Git clone bị sandbox chặn CreateFileMapping error 5. |
+| BOM/cú pháp | Kiểm byte: team.ps1 và file test có BOM UTF-8; PowerShell Parser: 0 lỗi. |
+- File đổi: `team.ps1` (restart, chờ dừng tối đa 10 giây/chờ cổng 90 giây, timeout deputy); `core.tests/AcceptanceV810HubRestartTests.cs` (3 ca mới); phiếu này (báo cáo).
+- Tự quyết: cổng còn bận sau dừng thì báo lỗi; fake taskkill kiểm đúng lệnh rồi dừng tiến trình giả, vì taskkill thật bị sandbox từ chối.
+- Chưa xác minh: taskkill /T thật ngoài sandbox, Hub/Codex thật; không chạy app/chụp ảnh theo phân công; không sửa lỗi ngoài phạm vi.
+- Không chạy git trực tiếp; hệ thống chịu trách nhiệm commit/push, chưa có commit được kiểm.
 ## Review (Claude)
 
 ## Kết quả
