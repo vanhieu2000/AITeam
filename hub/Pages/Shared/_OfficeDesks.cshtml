@@ -85,28 +85,7 @@
                 }
                 @if (Model.ControlsEnabled && d.Key is "A" or "B" or "C")
                 {
-                    var assignable = Model.Assignable.Where(t => string.Equals(t.Agent, d.Key, StringComparison.OrdinalIgnoreCase)).ToList();
-                    var resumable = Model.Resumable.Where(t => string.Equals(t.Agent, d.Key, StringComparison.OrdinalIgnoreCase)).ToList();
-                    <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Giao task đã chọn?">
-                        <select class="inp" name="target" disabled="@(assignable.Count == 0)">
-                            @foreach (var task in assignable)
-                            {
-                                <option value="@task.Project/@task.Id">@task.Project · @task.Id · @task.Title</option>
-                            }
-                            @if (assignable.Count == 0) { <option>Không có task có thể giao</option> }
-                        </select>
-                        <button class="btn sm" type="submit" name="command" value="@(d.Key == "C" ? "AssignCodex" : "Assign")" disabled="@(assignable.Count == 0)">Giao task</button>
-                    </form>
-                    <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Giao lại task kèm góp ý?" hx-include="#office-feedback">
-                        <select class="inp" name="target" disabled="@(resumable.Count == 0)">
-                            @foreach (var task in resumable)
-                            {
-                                <option value="@task.Project/@task.Id">@task.Project · @task.Id · @task.Title</option>
-                            }
-                            @if (resumable.Count == 0) { <option>Không có task có thể giao lại</option> }
-                        </select>
-                        <button class="btn sm" type="submit" name="command" value="Resume" disabled="@(resumable.Count == 0)">Giao lại</button>
-                    </form>
+                    <partial name="_OfficeControl" model="Model" view-data="@(new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData) { ["OfficeDeskKey"] = d.Key })" />
                 }
                 @if (d.Task is { } tf && !string.IsNullOrEmpty(tf.Project))
                 {

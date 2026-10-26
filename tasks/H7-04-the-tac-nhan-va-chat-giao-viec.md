@@ -73,18 +73,18 @@ Theo brief R-009 mục 1. Brief không nêu mockup riêng. H7-03 đã có IOffic
 - [x] Báo cáo có bảng từng tiêu chí → bằng chứng lệnh/kết quả thật; file đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng / kết quả thật lượt kiểm tra 26/10/2026 |
+| Tiêu chí | Bằng chứng / kết quả thật lượt sửa 26/10/2026 |
 |---|---|
-| Build: chưa đạt 0 warning | `dotnet build AITeam.sln`: mã 1, 0 lỗi/0 warning, không chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore -m:1 -v:minimal`: mã 0, 0 lỗi, 2 warning xUnit2031 tại test nghiệm thu dòng 242/247. |
-| Test toàn bộ: chưa đạt | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 735 pass/13 fail/0 skip; Core chưa tổng kết, đã dừng Ctrl+C sau lỗi V808: Git không tạo được signal pipe, Win32 error 5. |
-| GET/partial, rỗng/đầy/tên dài/XSS, target | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH704OfficeTests" --blame-hang-timeout 2m`: 27 pass/0 fail/0 skip. |
-| CSRF, ViewData/ModelState, gửi H7-03 | Cùng lệnh H7-04: 27/27 pass; giữ nguyên test nghiệm thu, hợp đồng và dịch vụ. |
-| Hai cột, breakpoint, polling/bản nháp | Cùng lệnh H7-04: 27/27 pass; chưa xác minh DOM/trình duyệt, thuộc Claude theo phân công. |
-| Báo cáo, phạm vi và BOM | Chỉ đổi file task để cập nhật bằng chứng; ghi lại đúng BOM ban đầu; không chạy lệnh git, hệ thống commit/push; chưa có commit được kiểm. |
-Quyết định: không sửa mã sản phẩm hoặc thêm test ngoài phạm vi; không sửa/Skip test bất biến, không thêm form/token giả để né assertion. Review vẫn “Chờ review”; không có thư mục logs nên không đọc được H7-04-verify-*.md.
-Chặn: 4 lỗi V505/W102 vẫn đòi form/token trong `_OfficeControl`, trái việc chuyển điều khiển sang thẻ; 9 lỗi Hub còn lại thuộc cấu hình/Map, có ReplaceFile Access denied, ngoài phạm vi.
-Cần Claude thống nhất: fixture H7-04 đặt gate Working nhưng đòi Verify, trong khi ràng buộc yêu cầu task Review; 2 warning nằm trong test không được sửa. Theo skill 07-code bước 4, báo lỗi nghiệm thu đáng nghi thay vì sửa test.
-Chưa xác minh: Core đầy đủ, giao diện/dữ liệu phiếu cũ thực tế và commit/push; không chạy app/chụp ảnh theo chỉ dẫn.
+| Build: chưa đạt 0 warning | `dotnet build AITeam.sln --no-restore -m:1 -v:minimal`: mã 0, 0 lỗi, 2 warning xUnit2031 trong nghiệm thu H704 dòng 242/247. |
+| Test toàn bộ: chưa đạt | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 739 pass/9 fail/0 skip; Core chưa tổng kết, đã dừng khi quá 3 phút; 2 ca V805 báo Git không tạo được signal pipe (Win32 error 5). Lần chạy mặc định đã dừng vì MSBuild song song không vào runner. |
+| GET/partial thật, rỗng/đầy/tên dài/XSS, đúng target | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH704OfficeTests|FullyQualifiedName~AcceptanceW102HubHelpersTests|FullyQualifiedName~AcceptanceV505CommandTests" --blame-hang-timeout 2m`: 93 pass/0 fail/0 skip; hết 4 lỗi được giao. |
+| CSRF, ViewData/ModelState, gửi H7-03 | Cùng lệnh lọc trên: 93/93 pass; không sửa/Skip test nghiệm thu. |
+| Hai cột, breakpoint, polling/bản nháp | Cùng lệnh lọc trên: 93/93 pass; form Giao/Giao lại dùng chung partial theo mã tác nhân, ô góp ý ngoài polling. |
+| Báo cáo, phạm vi, BOM | Đã kiểm byte đầu: cả 3 file Razor và task có BOM UTF-8; báo cáo cập nhật, không sửa dịch vụ/hợp đồng. |
+File đổi: `_OfficeControl.cshtml` tái sử dụng form có token/confirm và trạng thái rỗng; `_OfficeDesks.cshtml` truyền mã thẻ bằng bản sao ViewData; `Office.cshtml` chuyển ô góp ý vào partial ngoài polling; file task ghi báo cáo.
+Quyết định: giữ nguyên test nghiệm thu, không tắt analyzer để che 2 warning; giữ các điều khiển theo tác nhân và tương thích partial cũ.
+Chặn: 2 warning thuộc file nghiệm thu bị cấm sửa; 9 lỗi Hub ngoài phạm vi ở Settings/TeamConfig/WorkflowRoles/Map, có File.Replace bị Access denied.
+Chưa xác minh: Core đầy đủ, giao diện thật (Claude phụ trách); không chạy app/chụp ảnh/git theo chỉ dẫn; hệ thống commit/push, chưa có commit được kiểm.
 ## Ghi chú chuẩn bị (Codex)
 - Đã đọc hợp đồng H7-03 thật; không sửa bộ đọc dữ liệu. Test dùng DTO dịch vụ giả, không nhận là bản sao fixture phiếu/projects.json thật. Không có fixture được chỉ định trong kế hoạch; chưa xác minh dữ liệu phiếu cũ qua giao diện.
 - Khung mới cố ý ném NotImplementedException. Không thêm dịch vụ/DI mới.

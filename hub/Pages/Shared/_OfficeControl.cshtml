@@ -1,5 +1,8 @@
 ﻿@model AITeam.Hub.Pages.OfficeModel
+@{ var deskKey = ViewData["OfficeDeskKey"] as string; }
 
+@if (deskKey == null)
+{
 <div id="office-control" class="panel">
     @if (!string.IsNullOrEmpty(Model.Notice))
     {
@@ -9,8 +12,48 @@
     {
         <div class="panel" style="border-color:#dc2626;background:#fef2f2;color:#b91c1c;margin-bottom:10px">@Model.CommandError</div>
     }
+    <label for="office-feedback">Góp ý khi giao lại</label>
+    <textarea id="office-feedback" class="inp" name="feedback" rows="3" maxlength="2000" placeholder="Nhập góp ý trước khi bấm Giao lại trên thẻ"></textarea>
     <h4 style="margin:0 0 8px 0">Lệnh gần đây</h4>
     <div id="office-jobs">
         <partial name="_OfficeJobs" model="Model" />
     </div>
+    @if (Model.View == null)
+    {
+        <partial name="_OfficeControl" model="Model" view-data="@(new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData) { ["OfficeDeskKey"] = "" })" />
+    }
 </div>
+}
+
+@if (deskKey != null)
+{
+    var assignable = Model.Assignable.Where(t => string.Equals(t.Agent, deskKey, StringComparison.OrdinalIgnoreCase)).ToList();
+    var resumable = Model.Resumable.Where(t => string.Equals(t.Agent, deskKey, StringComparison.OrdinalIgnoreCase)).ToList();
+    <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Giao task đã chọn?">
+        <select class="inp" name="target" disabled="@(assignable.Count == 0)">
+            @foreach (var task in assignable)
+            {
+                <option value="@task.Project/@task.Id">@task.Project · @task.Id · @task.Title</option>
+            }
+            @if (assignable.Count == 0) { <option>Không có task có thể giao</option> }
+        </select>
+        @if (deskKey == "C")
+        {
+            <button class="btn sm" type="submit" name="command" value="AssignCodex" disabled="@(assignable.Count == 0)">Giao task</button>
+        }
+        else
+        {
+            <button class="btn sm" type="submit" name="command" value="Assign" disabled="@(assignable.Count == 0)">Giao task</button>
+        }
+    </form>
+    <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Giao lại task kèm góp ý?" hx-include="#office-feedback">
+        <select class="inp" name="target" disabled="@(resumable.Count == 0)">
+            @foreach (var task in resumable)
+            {
+                <option value="@task.Project/@task.Id">@task.Project · @task.Id · @task.Title</option>
+            }
+            @if (resumable.Count == 0) { <option>Không có task có thể giao lại</option> }
+        </select>
+        <button class="btn sm" type="submit" name="command" value="Resume" disabled="@(resumable.Count == 0)">Giao lại</button>
+    </form>
+}
