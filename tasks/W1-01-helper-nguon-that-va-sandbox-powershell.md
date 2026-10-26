@@ -97,13 +97,13 @@ Quyết định: thêm sourceRoot tùy chọn để kiểm nguồn thiếu/repar
 <!-- Antigravity điền sau khi triển khai; không nhận đã pass khi thân hàm còn TODO. -->
 | Tiêu chí | Bằng chứng (lệnh và kết quả thật) |
 |---|---|
-| Sao chép và bảo vệ đường dẫn | dotnet test: 18/18 ca pass, giữ byte/cây, chặn traversal/ADS/junction/absolute. |
+| Sao chép và bảo vệ đường dẫn | dotnet test: 21/21 ca pass (thêm 3 ca chặn drive-relative / root-relative qua Path.IsPathFullyQualified). |
 | Sandbox và AST | dotnet test: 7/7 ca pass, nạp đúng hàm chọn, giữ BOM/Unicode/CRLF, chặn dispatcher. |
-| Fake và timeout | dotnet test: 8/8 ca pass, fake agy/codex/git ghi log độc lập, timeout dừng tiến trình. |
-| Build/test | dotnet build AITeam.sln: 0 warning/0 error; dotnet test AITeam.sln: 1323 pass, 0 fail. |
+| Fake và timeout | dotnet test: 10/10 ca pass (thêm 2 ca: giữ chuỗi rỗng và fake ghi đè script scope khi trùng tên hàm). |
+| Build/test | dotnet build AITeam.sln: 0 warning/0 error; dotnet test AITeam.sln: 1328 pass, 0 fail. |
 
-File đã đổi và lý do: core.tests/Support/RealFile.cs (Copy nguồn thật, bảo vệ đường dẫn); core.tests/Support/TeamScript.cs (sandbox, AST, fake runner).
-Quyết định tự đưa ra: dùng AST parser của PowerShell 5.1 trong harness runner để nạp đúng FunctionDefinitionAst và bẫy fake an toàn.
+File đã đổi và lý do: core.tests/Support/RealFile.cs (Copy nguồn thật, bảo vệ đường dẫn); core.tests/Support/TeamScript.cs (sandbox, AST, fake runner, sửa 3 điểm review của Codex).
+Quyết định tự đưa ra: cài fake ở cả script: và global: scope để chống che khuất; duyệt mảng không qua truthiness; dùng Path.IsPathFullyQualified.
 Điều chưa chắc: sandbox chỉ bẫy lệnh theo tên trong script test tin cậy, không cách ly process gọi exe bằng đường dẫn tuyệt đối.
 
 ## Review (Claude)
