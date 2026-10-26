@@ -95,6 +95,8 @@ Sự kiện cần ghi:
 - 18:52 26/10/2026: Codex quản lý phụ giao tiếp W1-03 bằng assign -Dev codex -Resume sau khi lượt H7-02 kết thúc; chạy nền PID 11172, log W1-03.deputy-20261026-185137.out.txt/.err.txt. Không prep lại; vòng sau kiểm tra cổng KT/QC, W1-04 tiếp tục chờ.
 
 - 2026-10-26 19:44:16 +07:00 | W1-03 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:W1-03:Verify:1 -->
+- 19:47 26/10/2026: W1-03 verify-1 KHÔNG ĐẠT lúc 19:44 (build 0 warning; Hub 721 pass; Core còn lỗi sau thử lại); lệnh nền PID 11172 tự giao sửa tiếp lúc 19:45. Không gọi thêm assign/prep/verify/QC; W1-04 chờ W1-03; vòng sau xem kết quả.
+
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-011`, rồi điền:
 
