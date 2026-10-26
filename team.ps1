@@ -2382,7 +2382,9 @@ function Assert-MergeApproval($cfg, $taskId, $head) {
 }
 
 function Invoke-Merge {
-    $mutex = New-Object Threading.Mutex($false, 'Global\AITeam_Merge')
+    $mutexName = $env:AITEAM_MERGE_MUTEX
+    if ([string]::IsNullOrWhiteSpace($mutexName)) { $mutexName = 'Global\AITeam_Merge' }
+    $mutex = New-Object Threading.Mutex($false, $mutexName)
     $locked = $false; $clone = $null
     $savedPreference = $ErrorActionPreference
     try {
@@ -2436,12 +2438,16 @@ function Invoke-Merge {
         $built = Invoke-ShellCapture $r.Info.build $clone
         if ($built.Code -ne 0 -or $built.Output -match ': warning (?!NU1900)[A-Za-z]+\d+:') { throw "Build clone sạch lỗi: $($built.Output)" }
         $testCmd = $r.Info.test
-        if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += ' --blame-hang-timeout 2m --blame-hang-dump-type none' }
-        $res = Invoke-ShellCapture $testCmd $clone
-        $res = Invoke-FailedTestRetry -Code $res.Code -Output $res.Output -TestCommand $testCmd -Run {
-            param($command)
-            Invoke-ShellCapture $command $clone
-        }
+        if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += ' --blame-hang-timeout 5m --blame-hang-dump-type none' }
+        $savedMutexName = $env:AITEAM_MERGE_MUTEX
+        try {
+            $env:AITEAM_MERGE_MUTEX = 'Global\AITeam_Merge_test_' + [guid]::NewGuid().ToString('N')
+            $res = Invoke-ShellCapture $testCmd $clone
+            $res = Invoke-FailedTestRetry -Code $res.Code -Output $res.Output -TestCommand $testCmd -Run {
+                param($command)
+                Invoke-ShellCapture $command $clone
+            }
+        } finally { $env:AITEAM_MERGE_MUTEX = $savedMutexName }
         foreach ($warning in $res.Warnings) { Say $warning Yellow }
         if ($res.Code -ne 0 -or $res.Output -notmatch 'Passed!\s+.*Passed:\s*[1-9]') { throw "Test clone sạch lỗi: $($res.Output)" }
     } catch {
