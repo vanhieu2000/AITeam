@@ -69,7 +69,18 @@
 - [ ] `powershell -NoProfile -File tools/test-verify.ps1`: pass; không yêu cầu chạy app hay chụp ảnh.
 
 ## Báo cáo của agent
-<!-- Agent điền tối đa 15 dòng: bảng từng tiêu chí → lệnh + số pass/fail/skip/warning thật, file đổi/lý do, quyết định tự đưa ra, điều chưa xác minh. -->
+| Tiêu chí | Bằng chứng / kết quả thật |
+|---|---|
+| Ba helper, Resume, giới hạn | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceV602ReviewGateTests --blame-hang-timeout 2m -m:1`: 21 pass, 3 fail, 0 skip / 24. |
+| Log AI, feedback/retry, lỗi CLI/mã task | Lỗi CLI/mã task đạt; 2 ca Fresh_ai_log thất bại: test chạy switch riêng nhưng không gán `$work`, `$taskFile` để dựng đường dẫn theo đặc tả; không sửa test/không thêm mã nhận diện test. |
+| Kịch bản 20, decision/bảng thật | Có sẵn trong `tools/test-verify.ps1`, giữ nguyên; ca repo tạm thất bại ở git push: `couldn't create signal pipe, Win32 error 5`, trước khi gọi hành vi cần thử. |
+| Giữ kịch bản/test bất biến | Không sửa test, fixture hay script verify; chỉ đổi `team.ps1` và báo cáo task. |
+| Build | `dotnet build AITeam.sln` mã 1 dù 0 lỗi/0 warning; chạy lại `dotnet build AITeam.sln --no-restore -m:1`: đạt, 0 lỗi, 0 warning. |
+| Test toàn solution | Đã chạy `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`; chưa có kết quả, đã gửi Ctrl+C; lần `-m:1` đã hủy (mã 1): tổng kết tạm 644 pass, 9 fail, 0 skip/653; 12 lỗi, 2 warning (có MSB5021 do hủy); chưa chạy hết Core. |
+| Script verify | `powershell -NoProfile -File tools/test-verify.ps1`: mã 1 tại kịch bản 1, git clone repo tạm bị Win32 error 5; hai kiểm tra tĩnh đầu đạt. |
+| File / mã hóa | `team.ps1`: nối chốt, gọi CLI bằng đối số rời tương thích PS 5.1, tái dùng decision, khôi phục biến bằng finally; parser 0 lỗi; BOM/CRLF giữ nguyên. |
+| Quyết định / giới hạn | Giữ đường dẫn task trong worktree đúng đặc tả; dừng sửa khi phát hiện test nghi sai theo AGENTS.md; chưa đối chiếu log thật, chưa nghiệm thu toàn bộ. |
+| Bàn giao | Không chạy lệnh git trực tiếp; các lệnh git phát sinh từ test ở thư mục tạm; hệ thống tự commit/push, chưa có commit được kiểm. MCP aiteam không khả dụng. |
 
 ## Điều chưa chắc khi chuẩn bị
 - `agy models` đã chạy nhưng thất bại do chưa đăng nhập/mạng bị chặn; chưa xác minh model có trong danh sách tài khoản. Model ghi theo kế hoạch được duyệt, không tự thay mã.
