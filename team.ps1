@@ -1842,11 +1842,23 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
             $lines = $text -split "`r?`n"
             $idx = -1
             for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|' -and $lines[$i] -match ("(\[|\(|\|\s*)" + [regex]::Escape($taskId) + "\b")) { $idx = $i; break } }
-            if ($idx -lt 0) { Say "  (Bảng việc chưa có dòng $taskId — không cập nhật.)" Yellow; return }
+            $added = $idx -lt 0
+            if ($added) {
+                $taskTitle = [regex]::Match($reqText, '(?m)^#\s+(.+?)\r?$').Groups[1].Value
+                $taskTitle = ($taskTitle -replace ('^' + [regex]::Escape($taskId) + '\b\s*'), '').Trim()
+                $agentId = [regex]::Match($reqText, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
+                $taskBranch = [regex]::Match($reqText, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
+                $idx = 0
+                for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|') { $idx = $i + 1 } }
+                $list = New-Object 'System.Collections.Generic.List[string]'
+                $list.AddRange([string[]]$lines)
+                $list.Insert($idx, ('| [{0} {1}]({2}) | {3} | `{4}` | {5} |' -f $taskId, $taskTitle, $journalTask, $agentId, $taskBranch, $status))
+                $lines = $list.ToArray()
+            }
             $cells = $lines[$idx].TrimEnd().TrimEnd('|') -split '\|'
             $cells[$cells.Count - 1] = " $status "
             $newLine = ($cells -join '|') + '|'
-            $boardChanged = ($newLine -ne $lines[$idx])
+            $boardChanged = $added -or ($newLine -ne $lines[$idx])
             if ($boardChanged) {
                 $lines[$idx] = $newLine
                 $nl = if ($text -match "`r`n") { "`r`n" } else { "`n" }
@@ -2333,6 +2345,20 @@ function Invoke-Merge {
     $ErrorActionPreference = $eap
     $approval = Assert-MergeApproval $cfg (Get-TaskId $tf) $head
     $ErrorActionPreference = "Continue"
+    Invoke-RepoTransaction -RepoPath $r.Path -Action {
+        $dirty = @(git -C $r.Path -c core.quotepath=false status --porcelain --untracked-files=all)
+        if ($LASTEXITCODE -ne 0) { throw 'Không đọc được trạng thái main.' }
+        $other = @($dirty | Where-Object { $_ -cnotmatch '^.. (requests/R-[^/]+\.md|tasks/README\.md|metrics/runs/.+)$' })
+        if ((git -C $r.Path branch --show-current) -eq 'main' -and $dirty.Count -gt 0 -and $other.Count -eq 0) {
+            $files = @($dirty | ForEach-Object { $_.Substring(3) })
+            git -C $r.Path add -- $files
+            if ($LASTEXITCODE -ne 0) { throw 'Không thêm được nhật ký / bảng / số đo.' }
+            git -C $r.Path commit -q -m 'Nhật ký / bảng / số đo (tự commit trước merge)' -- $files
+            if ($LASTEXITCODE -ne 0) { throw 'Không tự commit được nhật ký / bảng / số đo.' }
+            git -C $r.Path push -q origin main 2>$null
+            if ($LASTEXITCODE -ne 0) { throw 'Không push được nhật ký / bảng / số đo.' }
+        }
+    }
     $dirty = @(git -C $r.Path status --porcelain)
     if ((git -C $r.Path branch --show-current) -ne 'main' -or $dirty.Count -ne 0) { throw 'Main local chưa sạch; không merge.' }
     git -C $r.Path pull -q --ff-only 2>$null
