@@ -57,7 +57,7 @@ public static class WorkProgressParser
     /// Sai số cột, task, lượt hoặc thao tác: bỏ dòng; sai/thiếu giờ: vẫn giữ sự kiện với Time=null.
     /// Giờ ISO có offset giữ nguyên; "HH:mm dd/MM/yyyy" dùng +07:00; chỉ HH:mm dùng ngày receivedAt
     /// tại +07:00, không có receivedAt thì null. Actor=null nếu nguồn không chỉ rõ người.
-    /// ĐẠT/PASS/PASSED (nguyên từ đầu kết quả) → Passed; CẦN SỬA/FAIL/FAILED/LỖI → Failed;
+    /// ĐẠT/PASS/PASSED/XONG (nguyên từ đầu kết quả) → Passed; KHÔNG ĐẠT/CẦN SỬA/FAIL/FAILED/LỖI → Failed;
     /// BLOCKED → Blocked; còn lại Unknown. Không coi "KHÔNG ĐẠT" là Passed.
     /// Loại dòng trùng hoàn toàn sau Trim; giữ thứ tự nguồn. Không đọc marker như lệnh hay HTML.
     /// </summary>
@@ -251,9 +251,9 @@ public static class WorkProgressParser
 
     private static WorkOutcome ParseOutcome(string text)
     {
-        if (HasPrefix(text, "CẦN SỬA") || HasPrefix(text, "FAILED") || HasPrefix(text, "FAIL") || HasPrefix(text, "LỖI")) return WorkOutcome.Failed;
+        if (HasPrefix(text, "KHÔNG ĐẠT") || HasPrefix(text, "CẦN SỬA") || HasPrefix(text, "FAILED") || HasPrefix(text, "FAIL") || HasPrefix(text, "LỖI")) return WorkOutcome.Failed;
         if (HasPrefix(text, "BLOCKED")) return WorkOutcome.Blocked;
-        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT")) return WorkOutcome.Passed;
+        if (HasPrefix(text, "PASSED") || HasPrefix(text, "PASS") || HasPrefix(text, "ĐẠT") || HasPrefix(text, "XONG")) return WorkOutcome.Passed;
         return WorkOutcome.Unknown;
     }
 
