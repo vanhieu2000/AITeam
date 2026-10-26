@@ -49,4 +49,8 @@
 - Không chạy git trực tiếp; hệ thống chịu trách nhiệm commit/push, chưa có commit được kiểm.
 ## Review (Claude)
 
+### Vòng 1 — ĐẠT (Claude)
+- Cổng KT ĐẠT. Diff: -Restart chỉ dừng tiến trình trong <AITeam>\hub\bin; deputy quá 45 phút ⇒ taskkill cây + ghi nhật ký.
+
 ## Kết quả
+- `team.ps1 hub -Restart` chạy lại Hub bản mới sau merge; lượt quản lý Codex không treo quá 45 phút.
