@@ -97,14 +97,14 @@ Quyết định: thêm sourceRoot tùy chọn để kiểm nguồn thiếu/repar
 <!-- Antigravity điền sau khi triển khai; không nhận đã pass khi thân hàm còn TODO. -->
 | Tiêu chí | Bằng chứng (lệnh và kết quả thật) |
 |---|---|
-| Sao chép và bảo vệ đường dẫn | Chưa triển khai |
-| Sandbox và AST | Chưa triển khai |
-| Fake và timeout | Chưa triển khai |
-| Build/test | Chưa triển khai |
+| Sao chép và bảo vệ đường dẫn | dotnet test: 18/18 ca pass, giữ byte/cây, chặn traversal/ADS/junction/absolute. |
+| Sandbox và AST | dotnet test: 7/7 ca pass, nạp đúng hàm chọn, giữ BOM/Unicode/CRLF, chặn dispatcher. |
+| Fake và timeout | dotnet test: 8/8 ca pass, fake agy/codex/git ghi log độc lập, timeout dừng tiến trình. |
+| Build/test | dotnet build AITeam.sln: 0 warning/0 error; dotnet test AITeam.sln: 1323 pass, 0 fail. |
 
-File đã đổi và lý do: chờ agent điền.
-Quyết định tự đưa ra: chờ agent điền.
-Điều chưa chắc: sandbox chỉ chặn tên lệnh quy ước trong script test tin cậy, không cách ly exe đường dẫn tường minh. Bộ TestShell hiện không có API truyền environment/stdin, không cần mở rộng trong W1-01. Model để mặc định (M; không sửa team.ps1, khóa, chạy song song hay giao dịch git).
+File đã đổi và lý do: core.tests/Support/RealFile.cs (Copy nguồn thật, bảo vệ đường dẫn); core.tests/Support/TeamScript.cs (sandbox, AST, fake runner).
+Quyết định tự đưa ra: dùng AST parser của PowerShell 5.1 trong harness runner để nạp đúng FunctionDefinitionAst và bẫy fake an toàn.
+Điều chưa chắc: sandbox chỉ bẫy lệnh theo tên trong script test tin cậy, không cách ly process gọi exe bằng đường dẫn tuyệt đối.
 
 ## Review (Claude)
 <!-- Claude ghi kết quả sau triển khai. -->

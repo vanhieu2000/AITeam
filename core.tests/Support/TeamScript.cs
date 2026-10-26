@@ -1,4 +1,7 @@
-﻿namespace AITeam.Core.Tests.Support;
+﻿using System.Text;
+using System.Text.Json;
+
+namespace AITeam.Core.Tests.Support;
 
 /// <summary>Đáp ứng giả cho agy/codex/git (không phân biệt hoa thường); mặc định code 0, output/error rỗng.</summary>
 public sealed record FakeCommand(string Name, int Code = 0, string Output = "", string Error = "");
@@ -12,6 +15,10 @@ public sealed record TeamScriptResult(TestShell.Result Process, IReadOnlyList<Fa
 /// <summary>Sandbox cho script tin cậy trong test; không phải bộ cách ly mã PowerShell độc hại hay đường dẫn exe tường minh.</summary>
 public sealed class TeamScript : IDisposable
 {
+    private static readonly string[] AllowedFakes = ["agy", "codex", "git"];
+    private readonly TempRepo _repo;
+    private bool _disposed;
+
     /// <summary>
     /// Tạo TempRepo(git: false), chép team.ps1 bắt buộc và toàn bộ tools/, scripts/, templates/
     /// nếu có, giữ cây/tên/byte. sourceRoot null dùng cùng cách tìm gốc với RealFile;
@@ -22,13 +29,85 @@ public sealed class TeamScript : IDisposable
     /// </summary>
     public TeamScript(string? sourceRoot = null)
     {
-        throw new NotImplementedException(); // TODO(agent)
+        _repo = new TempRepo(git: false);
+        try
+        {
+            string srcRoot;
+            if (sourceRoot == null)
+            {
+                srcRoot = RealFile.FindRepoRoot();
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(sourceRoot) || !Path.IsPathRooted(sourceRoot))
+                    throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+                srcRoot = Path.GetFullPath(sourceRoot);
+            }
+
+            if (RealFile.HasReparsePoint(srcRoot) || RealFile.HasReparsePoint(_repo.Root))
+                throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+
+            var teamSrc = Path.Combine(srcRoot, "team.ps1");
+            if (RealFile.HasReparsePoint(teamSrc))
+                throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+
+            if (!File.Exists(teamSrc))
+                throw new FileNotFoundException("Không tìm thấy file nguồn.", teamSrc);
+
+            File.Copy(teamSrc, Path.Combine(_repo.Root, "team.ps1"), overwrite: true);
+
+            foreach (var optDir in new[] { "tools", "scripts", "templates" })
+            {
+                var fullOptSrc = Path.Combine(srcRoot, optDir);
+                if (Directory.Exists(fullOptSrc))
+                {
+                    CopyDirectorySafe(fullOptSrc, Path.Combine(_repo.Root, optDir));
+                }
+            }
+        }
+        catch
+        {
+            _repo.Dispose();
+            throw;
+        }
+    }
+
+    private static void CopyDirectorySafe(string sourceDir, string targetDir)
+    {
+        if (RealFile.HasReparsePoint(sourceDir))
+            throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+
+        Directory.CreateDirectory(targetDir);
+
+        foreach (var dir in Directory.EnumerateDirectories(sourceDir))
+        {
+            var fa = File.GetAttributes(dir);
+            if ((fa & FileAttributes.ReparsePoint) != 0)
+                throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+
+            var subTarget = Path.Combine(targetDir, Path.GetFileName(dir));
+            CopyDirectorySafe(dir, subTarget);
+        }
+
+        foreach (var file in Directory.EnumerateFiles(sourceDir))
+        {
+            var fa = File.GetAttributes(file);
+            if ((fa & FileAttributes.ReparsePoint) != 0)
+                throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+
+            var destFile = Path.Combine(targetDir, Path.GetFileName(file));
+            File.Copy(file, destFile, overwrite: true);
+        }
     }
 
     /// <summary>Đường dẫn tuyệt đối của sandbox riêng; không phải nguồn thật.</summary>
     public string Root
     {
-        get { throw new NotImplementedException(); } // TODO(agent)
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _repo.Root;
+        }
     }
 
     /// <summary>
@@ -49,15 +128,217 @@ public sealed class TeamScript : IDisposable
     /// ArgumentException("Tham số sandbox không hợp lệ."). Quá hạn: TimeoutException
     /// từ TestShell, dừng cây tiến trình. File thiếu: FileNotFoundException như RealFile.
     /// </summary>
-    public Task<TeamScriptResult> RunAsync(string relativeScript, string[] functionNames,
+    public async Task<TeamScriptResult> RunAsync(string relativeScript, string[] functionNames,
         string script, FakeCommand[]? fakes = null, int timeoutSeconds = 60)
     {
-        throw new NotImplementedException(); // TODO(agent)
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        if (timeoutSeconds <= 0)
+            throw new ArgumentException("Tham số sandbox không hợp lệ.", nameof(timeoutSeconds));
+
+        if (functionNames == null || functionNames.Length == 0)
+            throw new ArgumentException("Tham số sandbox không hợp lệ.", nameof(functionNames));
+
+        var funcSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var fn in functionNames)
+        {
+            if (string.IsNullOrWhiteSpace(fn) || !funcSet.Add(fn.Trim()))
+                throw new ArgumentException("Tham số sandbox không hợp lệ.", nameof(functionNames));
+        }
+
+        if (fakes != null)
+        {
+            var fakeSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var fake in fakes)
+            {
+                if (fake == null || !AllowedFakes.Contains(fake.Name, StringComparer.OrdinalIgnoreCase) || !fakeSet.Add(fake.Name))
+                    throw new ArgumentException("Tham số sandbox không hợp lệ.", nameof(fakes));
+            }
+        }
+
+        RealFile.ValidateRelativePath(relativeScript);
+
+        var scriptFullPath = Path.Combine(Root, relativeScript);
+        if (RealFile.HasReparsePoint(scriptFullPath))
+            throw new ArgumentException("Đường dẫn bản sao không hợp lệ.");
+
+        if (!File.Exists(scriptFullPath))
+            throw new FileNotFoundException("Không tìm thấy file nguồn.", scriptFullPath);
+
+        var logFile = Path.Combine(Path.GetTempPath(), "aiteam-fakes-" + Guid.NewGuid().ToString("N") + ".log");
+
+        try
+        {
+            var agyFake = fakes?.FirstOrDefault(f => string.Equals(f.Name, "agy", StringComparison.OrdinalIgnoreCase)) ?? new FakeCommand("agy");
+            var codexFake = fakes?.FirstOrDefault(f => string.Equals(f.Name, "codex", StringComparison.OrdinalIgnoreCase)) ?? new FakeCommand("codex");
+            var gitFake = fakes?.FirstOrDefault(f => string.Equals(f.Name, "git", StringComparison.OrdinalIgnoreCase)) ?? new FakeCommand("git");
+
+            var harnessScript = BuildHarnessScript(scriptFullPath, functionNames, script, logFile, agyFake, codexFake, gitFake);
+
+            var processResult = await TestShell.PowerShell(Root, harnessScript, timeoutSeconds);
+
+            var calls = ReadCallsFromLog(logFile);
+            return new TeamScriptResult(processResult, calls);
+        }
+        finally
+        {
+            if (File.Exists(logFile))
+            {
+                try { File.Delete(logFile); } catch { }
+            }
+        }
+    }
+
+    private static string ToPsLiteral(string s) => "'" + s.Replace("'", "''") + "'";
+
+    private string BuildHarnessScript(string scriptFullPath, string[] functionNames, string userScript,
+        string logFile, FakeCommand agy, FakeCommand codex, FakeCommand git)
+    {
+        var sb = new StringBuilder();
+
+        sb.AppendLine($"$Root = {ToPsLiteral(Root)}");
+        sb.AppendLine($"$scriptFullPath = {ToPsLiteral(scriptFullPath)}");
+        sb.AppendLine($"$logPath = {ToPsLiteral(logFile)}");
+        sb.AppendLine($"$targetFunctions = @({string.Join(", ", functionNames.Select(ToPsLiteral))})");
+
+        // 1. Parse AST và nạp hàm
+        sb.AppendLine(@"
+$tokens = $null
+$errors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptFullPath, [ref]$tokens, [ref]$errors)
+if ($errors -and $errors.Count -gt 0) {
+    [Console]::Error.WriteLine('LỖI: cú pháp PowerShell không hợp lệ.')
+    exit 1
+}
+
+$statements = @()
+if ($ast.BeginBlock) { $statements += $ast.BeginBlock.Statements }
+if ($ast.ProcessBlock) { $statements += $ast.ProcessBlock.Statements }
+if ($ast.EndBlock) { $statements += $ast.EndBlock.Statements }
+$allScriptFuncs = @($statements | Where-Object { $_ -is [System.Management.Automation.Language.FunctionDefinitionAst] })
+
+$funcTexts = @()
+foreach ($fn in $targetFunctions) {
+    $matched = @($allScriptFuncs | Where-Object { $_.Name -ieq $fn })
+    if ($matched.Count -ne 1) {
+        [Console]::Error.WriteLine('LỖI: hàm PowerShell không hợp lệ.')
+        exit 1
+    }
+    $funcTexts += $matched[0].Extent.Text
+}
+
+$scriptDir = Split-Path -Parent $scriptFullPath
+$loaderPath = Join-Path $scriptDir ('.w101-load-' + [System.Guid]::NewGuid().ToString('N') + '.ps1')
+$loaderContent = [string]::Join([Environment]::NewLine + [Environment]::NewLine, $funcTexts)
+[System.IO.File]::WriteAllText($loaderPath, $loaderContent, (New-Object System.Text.UTF8Encoding $true))
+try {
+    . $loaderPath
+}
+finally {
+    if ([System.IO.File]::Exists($loaderPath)) {
+        [System.IO.File]::Delete($loaderPath)
+    }
+}
+
+$global:Root = $Root
+$Root = $Root
+$global:PSScriptRoot = $scriptDir
+$PSScriptRoot = $scriptDir
+");
+
+        // 2. Fakes
+        sb.AppendLine($"$agyCode = {agy.Code}; $agyOut = {ToPsLiteral(agy.Output)}; $agyErr = {ToPsLiteral(agy.Error)}");
+        sb.AppendLine($"$codexCode = {codex.Code}; $codexOut = {ToPsLiteral(codex.Output)}; $codexErr = {ToPsLiteral(codex.Error)}");
+        sb.AppendLine($"$gitCode = {git.Code}; $gitOut = {ToPsLiteral(git.Output)}; $gitErr = {ToPsLiteral(git.Error)}");
+
+        sb.AppendLine(@"
+function Invoke-W101FakeCall($name, $callArgs, $code, $outStr, $errStr) {
+    $argList = @()
+    if ($callArgs) {
+        foreach ($a in $callArgs) { $argList += [string]$a }
+    }
+    $callObj = [PSCustomObject]@{
+        Name = $name
+        Arguments = $argList
+        Code = $code
+        Output = $outStr
+        Error = $errStr
+    }
+    $jsonLine = ConvertTo-Json $callObj -Compress
+    [System.IO.File]::AppendAllLines($logPath, [string[]]@($jsonLine), [System.Text.Encoding]::UTF8)
+    $global:LASTEXITCODE = $code
+    if (![string]::IsNullOrEmpty($outStr)) {
+        Write-Output $outStr
+    }
+    if (![string]::IsNullOrEmpty($errStr)) {
+        [Console]::Error.Write($errStr)
+    }
+}
+
+function global:agy { Invoke-W101FakeCall 'agy' $args $agyCode $agyOut $agyErr }
+function global:agy.exe { Invoke-W101FakeCall 'agy' $args $agyCode $agyOut $agyErr }
+function global:codex { Invoke-W101FakeCall 'codex' $args $codexCode $codexOut $codexErr }
+function global:codex.exe { Invoke-W101FakeCall 'codex' $args $codexCode $codexOut $codexErr }
+function global:git { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitErr }
+function global:git.exe { Invoke-W101FakeCall 'git' $args $gitCode $gitOut $gitErr }
+");
+
+        // 3. User script
+        sb.AppendLine("try {");
+        sb.AppendLine(userScript);
+        sb.AppendLine("}");
+        sb.AppendLine("catch {");
+        sb.AppendLine("    [Console]::Error.WriteLine('LỖI: ' + $_.Exception.Message)");
+        sb.AppendLine("    exit 1");
+        sb.AppendLine("}");
+
+        return sb.ToString();
+    }
+
+    private static IReadOnlyList<FakeCall> ReadCallsFromLog(string logFile)
+    {
+        var calls = new List<FakeCall>();
+        if (!File.Exists(logFile)) return calls;
+
+        var lines = File.ReadAllLines(logFile, Encoding.UTF8);
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                var root = doc.RootElement;
+                var name = root.GetProperty("Name").GetString() ?? "";
+                var code = root.GetProperty("Code").GetInt32();
+                var output = root.GetProperty("Output").GetString() ?? "";
+                var error = root.GetProperty("Error").GetString() ?? "";
+
+                var argsProp = root.GetProperty("Arguments");
+                string[] args;
+                if (argsProp.ValueKind == JsonValueKind.Array)
+                {
+                    args = argsProp.EnumerateArray().Select(e => e.GetString() ?? "").ToArray();
+                }
+                else if (argsProp.ValueKind == JsonValueKind.String)
+                {
+                    args = [argsProp.GetString() ?? ""];
+                }
+                else
+                {
+                    args = [];
+                }
+                calls.Add(new FakeCall(name, args, code, output, error));
+            }
+            catch { }
+        }
+        return calls;
     }
 
     /// <summary>Dọn TempRepo và toàn bộ file sinh trong sandbox, kể cả chỉ đọc; gọi lại không lỗi, không đụng nguồn.</summary>
     public void Dispose()
     {
-        throw new NotImplementedException(); // TODO(agent)
+        if (_disposed) return;
+        _disposed = true;
+        _repo.Dispose();
     }
 }
