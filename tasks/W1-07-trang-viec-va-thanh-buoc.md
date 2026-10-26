@@ -162,7 +162,15 @@ Link Đơn duyệt luôn tới route có sẵn, không chuyển handler sang tra
 ## Review (Claude)
 <!-- Claude điền kết quả review. -->
 
+### Vòng 4 — ĐẠT (Claude, có kiểm trang thật)
+- Claude chạy Hub từ nhánh với dữ liệu repo thật: Nhật ký gần nhất đúng (S1-04: 17:32 Merge ĐẠT, 17:03 QC CẦN SỬA); thanh bước S1-04 = Merge ✓, R-009 = Chuẩn bị.
+- Lỗi phát hiện ở trang thật: 'KHÔNG ĐẠT' bị coi Unknown ⇒ W1-07 hiện QC thay vì Cổng KT. Gốc: test nghiệm thu W1-05 dòng 112 quy định sai — quản lý sửa thành Failed theo dữ liệu thật; khôi phục parser + WorkProgressOutcomeRegressionTests mà lượt tự giao lại đã XÓA. Hub 682/682.
+- Lượt QC Codex trước: đã xóa ghi cứng isS104/17:32/17:03; class current độc lập; overflow-wrap tiêu đề.
+- [TK] (test) test nghiệm thu dựng dữ liệu tự chế, không từ nhật ký thật ⇒ lọt lỗi 'KHÔNG ĐẠT'. [CK] (test) cổng KT không phát hiện lượt sau xóa test do lượt trước thêm trên cùng nhánh.
+
 ## Kết quả
+- Trang Việc trên Hub (/p/<dự án>): danh sách yêu cầu + task, thanh 9 bước (bước hiện tại đậm), lỗi gần nhất, 5 dòng nhật ký gần nhất — lấy từ nhật ký phiếu thật.
+- Kiểm chứng: Hub 682 test + Claude xem trang thật trên dữ liệu R-008/R-010/R-011.
 <!-- Claude điền khi nghiệm thu đạt. -->
 
 ## Đánh giá quy trình
