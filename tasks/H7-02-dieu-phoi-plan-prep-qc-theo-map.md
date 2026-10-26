@@ -75,19 +75,19 @@ Theo brief R-009 mục 6; H7-01 đã có trong WorkflowRolesService. Hiện plan
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceH702WorkflowDispatchTests --blame-hang-timeout 2m`: 68 pass, 0 fail, 0 skip.
+T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceH702WorkflowDispatchTests --blame-hang-timeout 2m`: 68 pass/0 fail/0 skip (lượt sửa cổng KT 26/10).
 | Tiêu chí | Bằng chứng / kết quả thật |
 |---|---|
-| Nối plan/prep/AutoReview/QC riêng/CLI | Đã nối quyết định Map; T đạt 68/68, gồm 3 ca AST entrypoint và 3 ca CLI; toàn giao dịch prep chưa xác minh. |
-| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T đạt: mặc định cũ, 18 ánh xạ, cấu hình sai, giữ byte và junction tổ tiên. |
-| Provider/chỉ đọc/khóa/tham số | T đạt 6 ca stub: provider, dấu/khoảng trắng, khóa Codex, LASTEXITCODE=7; thủ công không gọi tiến trình/khóa. |
-| QC cố định, chặn tự duyệt/lỗi | T đạt: tự duyệt, thiếu/tắt/sai vai/nghỉ, quota/timeout/lỗi không fallback; tái dùng ReviewService/OutcomeJson giữ schema/hash. |
-| Build/test/BOM/nghiệm thu | `dotnet build AITeam.sln -m:1 -nr:false`: 0 lỗi/0 warning; parser PowerShell 0 lỗi; 4 file mã giữ BOM; không sửa test/fixture. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, đã dừng theo giới hạn 3 phút; Hub 712 pass/9 fail/0 skip, Core chưa có tổng kết. |
-| Báo cáo/bàn giao | Đã điền bảng; hệ thống tự commit/push, chưa có commit được kiểm; không chạy lệnh git trực tiếp. |
-File đổi: `team.ps1` (helper/wiring, QC riêng lấy provider từ log lượt code); `Program.cs` (CLI/kiểm Map trước SKIPPED); `WorkflowRoleDispatch.cs` (parser); `ReviewRunner.cs` (QC cố định); task này (báo cáo).
-Quyết định: giữ giao dịch prep/router QC cũ khi thiếu roles; Minh/Lan cùng agy; lỗi ngoài phạm vi không sửa. Chưa xác minh Map lưu thật, chạy provider thật và toàn giao dịch tích hợp.
-Cần Claude xử lý: 9 lỗi Hub (File.Replace bị UnauthorizedAccess và lưu Map thất bại); Core có ít nhất 5 lỗi Git CreateFileMapping Win32 error 5 và 2 lỗi S1-04 do harness không nạp helper Resolve-WorkflowAssignment mới; giữ nguyên test, không thêm mã nhận biết test.
+| Nối plan/prep/AutoReview/QC/CLI | T: 68/68; các ca entrypoint/CLI đạt. |
+| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T: 68/68; giữ nguyên triển khai và test nghiệm thu. |
+| Provider/chỉ đọc/khóa/tham số | T: 68/68; các ca stub/khóa/tham số đạt. |
+| QC chặn tự duyệt/cấu hình/lỗi, không fallback | T: 68/68; các ca QC cố định đạt. |
+| Build/BOM | `dotnet build AITeam.sln --no-restore -m:1 -nr:false`: 0 lỗi/0 warning; 4 file mã H7-02 có BOM; parser PowerShell 0 lỗi. |
+| Lỗi quản lý giao lại | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter 'FullyQualifiedName~AcceptanceS104SkillPromptsTests.ProviderGiaNhanPromptThat_MoiNhanh|FullyQualifiedName~AcceptanceV801WorkflowTests.KhoaChanTienTrinhKhacVaTimeout' --blame-hang-timeout 2m`: 4 pass/2 fail/0 skip; V8-01 pass, hai ca S1-04 báo không tìm thấy Resolve-WorkflowAssignment. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, dừng gần 3 phút theo giới hạn; Hub 712 pass/9 fail/0 skip, Core chưa tổng kết; có lỗi Git CreateFileMapping Win32 error 5 và S1-04. |
+| Báo cáo/bàn giao | Chỉ cập nhật báo cáo trong task; không đổi mã/test/fixture; hệ thống tự commit/push, chưa xác minh commit. |
+Điểm chặn: harness S1-04 không nạp helper mới; AGENTS.md cấm sửa test nghiệm thu và mã nhận biết test, yêu cầu báo cáo rồi dừng khi test sai. Cần Claude cập nhật harness nạp phụ thuộc điều phối, không bỏ wiring Map trong sản phẩm.
+Quyết định: không sửa ngoài phạm vi; 9 lỗi Hub tại File.Replace/Map và lỗi quyền Git cần chạy lại ngoài sandbox. Chưa xác minh toàn solution pass, provider/Map thật và toàn giao dịch prep; lỗi V8-01 không tái hiện ở lượt lọc.
 ## Review (Claude)
 <!-- Claude điền. -->
 
