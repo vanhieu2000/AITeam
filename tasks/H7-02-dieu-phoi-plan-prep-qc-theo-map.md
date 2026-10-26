@@ -75,23 +75,19 @@ Theo brief R-009 mục 6; H7-01 đã có trong WorkflowRolesService. Hiện plan
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-<!-- Lập trình viên điền bảng tiêu chí → bằng chứng, file đổi/lý do, quyết định, điều chưa xác minh. -->
-
-### Ghi nhận bước chuẩn bị (Codex, 26/10/2026)
-| Điều kiện | Bằng chứng / trạng thái |
+T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceH702WorkflowDispatchTests --blame-hang-timeout 2m`: 68 pass, 0 fail, 0 skip.
+| Tiêu chí | Bằng chứng / kết quả thật |
 |---|---|
-| Đặc tả và khung | WorkflowRoleDispatch, RunAssignedAsync, CLI WorkflowRole, hai helper PowerShell; phần thân mới đều throw NotImplementedException, chưa nối logic sản phẩm. |
-| Test và mẫu thật | 68 ca (Theory mở rộng + Fact); AcceptanceH702WorkflowDispatchTests, Fixtures/H702; dùng TestShell, stub, không tiến trình agent thật trong test. |
-| Kiểm tra tĩnh | PowerShell parser: 0 lỗi; 5 file mã đổi/thêm có UTF-8 BOM; fixture team.json khớp nguyên byte nguồn. |
-| Build lần 1 | `dotnet build AITeam.sln`: mã 1; in 0 warning/0 error nhưng Build FAILED, chưa chứng minh biên dịch. |
-| Build lần 2 | `dotnet build AITeam.sln -m:1 -nr:false`, CLI home cục bộ: mã 1, 0 warning, 9 lỗi NU1301; NuGet repository-signatures bị proxy 127.0.0.1:9 từ chối. Đã dừng ở giới hạn 2 lần. |
-| Test | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceH702WorkflowDispatchTests --blame-hang-timeout 2m`: mã 0, không output/số ca. CHƯA xác minh discovery hoặc trạng thái đỏ; không tính là pass. |
-| Model | Đặt claude-opus-4-6-thinking theo yêu cầu sửa team.ps1; agy models yêu cầu đăng nhập, mạng bị chặn nên chưa xác minh model. Quản lý kiểm tra trước giao; Opus hết lượt riêng thì chọn Gemini Argon High theo chỉ định. |
-
-File chuẩn bị: task này (đặc tả), team.ps1 (khung helper), Program.cs (CLI khung), ReviewRunner.cs (QC cố định khung), WorkflowRoleDispatch.cs (hợp đồng), test và fixture (nghiệm thu bất biến).
-Quyết định: giữ nguyên Agent B/nhánh ở đầu dù kế hoạch ghi A; thiếu mục hiểu theo H7-01; claude/gate/owner thủ công theo khả năng runtime hiện có. Không chạy git theo chỉ định phiên này.
-Điều chưa chắc: thư mục tạm `.dotnet-h702` còn trong worktree vì kiểm duyệt tự động từ chối lệnh dọn với lý do “blocked by policy”; không đưa thư mục này vào commit. Build/test và model chưa xác minh; chưa thử Map lưu thật. Test AST không chứng minh toàn giao dịch prep/verify; agent bổ sung test tích hợp stub cho các luồng và CLI review trực tiếp. Chưa đủ điều kiện giao khi build chưa đạt.
-
+| Nối plan/prep/AutoReview/QC riêng/CLI | Đã nối quyết định Map; T đạt 68/68, gồm 3 ca AST entrypoint và 3 ca CLI; toàn giao dịch prep chưa xác minh. |
+| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T đạt: mặc định cũ, 18 ánh xạ, cấu hình sai, giữ byte và junction tổ tiên. |
+| Provider/chỉ đọc/khóa/tham số | T đạt 6 ca stub: provider, dấu/khoảng trắng, khóa Codex, LASTEXITCODE=7; thủ công không gọi tiến trình/khóa. |
+| QC cố định, chặn tự duyệt/lỗi | T đạt: tự duyệt, thiếu/tắt/sai vai/nghỉ, quota/timeout/lỗi không fallback; tái dùng ReviewService/OutcomeJson giữ schema/hash. |
+| Build/test/BOM/nghiệm thu | `dotnet build AITeam.sln -m:1 -nr:false`: 0 lỗi/0 warning; parser PowerShell 0 lỗi; 4 file mã giữ BOM; không sửa test/fixture. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, đã dừng theo giới hạn 3 phút; Hub 712 pass/9 fail/0 skip, Core chưa có tổng kết. |
+| Báo cáo/bàn giao | Đã điền bảng; hệ thống tự commit/push, chưa có commit được kiểm; không chạy lệnh git trực tiếp. |
+File đổi: `team.ps1` (helper/wiring, QC riêng lấy provider từ log lượt code); `Program.cs` (CLI/kiểm Map trước SKIPPED); `WorkflowRoleDispatch.cs` (parser); `ReviewRunner.cs` (QC cố định); task này (báo cáo).
+Quyết định: giữ giao dịch prep/router QC cũ khi thiếu roles; Minh/Lan cùng agy; lỗi ngoài phạm vi không sửa. Chưa xác minh Map lưu thật, chạy provider thật và toàn giao dịch tích hợp.
+Cần Claude xử lý: 9 lỗi Hub (File.Replace bị UnauthorizedAccess và lưu Map thất bại); Core có ít nhất 5 lỗi Git CreateFileMapping Win32 error 5 và 2 lỗi S1-04 do harness không nạp helper Resolve-WorkflowAssignment mới; giữ nguyên test, không thêm mã nhận biết test.
 ## Review (Claude)
 <!-- Claude điền. -->
 
