@@ -466,5 +466,8 @@ finally {
 if ($LASTEXITCODE -ne 0) { $script:failed++ }
 & dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV803AcceptTests --blame-hang-timeout 2m
 if ($LASTEXITCODE -ne 0) { $script:failed++ }
+Write-Host "Kịch bản 20: Resume đủ ba vòng dừng agent, tái dùng quyết định và cập nhật bảng thật (V6-02)" -ForegroundColor Cyan
+& dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~Resume_three_rounds_creates_one_pending_decision_and_updates_real_board --blame-hang-timeout 2m
+if ($LASTEXITCODE -ne 0) { $script:failed++ }
 if ($script:failed -gt 0) { Write-Host "$($script:failed) kiểm tra HỎNG" -ForegroundColor Red; exit 1 }
 Write-Host "Tất cả kiểm tra ĐẠT" -ForegroundColor Green
