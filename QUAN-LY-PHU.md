@@ -25,23 +25,16 @@ Chủ dự án 26/10: "để việc của bạn (Claude) qua cho Codex làm; Cla
 Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ **ĐÃ DUYỆT** cuối plan.md, commit + push.
 Đề xuất nghiệm thu (việc của bạn): cổng KT ĐẠT + QC PASS ⇒ ghi vào file task TRÊN NHÁNH (worktree `D:\AITeam-work\AITeam\<a|b>-<mã>`) mục "### Đề xuất nghiệm thu (Codex quản lý phụ)": đã kiểm gì, phát hiện còn mở, đề xuất ĐẠT / CẦN SỬA; + "## Kết quả" nháp; commit + push NHÁNH; thêm 1 dòng vào mục "Chờ Claude chốt" cuối file này. Claude đọc rồi tự ghi "### Vòng N — ĐẠT" và merge. Task có giao diện: chạy Hub chế độ giả (`$env:HUB_FAKE=1; $env:HUB_PORT=5058; dotnet run --project hub`), xem 1000px không tràn ngang, ghi vào đề xuất.
 
-## Việc đang dở (ưu tiên theo chủ dự án: SKILL + HỆ THỐNG trước, sửa giao diện sau)
-1. **R-010 bộ skill:** S1-01/02/03/04/05/08 đã merge; S1-04 được Claude chốt vòng 1 lúc 17:32 (bảng việc commit `631bb62`). S1-06 đã prep và giao Agent B lúc 17:45, nhánh `agent-b/S1-06-lenh-ghi-bai-hoc-co-commit`, worktree `D:\AITeam-work\AITeam\b-s1-06`.
-   - Kiểm tra 18:15 25/10: Antigravity lượt 1 hết hạn mức lúc 18:10 (`S1-06-1.stderr.txt`); dây chuyền đã chuyển Codex lượt 2 lúc 18:11. Codex PID 42808 đang chạy, worktree có thay đổi `scripts/SkillNotes.ps1` chưa commit. Chưa có cổng KT/QC cho S1-06; không giao trùng hay can thiệp luồng đang chạy.
-   - Vòng sau xem kết quả S1-06, cổng KT và QC; chỉ đề xuất nghiệm thu khi ĐẠT/PASS trên bản sửa mới. S1-07 chờ S1-06 được Claude chốt/merge. Không giao song song task sửa `team.ps1`.
-2. **R-008 hệ thống tự vận hành:** V8-01 đã merge vòng 1. Tiếp theo V8-02 → V8-03 theo plan đã duyệt; giữ sau bộ skill, tránh chạy song song phạm vi team.ps1 với S1-06 đang chạy.
-3. **R-006:** V6-02 giao sau R-008.
-4. **R-009 Hub v6.1:** H7-01 đã merge; H7-07 cổng KT ĐẠT (`H7-07-verify-6.md`: build 0 warning, 527 Hub + 425 Core pass) và QC PASS (`H7-07.review-4.json`: 0 phát hiện). Trong vòng này phiên Claude khác đã nghiệm thu rồi merge (`26dc880`, bảng `f954fbf`); không sửa chồng hay đưa task đã merge vào chờ chốt. Trình duyệt của phiên quản lý phụ không khả dụng (inventory rỗng), chưa tự xác minh UI; báo cáo Claude trên nhánh ghi đã xem 1000×800. H7-03 chưa giao; giữ ưu tiên skill + hệ thống.
-5. **R-007:** phần còn lại bỏ, thay bằng R-009.
-## Hàng việc 26/10 14:10 (Codex làm theo thứ tự; giao diện Hub ưu tiên)
-1. V8-09 (Codex dev đang chạy): agy models mã thoát + Codex quá tải thử lại. Xong ⇒ nghiệm thu ⇒ "Chờ Claude merge".
-2. R-009 Hub v6.1: `.\team.ps1 pipeline -Request R-009` (H7-02 → H7-04 → H7-05 → H7-06; H7-01/03/07 đã merge). Nếu prep lỗi "at capacity" ⇒ chạy lại sau 20 phút.
-3. R-011: W1-03 (sinh mockup + khóa prep trước duyệt) → W1-04 (cổng KT cảnh báo ProcessStartInfo + TEST-CHUAN + checklist QC). W1-01/02/05/06/07 đã merge.
-4. V8-10 (task mới, Codex dev): `team.ps1 hub -Restart` (dừng Hub đang chạy từ D:\AITeam\hub\bin rồi chạy lại bản mới) + giới hạn 45 phút cho mỗi lượt `team.ps1 deputy` (26/10: deputy treo 19 giờ).
-5. V6-02 (⏸ tạm dừng, quá 3 vòng): lấy bản lượt Codex 5, chỉ sửa 2 ca Fresh_ai_log_stops_even_without_feedback_or_after_retry.
-6. Hàng chờ nhỏ: V8-02/V8-03 test nhẹ hơn (hay chập chờn khi máy bận); cache .state/agy-models.json xóa khi switch-account; W1-05 ca (b) QC đạt trước Verify; W1-02 dispose singleton factory.
-Luật: test dùng `core.tests/Support` (TestShell, TempRepo, RealFile, TeamScript); lượt tự giao lại KHÔNG được xóa test do lượt trước thêm; quá 3 vòng ⇒ tạm dừng + ghi lý do; không merge.
+## Việc đang dở (cập nhật 16:46 26/10/2026)
+1. **R-009 Hub v6.1:** H7-01/03/07 đã merge. H7-06 đã kết thúc lượt 6 lúc 16:42, cổng KT KHÔNG ĐẠT: build 0 warning, Core 690/690 pass, Hub 739 pass/24 fail; lỗi NullReferenceException tại Projects.cshtml:4 vẫn còn sau thử lại. QC chưa chạy. Tạm dừng vì quá 3 lượt; không giao lượt 7, không sửa test nghiệm thu. Log H7-06-verify-2.md; nhánh ee20e18 đã push, worktree sạch.
+2. **H7-02 tạm dừng:** đã có lượt code 4, vượt giới hạn 3 vòng. `H7-02-verify-2.md` KHÔNG ĐẠT: build 0 warning, Hub 721 pass; Core còn 2 ca S1-04 thiếu `Resolve-WorkflowAssignment` sau thử lại. Chờ Claude xử lý bất nhất harness/phạm vi; không sửa test nghiệm thu, không tự giao lượt 5.
+3. **H7-04 tạm dừng:** lượt code 3 chỉ cập nhật báo cáo; `H7-04-verify-2.md` KHÔNG ĐẠT: 2 warning xUnit2031 trong test nghiệm thu bất biến và 4 lỗi Hub còn sau thử lại (V5-05/W1-02). Chờ Claude chốt cách xử lý test/thiết kế; không sửa test nghiệm thu hoặc tự giao thêm. H7-05 chờ H7-04 được chốt/merge.
+4. **R-011:** W1-01/02/05/06/07 đã merge. Đã chạy nền `team.ps1 prep -Request R-011 -Task W1-03` lúc 16:46 26/10/2026, PID 39704; log: `D:\AITeam-work\AITeam\logs\W1-03.deputy-20261026-164647.out.txt` và `D:\AITeam-work\AITeam\logs\W1-03.deputy-20261026-164647.err.txt`. Vòng sau kiểm tra tiến trình, prep/assign/cổng KT/QC; không giao trùng. W1-04 chờ W1-03.
+5. **Hệ thống + skill:** S1-01…08, V8-01/02/03/09/10 đã merge theo bảng việc; bỏ các chỉ dẫn giao lại cũ. Không đưa việc đã merge vào chờ chốt.
+6. **V6-02:** tiếp tục tạm dừng, quá 3 vòng; còn 2 ca Fresh_ai_log ở lượt Codex 5. Không giao lại trong vòng này.
+7. **Hàng chờ nhỏ:** test V8-02/V8-03 chập chờn khi máy bận; cache `.state/agy-models.json` khi switch-account; W1-05 ca QC trước Verify; W1-02 dispose singleton factory. Chưa mở rộng phạm vi.
 
+Luật: test dùng `core.tests/Support`; không xóa test lượt trước; quá 3 vòng thì tạm dừng và ghi lý do. Chỉ đề xuất nghiệm thu khi cổng KT ĐẠT + QC PASS trên bản sửa hiện tại; Claude chốt và merge.
 ## Luật bắt buộc
 - Commit do chính `team.ps1` tự làm khi chạy plan / prep / assign / verify / qc (bảng việc, `metrics/runs/**`, nhật ký phiếu, file task mới) là ĐƯỢC PHÉP. Chỉ cấm: `team.ps1 merge`, tự đẩy code lên main, force-push, xóa nhánh / dữ liệu.
 - Không force-push main; repo private; không đưa bí mật vào file / log / prompt.
@@ -53,9 +46,16 @@ Luật: test dùng `core.tests/Support` (TestShell, TempRepo, RealFile, TeamScri
 ## Chờ Claude merge (Codex ghi: `- <MÃ> · nhánh · Vòng N ĐẠT · giờ`; Claude xóa dòng khi đã merge)
 - (trống)
 
+## Chờ Claude chốt
+- (trống; chưa có task mới đủ cổng KT ĐẠT + QC PASS)
+
 ## Nhật ký quản lý phụ
 - 16:52 25/10/2026: Một vòng điều phối: đối chiếu bảng việc/log/worktree; H7-07 được phiên Claude khác chốt và merge trong lúc kiểm tra; S1-04 hết thời gian, chưa commit helper. Không chạy lại prep/assign vì tự commit/push ngoài danh sách cho phép; không có đề xuất mới chờ Claude. Không chạy build/test mới; dùng kết quả cổng KT và QC có sẵn.
 
 - 17:16 25/10/2026: Một vòng điều phối: đã đồng bộ main, đối chiếu bảng việc/log/tiến trình/worktree; S1-04 cổng KT lượt 2 ĐẠT nhưng QC CẦN SỬA, lượt code 3 đang chạy nên không gọi lệnh giao trùng. Chưa có đề xuất nghiệm thu mới; cập nhật bảng việc và nhật ký R-010; không chạy build/test mới, không merge.
 
 - 18:16 25/10/2026: Một vòng điều phối: main khớp origin/main; đối chiếu bảng việc, log và tiến trình. S1-04 đã merge; S1-06 chuyển Codex lượt 2 sau khi Antigravity hết hạn mức, còn chạy nên không gọi plan/prep/assign/verify/qc trùng. Chưa có task mới đủ cổng KT ĐẠT + QC PASS để đề xuất nghiệm thu. Cập nhật việc đang dở và nhật ký R-010; không chạy build/test mới, không merge.
+
+- 16:16 26/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; đối chiếu bảng việc, log và tiến trình. H7-02 tạm dừng sau lượt 4; H7-04 vướng test nghiệm thu bất biến, không giao thêm. Giao lại H7-06 chạy nền PID 32068 sau lỗi quá tải (log H7-06.deputy-20261026-161620.out.txt/.err.txt); vòng sau xem tiếp. Chưa có đề xuất nghiệm thu mới; không chạy build/test riêng, không merge.
+
+- 16:46 26/10/2026: Một vòng điều phối: origin/main khớp main; H7-06 kết thúc lượt 6, cổng KT KHÔNG ĐẠT (build 0 warning; Core 690 pass; Hub 739 pass/24 fail), tạm dừng theo giới hạn 3 lượt. H7-02/H7-04/V6-02 giữ tạm dừng. Chạy nền prep W1-03, PID 39704, log W1-03.deputy-20261026-164647.out.txt/.err.txt; vòng sau xem tiếp. Chưa có task mới đủ ĐẠT + PASS để đề xuất nghiệm thu; không chạy build/test riêng, không merge.
