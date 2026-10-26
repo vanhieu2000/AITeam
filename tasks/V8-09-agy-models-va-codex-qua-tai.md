@@ -48,4 +48,8 @@
 - Chưa xác minh toàn bộ test/cổng kiểm tra đạt trong môi trường đủ quyền; không chạy app/chụp ảnh. Không chạy lệnh git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
 ## Review (Claude)
 
+### Vòng 2 — ĐẠT (Claude)
+- Cổng KT: test đạt; 'ngoài phạm vi' = thêm Invoke-CodexRetry vào $names harness S1-04 (quản lý cho phép) ⇒ CHẤP NHẬN. Diff: $proc.Handle trước chờ; at capacity/overloaded/429 ⇒ chờ 60s thử lại, rồi codex.modelFallback.
+
 ## Kết quả
+- Tự chọn model agy hoạt động (đọc được mã thoát); Codex quá tải tự thử lại thay vì báo lỗi.
