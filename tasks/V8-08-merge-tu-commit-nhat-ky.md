@@ -47,4 +47,9 @@
 - Giới hạn: Hub có lỗi quyền `File.Replace` và lưu cấu hình; Core/V8-05 cũng gặp lỗi Git; cần chạy lại ngoài sandbox. Chưa kiểm chứng commit; hệ thống tự commit/push, không chạy git trên bản làm việc.
 ## Review (Claude)
 
+### Vòng 1 — ĐẠT (Claude)
+- Cổng KT ĐẠT. Diff: chỉ tự commit khi MỌI file bẩn thuộc requests/R-*.md, tasks/README.md, metrics/runs/**; thêm dòng bảng sau dòng bảng cuối (README hiện 1 bảng — đúng chỗ).
+- Optional: chèn theo bảng việc cụ thể nếu README thêm bảng khác.
+
 ## Kết quả
+- Merge không còn bị chặn bởi dòng nhật ký do việc song song ghi; task tạo tay tự có dòng trên bảng việc.
