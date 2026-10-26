@@ -32,20 +32,20 @@
 - `core.tests/AcceptanceV809RetryTests.cs` (Codex viết cùng lượt, dùng TeamScript + fake): agy models fake mã 0 ⇒ đọc danh sách; mã 1 ⇒ giữ model cũ; codex fake trả "at capacity" lần 1, OK lần 2 ⇒ thành công + 1 dòng thông báo; 2 lần quá tải + modelFallback ⇒ lần 3 dùng model dự phòng; quota thật (usage limit) ⇒ KHÔNG thử lại.
 
 ## Tiêu chí hoàn thành
-- [ ] Build 0 warning
+- [x] Build 0 warning
 - [ ] `dotnet test AITeam.sln` pass + `powershell -File tools\test-verify.ps1` ĐẠT
 
 ## Báo cáo của agent
 
-| Tiêu chí | Lệnh / bằng chứng thật lượt sửa verify-2 |
+| Tiêu chí | Lệnh / bằng chứng thật lượt sửa verify-3 |
 |---|---|
-| Build 0 warning: ĐẠT | `dotnet build AITeam.sln --no-restore -m:1 --nologo`: 0 lỗi, 0 warning, 19,15 giây. |
+| Build 0 warning: ĐẠT | `dotnet build AITeam.sln --no-restore -m:1 --nologo`: 0 lỗi, 0 warning; 31,09 giây. |
 | S104 + V809: ĐẠT | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS104SkillPromptsTests\|FullyQualifiedName~AcceptanceV809RetryTests" --blame-hang-timeout 2m --nologo`: 30 pass, 0 fail, 0 skip. |
-| Test toàn solution: CHƯA ĐẠT | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo`: Hub 712 pass/9 fail (các luồng lưu cấu hình, có lỗi File.Replace bị từ chối quyền); Core chưa tổng kết, đã có lỗi Git CreateFileMapping, Win32 error 5; đã dừng bằng Ctrl+C theo giới hạn 3 phút, exit 1. |
-| Cổng verify: CHƯA ĐẠT | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: 2 kiểm tra tĩnh đạt; kịch bản 1 dừng vì Git CreateFileMapping, Win32 error 5. |
-- Đổi `core.tests/AcceptanceS104SkillPromptsTests.cs`: chỉ thêm `Invoke-CodexRetry` vào `$names` theo quyền quản lý cấp; giữ nguyên assertion và BOM UTF-8; không đổi mã sản phẩm/V809.
-- Đổi phiếu này để cập nhật bằng chứng; không mở rộng sửa các lỗi ngoài phạm vi. Build Core mặc định từng trả exit 1, 0 lỗi/0 warning; chạy lại tuần tự `-m:1` đạt.
-- Chưa xác minh toàn bộ test đạt trong môi trường đủ quyền; không chạy app/chụp ảnh. Không chạy lệnh git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
+| Test toàn solution: CHƯA ĐẠT | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo`: Hub 712 pass/9 fail/0 skip (có lỗi File.Replace từ chối quyền); Core chưa tổng kết, đã có lỗi Git CreateFileMapping, Win32 error 5. Dừng Ctrl+C vì vượt 3 phút, exit 1. |
+| Cổng verify: CHƯA ĐẠT | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: 2 kiểm tra tĩnh đạt, exit 1 ở kịch bản 1 do Git CreateFileMapping, Win32 error 5 (từ chối quyền). |
+| Ngoài phạm vi: CHỜ CLAUDE QUYẾT | Giữ thay đổi duy nhất ở `core.tests/AcceptanceS104SkillPromptsTests.cs:168`: thêm `Invoke-CodexRetry` vào danh sách hàm nạp bằng AST; `Invoke-CodexDevelop` nay gọi hàm này, bỏ dòng bổ sung sẽ thiếu hàm khi test luồng Codex. Không đổi assertion; BOM UTF-8 còn nguyên. Đây là phụ thuộc bắt buộc của harness, không thêm hành vi sản phẩm. |
+- Lượt này chỉ đổi báo cáo trong phiếu task; không sửa thêm test hoặc mã sản phẩm. Chọn ghi lý do bắt buộc theo yêu cầu quản lý thay vì hoàn tác phụ thuộc cần thiết.
+- Chưa xác minh toàn bộ test/cổng kiểm tra đạt trong môi trường đủ quyền; không chạy app/chụp ảnh. Không chạy lệnh git trực tiếp; hệ thống tự commit/push, chưa có commit được kiểm.
 ## Review (Claude)
 
 ## Kết quả
