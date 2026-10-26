@@ -8,7 +8,7 @@
 - **Thời gian tối đa:** 15 phút
 - **Review AI:** có
 - **Độ khó:** M
-- **Model:** `gemini-4-argon-high`
+- **Model:** `claude-opus-4-6-thinking`
 
 ## Tóm tắt
 - Có chức năng mới: chủ dự án nhận yêu cầu quyết định khi task đã tới giới hạn review.
