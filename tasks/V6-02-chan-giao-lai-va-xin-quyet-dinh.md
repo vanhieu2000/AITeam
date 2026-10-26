@@ -71,16 +71,16 @@
 ## Báo cáo của agent
 | Tiêu chí | Bằng chứng / kết quả thật |
 |---|---|
-| Ba helper, Resume, ngưỡng | Giữ `team.ps1`; parser PowerShell: 0 lỗi, BOM còn nguyên. Chưa xác nhận toàn bộ test ngưỡng. |
-| AI mới + feedback/retry | Hai ca `Fresh_ai_log` lỗi mã 1; test chỉ trích switch (`AcceptanceV602ReviewGateTests.cs:132–137`), chưa dựng `$work`, `$taskFile` cần cho đường dẫn worktree bắt buộc. |
-| Hồi quy S1-04 | Bốn ca assign lỗi `Stop-ReviewReassignment is not recognized`: khung chưa nạp helper; không phải lỗi nội dung prompt. |
-| Test lỗi được giao | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~Fresh_ai_log_stops_even_without_feedback_or_after_retry|FullyQualifiedName~ProviderGiaNhanPromptThat_MoiNhanh|FullyQualifiedName~CauHinhCuKhongStack_KhongDoanTuPrompt" --blame-hang-timeout 2m`: 2 pass, 6 fail, 0 skip/8. |
-| Kịch bản 20 / giữ test cũ | Thêm đúng một lời gọi test `Resume_three_rounds_creates_one_pending_decision_and_updates_real_board` ở `tools/test-verify.ps1:469`; không sửa test/fixture hoặc kịch bản cũ; parser 0 lỗi, BOM/CRLF giữ nguyên. |
-| Build | `dotnet build AITeam.sln`: mã 1, 0 lỗi/0 warning không chẩn đoán; `dotnet build AITeam.sln --no-restore -m:1`: đạt, 0 lỗi, 0 warning. |
-| Test toàn bộ | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m -m:1`: dừng Ctrl+C theo giới hạn 3 phút, mã 1; Hub 644 pass, 9 fail/653 (File.Replace/quyền ghi); Core gặp Git Win32 5, chưa có tổng kết. |
-| Test ngưỡng riêng | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceV602ReviewGateTests&FullyQualifiedName!~Fresh_ai_log&FullyQualifiedName!~Resume_three_rounds" --blame-hang-timeout 2m`: dừng theo giới hạn thời gian, mã 1, chưa có tổng kết. |
-| Script verify | `powershell -NoProfile -File tools/test-verify.ps1`: mã 1; 2 kiểm tra tĩnh đạt; kịch bản 1 dừng vì git clone repo tạm: CreateFileMapping Win32 5; chưa tới kịch bản 20. |
-| File đổi / quyết định / bàn giao | Chỉ sửa `tools/test-verify.ps1` để nối kịch bản 20 và báo cáo task. Theo AGENTS.md, không sửa test bất biến hoặc thêm mã nhận diện test; Claude cần bổ sung ngữ cảnh khung test. Chưa đối chiếu log thật; chưa đạt nghiệm thu; hệ thống commit/push, chưa có commit được kiểm. |
+| Ba helper, Resume, ngưỡng | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceV602ReviewGateTests --blame-hang-timeout 2m`: 21 pass, 3 fail, 0 skip/24; các ca 0/2/3/4, cấu hình và lỗi CLI đạt. |
+| AI mới, feedback/retry | 2 ca `Fresh_ai_log` fail: chạy nguyên setup/body từ test cho stderr `Join-Path: Cannot bind argument to parameter 'Path' because it is null` tại `$work`; harness trích switch nhưng thiếu `$work` và `$taskFile`. Không sửa test bất biến hoặc thêm mã nhận diện test. |
+| Kịch bản 20, decision/bảng thật | Ca `Resume_three_rounds...` fail trước Invoke-Assign: Git push remote tạm báo `CreateFileMapping ... Win32 error 5`; chưa xác minh lưu bảng/không nhân đôi. |
+| Giữ kịch bản/test nghiệm thu | Không sửa `tools/test-verify.ps1`, `AcceptanceV602ReviewGateTests.cs`, fixture hoặc assert; chỉ bổ sung fake CLI S1-04 theo quyền quản lý cấp. |
+| Build | `dotnet build AITeam.sln --no-restore -m:1`: đạt, 0 lỗi, 0 warning. |
+| Test toàn bộ | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m -m:1`: dừng Ctrl+C theo giới hạn 3 phút, mã 1; Hub 644 pass, 9 fail/653 (File.Replace/quyền ghi); Core có lỗi Git Win32 5 và 2 ca Fresh_ai_log, chưa có tổng kết. |
+| Script verify | `powershell -NoProfile -File tools/test-verify.ps1`: mã 1; 2 kiểm tra tĩnh đạt; kịch bản 1 dừng tại git clone remote tạm, Win32 error 5; chưa tới kịch bản 20. |
+| Hồi quy S1-04 | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceS104SkillPromptsTests --blame-hang-timeout 2m`: 23 pass, 0 fail, 0 skip; trước sửa 4 ca assign lỗi vì FakeProvider bắt lệnh review-rounds như lời gọi AI. |
+| File đổi, quyết định | `core.tests/AcceptanceS104SkillPromptsTests.cs`: fake ranh giới CLI trả 0 vòng/mã 0, không tăng bộ đếm gọi AI; file task: báo cáo. Giữ code sản phẩm dùng task trong worktree đúng hợp đồng; Claude cần bổ sung ngữ cảnh cho 2 ca Fresh_ai_log. |
+| Mã hóa, giới hạn, bàn giao | Kiểm byte: BOM UTF-8/CRLF còn nguyên ở S1-04, V6-02, team.ps1, test-verify.ps1; parser team.ps1 0 lỗi. Chưa đối chiếu log thật; chưa đạt nghiệm thu. Không chạy git trực tiếp; hệ thống commit/push, chưa có commit được kiểm. |
 ## Điều chưa chắc khi chuẩn bị
 - `agy models` đã chạy nhưng thất bại do chưa đăng nhập/mạng bị chặn; chưa xác minh model có trong danh sách tài khoản. Model ghi theo kế hoạch được duyệt, không tự thay mã.
 - Chưa có mẫu log thật trong danh sách được phép đọc; dùng hợp đồng verdict của code, không nhận đã xác minh log thật.
