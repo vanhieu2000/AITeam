@@ -60,6 +60,7 @@ Sự kiện cần ghi:
 - 2026-10-26 16:42:46 +07:00 | H7-06 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:H7-06:Verify:2 -->
 - 2026-10-26 18:33:42 +07:00 | H7-02 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:H7-02:Verify:3 -->
 - 2026-10-26 18:53:40 +07:00 | H7-02 | Verify | lượt 4 | KHÔNG ĐẠT <!-- workflow:H7-02:Verify:4 -->
+- 2026-10-26 19:16:25 +07:00 | H7-04 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:H7-04:Verify:3 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-009`, rồi điền:
 
