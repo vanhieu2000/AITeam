@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +12,14 @@ public class ProjectModel : PageModel
     private readonly ITeamConfigService _configService;
     private readonly IAgentRunService? _runService;
 
-    public ProjectModel(ITaskBoardService boardService, ITeamConfigService configService, IAgentRunService? runService = null)
+    private readonly IWorkProgressService? _workService;
+
+    public ProjectModel(ITaskBoardService boardService, ITeamConfigService configService, IAgentRunService? runService = null, IWorkProgressService? workService = null)
     {
         _boardService = boardService;
         _configService = configService;
         _runService = runService;
+        _workService = workService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -24,6 +27,20 @@ public class ProjectModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public string Tab { get; set; } = "board";
+
+    /// <summary>Mã yêu cầu trong snapshot; rỗng chọn yêu cầu đầu; sai hoặc khác dự án trả 404.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? RequestId { get; set; }
+
+    /// <summary>Mã task thuộc yêu cầu đã chọn; rỗng xem yêu cầu; sai quan hệ trả 404.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? TaskId { get; set; }
+
+    public WorkProjectProgress? Work { get; private set; }
+    public WorkRequestProgress? SelectedRequest { get; private set; }
+    public WorkTaskProgress? SelectedTask { get; private set; }
+    public WorkProgress? SelectedProgress { get; private set; }
+    public string? WorkError { get; private set; }
 
     public ProjectBoard? Board { get; private set; }
     public IReadOnlyList<AgentRun> Runs { get; private set; } = Array.Empty<AgentRun>();
@@ -50,33 +67,20 @@ public class ProjectModel : PageModel
         return match.Success && int.TryParse(match.Value, out var n) ? n : -1;
     }
 
+    /// <summary>
+    /// GET /p/{name}: giữ bảng, kế hoạch và lịch sử; tab mặc định/board/work hiển thị Việc.
+    /// Name rỗng chuyển /Index; dự án không cấu hình hoặc mã chọn không thuộc snapshot trả 404.
+    /// Gọi IWorkProgressService.GetProject đúng Name cấu hình, một lần; không đọc file/chạy lệnh.
+    /// Chọn Id không phân biệt hoa thường; RequestId rỗng chọn yêu cầu đầu trong snapshot;
+    /// TaskId rỗng chọn tiến độ yêu cầu, có TaskId phải thuộc SelectedRequest.
+    /// Dự án rỗng vẫn Page, SelectedProgress=null; giao diện ghi 'Chưa có việc.'.
+    /// IOException từ dịch vụ: Page với WorkError='Không đọc được tiến độ công việc.',
+    /// không lộ exception/đường dẫn/nội dung; InvalidDataException trả 404.
+    /// SelectedProgress giữ nguyên tiến độ từ W1-06, không suy diễn trạng thái/giờ/người.
+    /// Không có POST hoặc nút chạy lệnh; link /Approvals giữ handler duyệt hiện có.
+    /// </summary>
     public IActionResult OnGet()
     {
-        if (string.IsNullOrEmpty(Name))
-        {
-            return RedirectToPage("/Index");
-        }
-
-        try
-        {
-            Board = _boardService.GetBoard(Name);
-            Runs = _runService != null ? _runService.GetRuns(Name) : Array.Empty<AgentRun>();
-
-            var (preview, remaining) = BoardViews.MergedPreview(Board.Tasks, 7);
-            MergedPreviewItems = preview;
-            MergedRemaining = remaining;
-
-            AllMergedOrdered = Board.Tasks
-                .Where(t => t.State == TaskState.Merged)
-                .OrderByDescending(t => ExtractNumber(t.Id))
-                .ThenByDescending(t => t.Id)
-                .ToList();
-        }
-        catch
-        {
-            return NotFound();
-        }
-
-        return Page();
+        throw new NotImplementedException(); // TODO(agent)
     }
 }
