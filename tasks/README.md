@@ -42,7 +42,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H6-08 AI & tài khoản: khung và Trạng thái](H6-08-ai-tai-khoan-khung-va-trang-thai.md) | B | `agent-b/H6-08-ai-tai-khoan-khung-va-trang-thai` | ✅ Đã merge (vòng 1) |
 | [V8-01 Thử lại lỗi máy và ghi nhật ký](V8-01-thu-lai-loi-may-va-ghi-nhat-ky.md) | A | `agent-a/V8-01-thu-lai-loi-may-va-ghi-nhat-ky` | ✅ Đã merge (vòng 1) |
 | [H7-01 Dịch vụ Map và lưu nguyên tử](H7-01-dich-vu-map-va-luu-nguyen-tu.md) | B | `agent-a/H7-01-dich-vu-map-va-luu-nguyen-tu` | ✅ Đã merge (vòng 1) |
-| [H7-03 Lõi chat Văn phòng và chuyển hướng](H7-03-loi-chat-van-phong-va-chuyen-huong.md) | B | `agent-b/H7-03-loi-chat-van-phong-va-chuyen-huong` | 🔵 Chờ review · cổng KT ĐẠT · AI review PASS |
+| [H7-03 Lõi chat Văn phòng và chuyển hướng](H7-03-loi-chat-van-phong-va-chuyen-huong.md) | B | `agent-b/H7-03-loi-chat-van-phong-va-chuyen-huong` | ✅ Đã merge (vòng 1) |
 | [S1-01 Skill tiếp nhận đến duyệt kế hoạch](S1-01-skill-tiep-nhan-den-duyet-ke-hoach.md) | B | `agent-b/S1-01-skill-tiep-nhan-den-duyet-ke-hoach` | ✅ Đã merge (vòng 1) |
 | [S1-05 Nối skill vào review độc lập](S1-05-noi-skill-vao-review-doc-lap.md) | B | `agent-b/S1-05-noi-skill-vao-review-doc-lap` | ✅ Đã merge (vòng 1) |
 | [S1-02 Skill chuẩn bị đến publish](S1-02-skill-chuan-bi-den-publish.md) | B | `agent-b/S1-02-skill-chuan-bi-den-publish` | ✅ Đã merge (vòng 1) |
@@ -60,7 +60,8 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V6-02 Chặn giao lại và xin quyết định](V6-02-chan-giao-lai-va-xin-quyet-dinh.md) | A | `agent-a/V6-02-chan-giao-lai-va-xin-quyet-dinh` | ⏸ Tạm dừng · quá 3 vòng (còn 2 ca Fresh_ai_log đỏ ở lượt Codex 5) |
 | [W1-07 Trang Việc và thanh bước](W1-07-trang-viec-va-thanh-buoc.md) | B | `agent-b/W1-07-trang-viec-va-thanh-buoc` | ✅ Đã merge (vòng 4) |
 | [W1-01 Helper nguồn thật và sandbox PowerShell](W1-01-helper-nguon-that-va-sandbox-powershell.md) | A | `agent-a/W1-01-helper-nguon-that-va-sandbox-powershell` | ✅ Đã merge (vòng 2) |
-| [V8-09 · Sửa đọc mã thoát `agy models` + Codex quá tải tự thử lại](V8-09-agy-models-va-codex-qua-tai.md) | A | `agent-a/V8-09-agy-models-va-codex-qua-tai` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 14:01 26/10/2026 |
+| [V8-09 · Sửa đọc mã thoát `agy models` + Codex quá tải tự thử lại](V8-09-agy-models-va-codex-qua-tai.md) | A | `agent-a/V8-09-agy-models-va-codex-qua-tai` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 14:25 26/10/2026 |
+| [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | 🟡 Đang chạy · máy DESKTOP-PP14EFS · 14:22 26/10/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
