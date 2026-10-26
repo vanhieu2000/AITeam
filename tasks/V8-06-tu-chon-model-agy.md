@@ -39,6 +39,18 @@
 
 ## Báo cáo của agent
 
+| Tiêu chí | Bằng chứng thật |
+|---|---|
+| Build 0 warning: chưa đạt | `dotnet build AITeam.sln -m:1`: thành công, 0 error, 8 warning NU1900 (không truy cập được NuGet). |
+| Chọn/parse/fallback/cache/lỗi/quá hạn: đạt | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceV806AgyModelTests --blame-hang-timeout 2m -m:1`: 10 pass, 0 fail, 0 skip. |
+| Test solution: chưa đạt | `dotnet test AITeam.sln --no-restore --blame-hang-timeout 2m -m:1`: Hub 644 pass/9 fail; core gặp lỗi Git Win32 error 5; đã ngắt lệnh khi chạm giới hạn 3 phút, chưa có tổng kết. |
+| Cổng kiểm tra: chưa đạt | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: 2 kiểm tra tĩnh ĐẠT; dừng kịch bản 1 vì Git không tạo được signal pipe (Win32 error 5). |
+| BOM: đạt | Kiểm byte đầu bằng PowerShell: `team.ps1` và test mới đều EF BB BF. |
+- File đổi: `team.ps1` (~60 dòng logic chọn model/cache/tích hợp assign); `core.tests/AcceptanceV806AgyModelTests.cs` (103 dòng, 10 ca); phiếu này chỉ điền báo cáo theo chỉ dẫn trực tiếp.
+- Quyết định: thêm tham số fallback tùy chọn để hàm chọn thuần, nhận `agy.modelFallback` từ cấu hình; không cần đổi `team.json`; cache lỗi/hết hạn và truy vấn lỗi giữ model cũ.
+- Chưa xác minh: agy thật và output thật hai tài khoản không được cung cấp; test dùng danh sách tab-separated theo định dạng phiếu; không chạy app/chụp ảnh. Tổng dòng gồm test vượt 120, logic sản phẩm trong ngân sách.
+- Không chạy lệnh git trực tiếp; hệ thống tự commit/push theo chỉ dẫn Codex dự phòng, chưa có commit được kiểm.
+
 ## Review (Claude)
 
 ## Kết quả
