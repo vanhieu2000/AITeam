@@ -75,19 +75,20 @@ Theo brief R-009 mục 6; H7-01 đã có trong WorkflowRolesService. Hiện plan
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
-T = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH702WorkflowDispatchTests|FullyQualifiedName~AcceptanceS104SkillPromptsTests.ProviderGiaNhanPromptThat_MoiNhanh" --blame-hang-timeout 2m`: 71 pass/2 fail/0 skip (2m19s).
-| Tiêu chí | Bằng chứng thật lượt sửa cổng kiểm tra 26/10 |
+B = `dotnet build AITeam.sln -warnaserror -m:1 -nr:false`; T = `dotnet test AITeam.sln --blame-hang-timeout 3m --no-build --no-restore -m:1 -nr:false`.
+F = `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS104SkillPromptsTests|FullyQualifiedName~AcceptanceH702WorkflowDispatchTests" --blame-hang-timeout 3m -m:1 -nr:false`.
+| Tiêu chí | Bằng chứng lượt Codex 02/11/2026 |
 |---|---|
-| Nối plan/prep/AutoReview/QC/CLI | T: H7-02 68/68 pass; không đổi mã sản phẩm lượt này. |
-| Mặc định/ánh xạ/thủ công/schema/không ghi/reparse | T: H7-02 68/68 pass; giữ nguyên test H7-02 và fixture. |
-| Provider/chỉ đọc/khóa/tham số | T: H7-02 68/68 pass. |
-| QC chặn tự duyệt/cấu hình/lỗi, không fallback | T: H7-02 68/68 pass. |
-| Build/BOM/parser | `dotnet build AITeam.sln`: mã 1, 0 lỗi/0 warning, không chẩn đoán; chạy lại `dotnet build AITeam.sln --no-restore -m:1 -nr:false`: đạt 0 lỗi/0 warning (34,89s); 5 file mã có BOM, parser team.ps1 0 lỗi. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1 -nr:false`: mã 1, dừng ở ngưỡng 3 phút; Hub 712 pass/9 fail/0 skip (File.Replace Access denied và lưu Map lỗi); Core chưa tổng kết, có Git CreateFileMapping Win32 error 5. |
-| Hoàn tác ngoài phạm vi/file đổi | `core.tests/AcceptanceS104SkillPromptsTests.cs`: chỉ hoàn tác hai tên hàm đã thêm vào `$names`, giữ BOM; task này: cập nhật báo cáo. Không sửa assertion/stub/test nghiệm thu. |
-| Điểm chặn S1-04 | T: 3 pass/2 fail; harness gốc không nạp Resolve-WorkflowAssignment; bản thêm tên hàm trước đó lại thiếu stub workflow-role trả JSON. Claude cần cập nhật harness/stub và khóa giả; không thêm nhánh nhận diện test trong sản phẩm. |
-Quyết định: tuân thủ lệnh hoàn tác test ngoài phạm vi; không sửa Hub/harness để né kiểm tra. Theo AGENTS.md, test sai thì báo cáo và dừng; Review (Claude) hiện trống.
-Chưa xác minh: toàn solution pass, Map/provider thật, commit được kiểm; không chạy app/chụp ảnh/lệnh git. Hệ thống tự commit/push.
+| Nối plan/prep/AutoReview/QC/CLI | F: 91/91 pass, 0 skip (H7-02 và toàn bộ S1-04); không đổi mã sản phẩm. |
+| Mặc định/ánh xạ/thủ công/schema/reparse/không ghi | F pass; test H7-02 và fixture giữ nguyên. |
+| Provider/cờ/khóa/tham số | F pass; harness S1-04 nạp hai hàm thật, giả workflow-role và khóa, không dùng khóa máy. |
+| QC chặn tự duyệt/cấu hình/lỗi, không fallback | F pass; không đổi logic QC. |
+| Build/test toàn solution | B: 0 lỗi/0 warning; T: Hub 712 pass/9 fail, Core 753 pass/5 fail, 0 skip; chưa đạt toàn xanh. |
+| Kiểm tra bổ sung | `powershell -NoProfile -ExecutionPolicy Bypass -File tools\test-verify.ps1`: fail ở git clone (signal pipe, Win32 error 5); `git diff --check` sạch; BOM S1-04 còn nguyên. |
+Ngoại lệ harness: `core.tests/AcceptanceS104SkillPromptsTests.cs:168,199–207` thiếu hàm AST và stub workflow-role/khóa; ban đầu ProviderGiaNhanPromptThat_MoiNhanh(plan/prep) 2 fail/3 pass: “Resolve-WorkflowAssignment is not recognized”; sửa dựng môi trường tối thiểu 8 dòng thêm/1 dòng đổi, không sửa assert. File task chỉ đổi báo cáo.
+Còn đỏ: V805SafeMergeTests.Merge_checks_local_clone_before_push_and_rolls_back_failure (2), V808AutoCommitTests.Merge_commits_only_allowed_changes_and_blocks_dirty_code (2), Board_inserts_missing_task_once_then_updates_status (1): Git signal pipe/CreateFileMapping Win32 error 5; Hub 9 lỗi File.Replace Access denied/lưu Map không thành công; không sửa ngoài phạm vi.
+Quyết định: restore tuần tự khắc phục thiếu assets; build/test dùng một MSBuild; lượt build trùng test từng bị khóa DLL, build cuối đã sạch. Không sửa test lần hai; không chạy app/browser, không push.
+Chưa xác minh main mới: fetch bị Permission denied FETCH_HEAD; merge bị ORIG_HEAD.lock; add/commit bị index.lock. Không có commit mới; HEAD acbece9, bản sửa còn trong worktree; chưa kiểm trên main đã cập nhật/máy thật.
 ## Review (Claude)
 <!-- Claude điền. -->
 
