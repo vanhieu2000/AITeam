@@ -239,13 +239,13 @@ public class AcceptanceH704OfficeTests
         Assert.Equal(3, stops.Length);
         foreach (var i in new[] { 1, 2, 3 })
         {
-            var form = Assert.Single(stops.Where(f => f.Contains("value=\"demo/T-" + i + "\"", StringComparison.Ordinal)));
+            var form = Assert.Single(stops, f => f.Contains("value=\"demo/T-" + i + "\"", StringComparison.Ordinal));
             Assert.Contains("hx-confirm=", form.Split('>')[0]);
             Assert.Contains("__RequestVerificationToken", form);
             Assert.Contains("handler=Command", form);
         }
-        var gate = Assert.Single(forms.Where(f => f.Contains("value=\"Verify\"", StringComparison.Ordinal)
-            && f.Contains("value=\"demo/T-4\"", StringComparison.Ordinal)));
+        var gate = Assert.Single(forms, f => f.Contains("value=\"Verify\"", StringComparison.Ordinal)
+            && f.Contains("value=\"demo/T-4\"", StringComparison.Ordinal));
         Assert.Contains("hx-confirm=", gate.Split('>')[0]);
     }
 
