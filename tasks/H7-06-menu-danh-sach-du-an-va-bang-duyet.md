@@ -108,19 +108,16 @@ Không có fixture file thật được kế hoạch chỉ định và không c�
 Điều chưa chắc: bản sửa cuối chưa được biên dịch/chạy; hạ tầng Razor render/token/URL cần xác minh trước khi khóa test giao coder. Test route cũ kiểm middleware đi tiếp, chưa chứng minh từng endpoint cũ trả trang đầy đủ. Test CSS không thay thế phép đo trình duyệt 1000px của Claude bước 7. Chưa có fixture đĩa thật; không thay nghiệp vụ dịch vụ bằng giả định định dạng. Metadata Agent A khác kế hoạch B nhưng được giữ nguyên theo chỉ thị. Chưa đủ điều kiện xác nhận bàn giao build xanh.
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng / kết quả thật (lượt sửa cổng kiểm tra 26/10) |
+| Nội dung | Bằng chứng / kết quả thật (OpenCode, 02/11) |
 |---|---|
-| Menu tám URL/active, bỏ truy vấn cũ | Chưa nghiệm thu: 9 ca menu đều NullReferenceException tại Projects.cshtml:4, trước assert. |
-| Dự án 0/1/nhiều, lỗi, URL an toàn | OnGet giữ nguyên; ca lỗi cấu hình pass; render bị chặn bởi PageContext.ViewData chưa được Fixture.Render cấp. |
-| Bảng sáu cột/loại/trạng thái/null/form | Chưa nghiệm thu: render lỗi tại Approvals.cshtml:5, trước assert bảng/token. |
-| Decide/PRG/lỗi, endpoint cũ, token | Handler/middleware giữ nguyên; chạy riêng ca thiếu token: fail tại test:313 vì filter trả Result=null, harness tạo Filters=[]; chưa chứng minh POST thật. |
-| Encode/chuỗi dài/co cột | Markup/CSS hiện có giữ nguyên; render bị chặn; không chạy app/chụp ảnh theo task. |
-| Build | `dotnet build AITeam.sln --no-restore --nologo -m:1 -nodeReuse:false`: exit 0, 0 lỗi/0 warning, 15,97 giây. |
-| Nghiệm thu bất biến | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceH706NavigationTests --blame-hang-timeout 2m --nologo --logger "console;verbosity=quiet"`: 19 pass/23 fail/0 skip, exit 1 sau build. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --nologo --logger "console;verbosity=quiet"`: Hub 730 pass/33 fail/0 skip; Core ít nhất 5 fail merge/auto-commit, chưa có tổng; dừng Ctrl+C ở mốc 3 phút, exit 1. |
-| Báo cáo/phạm vi/BOM | Lượt này chỉ đổi tiêu chí và báo cáo trong file task; không sửa mã/test; kiểm ReadAllBytes: cả 5 file .cs/.cshtml phạm vi có BOM. |
-Quyết định: theo AGENTS.md, giữ nguyên test nghiệm thu lỗi và dừng sửa mã; Claude cần cấp PageContext.ViewData trong Fixture.Render (test:103–127) và kiểm lại ngữ cảnh filter antiforgery (test:145–153), không thêm mã nhận diện test vào sản phẩm.
-Chưa xác minh: nghiệm thu đạt, toàn bộ Core, bố cục thật/fixture thật; chưa có commit được kiểm. Không chạy git; hệ thống tự commit/push theo chỉ thị Codex dự phòng.
+| Gốc lỗi | `Fixture.Render` thiếu `PageContext.ViewData`; đã dựng `CompiledPageActionDescriptor`, `ViewDataDictionary<TModel>` và gán `PageContext`/`PageModel.PageContext`. |
+| Bộ dựng form | `_app` chưa chạy nên endpoint trống, action rỗng; đã cấp `IUrlHelperFactory`/`IHtmlGenerator` giả NGAY TRONG `Render` để URL form là `/Approvals?handler=Decide`. |
+| File đã sửa | `hub.tests/AcceptanceH706NavigationTests.cs` (chỉ `Fixture.Render` + using); `hub/Pages/Approvals.cshtml` (Detail qua `MarkdownRenderer.Render`, giữ H3-03). |
+| Build | `dotnet build AITeam.sln -warnaserror`: exit 0, 0 warning, 0 error. |
+| Test toàn solution | `dotnet test AITeam.sln --blame-hang-timeout 3m`: Core 690 pass/0 fail; Hub 762 pass/1 fail/0 skip. |
+| Test H7-06 | Trước 19 pass/23 fail; sau 41 pass/1 fail. Ca còn đỏ: `POST_thieu_token_bi_chan_truoc_khi_ghi`. |
+| Ca còn đỏ | `Assert.IsAssignableFrom<BadRequestResult>` nhận null: `MissingToken` tạo `AuthorizationFilterContext` với `Filters=[]`, không đặt endpoint metadata nên filter antiforgery bỏ qua; gọi thẳng `IAntiforgery.ValidateRequestAsync` vẫn ném `AntiforgeryValidationException`. Ngoài phạm vi được sửa, không sửa test/không Skip. |
+| Chưa xác minh | Giao diện thật 1000px và ảnh chụp (Claude bước 7); chưa push. |
 ## Review (Claude)
 <!-- Claude điền khi review. -->
 

@@ -16,7 +16,9 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
@@ -110,8 +112,42 @@ public sealed class AcceptanceH706NavigationTests
             route.Values["page"] = routePage ?? page;
             http.Request.RouteValues = route.Values;
             http.SetEndpoint(new Endpoint(_ => Task.CompletedTask, new EndpointMetadataCollection(), "Nghiệm thu"));
-            var action = new ActionContext(http, route, new ActionDescriptor { RouteValues = new Dictionary<string, string?> { ["page"] = routePage ?? page } });
+            var action = new ActionContext(http, route, new CompiledPageActionDescriptor { RouteValues = new Dictionary<string, string?> { ["page"] = routePage ?? page } });
             var services = scope.ServiceProvider;
+            var currentPageName = routePage ?? page;
+            string BuildUrl(object? values)
+            {
+                var dict = new RouteValueDictionary(values);
+                var handler = dict.TryGetValue("handler", out var hv) ? hv as string : null;
+                var pageValue = dict.TryGetValue("page", out var pv) ? pv as string : null;
+                var controller = dict.TryGetValue("controller", out var cv) ? cv as string : null;
+                var actionName = dict.TryGetValue("action", out var av) ? av as string : null;
+                var target = pageValue
+                    ?? (controller is not null && actionName is not null ? "/" + controller + "/" + actionName : currentPageName);
+                return handler is null ? target : target + "?handler=" + handler;
+            }
+            var urlHelper = Fake<IUrlHelper>((method, args) => method.Name switch
+            {
+                "get_ActionContext" => action,
+                "Content" => "/" + (args![0] as string ?? string.Empty).TrimStart('~').TrimStart('/'),
+                "IsLocalUrl" => true,
+                "RouteUrl" when args![0] is UrlRouteContext routeContext => BuildUrl(routeContext.Values),
+                "RouteUrl" when args![1] is object routeValues => BuildUrl(routeValues),
+                "Action" when args![0] is UrlActionContext actionContext => BuildUrl(actionContext.Values),
+                "Link" when args![1] is object linkValues => BuildUrl(linkValues),
+                _ => null
+            });
+            var urlFactory = Fake<IUrlHelperFactory>((_, _) => urlHelper);
+            IServiceProvider? providerProxy = null;
+            IHtmlGenerator? generator = null;
+            providerProxy = Fake<IServiceProvider>((_, args) =>
+            {
+                var serviceType = (Type)args![0]!;
+                if (serviceType == typeof(IUrlHelperFactory)) return urlFactory;
+                if (serviceType == typeof(IHtmlGenerator)) return generator ??= ActivatorUtilities.CreateInstance<DefaultHtmlGenerator>(providerProxy!);
+                return services.GetService(serviceType);
+            });
+            http.RequestServices = providerProxy;
             var factory = services.GetRequiredService<IRazorPageFactoryProvider>();
             var result = factory.CreateFactory($"/Pages{page}.cshtml");
             Assert.True(result.Success, $"Không tìm thấy trang Razor {page}.");
@@ -120,10 +156,22 @@ public sealed class AcceptanceH706NavigationTests
             var view = new RazorView(services.GetRequiredService<IRazorViewEngine>(),
                 services.GetRequiredService<IRazorPageActivator>(), [], razor, HtmlEncoder.Default,
                 services.GetRequiredService<DiagnosticListener>());
-            var data = new ViewDataDictionary(services.GetRequiredService<IModelMetadataProvider>(), new ModelStateDictionary()) { Model = model };
+            var metadataProvider = services.GetRequiredService<IModelMetadataProvider>();
+            var data = (ViewDataDictionary)Activator.CreateInstance(
+                typeof(ViewDataDictionary<>).MakeGenericType(model.GetType()), metadataProvider, new ModelStateDictionary())!;
+            data.Model = model;
             using var writer = new StringWriter();
             var context = new ViewContext(action, view, data,
                 new TempDataDictionary(http, services.GetRequiredService<ITempDataProvider>()), writer, new HtmlHelperOptions());
+            if (razor is Page razorPage)
+            {
+                razorPage.PageContext = new PageContext(action) { ViewData = data };
+                razorPage.ViewContext = context;
+                if (model is PageModel pageModel)
+                {
+                    pageModel.PageContext = razorPage.PageContext;
+                }
+            }
             await view.RenderAsync(context);
             return writer.ToString();
         }

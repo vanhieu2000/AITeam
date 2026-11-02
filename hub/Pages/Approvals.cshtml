@@ -62,7 +62,7 @@
                                     <b>@a.Title</b>
                                     <details>
                                         <summary>Chi tiết</summary>
-                                        <div class="approval-detail">@a.Detail</div>
+                                        <div class="approval-detail">@MarkdownRenderer.Render(a.Detail)</div>
                                         <div class="muted">@a.RequestedBy</div>
                                         @if (!string.IsNullOrEmpty(commitShort)) { <div><code>@commitShort</code></div> }
                                         @foreach (var link in a.Links) { <div><code>@link</code></div> }
