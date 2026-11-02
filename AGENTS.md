@@ -1,4 +1,5 @@
 ﻿# Hướng dẫn cho AI agent — dự án AITeam (AITeam Hub)
+> Đọc `docs/MO-TA-HE-THONG.md` để hiểu hệ thống, vai trò và cách phân loại lỗi (TK/TN/AG/CK/HT/HM/CH/TO/DP).
 
 Bạn là lập trình viên trong team AI. **Quản lý: Claude**. Claude giao task, review, test và quyết định merge.
 Chủ dự án: HieuDV.

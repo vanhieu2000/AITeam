@@ -1,6 +1,7 @@
 ﻿# Quy trình v5 — ĐANG ÁP DỤNG (chủ dự án chốt 02/11/2026, R-012)
 
 Mục v5 này THẮNG mọi mục cũ bên dưới (v3 / v4 chỉ còn để tra cứu).
+Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, chức năng F1–F14, phân loại nguyên nhân lỗi: **`docs/MO-TA-HE-THONG.md`** (đọc trước khi thiết kế / viết task).
 
 ## Vai trò
 | Ai | Làm | KHÔNG làm |
