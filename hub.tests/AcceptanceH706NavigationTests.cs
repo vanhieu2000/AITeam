@@ -193,8 +193,9 @@ public sealed class AcceptanceH706NavigationTests
             var http = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
             http.Request.Method = "POST";
             http.Request.Path = "/Approvals";
-            var context = new AuthorizationFilterContext(new ActionContext(http, new RouteData(), new ActionDescriptor()), []);
             var filter = (IAsyncAuthorizationFilter)new ValidateAntiForgeryTokenAttribute().CreateInstance(scope.ServiceProvider);
+            // Bộ lọc antiforgery chỉ chạy khi chính nó là chính sách gần nhất trong Filters (IsEffectivePolicy).
+            var context = new AuthorizationFilterContext(new ActionContext(http, new RouteData(), new ActionDescriptor()), [(IFilterMetadata)filter]);
             await filter.OnAuthorizationAsync(context);
             return context;
         }
