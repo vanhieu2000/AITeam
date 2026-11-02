@@ -103,4 +103,13 @@ Chưa xác minh: Core đầy đủ, giao diện thật (Claude phụ trách); kh
 
 Điều chưa chắc: bộ test hiện kiểm handler gửi mới/bổ sung qua fake H7-03, chọn phiếu sai/mất, lỗi/thiếu dịch vụ, XSS thẻ/lỗi, CSRF thiếu token, partial/markup polling và CSS; chưa chứng minh bản nháp thực sự còn trong DOM trình duyệt. Đây là gói chuẩn bị chưa đạt cổng build, không ghi nhận sẵn sàng giao.
 ## Review (Claude)
-Chờ review.
+### Vòng 1 — ĐẠT (Claude, 02/11/2026)
+- Luồng R-012: OpenCode (DeepSeek) cập nhật main + sửa 2 cảnh báo xUnit2031; Codex QC không chạy được (cầu nối cục bộ tắt) ⇒ Claude review trực tiếp theo yêu cầu chủ dự án.
+- Đã kiểm: diff so với main (8 file, 195 dòng / ngân sách 350); `OfficeModel.LoadChat/OnGetChat/OnPostChat` kiểm mã phiếu bằng regex `\AR-[0-9]{3}\z`, xử lý lỗi + thiếu dịch vụ; Razor mã hóa mọi chuỗi; POST có token. Cổng KT: build 0 warning, Hub 748/748, Core 690/690, quét bí mật sạch.
+- Cổng KT báo "sửa test nghiệm thu": đúng 2 câu `Assert.Single(x.Where(..))` ⇒ `Assert.Single(x, ..)` do Claude CHO PHÉP (cảnh báo xUnit2031 nằm trong test, không đổi ý kiểm tra).
+- Lỗi: - [TK] (test) test nghiệm thu có cảnh báo xUnit2031 khiến cổng KT không đạt 3 lượt.
+
+## Kết quả
+- Văn phòng: mỗi tác nhân là một thẻ, khung chat giao việc theo phiếu R-xxx ngay trên trang (xem / gửi / bổ sung).
+- Kiểm chứng: 1.438 test pass, build 0 warning.
+- Còn cải tiến: chưa thử bản nháp còn trong DOM trình duyệt thật (hàng chờ).
