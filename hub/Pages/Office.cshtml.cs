@@ -13,11 +13,91 @@ public class OfficeModel : PageModel
 {
     private readonly IOfficeService _office;
     private readonly ICommandService? _commands;
+    private readonly IRequestService? _requests;
+    private readonly IOfficeChatService? _chat;
+    private readonly ITeamConfigService? _config;
 
-    public OfficeModel(IOfficeService office, ICommandService? commands = null)
+    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null)
     {
         _office = office;
         _commands = commands;
+        _requests = requests;
+        _chat = chat;
+        _config = config;
+    }
+
+    [BindProperty(SupportsGet = true)] public string? RequestId { get; set; }
+    public IReadOnlyList<RequestThread> Threads { get; private set; } = Array.Empty<RequestThread>();
+    public RequestThread? SelectedThread { get; private set; }
+    public IReadOnlyList<ProjectInfo> ChatProjects { get; private set; } = Array.Empty<ProjectInfo>();
+    public string? ChatNotice { get; private set; }
+    public string? ChatError { get; private set; }
+
+    /// <summary>
+    /// Đọc GetAll/GetProjects. RequestId null/rỗng chọn tạo mới; khác phải khớp toàn bộ
+    /// R-[0-9]{3} và tồn tại theo Ordinal, sai/mất: "Phiếu không hợp lệ."; không tự chọn phiếu khác.
+    /// Lỗi đọc: "Không đọc được hội thoại: " + ex.Message. Thiếu dịch vụ: danh sách rỗng,
+    /// "Chat đang ở chế độ chỉ xem.". Không ghi dữ liệu hoặc chạy tiến trình.
+    /// </summary>
+    public void LoadChat()
+    {
+        Threads = Array.Empty<RequestThread>();
+        ChatProjects = Array.Empty<ProjectInfo>();
+        SelectedThread = null;
+        if (_requests == null || _config == null)
+        {
+            ChatError ??= "Chat đang ở chế độ chỉ xem.";
+            return;
+        }
+        try
+        {
+            Threads = _requests.GetAll();
+            ChatProjects = _config.GetProjects();
+            if (!string.IsNullOrEmpty(RequestId))
+            {
+                if (System.Text.RegularExpressions.Regex.IsMatch(RequestId, @"\AR-[0-9]{3}\z"))
+                    SelectedThread = Threads.FirstOrDefault(t => string.Equals(t.Id, RequestId, StringComparison.Ordinal));
+                if (SelectedThread == null && ChatNotice == null) ChatError ??= "Phiếu không hợp lệ.";
+            }
+        }
+        catch (Exception ex) { ChatError ??= "Không đọc được hội thoại: " + ex.Message; }
+    }
+
+    /// <summary>
+    /// GET Chat: LoadChat rồi trả _OfficeChat, Model=this, sao chép ViewData và ModelState.
+    /// Partial chỉ có hội thoại/thông báo, root office-chat-thread, không chứa form soạn.
+    /// </summary>
+    public IActionResult OnGetChat()
+    {
+        LoadChat();
+        return Self("_OfficeChat");
+    }
+
+    /// <summary>
+    /// POST Chat: gọi IOfficeChatService.Send(project,text,requestId) đúng một lần, không trim thay dịch vụ.
+    /// Thành công: "Đã gửi. Claude nhận yêu cầu khi bắt đầu phiên làm việc và trả lời trong phiếu R-xxx.".
+    /// ArgumentException: ChatError=ex.Message; lỗi khác: "Không gửi được yêu cầu: " + ex.Message.
+    /// Thiếu chat: "Chat đang ở chế độ chỉ xem.". Giữ RequestId, nạp hội thoại, trả _OfficeChat,
+    /// giữ ViewData/ModelState. Không redirect. Form ngoài swap, lỗi giữ bản nháp, chỉ thành công mới xóa.
+    /// </summary>
+    public IActionResult OnPostChat(string project, string? text, string? requestId)
+    {
+        RequestId = requestId;
+        if (_chat == null) ChatError = "Chat đang ở chế độ chỉ xem.";
+        else
+        {
+            try
+            {
+                _chat.Send(project, text, requestId);
+                if (PageContext.HttpContext is { } context)
+                    context.Response.Headers["HX-Trigger"] = "office-chat-sent";
+                ChatNotice = "Đã gửi. Claude nhận yêu cầu khi bắt đầu phiên làm việc và trả lời trong phiếu R-xxx.";
+            }
+            catch (ArgumentException ex) { ChatError = ex.Message; }
+            catch (Exception ex) { ChatError = "Không gửi được yêu cầu: " + ex.Message; }
+        }
+        LoadChat();
+        return Self("_OfficeChat");
     }
 
     public OfficeView? View { get; private set; }
@@ -53,6 +133,7 @@ public class OfficeModel : PageModel
             Error = "Không đọc được dữ liệu văn phòng: " + ex.Message;
         }
         LoadControl();
+        LoadChat();
     }
 
     /// <summary>
@@ -155,9 +236,12 @@ public class OfficeModel : PageModel
         return new ContentResult { Content = content, ContentType = "text/plain; charset=utf-8" };
     }
 
-    private PartialViewResult Self(string name) => new()
+    private PartialViewResult Self(string name)
     {
-        ViewName = name,
-        ViewData = new ViewDataDictionary<OfficeModel>(new EmptyModelMetadataProvider(), ModelState) { Model = this },
-    };
+        var data = new ViewDataDictionary<OfficeModel>(new EmptyModelMetadataProvider(), ModelState);
+        if (ViewData != null)
+            foreach (var item in ViewData) data[item.Key] = item.Value;
+        data.Model = this;
+        return new PartialViewResult { ViewName = name, ViewData = data };
+    }
 }
