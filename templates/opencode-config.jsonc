@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Chủ dự án HieuDV 02/11/2026: OpenCode CHỈ dùng DeepSeek, khóa mọi model khác.
+  "model": "opencode/deepseek-v4.1-flash-free",
+  "small_model": "opencode/deepseek-v4.1-flash-free",
+  // Chỉ bật nhà cung cấp "opencode" (model free) và "deepseek" (API DeepSeek chính chủ, nếu sau này có khóa).
+  "enabled_providers": ["opencode", "deepseek"],
+  "provider": {
+    // Trong "opencode" chỉ cho model DeepSeek.
+    "opencode": {
+      "whitelist": ["deepseek-v4.1-flash-free"]
+    }
+  }
+}

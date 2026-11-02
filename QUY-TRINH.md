@@ -1,6 +1,43 @@
-﻿# Quy trình v3 — chốt từ đầu, agent chỉ code, Claude review
+﻿# Quy trình v5 — ĐANG ÁP DỤNG (chủ dự án chốt 02/11/2026, R-012)
 
-Áp dụng từ 21/10/2026 (sau đánh giá R-001). Một trang này là đủ cho mỗi phiên. `CLAUDE.md` chỉ để tra cứu chi tiết.
+Mục v5 này THẮNG mọi mục cũ bên dưới (v3 / v4 chỉ còn để tra cứu).
+
+## Vai trò
+| Ai | Làm | KHÔNG làm |
+|---|---|---|
+| Chủ dự án | Đưa yêu cầu; có thể giao thẳng cho Codex bằng `plans/R-xxx/YEU-CAU-CODEX.md` | — |
+| **Codex** (ChatGPT, CLI) | Viết code, việc khó / sửa `team.ps1` / nhiều file | **Không QC nữa** |
+| **OpenCode** (CHỈ DeepSeek) | Viết code, việc vừa / nhỏ, chạy song song với Codex | Không dùng model khác |
+| Antigravity | **Chỉ giao khi tài khoản có model Argon 4** (`team.ps1 models`). 02/11: chưa có ⇒ KHÔNG giao | — |
+| Claude | Chẩn đoán khi AI tắc, review, sửa nhỏ ≤ 50 dòng, **chốt + merge**, ghi phiếu | Không giao lại cùng một lỗi lần 3 mà chưa tự tìm gốc |
+
+- Chia task cho nhiều người cùng lúc, **khác file**; 2 task cùng sửa `team.ps1` hoặc cùng file test ⇒ tuần tự.
+- Cùng một lỗi đỏ sau 2 lượt AI ⇒ Claude tự đọc stack trace tìm gốc trước (02/11: H7-06 đỏ 10 lượt chỉ vì bộ test dựng trang sai, tìm ra trong 5 phút).
+
+## Chạy OpenCode (đã kiểm chứng 02/11, bản 1.19.5)
+- Cài: `npm install -g opencode-ai@1.19.5`. Khóa DeepSeek ở `%USERPROFILE%\.config\opencode\opencode.jsonc` (mẫu: `templates/opencode-config.jsonc`). Không tạo `opencode.json` trong repo.
+- Quyền hẹp cho mỗi lần chạy: `$env:OPENCODE_CONFIG = <bản sao templates/opencode-quyen-han.json>` (chỉ sửa file + `git`/`dotnet`; cấm webfetch, websearch, đọc ngoài thư mục). **KHÔNG dùng `--auto`** (bị chặn, và nguy hiểm).
+- Lệnh: `opencode run "Lam dung theo file dinh kem." -f <prompt.md> --dir <worktree> --format json --title <Mã> < NUL`. Lời nhắn PHẢI đứng trước `-f` (`-f` là mảng, nuốt mọi thứ phía sau).
+- Kết quả: dòng `type=text` cuối trong JSON. Bị từ chối quyền ⇒ OpenCode dừng luôn (không báo lỗi) ⇒ đọc sự kiện `tool_use` có `status=error`.
+
+## Chạy Codex CLI (đã kiểm chứng 02/11, bản 0.166.0)
+- Cài: `npm install -g @openai/codex@0.166.0`; dùng đăng nhập ChatGPT sẵn có (`codex login status`).
+- **Luôn ghi đè theo lần gọi, KHÔNG sửa `~/.codex/config.toml`:** `-c openai_base_url="https://chatgpt.com/backend-api/codex"` (config máy công ty trỏ cầu nối 127.0.0.1:17841; cầu nối tắt ⇒ Codex treo vô hạn) và `-c windows.sandbox="unelevated"` (sandbox mặc định cần UAC ⇒ lỗi 1223, không chạy được lệnh nào).
+- Lệnh: `codex exec --cd <worktree> --skip-git-repo-check --sandbox workspace-write -c windows.sandbox="unelevated" -c notify=[] -c openai_base_url="…" - < prompt.md`.
+- Sandbox unelevated **không ghi được metadata git** của worktree ⇒ người điều phối tự `git fetch` + `git merge origin/main` TRƯỚC khi giao, và tự commit + push SAU khi Codex xong. Test có fixture git / ghi file có thể đỏ giả trong sandbox ⇒ chạy lại test ngoài sandbox trước khi kết luận.
+- Sau mỗi lần Codex build: `dotnet build-server shutdown`. MSBuild giữ tiến trình build ngầm mang quyền hạn chế của sandbox ⇒ lần build sau báo "Access to the path … is denied". Build tay dùng `-nodeReuse:false`.
+
+## Worktree, cổng kiểm tra, merge
+- Thư mục: `<workDir>\<a|b>-<mã viết thường>` (vd. `a-h7-06`), nếu không `team.ps1 verify/qc` báo "Chưa có thư mục làm việc". Tạo: `git worktree add <thư mục> -B <nhánh> origin/<nhánh>`; tên git riêng bằng `git config --worktree user.name`.
+- Không chạy nhiều `dotnet build` / `verify` song song trên máy (khóa file `obj`).
+- Cổng KT báo "sửa test nghiệm thu" khi quản lý đã CHO PHÉP sửa phần dựng môi trường ⇒ ghi rõ trong "### Vòng N — ĐẠT" (file, dòng, vì sao) rồi `team.ps1 merge`.
+- `merge` xung đột (thường `hub.css` khi 2 task cùng thêm style cuối file) ⇒ giữ cả hai khối, build + toàn bộ test + clone sạch, rồi mới push.
+
+---
+
+# Quy trình v3 — chốt từ đầu, agent chỉ code, Claude review (cũ, tra cứu)
+
+Áp dụng từ 21/10/2026 (sau đánh giá R-001). `CLAUDE.md` chỉ để tra cứu chi tiết.
 
 ## Vai trò (cố định, không đổi giữa chừng)
 | Ai | Làm | KHÔNG làm |

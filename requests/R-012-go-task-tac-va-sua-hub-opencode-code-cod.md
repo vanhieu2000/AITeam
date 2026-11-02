@@ -27,6 +27,11 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-012` để `team.ps1 reque
 | 23:10 | Codex QC H7-04: BLOCKED quá thời gian 15 phút. Gốc: `~/.codex/config.toml` trỏ `openai_base_url` về cầu nối cục bộ 127.0.0.1:17841 (codex-chatgpt-web) đang KHÔNG chạy ⇒ mọi lệnh Codex CLI treo | chờ chủ dự án |
 | 22:58 | H7-06 → OpenCode lượt 1: merge main xong nhưng đi lạc (đọc obj/, tra web), dừng khi bị chặn đọc ngoài repo; 4,8 phút, chưa sửa | [CK] quyền chưa cấm websearch |
 | 23:20 | Claude chẩn đoán H7-06: 23/42 test đỏ do `Fixture.Render` trong test nghiệm thu không gán `PageContext` (Razor Pages đọc ViewData qua PageContext) — lỗi bộ test, không phải code trang. Giao OpenCode lượt 2 kèm cách sửa; cấm websearch + đọc ngoài thư mục | [TK] test nghiệm thu H7-06 viết sai bộ dựng trang |
+| 00:10 | Chủ dự án: Codex + OpenCode cùng code, Codex KHÔNG QC, Antigravity chỉ khi có Argon 4 (chưa có). Codex CLI gỡ treo bằng ghi đè theo lần gọi (`openai_base_url`, `windows.sandbox="unelevated"`) | quy trình v5 |
+| 00:40 | ✅ H7-04 merge (review Claude). Codex H7-02: sửa harness S1-04, sandbox chặn git ⇒ Claude lưu nhánh 7f21688 | |
+| 01:00 | ✅ H7-06 merge (fb83f06; xung đột hub.css giữ cả 2 khối; clone sạch: build 0 warning, Hub 790, Core 690). Lỗi "Access denied" khi build = MSBuild node của sandbox Codex ⇒ `dotnet build-server shutdown` | |
+| 01:05 | OpenCode W1-03 xanh (2423462, 18 phút) — push nhánh, chưa review | |
+| 01:15 | Chủ dự án: DỪNG hết; Claude cập nhật quy trình v5 + `plans/R-012/YEU-CAU-CODEX.md` để chủ dự án giao Codex trực tiếp | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
