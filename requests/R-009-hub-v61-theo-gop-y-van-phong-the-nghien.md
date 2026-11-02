@@ -68,6 +68,7 @@ Sự kiện cần ghi:
 
 - 2026-11-02 23:10:54 +05:30 | H7-04 | Qc | lượt 1 | BLOCKED <!-- workflow:H7-04:Qc:1 -->
 - 2026-11-02 23:40:10 +05:30 | H7-04 | Merge | lượt 1 | ĐẠT <!-- workflow:H7-04:Merge:1 -->
+- 2026-11-02 23:41:54 +05:30 | H7-06 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:H7-06:Verify:3 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-009`, rồi điền:
 
