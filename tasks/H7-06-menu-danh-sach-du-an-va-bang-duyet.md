@@ -119,7 +119,16 @@ Không có fixture file thật được kế hoạch chỉ định và không c�
 | Ca còn đỏ | `Assert.IsAssignableFrom<BadRequestResult>` nhận null: `MissingToken` tạo `AuthorizationFilterContext` với `Filters=[]`, không đặt endpoint metadata nên filter antiforgery bỏ qua; gọi thẳng `IAntiforgery.ValidateRequestAsync` vẫn ném `AntiforgeryValidationException`. Ngoài phạm vi được sửa, không sửa test/không Skip. |
 | Chưa xác minh | Giao diện thật 1000px và ảnh chụp (Claude bước 7); chưa push. |
 ## Review (Claude)
-<!-- Claude điền khi review. -->
+### Vòng 1 — ĐẠT (Claude, 02/11/2026)
+- Luồng R-012: OpenCode (DeepSeek) 2 lượt; Claude chẩn đoán + sửa 3 dòng; review trực tiếp (Codex không QC theo chủ dự án).
+- Gốc 23/42 test đỏ: `Fixture.Render` trong test nghiệm thu dựng trang `@page` bằng RazorView mà không gán `PageContext` ⇒ `ViewData` null ở dòng 4. OpenCode sửa phần dựng môi trường (CompiledPageActionDescriptor, `ViewDataDictionary<TModel>`, PageContext, UrlHelper/HtmlGenerator giả) — Claude CHO PHÉP, không đổi assert.
+- Ca `POST_thieu_token…`: harness truyền `Filters=[]` nên filter antiforgery không phải chính sách hiệu lực ⇒ Claude đưa filter vào Filters (3 dòng).
+- `Approvals.cshtml`: `@MarkdownRenderer.Render(a.Detail)` = khôi phục bản trên main (H3-03); test chống chèn HTML xanh.
+- Đã kiểm: build 0 warning; Hub 763/763, Core 690/690; giao diện thật HUB_FAKE ở 1000px: menu 8 mục đúng thứ tự, không tràn ngang, Đơn duyệt bảng 6 cột, trạng thái rỗng có thông báo.
+- Cổng KT báo "sửa test nghiệm thu" (đã cho phép) và lỗi khóa file `obj` khi nhiều bản build chạy song song (build lại riêng: OK).
+- Lỗi: - [TK] (test) test nghiệm thu H7-06 dựng trang sai (thiếu PageContext, Filters rỗng) ⇒ 23 ca đỏ giả suốt 10 lượt.
 
 ## Kết quả
-<!-- Claude điền khi nghiệm thu đạt. -->
+- Menu gọn 8 mục (Văn phòng, Đơn duyệt, Dự án, Hiệu suất, Quy trình & cải tiến, Cài đặt, Tài khoản, Map); Dự án là một nút chung; Đơn duyệt là bảng 6 cột, nút duyệt ngay trong dòng chờ duyệt.
+- Kiểm chứng: 1.453 test pass, build 0 warning, xem thật ở 1000px.
+- Còn cải tiến: dữ liệu giả chưa có đơn "Chờ duyệt" để nhìn nút trong dòng trên giao diện thật (test đã phủ).
