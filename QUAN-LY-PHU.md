@@ -25,15 +25,15 @@ Chủ dự án 26/10: "để việc của bạn (Claude) qua cho Codex làm; Cla
 Duyệt plan = thêm mục `## Quyết định của quản lý (…)` có chữ **ĐÃ DUYỆT** cuối plan.md, commit + push.
 Đề xuất nghiệm thu (việc của bạn): cổng KT ĐẠT + QC PASS ⇒ ghi vào file task TRÊN NHÁNH (worktree `D:\AITeam-work\AITeam\<a|b>-<mã>`) mục "### Đề xuất nghiệm thu (Codex quản lý phụ)": đã kiểm gì, phát hiện còn mở, đề xuất ĐẠT / CẦN SỬA; + "## Kết quả" nháp; commit + push NHÁNH; thêm 1 dòng vào mục "Chờ Claude chốt" cuối file này. Claude đọc rồi tự ghi "### Vòng N — ĐẠT" và merge. Task có giao diện: chạy Hub chế độ giả (`$env:HUB_FAKE=1; $env:HUB_PORT=5058; dotnet run --project hub`), xem 1000px không tràn ngang, ghi vào đề xuất.
 
-## Việc đang dở (cập nhật 18:52 26/10/2026)
-1. **R-009 Hub v6.1:** H7-01/03/07 đã merge. H7-06 đã kết thúc lượt 6 lúc 16:42, cổng KT KHÔNG ĐẠT: build 0 warning, Core 690/690 pass, Hub 739 pass/24 fail; lỗi NullReferenceException tại Projects.cshtml:4 vẫn còn sau thử lại. QC chưa chạy. Tạm dừng vì quá 3 lượt; không giao lượt 7, không sửa test nghiệm thu. Log H7-06-verify-2.md; lượt 8 lúc 17:23 chỉ trả Resting, không có cổng KT/QC mới. Không tự giao thêm.
-2. **H7-02 tạm dừng sau lượt 10:** lượt 8 kết thúc 18:21; cổng KT H7-02-verify-3.md lúc 18:33 KHÔNG ĐẠT (build 0 warning; Hub 721/721 pass; Core 756 pass/2 fail S1-04 thiếu workflow-role; có sửa test ngoài phạm vi). Lượt 10 kết thúc 18:40, HEAD acbece9, đã hoàn tác sửa test ngoài phạm vi; agent báo build 0 lỗi/0 warning và H7-02 68/68 pass, toàn solution chưa đạt. Worktree hiện sạch, hết xung đột team.ps1; chưa có cổng KT/QC cho HEAD mới. Quá 3 lượt, không tự giao thêm; chờ Claude xử lý bất nhất harness/phạm vi, giữ nguyên test nghiệm thu.
-3. **H7-04 tạm dừng:** lượt code 3 chỉ cập nhật báo cáo; `H7-04-verify-2.md` KHÔNG ĐẠT: 2 warning xUnit2031 trong test nghiệm thu bất biến và 4 lỗi Hub còn sau thử lại (V5-05/W1-02). Chờ Claude chốt cách xử lý test/thiết kế; không sửa test nghiệm thu hoặc tự giao thêm. Lượt 5 lúc 17:23 chỉ trả Resting, không có cổng KT/QC mới. H7-05 chờ H7-04 được chốt/merge.
-4. **R-011:** W1-01/02/05/06/07 đã merge. W1-03 prep đã xong; lượt code 2 trước đó dừng QuotaExhausted, hạn chờ tới 18:09 đã qua. H7-02 đã kết thúc và worktree sạch; lúc 18:51 giao tiếp `assign -Project AITeam -Task W1-03 -Dev codex -Resume` chạy nền PID 11172. Log `logs/W1-03.deputy-20261026-185137.out.txt/.err.txt`; vòng sau kiểm tra, không giao trùng, không prep lại. Chưa có cổng KT/QC mới. W1-04 chờ W1-03.
-5. **Hệ thống + skill:** S1-01…08, V8-01/02/03/09/10 đã merge theo bảng việc; bỏ các chỉ dẫn giao lại cũ. Không đưa việc đã merge vào chờ chốt.
-6. **V6-02:** tiếp tục tạm dừng, quá 3 vòng; còn 2 ca Fresh_ai_log ở lượt Codex 5. Không giao lại trong vòng này.
-7. **Hàng chờ nhỏ:** test V8-02/V8-03 chập chờn khi máy bận; cache `.state/agy-models.json` khi switch-account; W1-05 ca QC trước Verify; W1-02 dispose singleton factory. Chưa mở rộng phạm vi.
-
+## Việc đang dở (cập nhật 20:45 28/10/2026)
+1. **R-009 Hub v6.1:** H7-01/03/07 đã merge. H7-06 lượt 10 dừng QuotaExhausted lúc 19:53 26/10 (logs/H7-06-10.json); cổng gần nhất H7-06-verify-2.md KHÔNG ĐẠT (build 0 warning; Core 690 pass; Hub 739 pass/24 fail). QC chưa chạy. Quá 3 lượt, giữ tạm dừng, không giao thêm.
+2. **H7-02:** giữ tạm dừng sau lượt 10; H7-02-verify-4.md KHÔNG ĐẠT trên acbece9 (build 0 warning; Hub 721 pass; Core 756 pass/2 fail S1-04, vẫn lỗi sau thử lại). Test nghiệm thu còn nguyên; QC chưa chạy. Chờ Claude xử lý bất nhất harness/phạm vi.
+3. **H7-04:** lượt 9 đã có H7-04-verify-4.md lúc 19:47 26/10: KHÔNG ĐẠT vì 2 warning xUnit2031 trong AcceptanceH704OfficeTests.cs:242,247; Hub 748/748 và Core 690/690 pass, test nghiệm thu còn nguyên. Không còn tiến trình test khi kiểm tra vòng này; QC chưa có kết quả mới. Quá 3 lượt, không sửa test nghiệm thu, không giao thêm. H7-05 chờ H7-04.
+4. **R-011:** W1-01/02/05/06/07 đã merge. W1-03 lượt 6 dừng QuotaExhausted lúc 19:53 26/10 (logs/W1-03-6.json); lệnh nền trước đã kết thúc. Cổng gần nhất W1-03-verify-1.md KHÔNG ĐẠT trên ebef924 (build 0 warning; Hub 721 pass; Core 731 pass/6 fail ban đầu, còn lỗi sau thử lại). Worktree hiện ở 84a1513; chưa có cổng KT/QC xác nhận HEAD hiện tại. Quá 3 lượt, giữ tạm dừng, không giao thêm. W1-04 chờ W1-03.
+5. **Hệ thống + skill:** S1-01…08, V8-01/02/03/09/10 đã merge theo bảng việc. Không đưa việc đã merge vào chờ chốt.
+6. **V6-02:** tiếp tục tạm dừng, quá 3 vòng; còn 2 ca Fresh_ai_log ở lượt Codex 5. Không giao lại.
+7. **Hàng chờ nhỏ:** test V8-02/V8-03 chập chờn khi máy bận; cache agy-models.json khi switch-account; W1-05 ca QC trước Verify; W1-02 dispose singleton factory. Chưa mở rộng phạm vi.
+8. **Kết luận vòng:** main khớp origin/main sau fetch; bảng việc và log không có cập nhật mới so với vòng 20:15 ngày 28/10 (log mới nhất vẫn 19:54 ngày 26/10). Chưa có task đủ cổng KT ĐẠT + QC PASS. Không chạy plan/prep/assign/verify/qc mới; các việc đều đã tạm dừng theo giới hạn lượt, không có việc độc lập mới cần khởi động.
 Luật: test dùng `core.tests/Support`; không xóa test lượt trước; quá 3 vòng thì tạm dừng và ghi lý do. Chỉ đề xuất nghiệm thu khi cổng KT ĐẠT + QC PASS trên bản sửa hiện tại; Claude chốt và merge.
 ## Luật bắt buộc
 - Commit do chính `team.ps1` tự làm khi chạy plan / prep / assign / verify / qc (bảng việc, `metrics/runs/**`, nhật ký phiếu, file task mới) là ĐƯỢC PHÉP. Chỉ cấm: `team.ps1 merge`, tự đẩy code lên main, force-push, xóa nhánh / dữ liệu.
@@ -50,6 +50,8 @@ Luật: test dùng `core.tests/Support`; không xóa test lượt trước; quá
 - (trống; chưa có task mới đủ cổng KT ĐẠT + QC PASS)
 
 ## Nhật ký quản lý phụ
+
+- 2026-10-26 19:32: Lượt quản lý quá 45 phút — đã dừng
 - 16:52 25/10/2026: Một vòng điều phối: đối chiếu bảng việc/log/worktree; H7-07 được phiên Claude khác chốt và merge trong lúc kiểm tra; S1-04 hết thời gian, chưa commit helper. Không chạy lại prep/assign vì tự commit/push ngoài danh sách cho phép; không có đề xuất mới chờ Claude. Không chạy build/test mới; dùng kết quả cổng KT và QC có sẵn.
 
 - 17:16 25/10/2026: Một vòng điều phối: đã đồng bộ main, đối chiếu bảng việc/log/tiến trình/worktree; S1-04 cổng KT lượt 2 ĐẠT nhưng QC CẦN SỬA, lượt code 3 đang chạy nên không gọi lệnh giao trùng. Chưa có đề xuất nghiệm thu mới; cập nhật bảng việc và nhật ký R-010; không chạy build/test mới, không merge.
@@ -63,3 +65,19 @@ Luật: test dùng `core.tests/Support`; không xóa test lượt trước; quá
 - 18:16 26/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; đối chiếu bảng việc/log/tiến trình. H7-02 đã được phiên khác giao lượt 8 lúc 18:15, Codex PID 13208 đang chạy, worktree còn xung đột team.ps1; không giao trùng hoặc chạy verify/QC đồng thời. W1-03 prep thành công nhưng code dừng QuotaExhausted, chờ lượt Codex trống; H7-04/H7-06 chỉ có lượt Resting mới, V6-02 giữ tạm dừng. Chưa có task mới đủ cổng KT ĐẠT + QC PASS; không đề xuất nghiệm thu, không chạy build/test riêng, không merge.
 
 - 18:52 26/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; đối chiếu bảng việc/log/worktree/tiến trình. H7-02 lượt 10 đã xong và hoàn tác sửa test ngoài phạm vi, chưa có cổng KT/QC trên HEAD acbece9; tạm dừng theo giới hạn 3 lượt. H7-04/H7-06/V6-02 giữ tạm dừng. Giao W1-03 tiếp tục chạy nền qua Codex lúc 18:51, PID 11172, log W1-03.deputy-20261026-185137.out.txt/.err.txt; vòng sau kiểm tra. Chưa có task đủ ĐẠT + PASS, không đề xuất nghiệm thu; không chạy build/test riêng, không merge.
+
+- 19:47 26/10/2026: Một vòng điều phối: fetch origin, đối chiếu bảng việc/log/tiến trình; W1-03 cổng KT KHÔNG ĐẠT và lệnh nền PID 11172 tự giao sửa tiếp lúc 19:45; H7-04 còn tiến trình test. Không gọi plan/prep/assign/verify/qc trùng. H7-02 verify-4 KHÔNG ĐẠT; H7-06/V6-02 giữ tạm dừng. Chưa có task đủ ĐẠT + QC PASS để đề xuất nghiệm thu. Không chạy build/test riêng, không merge; giữ dòng nhật ký 19:32 có sẵn.
+
+- 20:16 27/10/2026: Một vòng điều phối: đối chiếu bảng việc, log và tiến trình; H7-04 verify-4 có Hub 748 + Core 690 test pass nhưng 2 warning nên KHÔNG ĐẠT; W1-03 lượt 6 và H7-06 lượt 10 đã dừng QuotaExhausted. Giữ tạm dừng H7-02/H7-04/H7-06/W1-03/V6-02 theo giới hạn 3 lượt; không gọi thêm plan/prep/assign/verify/qc, không có đề xuất nghiệm thu mới. Cập nhật bảng việc và nhật ký R-009/R-011; không chạy build/test mới, không merge.
+
+- 20:45 27/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; bảng việc và log không có cập nhật mới từ vòng trước. Giữ tạm dừng H7-02/H7-04/H7-06/W1-03/V6-02 theo giới hạn lượt; không có việc cần chạy plan/prep/assign/verify/qc hoặc đề xuất nghiệm thu. Chỉ cập nhật sổ tay, không chạy build/test mới, không merge.
+
+- 21:15 27/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; bảng việc và log không có cập nhật mới (log mới nhất 19:54 ngày 26/10). Giữ tạm dừng H7-02/H7-04/H7-06/W1-03/V6-02 theo giới hạn lượt; chưa có task đủ cổng KT ĐẠT + QC PASS. Không có việc cần chạy plan/prep/assign/verify/qc; chỉ cập nhật sổ tay rồi dừng, không chạy build/test mới, không merge.
+
+- 21:45 27/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; bảng việc và log không có cập nhật mới (log mới nhất 19:54 ngày 26/10). Giữ tạm dừng H7-02/H7-04/H7-06/W1-03/V6-02 theo giới hạn lượt; chưa có task đủ cổng KT ĐẠT + QC PASS. Không có việc cần chạy plan/prep/assign/verify/qc; chỉ cập nhật sổ tay rồi dừng, không chạy build/test mới, không merge.
+
+- 19:45 28/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; bảng việc và log không có cập nhật mới (log mới nhất 19:54 ngày 26/10). Giữ tạm dừng H7-02/H7-04/H7-06/W1-03/V6-02 theo giới hạn lượt; chưa có task đủ cổng KT ĐẠT + QC PASS. Không có việc cần chạy plan/prep/assign/verify/qc; chỉ cập nhật sổ tay rồi dừng, không chạy build/test mới, không merge.
+
+- 20:15 28/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; bảng việc và log không có cập nhật mới (log mới nhất 19:54 ngày 26/10). Giữ tạm dừng H7-02/H7-04/H7-06/W1-03/V6-02 theo giới hạn lượt; chưa có task đủ cổng KT ĐẠT + QC PASS. Không có việc cần chạy plan/prep/assign/verify/qc; chỉ cập nhật sổ tay rồi dừng, không chạy build/test mới, không merge.
+
+- 20:45 28/10/2026: Một vòng điều phối: fetch origin, main khớp origin/main; bảng việc và log không có cập nhật mới (log mới nhất 19:54 ngày 26/10). Giữ tạm dừng H7-02/H7-04/H7-06/W1-03/V6-02 theo giới hạn lượt; chưa có task đủ cổng KT ĐẠT + QC PASS. Không có việc cần chạy plan/prep/assign/verify/qc; chỉ cập nhật sổ tay rồi dừng, không chạy build/test mới, không merge.
