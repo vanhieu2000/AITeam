@@ -1148,7 +1148,8 @@ function Write-PlanMockup([string]$RequestId, [string]$PlanText) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $hash = [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '').ToLowerInvariant() }
     finally { $sha.Dispose() }
-    return [pscustomobject]@{ Path = $path; Fingerprint = $hash }
+    $filePath = [IO.Path]::Combine($rootPath, "docs/design/$RequestId-mockup.html")
+    return [pscustomobject]@{ Path = $filePath; Fingerprint = $hash }
 }
 
 # /// <summary>Chỉ đọc, không fetch/worktree/provider/ghi file. Loại comment HTML và

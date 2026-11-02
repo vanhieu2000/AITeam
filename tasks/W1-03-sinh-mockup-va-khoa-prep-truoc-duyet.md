@@ -66,16 +66,13 @@ Theo brief R-011 mục 2; phụ thuộc W1-01 đã có helper. Ba hàm PowerShel
 ## Báo cáo của agent
 | Tiêu chí | Bằng chứng |
 |---|---|
-| Lõi/UI/phân loại; HTML 120/121; CSS tại máy | Ba helper và hai điểm nối có đủ phần thân; `Read-PlanMockup` với HTML plan R-011 thật: đạt; giới hạn dòng chưa có kết quả xUnit cuối. |
-| Chặn mã chủ động/duyệt giả/sửa sau duyệt | Kiểm PowerShell trực tiếp: 3/3 ca comment HTML sai, href CSS mã hóa, CSS escape bị từ chối; AST 0 lỗi. Test nghiệm thu không sửa. |
-| Guard trước tác dụng phụ; lõi cũ | Đối chiếu `Invoke-Prep`: guard ngay sau đọc plan, trước Select-FreeAgent/logs/fetch/resume; chưa xác minh xUnit cuối. |
-| Build | `dotnet build AITeam.sln --no-restore -m:1 -nr:false -p:UseSharedCompilation=false`: thiếu assets, 5 lỗi; chạy lại có restore, thêm `-p:NuGetAudit=false --ignore-failed-sources`: đạt, 0 lỗi/0 warning. |
-| Test toàn solution | `dotnet test AITeam.sln --blame-hang-timeout 2m --no-restore -m:1 -nr:false -p:UseSharedCompilation=false`: Hub 712 đạt/9 lỗi/0 bỏ qua; Core quá 3 phút đã dừng, chưa có tổng kết. |
-| Test riêng W1-03 | Hai lượt `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~AcceptanceW103PlanApprovalTests --blame-hang-timeout 2m` chưa ra kết quả trong 3 phút, đã dừng; chạy DLL bằng `dotnet vstest` cũng vượt 3 phút, đã gửi lệnh dừng; chưa có số pass/fail W1-03. |
-| Không chạy app/chụp ảnh | Đã tuân thủ; Claude nghiệm thu mockup thật bước 7. |
-| File/lý do | `team.ps1`: bổ sung whitelist comment/href; `templates/codex-plan.md`: hướng dẫn tương ứng; file task: báo cáo. Mẫu prep đã có guard/helper/cấm git, giữ nguyên. |
-| Tự quyết/giới hạn | Không sửa phần Hub ngoài phạm vi: lỗi lưu cấu hình/phân vai báo UnauthorizedAccessException tại File.Replace; sandbox còn làm chậm cả lệnh đơn giản. BOM team.ps1/hai mẫu/test: đều có. |
-| Bàn giao | Không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa có commit được kiểm. Chưa xác minh toàn bộ xUnit và mở mockup trên máy. |
+| Đỏ ban đầu | verify-1 (HEAD ebef924) báo 6 đỏ; chạy lại sau merge tại nhánh này còn 2: `AcceptanceW103…Ui_exports…` (Path trả `\` thay vì `docs/design`) và `AcceptanceS104…ProviderGiaNhanPromptThat_MoiNhanh(prep,codex)` (`Assert-PrepPlanApproval` không được nạp). |
+| Sửa trong Phạm vi | `team.ps1:1151`: trả `Path` dạng `Root\docs/design/<R>-mockup.html` bằng `[IO.Path]::Combine`; vẫn dùng đường dẫn chuẩn hóa để kiểm reparse/ghi file. |
+| Sửa môi trường test (ngoại lệ, không sửa assert) | `core.tests/AcceptanceS104SkillPromptsTests.cs:168` thêm `Assert-PrepPlanApproval` vào danh sách hàm nạp; `:182` thêm mục `## Quyết định của quản lý (giả)` + `- ĐÃ DUYỆT.` cho plan fixture. Lý do: harness chỉ nạp 5 hàm và fixture thiếu duyệt nên `Invoke-Prep` không thể chạy đúng hợp đồng guard mới; assert giữ nguyên. |
+| Build | `dotnet build AITeam.sln -warnaserror` lần đầu lỗi MSB3491 khóa file tạm trong `bin` (môi trường); chạy `-m:1 -nr:false`: 0 warning, 0 lỗi. |
+| Test | `dotnet test AITeam.sln --blame-hang-timeout 3m --no-build`: Hub 721 đạt/0 đỏ, Core 737 đạt/0 đỏ. Lọc W1-03 + S104: 70 đạt/0 đỏ. |
+| Hợp đồng | Giữ tên/chữ ký 3 hàm; guard ngay sau đọc plan, trước Select-FreeAgent/logs/fetch/provider; không sửa assert, không tự duyệt. |
+| Chưa xác minh | Không chạy được `powershell -File tools\test-verify.ps1` (quyền công cụ chỉ cho git/dotnet); chưa mở mockup thật — Claude kiểm ở bước 7. |
 ## Review (Claude)
 <!-- Claude điền. -->
 

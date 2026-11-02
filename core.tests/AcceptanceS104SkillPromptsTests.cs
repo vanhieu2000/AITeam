@@ -165,7 +165,7 @@ $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
-$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry')
+$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Assert-PrepPlanApproval')
 foreach ($f in $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$true)) {
     if ($f.Name -in $names) { . ([scriptblock]::Create($f.Extent.Text)) }
 }
@@ -179,7 +179,7 @@ foreach($d in @($repo,$logs,$workRoot,$planDir,(Join-Path $Root 'templates'),(Jo
 foreach($d in @((Join-Path $workRoot 'a-s1-04'),(Join-Path $workRoot 'prep-s1-04'))) { New-Item -ItemType Directory -Force $d | Out-Null }
 [IO.File]::WriteAllText((Join-Path $repo 'tasks/S1-04.md'), "- **Agent:** A`n- **Nhánh:** ``agent-a/S1-04``")
 [IO.File]::WriteAllText((Join-Path $planDir 'brief.md'),'brief giả')
-[IO.File]::WriteAllText((Join-Path $planDir 'plan.md'),"### S1-04 · Kết nối`n- **Agent:** A`n- **Ngân sách:** ~280 dòng")
+[IO.File]::WriteAllText((Join-Path $planDir 'plan.md'),"### S1-04 · Kết nối`n- **Agent:** A`n- **Ngân sách:** ~280 dòng`n`n## Quyết định của quản lý (giả)`n- ĐÃ DUYỆT.")
 foreach($f in @('codex-plan.md','codex-prep.md')) { [IO.File]::WriteAllText((Join-Path $Root "templates/$f"),'CHỈ đọc old.cs {REQUEST} {TASK}') }
 $info=[pscustomobject]@{name='demo';build='build giả';test='test giả'}
 if ($null -ne $x.stack) { $info | Add-Member NoteProperty stack $x.stack }
