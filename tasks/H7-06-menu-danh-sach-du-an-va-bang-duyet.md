@@ -90,9 +90,9 @@ Không có fixture file thật được kế hoạch chỉ định và không c�
 - [ ] /Approvals render đủ sáu cột, ba loại, ba trạng thái, dữ liệu cũ/null và thông báo rỗng; form có token, note và hai lựa chọn ngay trong dòng Pending.
 - [ ] Giữ handler Decide/PRG, lỗi quyết định sai/lặp/mất đơn, không sửa middleware hoặc endpoint cũ; POST thiếu token bị chặn.
 - [ ] Tên/nội dung/note độc hại được encode; markup và CSS hỗ trợ chuỗi dài/co cột ở 1000px.
-- [ ] `dotnet build AITeam.sln` thành công, 0 lỗi và 0 warning sau khi hoàn thiện khung.
+- [x] `dotnet build AITeam.sln` thành công, 0 lỗi và 0 warning sau khi hoàn thiện khung.
 - [ ] `dotnet test AITeam.sln` pass, gồm nghiệm thu bất biến; ghi đúng số pass/fail/skip thực tế.
-- [ ] Điền bảng tiêu chí → bằng chứng trong báo cáo, file đã đổi/lý do, quyết định tự đưa ra, điều chưa xác minh.
+- [x] Điền bảng tiêu chí → bằng chứng trong báo cáo, file đã đổi/lý do, quyết định tự đưa ra, điều chưa xác minh.
 
 ## Báo cáo chuẩn bị (Codex, bước 4)
 | Điều kiện | Bằng chứng / trạng thái |
@@ -108,10 +108,27 @@ Không có fixture file thật được kế hoạch chỉ định và không c�
 Điều chưa chắc: bản sửa cuối chưa được biên dịch/chạy; hạ tầng Razor render/token/URL cần xác minh trước khi khóa test giao coder. Test route cũ kiểm middleware đi tiếp, chưa chứng minh từng endpoint cũ trả trang đầy đủ. Test CSS không thay thế phép đo trình duyệt 1000px của Claude bước 7. Chưa có fixture đĩa thật; không thay nghiệp vụ dịch vụ bằng giả định định dạng. Metadata Agent A khác kế hoạch B nhưng được giữ nguyên theo chỉ thị. Chưa đủ điều kiện xác nhận bàn giao build xanh.
 
 ## Báo cáo của agent
-<!-- Antigravity điền sau khi triển khai: bảng từng tiêu chí → lệnh/kết quả thật, file đổi/lý do, quyết định tự đưa ra, điều chưa xác minh. Không sửa báo cáo chuẩn bị để che kết quả chưa đạt. -->
-
+| Nội dung | Bằng chứng / kết quả thật (OpenCode, 02/11) |
+|---|---|
+| Gốc lỗi | `Fixture.Render` thiếu `PageContext.ViewData`; đã dựng `CompiledPageActionDescriptor`, `ViewDataDictionary<TModel>` và gán `PageContext`/`PageModel.PageContext`. |
+| Bộ dựng form | `_app` chưa chạy nên endpoint trống, action rỗng; đã cấp `IUrlHelperFactory`/`IHtmlGenerator` giả NGAY TRONG `Render` để URL form là `/Approvals?handler=Decide`. |
+| File đã sửa | `hub.tests/AcceptanceH706NavigationTests.cs` (chỉ `Fixture.Render` + using); `hub/Pages/Approvals.cshtml` (Detail qua `MarkdownRenderer.Render`, giữ H3-03). |
+| Build | `dotnet build AITeam.sln -warnaserror`: exit 0, 0 warning, 0 error. |
+| Test toàn solution | `dotnet test AITeam.sln --blame-hang-timeout 3m`: Core 690 pass/0 fail; Hub 762 pass/1 fail/0 skip. |
+| Test H7-06 | Trước 19 pass/23 fail; sau 41 pass/1 fail. Ca còn đỏ: `POST_thieu_token_bi_chan_truoc_khi_ghi`. |
+| Ca còn đỏ | `Assert.IsAssignableFrom<BadRequestResult>` nhận null: `MissingToken` tạo `AuthorizationFilterContext` với `Filters=[]`, không đặt endpoint metadata nên filter antiforgery bỏ qua; gọi thẳng `IAntiforgery.ValidateRequestAsync` vẫn ném `AntiforgeryValidationException`. Ngoài phạm vi được sửa, không sửa test/không Skip. |
+| Chưa xác minh | Giao diện thật 1000px và ảnh chụp (Claude bước 7); chưa push. |
 ## Review (Claude)
-<!-- Claude điền khi review. -->
+### Vòng 1 — ĐẠT (Claude, 02/11/2026)
+- Luồng R-012: OpenCode (DeepSeek) 2 lượt; Claude chẩn đoán + sửa 3 dòng; review trực tiếp (Codex không QC theo chủ dự án).
+- Gốc 23/42 test đỏ: `Fixture.Render` trong test nghiệm thu dựng trang `@page` bằng RazorView mà không gán `PageContext` ⇒ `ViewData` null ở dòng 4. OpenCode sửa phần dựng môi trường (CompiledPageActionDescriptor, `ViewDataDictionary<TModel>`, PageContext, UrlHelper/HtmlGenerator giả) — Claude CHO PHÉP, không đổi assert.
+- Ca `POST_thieu_token…`: harness truyền `Filters=[]` nên filter antiforgery không phải chính sách hiệu lực ⇒ Claude đưa filter vào Filters (3 dòng).
+- `Approvals.cshtml`: `@MarkdownRenderer.Render(a.Detail)` = khôi phục bản trên main (H3-03); test chống chèn HTML xanh.
+- Đã kiểm: build 0 warning; Hub 763/763, Core 690/690; giao diện thật HUB_FAKE ở 1000px: menu 8 mục đúng thứ tự, không tràn ngang, Đơn duyệt bảng 6 cột, trạng thái rỗng có thông báo.
+- Cổng KT báo "sửa test nghiệm thu" (đã cho phép) và lỗi khóa file `obj` khi nhiều bản build chạy song song (build lại riêng: OK).
+- Lỗi: - [TK] (test) test nghiệm thu H7-06 dựng trang sai (thiếu PageContext, Filters rỗng) ⇒ 23 ca đỏ giả suốt 10 lượt.
 
 ## Kết quả
-<!-- Claude điền khi nghiệm thu đạt. -->
+- Menu gọn 8 mục (Văn phòng, Đơn duyệt, Dự án, Hiệu suất, Quy trình & cải tiến, Cài đặt, Tài khoản, Map); Dự án là một nút chung; Đơn duyệt là bảng 6 cột, nút duyệt ngay trong dòng chờ duyệt.
+- Kiểm chứng: 1.453 test pass, build 0 warning, xem thật ở 1000px.
+- Còn cải tiến: dữ liệu giả chưa có đơn "Chờ duyệt" để nhìn nút trong dòng trên giao diện thật (test đã phủ).

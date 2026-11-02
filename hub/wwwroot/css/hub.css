@@ -1405,3 +1405,47 @@ textarea.inp, textarea.form-control {
 @media (max-width:1000px) {
   .office-workspace { grid-template-columns:1fr; }
 }
+/* Danh sách dự án và bảng đơn duyệt co theo vùng nội dung. */
+.projects-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+}
+.projects-grid .project-heading {
+  height: auto;
+  min-height: 40px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  flex-wrap: wrap;
+}
+.projects-grid .project-heading a { min-width: 0; }
+.projects-grid .pill { height: auto; white-space: normal; overflow-wrap: anywhere; }
+.approvals-table {
+  width: 100%;
+  table-layout: fixed;
+}
+.approvals-table th, .approvals-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.approvals-table .approval-id { width: 9%; }
+.approvals-table .approval-kind { width: 13%; }
+.approvals-table .approval-project { width: 14%; }
+.approvals-table .approval-summary { width: 30%; }
+.approvals-table .approval-time { width: 11%; }
+.approvals-table .approval-status { width: 23%; }
+.approvals-table form, .approvals-table textarea, .approvals-table input {
+  min-width: 0;
+  max-width: 100%;
+}
+.approvals-table form { margin-top: 8px; }
+.approvals-table textarea { margin-bottom: 8px; }
+.approvals-table .row { flex-wrap: wrap; }
+.approvals-table .pill, .approvals-table .btn {
+  height: auto;
+  min-height: 20px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.approvals-table .btn { min-height: 32px; }
+.approval-detail { white-space: pre-wrap; }
