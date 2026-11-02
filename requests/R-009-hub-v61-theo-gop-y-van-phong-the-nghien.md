@@ -59,6 +59,14 @@ Sự kiện cần ghi:
 - 2026-10-26 16:31:07 +07:00 | H7-06 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:H7-06:Verify:1 -->
 - 2026-10-26 16:42:46 +07:00 | H7-06 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:H7-06:Verify:2 -->
 - 2026-10-26 18:33:42 +07:00 | H7-02 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:H7-02:Verify:3 -->
+- 2026-10-26 18:53:40 +07:00 | H7-02 | Verify | lượt 4 | KHÔNG ĐẠT <!-- workflow:H7-02:Verify:4 -->
+- 2026-10-26 19:16:25 +07:00 | H7-04 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:H7-04:Verify:3 -->
+- 2026-10-26 19:47:11 +07:00 | H7-04 | Verify | lượt 4 | KHÔNG ĐẠT <!-- workflow:H7-04:Verify:4 -->
+- 19:47 26/10/2026: H7-02 verify-4 KHÔNG ĐẠT trên HEAD acbece9; H7-04 lượt 9 kết thúc code 19:32 nhưng còn tiến trình test, chưa có cổng KT/QC mới. Không giao trùng; không giao thêm các task quá 3 lượt; chưa đề xuất nghiệm thu.
+
+- 20:16 27/10/2026 (Codex quản lý phụ): H7-04 verify-4: Hub 748 + Core 690 test pass, cổng KHÔNG ĐẠT vì 2 warning trong test nghiệm thu; H7-06 lượt 10 dừng QuotaExhausted. H7-02/H7-04/H7-06 quá 3 lượt, giữ tạm dừng; chưa có đề xuất nghiệm thu, không giao thêm.
+
+- 2026-11-02 23:10:54 +05:30 | H7-04 | Qc | lượt 1 | BLOCKED <!-- workflow:H7-04:Qc:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-009`, rồi điền:
 
