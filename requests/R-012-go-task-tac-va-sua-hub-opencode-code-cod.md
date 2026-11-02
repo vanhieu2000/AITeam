@@ -23,6 +23,10 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-012` để `team.ps1 reque
 | Giờ | Sự kiện | Ghi chú |
 |---|---|---|
 | 23:30 | Nhận yêu cầu; kế hoạch + danh sách việc: plans/R-012/GIAO-VIEC.md; cài OpenCode 1.19.5 (khóa DeepSeek) + Codex CLI 0.166.0 trên máy công ty | |
+| 22:40 | H7-04 → OpenCode (DeepSeek free, quyền hẹp: chỉ sửa file + git/dotnet): merge main + sửa 2 cảnh báo xUnit2031; 5,3 phút; build 0 warning, 1438 test pass; Claude xem diff: đúng 2 câu lệnh, giữ BOM; push 8e1d9db | lượt 1 hỏng do lỗi tham số `-f` của Claude (0 phút) |
+| 23:10 | Codex QC H7-04: BLOCKED quá thời gian 15 phút. Gốc: `~/.codex/config.toml` trỏ `openai_base_url` về cầu nối cục bộ 127.0.0.1:17841 (codex-chatgpt-web) đang KHÔNG chạy ⇒ mọi lệnh Codex CLI treo | chờ chủ dự án |
+| 22:58 | H7-06 → OpenCode lượt 1: merge main xong nhưng đi lạc (đọc obj/, tra web), dừng khi bị chặn đọc ngoài repo; 4,8 phút, chưa sửa | [CK] quyền chưa cấm websearch |
+| 23:20 | Claude chẩn đoán H7-06: 23/42 test đỏ do `Fixture.Render` trong test nghiệm thu không gán `PageContext` (Razor Pages đọc ViewData qua PageContext) — lỗi bộ test, không phải code trang. Giao OpenCode lượt 2 kèm cách sửa; cấm websearch + đọc ngoài thư mục | [TK] test nghiệm thu H7-06 viết sai bộ dựng trang |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
