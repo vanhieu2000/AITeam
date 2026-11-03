@@ -254,6 +254,31 @@ public sealed class LocalChatStore : IDisposable
         }
     }
 
+    public void AppendExchange(string conversationId, string userText, string answerText, string model, long? tokens, string? error)
+    {
+        var safeUser = SecretRedactor.Redact(userText ?? "").Text;
+        var safeAnswer = SecretRedactor.Redact(answerText ?? "").Text;
+        lock (_gate)
+        {
+            using var db = Open();
+            using var tx = db.BeginTransaction();
+            RequireConversation(db, conversationId);
+            var now = Now();
+            Execute(db, "INSERT INTO messages(conversation,role,text,status,at) VALUES($id,'user',$text,'complete',$at)",
+                ("$id", conversationId), ("$text", safeUser), ("$at", now));
+            using var last = Command(db, "SELECT last_insert_rowid()");
+            var userId = (long)last.ExecuteScalar()!;
+            var assistantStatus = error == null ? "complete" : "error";
+            Execute(db, "INSERT INTO messages(conversation,role,text,status,at,model,tokens,error,reply_to) VALUES($id,'assistant',$text,$status,$at,$model,$tokens,$error,$user)",
+                ("$id", conversationId), ("$text", safeAnswer[..Math.Min(64000, safeAnswer.Length)]),
+                ("$status", assistantStatus), ("$at", now), ("$model", model ?? ""),
+                ("$tokens", tokens), ("$error", error), ("$user", userId));
+            Execute(db, "UPDATE conversations SET title=CASE WHEN title='Cuộc trò chuyện mới' THEN $title ELSE title END,updated=$at WHERE id=$id",
+                ("$title", safeUser[..Math.Min(70, safeUser.Length)]), ("$at", now), ("$id", conversationId));
+            tx.Commit();
+        }
+    }
+
     public ChatTurn? Claim()
     {
         lock (_gate)

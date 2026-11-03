@@ -73,6 +73,8 @@ public static class HubV3Registration
             sp.GetRequiredService<IAiServiceRegistry>(),
             sp.GetService<IProcessRunner>() ?? new ProcessRunner(),
             sp.GetRequiredService<ISecretLookup>()));
+        // V10-05 (R-014): trợ lý chat
+        services.TryAddSingleton<IChatAssistant, ChatAssistant>();
         return services;
     }
 }
