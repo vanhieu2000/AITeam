@@ -105,6 +105,13 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
 ## Kế hoạch / hàng chờ
+
+- **Sửa cổng / công cụ (R-014, phát hiện đêm 03–04/11, giao Codex sau 12:09 04/11):**
+  1. [CK] `team.ps1` báo "HẾT HẠN MỨC" khi lượt agy kết thúc bằng lỗi mạng "no such host" (V10-02) ⇒ phân biệt lỗi mạng / hạn mức thật.
+  2. [CK] Cổng KT chỉ coi commit ĐẦU của nhánh là test nghiệm thu của Claude; bản sửa test sau đó bị coi là agent sửa (W2-02) ⇒ nhận commit "(Claude)" của danh tính quản lý; Claude commit trong worktree agent phải ghi đè danh tính.
+  3. [CK] `assign` tìm worktree theo tên `a-/b-<task>`; worktree đặt tên khác (rv\X) ⇒ cổng KT không chạy (V10-03). `Select-FreeAgent` đổi Agent trên main ⇒ xung đột file task với nhánh đã chuẩn bị sẵn.
+  4. [CK] OpenCode free hết lượt thì đứng im thay vì báo lỗi ⇒ bộ canh `oc-run.ps1` (log đứng 15′) nên đưa vào `assign -Dev opencode`.
+- **Giao diện R-014 (Claude):** UI-04 Duyệt (V10-03 ✅), UI-05 Báo cáo + biểu đồ (V10-04 ✅), UI-06 Xem lại + bài học (W2-02 ✅), UI-07 Quy trình & vai trò, UI-08 Tài khoản AI + cài đặt trợ lý (V10-01, V10-02 ✅), UI-09 khung chat nối thật (V10-05 ✅). Lõi đã đủ, chờ chủ dự án cho làm giao diện.
 Theo `docs/HUB-DESIGN.md` mục 7:
 - **H-003 (B):** nối trang với dịch vụ thật; trang Agent, Hộp thư. Sau H-001 và H-002.
 - **H-004 (A):** trang Cài đặt, Tài khoản, Bí mật; lệnh `team.ps1 hub`. Sau H-001.
