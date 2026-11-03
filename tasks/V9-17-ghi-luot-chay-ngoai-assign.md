@@ -124,3 +124,11 @@
 - Build 0 warning; test 837/837 (hub) + 950/950 (core), 0 đỏ.
 
 ## Review (Claude)
+### Vòng 1 — CẦN SỬA
+- Đã kiểm: diff đối chiếu Mục tiêu / Ràng buộc; build 0 warning; `parse-run-log` trên log thật R-012 (H8-15 675 s · 86.562 token, V9-15 3347 s, H8-13 3306 s, Codex b-h7-02 37.701) khớp số đo tay; test không có nhánh return sớm.
+- [AG] (dữ liệu) `Invoke-LogRun` ép `[long]$null` ⇒ token Codex không rõ thành 0 thay vì null.
+
+### Vòng 2 — ĐẠT
+- Token null giữ nguyên null; thêm test harness `-Dev codex`. Bám đúng thiết kế: đọc log ở C#, `team.ps1` chỉ gọi CLI, không chép nội dung prompt, `conversationId` rỗng.
+- Optional: dòng thứ 2 so với ngân sách ~268/250 (trong 1,5 lần).
+
