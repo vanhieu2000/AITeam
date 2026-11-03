@@ -72,6 +72,9 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $Utf8 = New-Object Text.UTF8Encoding $false
+# PowerShell 5.1 và Hub đọc cùng UTF-8, không phụ thuộc code page của máy.
+[Console]::OutputEncoding = $Utf8
+$OutputEncoding = $Utf8
 # skill-note chỉ dùng kho skill, không phụ thuộc module điều phối pipeline.
 . (Join-Path $Root "scripts/SkillPrompts.ps1")
 . (Join-Path $Root "scripts/SkillNotes.ps1")
