@@ -10,6 +10,7 @@ namespace AITeam.Hub.Pages;
 /// <summary>Trang "Phòng nghiên cứu" (/Research?r=R-005) — R-005 / V5-07b.</summary>
 public class ResearchModel : PageModel
 {
+    public bool Embedded { get; set; }
     private readonly IResearchService _research;
     private readonly IRequestService _requests;
 
@@ -45,7 +46,12 @@ public class ResearchModel : PageModel
         {
             Requests = _requests.GetAll();
             Current = (!string.IsNullOrEmpty(r) ? Requests.FirstOrDefault(x => string.Equals(x.Id, r, StringComparison.OrdinalIgnoreCase)) : null)
-                ?? Requests.FirstOrDefault();
+                ?? (Embedded ? null : Requests.FirstOrDefault());
+            if (Embedded && Current == null)
+            {
+                Options = []; Jobs = []; Entries = [];
+                return;
+            }
             Options = _research.Options();
             Jobs = Current != null ? _research.Jobs(Current.Id) : Array.Empty<ResearchJob>();
             Entries = Current != null ? _research.Entries(Current.Id) : Array.Empty<ResearchEntry>();

@@ -1,0 +1,11 @@
+﻿@model AITeam.Hub.Pages.OfficeModel
+<section id="office-research" style="margin-top:16px;min-width:0" hx-get="/?handler=Research" hx-trigger="change from:#office-request-select" hx-include="#office-request-select" hx-target="this" hx-swap="outerHTML">
+    @if (Model.ResearchPane?.Current == null)
+    {
+        <p class="muted">Chưa có phiếu để nghiên cứu.</p>
+    }
+    @if (Model.ResearchPane != null)
+    {
+        <partial name="_ResearchPanel" model="Model.ResearchPane" />
+    }
+</section>
