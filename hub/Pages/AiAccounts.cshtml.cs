@@ -16,6 +16,9 @@ public class AiAccountsModel : PageModel
 
     public IReadOnlyList<AiAccountView> Rows { get; private set; } = Array.Empty<AiAccountView>();
 
+    /// <summary>Bốn thẻ tài khoản AI theo mockup H8-13 (Codex, OpenCode, Antigravity, Claude).</summary>
+    public IReadOnlyList<AiAccountCardView> Cards { get; private set; } = Array.Empty<AiAccountCardView>();
+
     /// <summary>Lỗi đọc ⇒ "Không đọc được danh sách tài khoản AI: " + ex.Message; Rows rỗng.</summary>
     public string? Error { get; private set; }
 
@@ -27,11 +30,13 @@ public class AiAccountsModel : PageModel
         try
         {
             Rows = _accounts.List();
+            Cards = _accounts.ListCards();
         }
         catch (Exception ex)
         {
             Error = "Không đọc được danh sách tài khoản AI: " + ex.Message;
             Rows = Array.Empty<AiAccountView>();
+            Cards = Array.Empty<AiAccountCardView>();
         }
     }
 
@@ -39,11 +44,16 @@ public class AiAccountsModel : PageModel
     /// Nút "Kiểm tra" (HTMX GET ?handler=Check&amp;id=…): Id lạ (ArgumentException) ⇒ NotFound().
     /// Ngược lại PartialViewResult "_AiAccountRow" với model AiAccountView (dựng tay ViewDataDictionary&lt;AiAccountView&gt;(new EmptyModelMetadataProvider(), ModelState) { Model = row }).
     /// </summary>
-    public async Task<IActionResult> OnGetCheckAsync(string? id)
+    public async Task<IActionResult> OnGetCheckAsync(string? id, string? full = null)
     {
         try
         {
             var row = await _accounts.CheckAsync(id, HttpContext?.RequestAborted ?? CancellationToken.None);
+            if (full == "1")
+            {
+                OnGet();
+                return Page();
+            }
             return new PartialViewResult
             {
                 ViewName = "_AiAccountRow",

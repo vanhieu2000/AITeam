@@ -1,7 +1,12 @@
 ﻿@page "/AiAccounts"
 @model AITeam.Hub.Pages.AiAccountsModel
+@using AITeam.Core.Accounts
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-@{ ViewData["Title"] = "Tài khoản AI"; }
+@{
+    ViewData["Title"] = "Tài khoản AI";
+}
+
+<link rel="stylesheet" href="~/css/ai-accounts.css" />
 
 @if (!string.IsNullOrEmpty(Model.Message))
 {
@@ -22,29 +27,99 @@
     </div>
 }
 
-<section class="screen on" id="s-ai-accounts">
-    <p class="muted" style="margin: 0 0 12px 0; font-size: 13px;">
-        Chỉ lưu tên gợi nhớ và chế độ ở %LOCALAPPDATA%\AITeam\config\accounts.json. Không lưu mật khẩu, cookie hay khóa API. Đăng nhập luôn làm trong CLI / trang chính thức của từng hãng.
-    </p>
-    <div class="panel" style="overflow-x: auto;">
-        <div class="hd"><span>Tài khoản AI</span></div>
-        <table class="hub-table">
-            <thead>
-                <tr>
-                    <th>Dịch vụ</th>
-                    <th>Kết nối qua</th>
-                    <th>Chế độ</th>
-                    <th>Trạng thái</th>
-                    <th>Kiểm tra lúc</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var row in Model.Rows)
-                {
-                    <partial name="_AiAccountRow" model="row" />
-                }
-            </tbody>
-        </table>
+<section class="screen on ai-accounts" id="s-ai-accounts">
+    <div class="ai-head">
+        <h1>Tài khoản AI và hạn mức</h1>
+        <p class="muted">
+            Chỉ lưu tên gợi nhớ và chế độ ở %LOCALAPPDATA%\AITeam\config\accounts.json. Không lưu mật khẩu, cookie hay khóa API.
+            Đăng nhập luôn làm trong CLI / trang chính thức của từng hãng.
+        </p>
     </div>
+
+    <div class="ai-note">
+        <b>Số liệu thật, ghi rõ nguồn.</b> Hạn mức lấy từ provider, ước tính hoặc ghi "không rõ"; token lấy từ metrics lượt chạy.
+        Không dùng số 0 thay dữ liệu thiếu. Khi nguồn provider hoặc ước tính có dữ liệu, hiển thị đúng; dưới 20% hiện cảnh báo.
+    </div>
+
+    <div class="ai-grid">
+        @if (Model.Cards.Count == 0)
+        {
+            <p class="muted">Chưa có dữ liệu tài khoản AI.</p>
+        }
+        @foreach (var card in Model.Cards)
+        {
+            <article class="ai-card" id="card-@card.Service.Id">
+                <h2>@card.Service.Name</h2>
+                <p><b>CLI:</b> @card.CliText · <span class="muted">@card.LoginText</span></p>
+                <p><b>Đang chạy:</b> @card.RunningJobs việc <span class="muted">(tách riêng đăng nhập)</span></p>
+                <p><b>Model được phép:</b> @card.AllowedModels</p>
+                <p><b>Gói:</b> @card.PlanText</p>
+                <p><b>Token hôm nay / tuần:</b> @(card.TokensToday?.ToString("N0") ?? "chưa đo") / @(card.TokensLast7Days?.ToString("N0") ?? "chưa đo")</p>
+                <p>
+                    <b>Còn lại:</b> @(card.RemainingPercent is null ? "không rõ" : card.RemainingPercent.Value.ToString("0.#") + "%")
+                    · <b>giờ hồi:</b> @(card.ResetsAt?.ToString("HH:mm dd/MM") ?? "không rõ")
+                </p>
+                <span class="pill n">Nguồn: @card.QuotaSource</span>
+                @if (card.Resting)
+                {
+                    <div class="ai-rest">Đang nghỉ: @card.RestText</div>
+                }
+                @if (card.WarnLow)
+                {
+                    <div class="ai-warn">Cảnh báo: còn dưới 20% hạn mức — cân nhắc đổi tài khoản hoặc chờ hồi.</div>
+                }
+                <p class="muted ai-explain">
+                    Không dùng số 0 thay dữ liệu thiếu. Khi nguồn provider hoặc ước tính có dữ liệu, hiển thị đúng; dưới 20% hiện cảnh báo.
+                </p>
+                @if (card.Links.Count > 0)
+                {
+                    <div class="ai-links">
+                        @foreach (var link in card.Links)
+                        {
+                            <a href="@link.Url" target="_blank" rel="noopener noreferrer">@link.Label</a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="muted">Liên kết quản lý: Chưa cấu hình</p>
+                }
+                <a class="btn sm" href="/AiAccounts?handler=Check&id=@card.Service.Id&full=1">Kiểm tra lại</a>
+            </article>
+        }
+    </div>
+
+    <div class="panel ai-links-note">
+        <h2>Liên kết quản lý theo tài khoản</h2>
+        <p class="muted">
+            Nhãn và URL HTTPS đã kiểm tra lấy từ team.json → accounts[].links. Thiếu URL thì ghi "Chưa cấu hình", không đoán trang thanh toán.
+        </p>
+        <p class="muted">
+            Chế độ HUB_FAKE: chỉ dữ liệu tạm; không ghi file tài khoản thật, không hiển thị khóa hay token đăng nhập.
+        </p>
+    </div>
+
+    <details class="panel ai-manage">
+        <summary class="ai-manage-hd">Quản lý tài khoản (tên gợi nhớ, chế độ)</summary>
+        <div class="ai-table-wrap">
+            <table class="hub-table">
+                <thead>
+                    <tr>
+                        <th>Dịch vụ</th>
+                        <th>Kết nối qua</th>
+                        <th>Chế độ</th>
+                        <th>Trạng thái</th>
+                        <th>Kiểm tra lúc</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <partial name="_AiAccountRow" model="row" />
+                    }
+                </tbody>
+            </table>
+        </div>
+    </details>
 </section>

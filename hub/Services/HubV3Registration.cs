@@ -20,7 +20,11 @@ public static class HubV3Registration
         // V5-07b: phòng nghiên cứu (connector thật: Codex CLI, Gemini CLI).
         services.TryAddSingleton<IResearchService>(sp => new ResearchService(
             sp.GetRequiredService<HubPaths>(), sp.GetRequiredService<IRequestService>(), sp.GetRequiredService<IAiAccountsService>()));
-        services.TryAddSingleton<IAiAccountsService>(sp => new AiAccountsService(sp.GetRequiredService<HubPaths>(), sp.GetRequiredService<IAgentRunService>()));
+        // H8-13: HUB_FAKE dùng tài khoản giả trong bộ nhớ, không ghi accounts.json thật.
+        if (Environment.GetEnvironmentVariable("HUB_FAKE") == "1")
+            services.TryAddSingleton<IAiAccountsService, FakeAiAccountsService>();
+        else
+            services.TryAddSingleton<IAiAccountsService>(sp => new AiAccountsService(sp.GetRequiredService<HubPaths>(), sp.GetRequiredService<IAgentRunService>()));
         // V5-05: điều khiển từ Văn phòng. Chế độ giả / rỗng đăng ký NoopProcessStarter TRƯỚC (không chạy lệnh thật).
         services.TryAddSingleton<IProcessStarter, RealProcessStarter>();
         services.TryAddSingleton<ICommandService>(sp => new CommandService(
