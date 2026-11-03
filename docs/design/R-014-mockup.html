@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup Văn phòng AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC;--surface:#FFFFFF;--sunken:#F1F5F9;--line:#E2E8F0;--text:#1E293B;--muted:#475569;--faint:#64748B;
+  --primary:#1E40AF;--primary-soft:#DBEAFE;--accent:#B45309;--accent-bg:#D97706;
+  --run:#1D4ED8;--run-soft:#DBEAFE;--rev:#6D28D9;--rev-soft:#EDE9FE;--fix:#C2410C;--fix-soft:#FFEDD5;
+  --ok:#15803D;--ok-soft:#DCFCE7;--err:#B91C1C;--err-soft:#FEE2E2;--warn:#A16207;--warn-soft:#FEF9C3;
+  --r:8px;--font:"Inter",system-ui,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220;--surface:#111A2E;--sunken:#0E1627;--line:#22304A;--text:#E2E8F0;--muted:#A5B4C8;--faint:#8A9BB3;
+  --primary:#93B4FF;--primary-soft:#1B2B52;--accent:#FBBF24;--accent-bg:#D97706;
+  --run:#93C5FD;--run-soft:#172A4D;--rev:#C4B5FD;--rev-soft:#2A2150;--fix:#FDBA74;--fix-soft:#3A2414;
+  --ok:#86EFAC;--ok-soft:#12321F;--err:#FCA5A5;--err-soft:#3B1717;--warn:#FDE68A;--warn-soft:#3A3010;}}
+:root[data-theme="dark"]{
+  --bg:#0B1220;--surface:#111A2E;--sunken:#0E1627;--line:#22304A;--text:#E2E8F0;--muted:#A5B4C8;--faint:#8A9BB3;
+  --primary:#93B4FF;--primary-soft:#1B2B52;--accent:#FBBF24;--accent-bg:#D97706;
+  --run:#93C5FD;--run-soft:#172A4D;--rev:#C4B5FD;--rev-soft:#2A2150;--fix:#FDBA74;--fix-soft:#3A2414;
+  --ok:#86EFAC;--ok-soft:#12321F;--err:#FCA5A5;--err-soft:#3B1717;--warn:#FDE68A;--warn-soft:#3A3010;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--font)}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--primary);text-decoration:none}a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100dvh}
+nav.side{background:var(--surface);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100dvh;overflow:auto}
+.brand{display:flex;gap:10px;align-items:center;font-weight:700;font-size:16px;padding:4px 8px 16px}
+.brand i{width:26px;height:26px;border-radius:7px;background:var(--primary);display:inline-block}
+.grp{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 8px 6px}
+.nav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--text);cursor:pointer;min-height:36px}
+.nav:hover{background:var(--sunken);text-decoration:none}
+.nav.on{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.nav svg{width:18px;height:18px;flex:none}
+.nav .badge{margin-left:auto}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;line-height:20px;white-space:nowrap}
+.b-err{background:var(--err-soft);color:var(--err)}.b-run{background:var(--run-soft);color:var(--run)}.b-rev{background:var(--rev-soft);color:var(--rev)}
+.b-fix{background:var(--fix-soft);color:var(--fix)}.b-ok{background:var(--ok-soft);color:var(--ok)}.b-warn{background:var(--warn-soft);color:var(--warn)}.b-mut{background:var(--sunken);color:var(--muted)}
+main{padding:20px 28px 40px;min-width:0}
+header.top{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+h1{font-size:24px;line-height:32px;margin:0;font-weight:700}
+h2{font-size:16px;margin:0 0 10px;font-weight:600}
+.sub{color:var(--muted);font-size:13px}
+.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:6px;padding:7px 12px;font:500 13px var(--font);cursor:pointer;min-height:34px;white-space:nowrap}
+.btn:hover{background:var(--sunken)}
+.btn.pri{background:var(--accent-bg);border-color:var(--accent-bg);color:#1A1204;font-weight:600}
+.btn.pri:hover{filter:brightness(.95)}
+.btn.danger{color:var(--err);border-color:var(--err-soft)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kpi{display:block;color:inherit}.kpi:hover{text-decoration:none;border-color:var(--primary)}
+.kpi .v{font-size:32px;font-weight:700;line-height:40px}.kpi .l{color:var(--muted);font-size:13px}
+.kpi .d{font-size:12px;margin-top:4px}
+.alert{display:flex;gap:12px;align-items:center;border:1px solid var(--err);background:var(--err-soft);color:var(--text);border-radius:var(--r);padding:12px 16px;margin-bottom:16px}
+.alert svg{color:var(--err);flex:none}
+.two{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+.desks{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.desk .who{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;flex:none;font-size:13px}
+.bar{height:6px;background:var(--sunken);border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--primary)}
+.steps{display:flex;gap:3px;margin:6px 0}.steps i{flex:1;height:6px;border-radius:2px;background:var(--line)}.steps i.d{background:var(--ok)}.steps i.c{background:var(--run)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:var(--sunken)}
+.feed li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.feed li:last-child{border:0}
+.feed time{color:var(--faint);width:44px;flex:none}
+ul.clean{list-style:none;margin:0;padding:0}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 14px;border:0;background:none;font:500 13px var(--font);color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--primary);border-color:var(--primary);font-weight:600}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+select,input[type=text]{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:6px;padding:6px 10px;font:13px var(--font);min-height:34px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:500}
+.lanes{display:grid;gap:12px}
+.lane{display:grid;grid-template-columns:170px repeat(4,minmax(0,1fr));gap:10px;align-items:start}
+.lane .col{background:var(--sunken);border-radius:6px;padding:8px;min-height:64px}
+.lane .col h4{margin:0 0 6px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:6px;font-size:12px}
+.tcard b{font-size:12px}
+.ap{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start}
+.ap+.ap{margin-top:12px}
+.ico{width:36px;height:36px;border-radius:8px;display:grid;place-items:center}
+.ap .act{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0;font-size:13px}dl.kv dt{color:var(--muted)}dl.kv dd{margin:0}
+.timeline{position:relative;padding-left:24px}
+.timeline:before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl{position:relative;padding:0 0 14px}
+.tl:before{content:"";position:absolute;left:-21px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--ok)}
+.tl.bad:before{border-color:var(--err)}.tl.slow:before{border-color:var(--warn)}
+.tl .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tl .meta{color:var(--muted);font-size:12px}
+.flow{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.fs{min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;cursor:pointer}
+.fs.on{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft)}
+.fs b{display:block;font-size:13px;margin-bottom:4px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px;background:var(--surface)}
+.svc{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.matrix td.c{text-align:center;font-weight:600}
+.heat0{background:transparent}.heat1{background:var(--warn-soft)}.heat2{background:var(--fix-soft)}.heat3{background:var(--err-soft)}
+.screen{display:none}.screen.on{display:block}
+.note{font-size:12px;color:var(--faint);margin-top:8px}
+.score{font-size:20px;font-weight:700}
+.toggle{width:36px;height:20px;border-radius:10px;background:var(--ok);position:relative;display:inline-block;vertical-align:middle}
+.toggle:after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.toggle.off{background:var(--line)}.toggle.off:after{right:auto;left:2px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.lane{grid-template-columns:1fr 1fr}.lane>div:first-child{grid-column:1/-1}}
+@media (max-width:760px){.app{grid-template-columns:1fr}nav.side{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px}.grp,.brand{display:none}main{padding:16px}.lane{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="side" aria-label="Menu chính">
+  <div class="brand"><i></i>AITeam · Văn phòng AI</div>
+  <div class="grp">Làm việc</div>
+  <a class="nav on" data-s="office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Văn phòng</a>
+  <a class="nav" data-s="approvals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>Cần anh duyệt<span class="badge b-err num">2</span></a>
+  <a class="nav" data-s="tracking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg>Theo dõi việc</a>
+  <a class="nav" data-s="none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Giao việc</a>
+  <a class="nav" data-s="none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Trò chuyện · Nghiên cứu</a>
+  <div class="grp">Đánh giá</div>
+  <a class="nav" data-s="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Báo cáo &amp; thống kê</a>
+  <a class="nav" data-s="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>Xem lại &amp; bài học</a>
+  <div class="grp">Cấu hình</div>
+  <a class="nav" data-s="workflow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h5l5-6M12 12l5 6"/></svg>Quy trình &amp; vai trò</a>
+  <a class="nav" data-s="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/></svg>Tài khoản AI</a>
+  <a class="nav" data-s="none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Cài đặt · Két bí mật</a>
+  <div class="grp">Mockup</div>
+  <a class="nav" id="theme">Đổi sáng / tối</a>
+</nav>
+
+<main>
+<!-- 1. VĂN PHÒNG -->
+<section class="screen on" id="office">
+  <header class="top"><div><h1>Văn phòng</h1><div class="sub num">Cập nhật 20:45:12 · tự làm mới 15 giây</div></div><span class="sp"></span><button class="btn pri">+ Giao việc mới</button></header>
+  <div class="alert" role="status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M12 8v5M12 16h.01"/></svg><div><b>2 việc cần anh duyệt</b> · 1 cần mật khẩu CSDL cho HDVTool, 1 thay đổi chạm xác thực Hub.</div><span class="sp"></span><a class="btn" data-go="approvals">Xem ngay</a></div>
+  <div class="grid kpis">
+    <a class="card kpi" data-go="tracking"><div class="l">Đang chạy</div><div class="v num">3</div><div class="d sub">Codex 1 · OpenCode 2</div></a>
+    <a class="card kpi" data-go="tracking"><div class="l">Chờ Claude review</div><div class="v num">2</div><div class="d sub">lâu nhất 12 phút</div></a>
+    <a class="card kpi" data-go="tracking"><div class="l">Xong hôm nay</div><div class="v num">14</div><div class="d"><span class="badge b-ok">↑ 6 so hôm qua</span></div></a>
+    <a class="card kpi" data-go="tracking"><div class="l">Bị chặn / cần sửa</div><div class="v num">1</div><div class="d"><span class="badge b-fix">V9-18 vòng 2</span></div></a>
+  </div>
+  <div class="grid two" style="margin-top:16px">
+    <div class="grid">
+      <div class="card"><h2>Bàn làm việc</h2>
+        <div class="grid desks">
+          <div class="card desk"><div class="who"><span class="av" style="background:#7C3AED">C</span><div><b>Claude</b><div class="sub">Quản lý · review</div></div></div><div>Đang review <a>H9-03</a></div><div class="sub num">8 phút</div></div>
+          <div class="card desk"><div class="who"><span class="av" style="background:#0F766E">CX</span><div><b>Codex</b><div class="sub">Code khó · team.ps1</div></div></div><div>Đang code <a>W2-01</a> Loại việc</div><div class="sub num">21 / 30 phút</div><div class="bar" style="margin-top:6px"><i style="width:70%"></i></div><div class="sub" style="margin-top:6px">Hạn mức còn <b class="num">42%</b></div></div>
+          <div class="card desk"><div class="who"><span class="av" style="background:#1D4ED8">O</span><div><b>OpenCode</b><div class="sub">DeepSeek · miễn phí</div></div></div><div>Đang code <a>H9-04</a> Theo dõi việc</div><div class="sub num">9 / 30 phút</div><div class="bar" style="margin-top:6px"><i style="width:30%"></i></div><div class="sub" style="margin-top:6px">Hạn mức: không giới hạn</div></div>
+          <div class="card desk"><div class="who"><span class="av" style="background:#64748B">AG</span><div><b>Antigravity</b><div class="sub">Chờ Argon 4</div></div></div><div class="sub">Tạm không giao</div><div style="margin-top:6px"><span class="badge b-mut">Nghỉ</span></div></div>
+        </div>
+      </div>
+      <div class="card"><h2>Yêu cầu đang mở</h2>
+        <table><thead><tr><th>Yêu cầu</th><th>Tiến độ 10 bước</th><th>Task</th><th>Bước hiện tại</th></tr></thead><tbody>
+          <tr><td><a><b>R-014</b></a> Văn phòng AI</td><td style="min-width:180px"><div class="steps"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i></div></td><td class="num">3 / 12</td><td>Code (đợt 1)</td></tr>
+          <tr><td><a><b>R-015</b></a> Bản chạy thử HDVTool</td><td><div class="steps"><i class="d"></i><i class="d"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></td><td class="num">0 / 2</td><td>Nghiên cứu</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+    <div class="card"><h2>Sự kiện</h2>
+      <ul class="clean feed">
+        <li><time class="num">20:44</time><span><span class="badge b-run">Giao</span> <a>H9-04</a> → OpenCode</span></li>
+        <li><time class="num">20:40</time><span><span class="badge b-ok">Claude tự quyết</span> merge <a>H9-01</a> (QC đạt, clone sạch xanh)</span></li>
+        <li><time class="num">20:31</time><span><span class="badge b-err">Cần anh</span> mật khẩu CSDL cho <a>HDVTool</a></span></li>
+        <li><time class="num">20:22</time><span><span class="badge b-fix">Cần sửa</span> <a>V9-18</a> vòng 1: token null thành 0</span></li>
+        <li><time class="num">20:10</time><span><span class="badge b-rev">Bài học</span> LS-021 "đổi hợp đồng ⇒ sửa test cũ"</span></li>
+        <li><time class="num">19:58</time><span><span class="badge b-ok">Xong</span> <a>W2-01</a> cổng KT đạt</span></li>
+      </ul>
+      <a class="note" data-go="tracking">Xem tất cả →</a>
+    </div>
+  </div>
+</section>
+
+<!-- 2. DUYỆT -->
+<section class="screen" id="approvals">
+  <header class="top"><div><h1>Cần anh duyệt</h1><div class="sub">Chỉ việc nhạy cảm: bí mật, bảo mật, dữ liệu nhạy cảm, hành động ra ngoài, quyết định sản phẩm. Code và QC do Claude tự quyết.</div></div></header>
+  <div class="tabs" role="tablist"><button class="tab on">Chờ anh (2)</button><button class="tab">Claude đã tự quyết (37)</button><button class="tab">Đã quyết</button></div>
+  <div class="card ap">
+    <div class="ico" style="background:var(--err-soft);color:var(--err)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+    <div><div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="badge b-err">Bí mật</span><span class="badge b-err">Rủi ro cao</span><b>Cần mật khẩu CSDL SQL Server cho HDVTool</b></div>
+      <dl class="kv"><dt>Vì sao</dt><dd>Task <a>HD-07</a> chạy test tích hợp với CSDL thật của máy công ty.</dd><dt>Nếu đồng ý</dt><dd>Anh tự nhập vào két cục bộ; Hub chỉ biết tên khóa <code>HDVTOOL_DB</code>, không hiện giá trị.</dd><dt>Nếu từ chối</dt><dd>Test tích hợp bỏ qua, chỉ chạy test dùng CSDL giả.</dd><dt>Xin bởi</dt><dd>Claude · 20:31 · yêu cầu <a>R-015</a></dd></dl></div>
+    <div class="act"><button class="btn pri">Mở két để nhập</button><button class="btn danger">Từ chối…</button></div>
+  </div>
+  <div class="card ap">
+    <div class="ico" style="background:var(--fix-soft);color:var(--fix)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></div>
+    <div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="badge b-fix">Bảo mật</span><span class="badge b-warn">Rủi ro trung bình</span><b>Merge H9-02: đổi quyền truy cập trang Két bí mật</b></div>
+      <dl class="kv"><dt>Tự phát hiện</dt><dd>Cổng KT: diff chạm <code>hub/Pages/Secrets.cshtml.cs</code>, <code>SecretRedactor.cs</code>.</dd><dt>Claude đã kiểm</dt><dd>QC đạt, 14 test bảo mật mới, chỉ nghe 127.0.0.1, không trả giá trị khóa.</dd><dt>Xem</dt><dd><a>Diff</a> · <a>Báo cáo QC</a> · <a>Task H9-02</a></dd></dl></div>
+    <div class="act"><button class="btn pri">Đồng ý merge</button><button class="btn danger">Từ chối…</button></div>
+  </div>
+  <p class="note">Tab "Claude đã tự quyết": mỗi dòng có nút "Không đồng ý — mở lại" để anh lật lại quyết định của Claude.</p>
+</section>
+
+<!-- 3. THEO DÕI VIỆC -->
+<section class="screen" id="tracking">
+  <header class="top"><div><h1>Theo dõi việc</h1><div class="sub">Cùng dữ liệu, 3 cách xem. Bộ lọc nằm trên địa chỉ trang để gửi link được.</div></div></header>
+  <div class="tabs" role="tablist"><button class="tab on">Theo người</button><button class="tab">Theo danh sách</button><button class="tab">Kanban</button></div>
+  <div class="filters"><select aria-label="Dự án"><option>Tất cả dự án</option><option>AITeam</option><option>HDVTool</option></select><select aria-label="Độ khó"><option>Mọi độ khó</option><option>S</option><option>M</option><option>L</option></select><select aria-label="Khoảng ngày"><option>7 ngày</option><option>30 ngày</option></select><input type="text" placeholder="Tìm mã / tên task" aria-label="Tìm"></div>
+  <div class="lanes">
+    <div class="lane">
+      <div><div class="who" style="display:flex;gap:8px;align-items:center"><span class="av" style="background:#0F766E">CX</span><div><b>Codex</b><div class="sub num">1 đang · 6 xong</div></div></div></div>
+      <div class="col"><h4>Đang làm</h4><div class="tcard"><b>W2-01</b> Loại việc + workflow.json<div class="chips" style="margin-top:4px"><span class="badge b-mut">M</span><span class="badge b-run num">21′</span></div></div></div>
+      <div class="col"><h4>Chờ review</h4></div>
+      <div class="col"><h4>Cần sửa</h4></div>
+      <div class="col"><h4>Xong 7 ngày</h4><div class="tcard"><b>V9-11</b> Hạn mức giờ hồi</div><div class="tcard"><b>V9-12</b> Lỗi có cấu trúc</div><div class="sub">+4 task</div></div>
+    </div>
+    <div class="lane">
+      <div><div style="display:flex;gap:8px;align-items:center"><span class="av" style="background:#1D4ED8">O</span><div><b>OpenCode</b><div class="sub num">2 đang · 9 xong</div></div></div></div>
+      <div class="col"><h4>Đang làm</h4><div class="tcard"><b>H9-04</b> Theo dõi việc<div class="chips" style="margin-top:4px"><span class="badge b-mut">M</span><span class="badge b-run num">9′</span></div></div></div>
+      <div class="col"><h4>Chờ review</h4><div class="tcard"><b>H9-03</b> Văn phòng<div class="chips" style="margin-top:4px"><span class="badge b-mut">M</span><span class="badge b-rev">Claude đang xem</span></div></div></div>
+      <div class="col"><h4>Cần sửa</h4><div class="tcard"><b>V9-18</b> Log Codex<div class="chips" style="margin-top:4px"><span class="badge b-fix">Vòng 2</span></div></div></div>
+      <div class="col"><h4>Xong 7 ngày</h4><div class="tcard"><b>H8-15</b> Sửa nhỏ giao diện</div><div class="tcard"><b>V9-17</b> log-run</div><div class="sub">+7 task</div></div>
+    </div>
+    <div class="lane">
+      <div><div style="display:flex;gap:8px;align-items:center"><span class="av" style="background:#7C3AED">C</span><div><b>Claude</b><div class="sub">thiết kế · review</div></div></div></div>
+      <div class="col"><h4>Đang làm</h4><div class="tcard"><b>R-014</b> Thiết kế + mockup</div></div>
+      <div class="col"><h4>Chờ review</h4></div><div class="col"><h4>Cần sửa</h4></div>
+      <div class="col"><h4>Xong 7 ngày</h4><div class="tcard"><b>R-012</b> nghiệm thu 30 mã</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. BÁO CÁO -->
+<section class="screen" id="reports">
+  <header class="top"><div><h1>Báo cáo &amp; thống kê</h1><div class="sub">03/10 – 03/11/2026 · mọi dự án</div></div><span class="sp"></span><button class="btn">Xuất CSV</button></header>
+  <div class="filters"><select aria-label="Khoảng ngày"><option>30 ngày</option><option>7 ngày</option><option>Tùy chọn…</option></select><select aria-label="Dự án"><option>Tất cả dự án</option></select><select aria-label="Người"><option>Mọi người / AI</option></select><select aria-label="Độ khó"><option>Mọi độ khó</option></select></div>
+  <div class="tabs" role="tablist"><button class="tab on">Tổng quan</button><button class="tab">Theo dự án</button><button class="tab">Theo người / AI</button><button class="tab">Lỗi</button></div>
+  <div class="grid kpis">
+    <div class="card kpi"><div class="l">Task xong</div><div class="v num">58</div></div>
+    <div class="card kpi"><div class="l">Đạt vòng 1</div><div class="v num">81%</div><div class="d sub">mục tiêu ≥ 67%</div></div>
+    <div class="card kpi"><div class="l">Phút AI</div><div class="v num">1.940</div><div class="d sub">TB 33′ / task</div></div>
+    <div class="card kpi"><div class="l">Lỗi do thiết kế (TK)</div><div class="v num">12</div><div class="d"><span class="badge b-fix">cao nhất</span></div></div>
+  </div>
+  <div class="grid two" style="margin-top:16px">
+    <div class="card"><h2>Bảng điểm người / AI</h2>
+      <table><thead><tr><th aria-sort="descending">Điểm</th><th>Ai</th><th>Task</th><th>Đạt vòng 1</th><th>Trong ngân sách</th><th>Phút TB</th><th>Lỗi AG</th></tr></thead><tbody>
+        <tr><td class="score num">86</td><td><b>Codex</b></td><td class="num">22</td><td class="num">91%</td><td class="num">64%</td><td class="num">18′</td><td class="num">0</td></tr>
+        <tr><td class="score num">78</td><td><b>OpenCode</b></td><td class="num">10</td><td class="num">70%</td><td class="num">80%</td><td class="num">29′</td><td class="num">1</td></tr>
+        <tr><td class="score num">71</td><td><b>Minh (agy)</b></td><td class="num">28</td><td class="num">89%</td><td class="num">29%</td><td class="num">13′</td><td class="num">6</td></tr>
+      </tbody></table>
+      <p class="note">Điểm = 40% đạt vòng 1 + 25% trong ngân sách + 20% đúng giờ + 15% không lỗi AG.</p>
+    </div>
+    <div class="card"><h2>Lỗi: nguyên nhân × loại</h2>
+      <table class="matrix"><thead><tr><th></th><th>Test</th><th>Phạm vi</th><th>Giao diện</th><th>Bảo mật</th></tr></thead><tbody>
+        <tr><th>TK Claude</th><td class="c heat3 num">9</td><td class="c heat2 num">5</td><td class="c heat1 num">3</td><td class="c heat1 num">2</td></tr>
+        <tr><th>AG nhân viên</th><td class="c heat1 num">2</td><td class="c heat0 num">0</td><td class="c heat1 num">1</td><td class="c heat0 num">0</td></tr>
+        <tr><th>CK cổng KT</th><td class="c heat1 num">2</td><td class="c heat1 num">3</td><td class="c heat1 num">2</td><td class="c heat0 num">0</td></tr>
+      </tbody></table>
+      <p class="note">Bấm một ô ⇒ danh sách lỗi cụ thể ⇒ task. Màu chỉ để nhấn mạnh, số luôn hiện.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. XEM LẠI TỪNG BƯỚC + BÀI HỌC -->
+<section class="screen" id="review">
+  <header class="top"><div><h1>Xem lại R-012 từng bước</h1><div class="sub">Gỡ task tắc + sửa Hub · 18 giờ · 30 task · 5 lỗi TK</div></div><span class="sp"></span><select aria-label="Chọn yêu cầu"><option>R-012</option><option>R-011</option></select></header>
+  <div class="grid two">
+    <div class="card"><h2>Dòng thời gian</h2>
+      <div class="timeline">
+        <div class="tl"><div class="row"><b>1. Tiếp nhận</b><span class="badge b-mut">Claude</span><span class="meta num">5′</span></div></div>
+        <div class="tl"><div class="row"><b>4. Kế hoạch</b><span class="badge b-mut">Claude</span><span class="meta num">40′</span></div></div>
+        <div class="tl bad"><div class="row"><b>7. Code — Codex đợt 1</b><span class="badge b-mut">Codex · gpt-6.1</span><span class="meta num">106′ · 26 nhánh</span><span class="badge b-err">6 nhánh dừng</span></div><div class="meta">Nguyên nhân: [TK] đổi hợp đồng không sửa test cũ</div><div class="chips" style="margin-top:6px"><button class="btn">Ghi mẹo</button><button class="btn">Đề xuất cải tiến</button></div></div>
+        <div class="tl slow"><div class="row"><b>Chờ</b><span class="meta num">~6 giờ</span><span class="badge b-warn">chờ hạn mức Codex</span></div></div>
+        <div class="tl"><div class="row"><b>7. Code — OpenCode</b><span class="badge b-mut">OpenCode · DeepSeek</span><span class="meta num">325′ · 11 lượt</span><span class="badge b-fix">3 vòng 2</span></div></div>
+        <div class="tl"><div class="row"><b>9. QC + nghiệm thu</b><span class="badge b-mut">Claude</span><span class="meta num">~5 giờ</span><span class="badge b-ok">30/30 merge</span></div></div>
+      </div>
+    </div>
+    <div class="card"><h2>Mẹo &amp; bài học</h2>
+      <div class="tabs"><button class="tab on">Nháp (3)</button><button class="tab">Đã thành luật (21)</button><button class="tab">Đã bỏ</button></div>
+      <div class="tcard"><b>LS-021</b> Đổi hợp đồng ⇒ git grep test theo chuỗi cũ, sửa cùng commit<div class="sub">Từ R-012 bước 7 · loại việc: mọi loại · bước: Chuẩn bị</div><div class="chips" style="margin-top:6px"><button class="btn pri">Nâng thành luật</button><button class="btn">Bỏ</button></div></div>
+      <div class="tcard"><b>LS-022</b> Task thay trang cũ phải ghi giữ route / tab nào<div class="sub">Từ H8-12 · loại việc: Giao diện · bước: Kế hoạch</div></div>
+      <div class="tcard"><b>LS-023</b> Task &gt; 300 dòng cho OpenCode ⇒ tách đôi (lượt 50–56′)<div class="sub">Từ báo cáo OpenCode · bước: Chia task</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. QUY TRÌNH -->
+<section class="screen" id="workflow">
+  <header class="top"><div><h1>Quy trình &amp; vai trò</h1><div class="sub">Mỗi loại việc một luồng; mỗi bước có người phụ trách, AI dự phòng, skill và luật chuẩn.</div></div><span class="sp"></span><button class="btn pri">Lưu thay đổi</button></header>
+  <div class="filters"><label class="f">Loại việc<select><option>Tính năng có giao diện</option><option>Tính năng lõi / CLI</option><option>Sửa lỗi</option><option>Tài liệu / dữ liệu</option><option>Nghiên cứu (chỉ đọc)</option><option>Bảo mật</option></select></label></div>
+  <div class="flow" role="list">
+    <div class="fs"><b>1 Tiếp nhận</b>Claude</div><div class="fs"><b>3 Thiết kế</b>Claude</div><div class="fs"><b>4 Mockup duyệt</b>Chủ dự án</div><div class="fs on"><b>6 Chuẩn bị</b>Codex</div><div class="fs"><b>7 Code</b>OpenCode → Codex</div><div class="fs"><b>8 Cổng KT</b>Tự động</div><div class="fs"><b>9 QC</b>Claude</div><div class="fs"><b>10 Nghiệm thu</b>Claude</div>
+  </div>
+  <div class="grid two" style="margin-top:16px">
+    <div class="card"><h2>Bước 6 · Chuẩn bị</h2>
+      <dl class="kv"><dt>Phụ trách</dt><dd><select><option>Codex</option><option>OpenCode</option><option>Claude</option></select></dd><dt>Dự phòng</dt><dd><select><option>OpenCode</option></select></dd><dt>Giới hạn</dt><dd class="num">25 phút · 2 vòng</dd><dt>Cần anh duyệt</dt><dd>Không (chỉ loại Bảo mật)</dd></dl>
+      <h2 style="margin-top:14px">Skill gắn kèm</h2><div class="chips"><span class="chip">06-chuan-bi</span><span class="chip">code-test</span><span class="chip">razor-ui</span><button class="btn">+ Thêm</button></div>
+    </div>
+    <div class="card"><h2>Luật chuẩn áp dụng ở bước này</h2>
+      <table><thead><tr><th>Mã</th><th>Luật</th><th>Nguồn</th></tr></thead><tbody>
+        <tr><td>L-014</td><td>Test nghiệm thu dựng trang thật, không giả PageContext</td><td><a>H7-06</a></td></tr>
+        <tr><td>L-019</td><td>Logic có trong C# ⇒ team.ps1 chỉ gọi CLI</td><td><a>V9-15</a></td></tr>
+        <tr><td>L-021</td><td>Đổi hợp đồng ⇒ sửa test cũ cùng commit</td><td><a>R-012</a></td></tr>
+      </tbody></table>
+      <p class="note">Luật đang hiệu lực tự chèn vào lời giao việc của bước này.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7. TÀI KHOẢN AI -->
+<section class="screen" id="ai">
+  <header class="top"><div><h1>Tài khoản AI</h1><div class="sub">Lưu cục bộ trên máy này (SQLite). Không lưu khóa ở đây — chỉ tên khóa trong két.</div></div><span class="sp"></span><button class="btn">Xuất .ini</button><button class="btn">Nhập .ini</button><button class="btn pri">+ Thêm dịch vụ AI</button></header>
+  <div class="grid svc">
+    <div class="card"><div style="display:flex;gap:10px;align-items:center"><span class="av" style="background:#0F766E">CX</span><div><b>Codex</b><div class="sub">cli-text · gpt-6.1</div></div><span class="sp"></span><span class="toggle" role="switch" aria-checked="true" aria-label="Bật Codex"></span></div>
+      <dl class="kv"><dt>Vai trò</dt><dd>code · nghiên cứu</dd><dt>Song song</dt><dd class="num">2</dd><dt>Đăng nhập</dt><dd><span class="badge b-ok">Đã đăng nhập</span></dd><dt>Hạn mức</dt><dd><div class="bar"><i style="width:42%"></i></div><span class="sub num">42% · hồi 06:00</span></dd><dt>Chi phí</dt><dd>Gói ChatGPT</dd></dl><div class="chips" style="margin-top:10px"><button class="btn">Kiểm tra</button><button class="btn">Sửa</button><a class="btn">Quản lý ↗</a></div></div>
+    <div class="card"><div style="display:flex;gap:10px;align-items:center"><span class="av" style="background:#1D4ED8">O</span><div><b>OpenCode</b><div class="sub">cli-json · deepseek</div></div><span class="sp"></span><span class="toggle" role="switch" aria-checked="true" aria-label="Bật OpenCode"></span></div>
+      <dl class="kv"><dt>Vai trò</dt><dd>code</dd><dt>Song song</dt><dd class="num">2</dd><dt>Đăng nhập</dt><dd><span class="badge b-ok">Sẵn sàng</span></dd><dt>Hạn mức</dt><dd>Không giới hạn</dd><dt>Chi phí</dt><dd>Miễn phí · <span class="badge b-warn">chỉ repo công khai</span></dd></dl><div class="chips" style="margin-top:10px"><button class="btn">Kiểm tra</button><button class="btn">Sửa</button></div></div>
+    <div class="card"><div style="display:flex;gap:10px;align-items:center"><span class="av" style="background:#64748B">AG</span><div><b>Antigravity</b><div class="sub">cli-json · chờ Argon 4</div></div><span class="sp"></span><span class="toggle off" role="switch" aria-checked="false" aria-label="Bật Antigravity"></span></div>
+      <dl class="kv"><dt>Vai trò</dt><dd>code</dd><dt>Tài khoản</dt><dd>Pro 1 · Pro 2</dd><dt>Trạng thái</dt><dd><span class="badge b-mut">Tắt</span></dd></dl><div class="chips" style="margin-top:10px"><button class="btn">Kiểm tra</button><button class="btn">Sửa</button></div></div>
+    <div class="card" style="border-style:dashed"><b>Thêm dịch vụ AI</b><dl class="kv"><dt>Kiểu kết nối</dt><dd><select><option>openai-compatible-http</option><option>cli-json</option><option>cli-text</option></select></dd><dt>Địa chỉ</dt><dd><input type="text" value="https://api.example.com/v1" aria-label="Địa chỉ"></dd><dt>Model</dt><dd><input type="text" placeholder="vd. qwen-3-coder" aria-label="Model"></dd><dt>Tên khóa (két)</dt><dd><input type="text" value="QWEN_API_KEY" aria-label="Tên khóa"></dd><dt>Vai trò</dt><dd><div class="chips"><span class="chip">code</span><span class="chip">QC</span><span class="chip">chat</span></div></dd></dl><div class="note">Giá trị khóa nhập bằng két / <code>team.ps1 secret-set</code>, không nhập ở đây.</div></div>
+  </div>
+</section>
+</main>
+</div>
+<script>
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('.nav[data-s]').forEach(n=>n.classList.toggle('on',n.dataset.s===id));try{location.hash=id}catch(e){}window.scrollTo(0,0)};
+document.querySelectorAll('.nav[data-s]').forEach(n=>n.addEventListener('click',()=>{if(n.dataset.s!=='none')show(n.dataset.s)}));
+document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(a.dataset.go)}));
+document.querySelectorAll('.tabs').forEach(t=>t.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;t.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b))}));
+document.getElementById('theme').addEventListener('click',()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'});
+const h=(location.hash||'').slice(1);if(h&&document.getElementById(h))show(h);
+</script>
+</body>
+</html>
