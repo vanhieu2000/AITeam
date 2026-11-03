@@ -57,20 +57,30 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-02 Helper dựng trang Hub](W1-02-helper-dung-trang-hub.md) | B | `agent-b/W1-02-helper-dung-trang-hub` | ✅ Đã merge (vòng 3) |
 | [V8-03 Gói nghiệm thu và quyết định một lệnh](V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh.md) | A | `agent-a/V8-03-goi-nghiem-thu-va-quyet-dinh-mot-lenh` | ✅ Đã merge (vòng 1) |
 | [W1-06 Dịch vụ tổng hợp việc theo dự án](W1-06-dich-vu-tong-hop-viec-theo-du-an.md) | B | `agent-b/W1-06-dich-vu-tong-hop-viec-theo-du-an` | ✅ Đã merge (vòng 3) |
-| [V6-02 Chặn giao lại và xin quyết định](V6-02-chan-giao-lai-va-xin-quyet-dinh.md) | C | `agent-c/V6-02-chan-giao-lai` | ⏸ Dừng · Fresh_ai_log thiếu $work/$taskFile, không sửa assert |
+| [V6-02 Chặn giao lại và xin quyết định](V6-02-chan-giao-lai-va-xin-quyet-dinh.md) | C | `agent-c/V6-02-chan-giao-lai` | ✅ Đã merge 03/11 (Claude sửa harness) |
 | [W1-07 Trang Việc và thanh bước](W1-07-trang-viec-va-thanh-buoc.md) | B | `agent-b/W1-07-trang-viec-va-thanh-buoc` | ✅ Đã merge (vòng 4) |
 | [W1-01 Helper nguồn thật và sandbox PowerShell](W1-01-helper-nguon-that-va-sandbox-powershell.md) | A | `agent-a/W1-01-helper-nguon-that-va-sandbox-powershell` | ✅ Đã merge (vòng 2) |
 | [V8-09 · Sửa đọc mã thoát `agy models` + Codex quá tải tự thử lại](V8-09-agy-models-va-codex-qua-tai.md) | A | `agent-a/V8-09-agy-models-va-codex-qua-tai` | ✅ Đã merge (vòng 2) |
 | [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | ✅ Đã merge 02/11 (OpenCode code, Claude review; fb83f06)
 | [V8-10 · `team.ps1 hub -Restart` + giới hạn 45 phút cho `deputy`](V8-10-hub-restart-va-deputy-timeout.md) | B | `agent-a/V8-10-hub-restart-va-deputy-timeout` | ✅ Đã merge (vòng 1) |
-| [H7-02 Điều phối plan/prep/QC theo Map](H7-02-dieu-phoi-plan-prep-qc-theo-map.md) | C | `agent-c/H7-02-map-plan-prep-qc` | ⏸ Tích hợp xong · 55/68 H702 đạt, chờ kiểm chứng Windows |
+| [H7-02 Điều phối plan/prep/QC theo Map](H7-02-dieu-phoi-plan-prep-qc-theo-map.md) | C | `agent-c/H7-02-map-plan-prep-qc` | ✅ Đã merge 03/11 · Windows xanh |
 | [H7-04 Thẻ tác nhân và chat giao việc](H7-04-the-tac-nhan-va-chat-giao-viec.md) | B | `agent-b/H7-04-the-tac-nhan-va-chat-giao-viec` | ✅ Đã merge (vòng 1) |
 | [W1-03 Sinh mockup và khóa prep trước duyệt](W1-03-sinh-mockup-va-khoa-prep-truoc-duyet.md) | A | `agent-a/W1-03-sinh-mockup-va-khoa-prep-truoc-duyet` | 🔵 Chờ review · OpenCode 02/11 xanh hết (2423462: Hub 721, Core 737)
 
-| [V9-10 Token mỗi lượt](V9-10-token-moi-luot.md) | C | `agent-c/V9-10-token-moi-luot` | ⏸ Codex đã sửa · chờ OpenCode/mẫu thật/Windows |
-| [V9-13 Tự gắn cờ lượt](V9-13-tu-gan-co-moi-luot.md) | C | `agent-c/V9-13-tu-gan-co-luot` | 🔵 Đã viết/test luật · chờ log H7-06 thật và Windows |
+| [V9-10 Token mỗi lượt](V9-10-token-moi-luot.md) | C | `agent-c/V9-10-token-moi-luot` | ✅ Đã merge 03/11 · còn mẫu OpenCode thành công |
+| [V9-13 Tự gắn cờ lượt](V9-13-tu-gan-co-moi-luot.md) | C | `agent-c/V9-13-tu-gan-co-luot` | ✅ Đã merge 03/11 (gồm V9-03) · còn log thật H7-06 |
 | [H8-14 ChatGPT tại Hub, model và ghi nhớ SQLite](H8-14-chatgpt-local-va-ghi-nho-sqlite.md) | C | `agent-c/H8-14-chatgpt-local` | ✅ Đã merge (vòng 2) · gọi ChatGPT thật OK trên Windows |
-| [H7-05 Nhúng Phòng nghiên cứu](H7-05-nhung-phong-nghien-cuu.md) | C | `agent-c/H7-05-nhung-phong-nghien-cuu` | ⏸ Dừng · test V5-07 khóa form trong source Research.cshtml |
+| [H7-05 Nhúng Phòng nghiên cứu](H7-05-nhung-phong-nghien-cuu.md) | C | `agent-c/H7-05-nhung-phong-nghien-cuu` | ✅ Đã merge 03/11 (Claude cập nhật test V5-07) |
+| [O-02 OpenCode DeepSeek](O-02-opencode-deepseek.md) | C | `agent-c/O-02-opencode-deepseek` | ✅ Đã merge 03/11 · chưa chạy model thật (proxy 403) |
+| [V9-06 Codex ổn định](V9-06-codex-on-dinh.md) | C | `agent-c/V9-06-codex-on-dinh` | ✅ Đã merge 03/11 |
+| [V9-14 Định tuyến theo luật](V9-14-dinh-tuyen-theo-luat.md) | C | `agent-c/V9-14-dinh-tuyen-theo-luat` | ✅ Đã merge 03/11 (phần lõi) · còn nối assign |
+| [H8-03 Review không lặp](H8-03-review-khong-lap.md) | C | `agent-c/H8-03-review-khong-lap` | ✅ Đã merge 03/11 |
+| [H8-04 Hiệu suất màn hình hẹp](H8-04-hieu-suat-man-hinh-hep.md) | C | `agent-c/H8-04-hieu-suat-man-hinh-hep` | ✅ Đã merge 03/11 |
+| [H8-06 Đơn duyệt mẫu](H8-06-don-duyet-mau.md) | C | `agent-c/H8-06-don-duyet-mau` | ✅ Đã merge 03/11 |
+| [V9-01 Xóa cache model](V9-01-xoa-cache-model.md) | C | `agent-c/V9-01-xoa-cache-model` | ✅ Đã merge 03/11 |
+| [V9-02 Đồng bộ test pipeline](V9-02-dong-bo-test-pipeline.md) | C | `agent-c/V9-02-dong-bo-test-pipeline` | ✅ Đã merge 03/11 |
+| [V9-05 Dispose khi Build lỗi](V9-05-dispose-khi-build-loi.md) | C | `agent-c/V9-05-dispose-khi-build-loi` | ✅ Đã merge 03/11 |
+| [V9-07 Cổng kiểm tra harness/khóa build](V9-07-cong-kiem-tra-build-harness.md) | C | `agent-c/V9-07-cong-kiem-tra-build-harness` | ✅ Đã merge 03/11 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
