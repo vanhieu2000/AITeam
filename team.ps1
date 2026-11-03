@@ -417,6 +417,16 @@ function Select-FreeAgent($r, [string]$suggested) {
     }
 }
 
+function Invoke-LintTask([string]$WorkDir = '', [string]$TaskPath = '') {
+    $lintProject = Resolve-Project $Project
+    if (-not $WorkDir) { $WorkDir = $lintProject.Path }
+    if (-not $TaskPath) { $TaskPath = (Find-TaskFile $lintProject $Task).FullName }
+    $lintExe = Get-AITeamExe
+    if (-not $lintExe) { throw 'Không build được CLI để lint task.' }
+    & $lintExe lint-task --root $Root --workdir $WorkDir --task-file $TaskPath
+    if ($LASTEXITCODE -ne 0) { throw 'Task không đạt kiểm chất lượng TK/TN; chưa giao AI. Xem lý do phía trên.' }
+}
+
 function Invoke-Assign {
     $cfg = Get-Config
     $r = Resolve-Project $Project
@@ -485,6 +495,9 @@ function Invoke-Assign {
         git -C $work merge origin/main --no-edit --quiet 2>$null
         $ErrorActionPreference = $eap
     }
+
+    try { Invoke-LintTask -WorkDir $work -TaskPath (Join-Path $work "tasks/$($taskFile.Name)") }
+    catch { Set-BoardStatus $r $Task "Bị chặn"; throw }
 
     $devInfo = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
     # Mã agent chưa khai báo trong team.json (vd. C = Codex lần đầu, R-004) ⇒ mặc định, không để null làm sập assign.
@@ -2802,6 +2815,7 @@ switch ($Command) {
     "add-project" { Invoke-AddProject }
     "new-task" { Invoke-NewTask }
     "assign" { Invoke-Assign }
+    "lint-task" { Invoke-LintTask }
     "status" { Invoke-Status }
     "verify" { $null = Invoke-Verify }
     "metrics" { Invoke-Metrics; Show-RunMetrics }

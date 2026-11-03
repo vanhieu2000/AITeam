@@ -16,6 +16,7 @@ try
     {
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
+        "lint-task" => await LintTask(),
         "review" => await Review(),
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
@@ -37,6 +38,16 @@ catch (Exception ex)
 {
     Console.Error.WriteLine($"LỖI: {ex.Message}");
     return 1;
+}
+
+async Task<int> LintTask()
+{
+    var work = Path.GetFullPath(Arg("--workdir") ?? root);
+    var taskFile = Arg("--task-file") ?? throw new InvalidDataException("Thiếu --task-file");
+    var result = await TaskLinter.RunAsync(work, await File.ReadAllTextAsync(taskFile), new ProcessRunner(), CancellationToken.None);
+    foreach (var error in result.Errors) Console.Error.WriteLine(error);
+    if (result.Ok) Console.WriteLine("Task đủ nội dung; test nghiệm thu build sạch và đỏ, chưa thấy lỗi harness.");
+    return result.Ok ? 0 : 2;
 }
 
 async Task<int> Providers()
