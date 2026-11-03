@@ -1,7 +1,7 @@
 ﻿@page "/"
 @model AITeam.Hub.Pages.OfficeModel
 @{ ViewData["Title"] = "Văn phòng"; }
-<p><a class="btn" href="/Work">Công việc toàn hệ thống</a></p>
+<p><a class="btn" href="/Work">Công việc toàn hệ thống</a> <a class="btn" href="/Performance">Hiệu suất và bảng điểm AI</a></p>
 @if (!string.IsNullOrEmpty(Model.Error))
 {
     <div class="panel" style="border-color:#dc2626;background:#fef2f2;color:#b91c1c">@Model.Error</div>

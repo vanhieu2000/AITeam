@@ -1,4 +1,4 @@
-﻿@page "/{route:regex(^(Performance|Overview)$)=Performance}"
+﻿@page "/{route:regex(^Overview$)=Overview}"
 @using AITeam.Hub.Pages
 @model AITeam.Hub.Pages.IndexModel
 @{
@@ -32,8 +32,9 @@
 
 <div class="performance-page">
 <nav class="performance-tabs" aria-label="Hiệu suất">
-    <a class="btn @(Model.Tab == "overview" ? "pri" : "")" href="/Performance?tab=overview&amp;range=@Model.Range" aria-current="@(Model.Tab == "overview" ? "page" : null)">Tổng quan</a>
-    <a class="btn @(Model.Tab == "staff" ? "pri" : "")" href="/Performance?tab=staff&amp;range=@Model.Range" aria-current="@(Model.Tab == "staff" ? "page" : null)">Nhân viên</a>
+    <a class="btn" href="/Performance">Hiệu suất</a>
+    <a class="btn @(Model.Tab == "overview" ? "pri" : "")" href="/Overview?tab=overview&amp;range=@Model.Range" aria-current="@(Model.Tab == "overview" ? "page" : null)">Tổng quan</a>
+    <a class="btn @(Model.Tab == "staff" ? "pri" : "")" href="/Overview?tab=staff&amp;range=@Model.Range" aria-current="@(Model.Tab == "staff" ? "page" : null)">Nhân viên</a>
 </nav>
 @if (Model.Tab == "staff")
 {

@@ -7,7 +7,11 @@
     var isApprovalsActive = currentPage.Equals("/Approvals", StringComparison.OrdinalIgnoreCase);
     var isProjectsActive = currentPage.Equals("/Projects", StringComparison.OrdinalIgnoreCase)
         || currentPage.Equals("/Project", StringComparison.OrdinalIgnoreCase);
-    var isPerformanceActive = currentPage.Equals("/Performance", StringComparison.OrdinalIgnoreCase);
+    var requestPath = Context.Request.Path;
+    var isPerformanceActive = currentPage.Equals("/Performance", StringComparison.OrdinalIgnoreCase)
+        || currentPage.Equals("/Overview", StringComparison.OrdinalIgnoreCase)
+        || requestPath.StartsWithSegments("/Performance", StringComparison.OrdinalIgnoreCase)
+        || requestPath.StartsWithSegments("/Overview", StringComparison.OrdinalIgnoreCase);
     var isProcessActive = currentPage.Equals("/Process", StringComparison.OrdinalIgnoreCase);
     var isSettingsActive = currentPage.Equals("/Settings", StringComparison.OrdinalIgnoreCase);
     var isAiActive = currentPage.Equals("/AI", StringComparison.OrdinalIgnoreCase);
