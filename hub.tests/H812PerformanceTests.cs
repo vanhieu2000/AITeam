@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using AITeam.Hub.Tests.Support;
@@ -78,6 +79,35 @@ public sealed class H812PerformanceTests
         Assert.Contains("Chưa đủ dữ liệu", text);
         Assert.Contains("chưa đo", text);
         Assert.Contains("khác 1", text);
+    }
+
+    [Fact]
+    public async Task Overview_staff_tab_and_performance_page_share_tabs_without_old_links()
+    {
+        using var env = new TestEnvironment();
+        var now = new DateTimeOffset(2026, 11, 4, 10, 0, 0, TimeSpan.FromHours(7));
+        var (config, board) = BuildProject(env, now);
+        await using var host = await HubTestHost.StartAsync(env, services =>
+        {
+            services.AddSingleton<ITeamConfigService>(config);
+            services.AddSingleton<ITaskBoardService>(board);
+        });
+
+        var staffResponse = await host.Client.GetAsync("/Overview?tab=staff");
+        Assert.Equal(HttpStatusCode.OK, staffResponse.StatusCode);
+        var staffHtml = WebUtility.HtmlDecode(await staffResponse.Content.ReadAsStringAsync());
+        Assert.Contains("Chưa có task nào theo quy trình mới", staffHtml);
+        Assert.DoesNotContain("/Performance?tab=", staffHtml);
+
+        var pageResponse = await host.Client.GetAsync("/Performance");
+        Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
+        var pageHtml = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
+        var tabs = Regex.Match(pageHtml, "<nav class=\"performance-tabs\"[\\s\\S]*?</nav>").Value;
+        Assert.Equal(3, Regex.Matches(tabs, "<a ").Count);
+        Assert.Contains("href=\"/Performance\"", tabs);
+        Assert.Contains("href=\"/Overview?tab=overview\"", tabs);
+        Assert.Contains("href=\"/Overview?tab=staff\"", tabs);
+        Assert.DoesNotContain("/Performance?tab=", pageHtml);
     }
 
     private static (ITeamConfigService Config, ITaskBoardService Board) BuildProject(TestEnvironment env, DateTimeOffset now)

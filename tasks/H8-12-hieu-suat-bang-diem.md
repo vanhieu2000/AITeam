@@ -24,3 +24,12 @@
 | Build | `dotnet build AITeam.sln -warnaserror -nodeReuse:false`: 0 warning, 0 error. |
 | Test | `H812PerformanceTests`: 2/2 pass; toàn bộ Hub: 824/824 pass; Core: 907/907 pass (chạy riêng `-m:1`). |
 | Chưa xác minh | Chưa mở trình duyệt thật 1000×800; `/Performance?tab=staff` cũ giờ do trang mới xử lý, `/Overview` giữ nguyên. |
+
+### Vòng 2 — giữ tab Tổng quan/Nhân viên (OpenCode)
+- `Index.cshtml` chỉ còn route `/Overview` (mặc định Overview); tab Tổng quan/Nhân viên trỏ `/Overview?tab=overview|staff&range=…`; thêm tab Hiệu suất → `/Performance`.
+- `Performance.cshtml` thêm thanh 3 tab (Hiệu suất · Tổng quan · Nhân viên) kiểu `btn`/`pri`/`aria-current`; CSS `.performance-tabs` trong `performance.css`.
+- `_Layout.cshtml`: mục Hiệu suất sáng ở cả `/Performance` và `/Overview` (theo RouteData và Request.Path).
+- Test mới `H812PerformanceTests.Overview_staff_tab_and_performance_page_share_tabs_without_old_links`: `/Overview?tab=staff` 200 + nội dung tab; `/Performance` có 3 tab; không còn `/Performance?tab=` trong HTML.
+- Build `dotnet build AITeam.sln -warnaserror -nodeReuse:false`: 0 warning, 0 error.
+- Test `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m`: Hub 825/825, Core 912/912 pass.
+- Không sửa assert test cũ; `git grep` không còn liên kết `/Performance?tab=` trong `hub/`.

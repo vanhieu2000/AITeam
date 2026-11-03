@@ -1,5 +1,6 @@
 .perf,.perf *{box-sizing:border-box;min-width:0}
 .perf{overflow-wrap:anywhere}
+.performance-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .perf-head{display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap}
 .perf-head h2{margin:0}
 .perf-error{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
