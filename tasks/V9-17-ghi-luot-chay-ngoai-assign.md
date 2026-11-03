@@ -109,4 +109,26 @@
 
 ## Báo cáo của agent
 
+## Báo cáo của agent — OpenCode
+- Đã làm: thêm `ExternalRunLog.Parse` (opencode JSONL + codex text), lệnh CLI `parse-run-log`, lệnh `team.ps1 log-run` ghép bản ghi, chống ghi trùng theo `sourceLog`, run tăng dần, `conversationId` rỗng, chỉ gọi CLI để đọc log.
+- File: `core/AITeam.Core/Metrics/ExternalRunLog.cs` (mới), `core/AITeam.Cli/Program.cs`, `team.ps1`, `core.tests/V917ExternalRunLogTests.cs` (mới), `core.tests/Fixtures/run-logs/*` (mới), file task này.
+- Build: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 error.
+- Test: `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → 837/837 (hub) + 949/949 (core), 0 đỏ.
+- Test mới: 12/12 xanh, gồm harness PowerShell (gọi `Invoke-LogRun` 2 lần cùng log ⇒ 1 file, run=4, agent=O, conversationId rỗng) trên thư mục tạm với `Save-RunMetrics` giả.
+- Chưa xác minh: chưa chạy `team.ps1 log-run` với log OpenCode thật R-012 trên máy (không có file log trong repo; công cụ bị giới hạn lệnh), phần đọc đã test bằng fixture đúng dạng.
+- Quyết định tự chịu: `at` của opencode lấy mốc timestamp lớn nhất (giờ địa phương); codex lấy LastWriteTime; token reasoning cộng vào output, cache.read không cộng.
+
+### Vòng 2 — OpenCode
+- Sửa `Invoke-LogRun`: `inputTokens`/`outputTokens`/`totalTokens` giữ `$null` khi CLI trả null (Codex chỉ biết tổng), chỉ ép `[long]` khi có giá trị.
+- Thêm test harness `PowerShell_log_run_keeps_null_tokens_for_codex`: `-Dev codex` + `codex-tokens.log` ⇒ `inputTokens`/`outputTokens` là JSON null, `totalTokens`=37701, `agent`=`C`.
+- Build 0 warning; test 837/837 (hub) + 950/950 (core), 0 đỏ.
+
 ## Review (Claude)
+### Vòng 1 — CẦN SỬA
+- Đã kiểm: diff đối chiếu Mục tiêu / Ràng buộc; build 0 warning; `parse-run-log` trên log thật R-012 (H8-15 675 s · 86.562 token, V9-15 3347 s, H8-13 3306 s, Codex b-h7-02 37.701) khớp số đo tay; test không có nhánh return sớm.
+- [AG] (dữ liệu) `Invoke-LogRun` ép `[long]$null` ⇒ token Codex không rõ thành 0 thay vì null.
+
+### Vòng 2 — ĐẠT
+- Token null giữ nguyên null; thêm test harness `-Dev codex`. Bám đúng thiết kế: đọc log ở C#, `team.ps1` chỉ gọi CLI, không chép nội dung prompt, `conversationId` rỗng.
+- Optional: dòng thứ 2 so với ngân sách ~268/250 (trong 1,5 lần).
+

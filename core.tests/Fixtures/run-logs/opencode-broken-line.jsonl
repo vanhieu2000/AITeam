@@ -1,0 +1,5 @@
+{"type":"step_start","timestamp":1793700200000,"sessionID":"ses_gia","part":{"type":"step-start"}}
+{"type":"tool_use","timestamp":1793700201000,"sessionID":"ses_gia","part":{"type":"tool","tool":"bash","state":{"status":"completed"}}}
+{dong-hong-json
+{"type":"step_finish","timestamp":1793700202000,"sessionID":"ses_gia","part":{"type":"step-finish","reason":"tool-calls","tokens":{"total":66,"input":11,"output":2,"reasoning":3,"cache":{"write":0,"read":50}},"cost":0}}
+{"type":"text","timestamp":1793700204000,"sessionID":"ses_gia","part":{"type":"text","text":"Xong giả"}}

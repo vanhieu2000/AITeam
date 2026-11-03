@@ -1,0 +1,6 @@
+{"type":"step_start","timestamp":1793700000000,"sessionID":"ses_gia","part":{"type":"step-start"}}
+{"type":"tool_use","timestamp":1793700000500,"sessionID":"ses_gia","part":{"type":"tool","tool":"bash","state":{"status":"completed"}}}
+{"type":"step_finish","timestamp":1793700001000,"sessionID":"ses_gia","part":{"type":"step-finish","reason":"tool-calls","tokens":{"total":1114,"input":100,"output":10,"reasoning":5,"cache":{"write":0,"read":999}},"cost":0}}
+{"type":"step_finish","timestamp":1793700015000,"sessionID":"ses_gia","part":{"type":"step-finish","reason":"tool-calls","tokens":{"total":2227,"input":200,"output":20,"reasoning":7,"cache":{"write":0,"read":999}},"cost":0}}
+{"type":"text","timestamp":1793700029000,"sessionID":"ses_gia","part":{"type":"text","text":"MARKER_KHONG_DUOC_CHEP","time":{"start":1793700028000,"end":1793700029000}}}
+{"type":"step_finish","timestamp":1793700030000,"sessionID":"ses_gia","part":{"type":"step-finish","reason":"stop","tokens":{"total":3341,"input":300,"output":30,"reasoning":9,"cache":{"write":0,"read":999}},"cost":0}}

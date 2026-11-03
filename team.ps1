@@ -21,6 +21,7 @@
   .\team.ps1 new-request -Title "..."               Tạo phiếu yêu cầu R-xxx (requests/) để theo dõi 1 yêu cầu của chủ dự án
   .\team.ps1 staff-report                           Bảng điểm từng nhân viên (tên trong staff/) + lỗi do quản lý / công cụ
   .\team.ps1 request-report -Request R-001          Tổng hợp mọi task của yêu cầu: lượt, phút agent, token, dòng / ngân sách, cổng kiểm tra, vòng review
+  .\team.ps1 log-run -Project Ten -Task H8-12 -Dev opencode -Log <file>   Ghi số đo 1 lượt chạy trực tiếp (OpenCode/Codex) vào metrics\runs
   .\team.ps1 status [-Project Ten]                  Agent đang chạy, nhánh, kết quả lần chạy gần nhất
   .\team.ps1 cleanup -Project Ten -Task T-003       Xóa worktree sau khi đã merge
   .\team.ps1 switch-account                         Mở agy để /logout và đăng nhập tài khoản Antigravity khác
@@ -71,7 +72,8 @@ param(
     [AllowEmptyString()][string] $Source = "",
     [string] $Optional = "",
     [string] $Note = "",
-    [string] $Reject = ""
+    [string] $Reject = "",
+    [string] $Log = ""
 )
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
@@ -2739,6 +2741,95 @@ function Save-RunMetrics($record) {
     }
 }
 
+# V9-17: ghi số đo cho lượt chạy trực tiếp (OpenCode/Codex) — CLI đọc log, ở đây chỉ ghép bản ghi.
+function Invoke-LogRun {
+    if (-not $Project) { throw "Thiếu -Project" }
+    if (-not $Task) { throw "Thiếu -Task" }
+    if ($Dev -notin @('opencode', 'codex')) { throw "Thiếu hoặc sai -Dev (chỉ opencode | codex)." }
+    if (-not $Log) { throw "Thiếu -Log <file log>." }
+    if (-not (Test-Path -LiteralPath $Log -PathType Leaf)) { throw "Không thấy file log: $Log" }
+    $logFull = [IO.Path]::GetFullPath($Log)
+    for ($node = $logFull; $node; $node = [IO.Path]::GetDirectoryName($node)) {
+        if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) { throw "File log không an toàn: $Log" }
+    }
+
+    $taskCode = [regex]::Match($Task, '^[A-Z]\d+-\d+').Value
+    if (-not $taskCode) { $taskCode = $Task }
+    $r = Resolve-Project $Project
+    $exe = Get-AITeamExe
+    if (-not $exe) { throw 'Chưa có CLI đọc log lượt chạy.' }
+    $lines = @(& $exe parse-run-log --dev $Dev --log $logFull)
+    if ($LASTEXITCODE -ne 0) { throw "Không đọc được log lượt chạy: $Log" }
+    $parsed = ($lines -join "`n") | ConvertFrom-Json
+
+    # Khóa chống ghi trùng: cùng dự án + task + máy + đúng file log (tên và kích thước).
+    $source = '{0}:{1}' -f [IO.Path]::GetFileName($logFull), (Get-Item -LiteralPath $logFull).Length
+    $runsDir = Join-Path $Root 'metrics\runs'
+    $maxRun = 0
+    foreach ($f in Get-ChildItem -LiteralPath $runsDir -Filter *.json -File -ErrorAction SilentlyContinue) {
+        try { $x = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { continue }
+        if ($x.project -ne $r.Info.name -or $x.task -ne $taskCode) { continue }
+        if ($x.machine -eq $env:COMPUTERNAME -and [string]$x.sourceLog -eq $source) { Say "Đã ghi lượt này" Yellow; return }
+        $n = 0
+        if ([int]::TryParse([string]$x.run, [ref]$n) -and $n -gt $maxRun) { $maxRun = $n }
+    }
+    $run = $maxRun + 1
+
+    $taskText = try { Get-Content (Find-TaskFile $r $taskCode).FullName -Raw -Encoding UTF8 } catch { "" }
+    $maxText = [regex]::Match($taskText, '\*\*Thời gian tối đa:\*\*\s*(\d+)').Groups[1].Value
+    $added = 0; $removed = 0; $files = 0
+    if ($Path -and (Test-Path -LiteralPath $Path)) {
+        $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        $base = git -C $Path merge-base origin/main HEAD 2>$null | Select-Object -First 1
+        if ($base) {
+            $seed = git -C $Path log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+            $from = if ($seed) { $seed } else { $base }
+            foreach ($line in (git -C $Path diff --numstat $from HEAD 2>$null)) {
+                $p = $line -split "`t"
+                if ($p.Count -ge 3 -and $p[2] -notmatch '^tasks/' -and $p[0] -match '^\d+$') { $added += [int]$p[0]; $removed += [int]$p[1]; $files++ }
+            }
+        }
+        $ErrorActionPreference = $eap
+    }
+
+    $record = [ordered]@{
+        at = [string]$parsed.at
+        head = $(if ($Path -and (Test-Path -LiteralPath $Path)) { git -C $Path rev-parse HEAD 2>$null } else { $null })
+        machine = $env:COMPUTERNAME
+        project = $r.Info.name
+        task = $taskCode
+        run = [string]$run
+        agent = $(if ($Dev -eq 'opencode') { 'O' } else { 'C' })
+        model = $(if ($Dev -eq 'opencode') { 'opencode-deepseek' } else { 'codex' })
+        findings = @(Get-ReviewFindings (Get-Section $taskText "Review (Claude)"))
+        status = [string]$parsed.status
+        durationSec = [int]$parsed.durationSec
+        tokensKnown = [bool]$parsed.tokensKnown
+        inputTokens = $(if ($null -eq $parsed.inputTokens) { $null } else { [long]$parsed.inputTokens })
+        outputTokens = $(if ($null -eq $parsed.outputTokens) { $null } else { [long]$parsed.outputTokens })
+        thinkingTokens = $null
+        totalTokens = $(if ($null -eq $parsed.totalTokens) { $null } else { [long]$parsed.totalTokens })
+        maxMinutes = $(if ($maxText -and [int]$maxText -gt 0) { [int]$maxText } else { 30 })
+        difficulty = [regex]::Match($taskText, '\*\*Độ khó:\*\*\s*([SML])\b').Groups[1].Value
+        hasOutput = [bool]$parsed.hasOutput
+        linesAdded = $added
+        linesRemoved = $removed
+        filesChanged = $files
+        verifyOk = $null
+        verifyFails = $null
+        autoRetry = $false
+        hungBackgroundTask = $false
+        log = "$taskCode-$run.json"
+        conversationId = ""
+        request = [regex]::Match($taskText, '\*\*Yêu cầu:\*\*\s*(R-\d+)').Groups[1].Value
+        sourceLog = $source
+    }
+    Save-RunMetrics $record
+    $minutes = [math]::Round(([int]$parsed.durationSec) / 60, 1)
+    $tokenText = if ($parsed.tokensKnown) { "$($parsed.totalTokens) token" } else { "không rõ token" }
+    Say ("Đã ghi số đo {0}/{1} lượt {2}: {3} phút · {4}" -f $r.Info.name, $taskCode, $run, $minutes, $tokenText) Green
+}
+
 # Nhập các log agent cũ trên máy này (chưa có số đo) — chạy 1 lần mỗi máy.
 function Invoke-MetricsImport {
     $have = @(Get-ChildItem (Join-Path $Root "metrics\runs") -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
@@ -3611,6 +3702,7 @@ switch ($Command) {
     "new-request" { $null = Invoke-NewRequest }
     "request-report" { Invoke-RequestReport }
     "staff-report" { Invoke-StaffReport }
+    "log-run" { Invoke-LogRun }
     "try" { Invoke-Try }
     "stop" { Invoke-Stop }
     "review" { Invoke-ReviewPack }
