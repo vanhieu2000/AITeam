@@ -22,3 +22,15 @@
 | Trạng thái | Chờ đúng mục 3 GIAO-CODEX-DOT-2.md: chỉ làm hàng đợi sau khi V9-11 vào main. V9-11 hiện còn test V911 cũ xung đột đã báo, không tự merge nhánh đó. |
 | Kiểm tra | Chỉ cập nhật nhánh và báo cáo, chưa sửa queue/lock; không chạy build/test không liên quan. Chưa chạy Windows. |
 | Đo đạc | Phút: chưa đo; token: chưa đo. |
+
+## Báo cáo của agent — OpenCode
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Khóa phạm vi file | `core/AITeam.Core/Queue/ScopeLocks.cs` + `ScopeLockStore` (`.state/locks.json`, khóa liên tiến trình, ghi tmp+move, sao lưu `locks.json.hong-*` nguyên byte, chặn `..`/tuyệt đối/reparse). |
+| `Invoke-Assign` không chạy trùng vùng | `team.ps1` hàm lồng `Invoke-ScopeLockFile`, lấy khóa sau `Assert-NotClaimedElsewhere`, nhả trong `finally`; gọi lại trong cùng lượt không khóa lại (`$script:ScopeLockOwn`). |
+| Hàng đợi auto | `TaskQueue` (đọc bảng, phụ thuộc chỉ đạt khi ✅ Đã merge) + `team.ps1 auto -Project -Max`, `.state/auto.stop`/`auto.pid`, `stop -All`; CLI `queue-ready`, `lock-acquire`, `lock-release`. |
+| Test | `core.tests/V915QueueTests.cs` 17 ca: trùng file/thư mục, đổi người cùng task, nhả khi xong, file hỏng, đường dẫn xấu, bảng/phụ thuộc, auto 0 task, stop -All, assign chờ khóa và nhả khóa khi lỗi. |
+| Build/test | `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → 822/822 Hub + 929/929 Core đạt. |
+| Tự quyết | Task không khai `Phạm vi` thì bỏ qua khóa (lint đã chặn luồng thật) để không phá harness S104; xung đột khóa không đổi trạng thái bảng (giữ 🟣 để auto giao lại sau); `auto` chỉ giao lại cùng task sau 60 giây. |
+| Chưa xác minh | Chưa chạy `auto`/`stop -All` trên tiến trình thật và chưa đo phút/token; hàng đợi chưa dùng `QuotaObservation` vì V9-11 chưa có trên main (định tuyến V9-14 đã dùng trong `Invoke-Assign`). |
+| File đổi | `core/AITeam.Core/Queue/ScopeLocks.cs` (mới), `core/AITeam.Core/Queue/TaskQueue.cs` (mới), `core/AITeam.Cli/Program.cs`, `team.ps1`, `core.tests/V915QueueTests.cs` (mới), file task này. |

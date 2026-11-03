@@ -34,6 +34,8 @@
   .\team.ps1 review -Project Ten -Task T-003        Gói review gọn: cổng kiểm tra, file đổi, báo cáo agent, ảnh
   .\team.ps1 merge -Project Ten -Task T-003         Merge (cần "Vòng N — ĐẠT"), bảng việc ✅, clone sạch, dọn worktree, làm mới bản chạy thử
   .\team.ps1 stop -Task T-003                       Dừng hẳn task: cả lệnh assign bao ngoài lẫn agent (không bị tự giao lại)
+  .\team.ps1 stop -All                              Dừng vòng auto và mọi assign nó đã sinh ra trên máy này
+  .\team.ps1 auto -Project Ten [-Max 2]             Lấy task "Chờ làm" đủ phụ thuộc, giao song song tối đa Max (mặc định 2)
   .\team.ps1 try -Project Ten [-NoLaunch]           Build bản ĐÃ MERGE ra thư mục riêng (AITeam-try) rồi mở app để chủ dự án chạy thử
 #>
 param(
@@ -62,6 +64,8 @@ param(
     [switch] $NoVerify,
     [switch] $NoReview,
     [switch] $Force,
+    [switch] $All,
+    [int] $Max = 2,
     [string] $Skill = "",
     [AllowEmptyString()][string] $Text = "",
     [AllowEmptyString()][string] $Source = "",
@@ -666,6 +670,110 @@ function Invoke-Assign {
     foreach ($o in (Get-ScopeOverlaps $r $taskFile $text)) {
         Say "CẢNH BÁO: trùng phạm vi với task đang chạy $o ⇒ dễ xung đột khi merge (cân nhắc giao tuần tự)." Yellow
     }
+    # V9-15: khóa các đường dẫn trong Phạm vi trước khi giao; task khác đang giữ vùng giao nhau thì không chạy.
+    # Hàm lồng trong Invoke-Assign để harness AST cũ nạp được mà không phải stub thêm hàm mới.
+    function Invoke-ScopeLockFile {
+        param([ValidateSet('acquire', 'release')][string]$Action, [string]$Provider)
+        $stateDir = Join-Path $Root '.state'
+        New-Item -ItemType Directory -Force $stateDir | Out-Null
+        $lockFile = Join-Path $stateDir 'locks.json'
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try { $hash = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes([IO.Path]::GetFullPath($Root).ToUpperInvariant()))).Replace('-', '') } finally { $sha.Dispose() }
+        $mutex = New-Object Threading.Mutex($false, ('Global\AITeam.ScopeLocks.' + $hash))
+        $owned = $false
+        try {
+            try { $owned = $mutex.WaitOne([TimeSpan]::FromSeconds(10)) } catch [Threading.AbandonedMutexException] { $owned = $true }
+            if (-not $owned) { throw 'Không lấy được khóa tệp locks.json.' }
+            $locks = @()
+            if (Test-Path -LiteralPath $lockFile) {
+                try {
+                    $raw = [IO.File]::ReadAllText($lockFile, [Text.Encoding]::UTF8)
+                    $parsed = $raw | ConvertFrom-Json
+                    if ($null -ne $parsed) { $locks = @($parsed) }
+                    foreach ($item in $locks) { if (-not $item.task -or $null -eq $item.scope) { throw 'Bản ghi khóa không hợp lệ.' } }
+                } catch {
+                    $backup = $lockFile + '.hong-' + (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfff') + '-' + [Guid]::NewGuid().ToString('N')
+                    Move-Item -LiteralPath $lockFile -Destination $backup -Force
+                    $locks = @()
+                }
+            }
+            $finished = @{}
+            $board = Join-Path $r.Path 'tasks/README.md'
+            if (Test-Path -LiteralPath $board) {
+                foreach ($line in [IO.File]::ReadAllLines($board)) {
+                    if ($line -notmatch '^\s*\|') { continue }
+                    $cells = $line.Split('|')
+                    if ($cells.Count -lt 3) { continue }
+                    $boardId = [regex]::Match($cells[1], '[A-Za-z][A-Za-z0-9]*-\d+').Value.ToUpperInvariant()
+                    if (-not $boardId) { continue }
+                    $boardStatus = $cells[$cells.Count - 2].Trim()
+                    if ($boardStatus.Contains('✅') -or $boardStatus.Contains('🔵') -or $boardStatus.Contains('🔴')) { $finished[$boardId] = $true }
+                }
+            }
+            $locks = @($locks | Where-Object { -not $finished.ContainsKey(([string]$_.task).ToUpperInvariant()) })
+            $taskKey = $Task.ToUpperInvariant()
+            if ($Action -eq 'release') {
+                $kept = @($locks | Where-Object { ([string]$_.task).ToUpperInvariant() -ne $taskKey })
+                if ($kept.Count -eq $locks.Count) { return $false }
+                $locks = $kept
+            } else {
+                $scopeText = [regex]::Match($text, '(?ms)^##\s+Phạm vi[^\r\n]*\r?\n(?<body>.*?)(?=^##\s|\z)').Groups['body'].Value
+                $scope = @([regex]::Matches($scopeText, '`([^`]+)`') | ForEach-Object { $_.Groups[1].Value.Trim().Replace('\', '/').TrimEnd('/') } | Where-Object { $_ })
+                if ($scope.Count -eq 0) { return $true }   # task không khai Phạm vi: không giữ khóa (lint đã chặn ở luồng thật)
+                foreach ($path in $scope) {
+                    if ($path.StartsWith('/') -or $path.Contains(':') -or @($path.Split('/') | Where-Object { $_ -eq '..' -or $_ -eq '.' }).Count -gt 0) {
+                        throw "Đường dẫn phạm vi không an toàn: $path"
+                    }
+                }
+                $same = @($locks | Where-Object { ([string]$_.task).ToUpperInvariant() -eq $taskKey }) | Select-Object -First 1
+                if (-not $same) {
+                    foreach ($item in $locks) {
+                        $hit = @($scope | Where-Object {
+                            $mine = $_
+                            @($item.scope | Where-Object {
+                                $other = ([string]$_).Replace('\', '/').TrimEnd('/')
+                                $mine -ieq $other -or $mine.StartsWith($other + '/', [StringComparison]::OrdinalIgnoreCase) -or $other.StartsWith($mine + '/', [StringComparison]::OrdinalIgnoreCase)
+                            }).Count -gt 0
+                        })
+                        if ($hit.Count -gt 0) { return @{ Held = [string]$item.task } }
+                    }
+                    $locks += [pscustomobject]@{ task = $Task; provider = $Provider; at = (Get-Date).ToString('o'); scope = [string[]]$scope }
+                } else {
+                    $same.provider = $Provider; $same.at = (Get-Date).ToString('o'); $same.scope = [string[]]$scope
+                }
+            }
+            if ($locks.Count -eq 0) {
+                if (Test-Path -LiteralPath $lockFile) { Remove-Item -LiteralPath $lockFile -Force }
+                return $true
+            }
+            $records = @($locks | ForEach-Object { $_ | ConvertTo-Json -Compress -Depth 5 })
+            $jsonText = '[' + ($records -join ',') + ']'
+            $tmp = Join-Path $stateDir ('locks.' + [Guid]::NewGuid().ToString('N') + '.tmp')
+            try {
+                [IO.File]::WriteAllText($tmp, $jsonText, (New-Object Text.UTF8Encoding $false))
+                Move-Item -LiteralPath $tmp -Destination $lockFile -Force
+            } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force } }
+            return $true
+        } finally {
+            if ($owned) { $mutex.ReleaseMutex() }
+            $mutex.Dispose()
+        }
+    }
+    $lockHeld = $false
+    $lockTaskKey = $Task.ToUpperInvariant()
+    if ($null -eq $script:ScopeLockOwn) { $script:ScopeLockOwn = @{} }
+    # Gọi lại Invoke-Assign trong cùng lượt (tự sửa / review) không khóa lại và không nhả khóa của lượt ngoài.
+    if (-not $script:ScopeLockOwn.ContainsKey($lockTaskKey)) {
+        $lockResult = Invoke-ScopeLockFile 'acquire' $Dev
+        if ($lockResult -is [hashtable]) {
+            $lockHolder = [string]$lockResult.Held
+            Say "Chờ khóa phạm vi: $lockHolder đang giữ." Yellow
+            throw "Phạm vi task đang bị khóa bởi $lockHolder."
+        }
+        $script:ScopeLockOwn[$lockTaskKey] = $true
+        $lockHeld = $true
+    }
+    try {
     if ($routeReason) {
         Set-BoardStatus $r $Task (Get-ClaimText) -Journal @{TaskFile=$taskFile.Name;Event='Assign';Result="ĐỊNH TUYẾN $Dev — $routeReason"}
     } else { Set-BoardStatus $r $Task (Get-ClaimText) }
@@ -904,6 +1012,12 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     }
     $assignResult = if ($v.Ok) { 'ĐẠT' } else { 'KHÔNG ĐẠT' }
     Set-BoardStatus $r $Task $(if ($boardText) { $boardText } elseif ($v.Ok) { "🔵 Chờ review · cổng KT ĐẠT" } else { "🔴 Cần sửa · cổng KT KHÔNG ĐẠT" }) -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = $assignResult }
+    } finally {
+        if ($lockHeld) {
+            Invoke-ScopeLockFile 'release' $Dev | Out-Null
+            $script:ScopeLockOwn.Remove($lockTaskKey)
+        }
+    }
 }
 
 # R-004: task khác đang chạy (🟡 trên bảng việc) có Phạm vi trùng ⇒ dễ xung đột merge. Bỏ qua thư mục test chung (tests/, core.tests/…).
@@ -2695,19 +2809,153 @@ function Show-RunMetrics {
     $perTask = $runs | Group-Object { "$($_.project)/$($_.task)" }
     Say ("  Thời gian agent cho 1 task (cộng mọi lượt): TB {0:N0} phút · lượt / task TB {1:N2}" -f (($perTask | ForEach-Object { ($_.Group | Measure-Object durationSec -Sum).Sum / 60 }) | Measure-Object -Average).Average, (($perTask | ForEach-Object { $_.Count }) | Measure-Object -Average).Average)
 }
-# Dừng hẳn 1 task: cả lệnh assign bao ngoài (nếu không nó tự giao lại sau cổng kiểm tra) lẫn tiến trình agy của task.
-function Invoke-Stop {
-    if (-not $Task) { throw "Thiếu -Task" }
+# Các lệnh assign đang chạy của 1 dự án trên máy này (V9-15 dùng để đếm tải và dừng).
+function Get-AssignProcesses($r) {
+    $name = [regex]::Escape([string]$r.Info.name)
+    @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $cl = $_.CommandLine
+        $cl -and $_.Name -match '^powershell|^pwsh' -and $cl -match 'team\.ps1' -and $cl -match '\bassign\b' -and
+        $cl -match ('-Project\s+"?' + $name + '\b')
+    })
+}
+
+function Stop-TaskProcesses([string]$taskId) {
     $procs = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
         $cl = $_.CommandLine
         $cl -and (
-            ($_.Name -match '^powershell|^pwsh' -and $cl -match 'team\.ps1' -and $cl -match '\bassign\b' -and $cl -match ("-Task\s+" + [regex]::Escape($Task) + "\b")) -or
-            ($_.Name -match '^agy' -and $cl -match ([regex]::Escape($Task) + '-\d+\.prompt\.md'))
+            ($_.Name -match '^powershell|^pwsh' -and $cl -match 'team\.ps1' -and $cl -match '\bassign\b' -and $cl -match ("-Task\s+" + [regex]::Escape($taskId) + "\b")) -or
+            ($_.Name -match '^agy' -and $cl -match ([regex]::Escape($taskId) + '-\d+\.prompt\.md'))
         ) })
-    if (-not $procs) { Say "Không thấy tiến trình nào của task $Task trên máy này." Yellow; return }
+    if (-not $procs) { Say "Không thấy tiến trình nào của task $taskId trên máy này." Yellow; return }
     foreach ($p in $procs | Sort-Object { $_.Name -notmatch '^powershell|^pwsh' }) {   # dừng lệnh assign trước để nó không tự giao lại
         Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
         Say ("Đã dừng {0} (PID {1})" -f $p.Name, $p.ProcessId) Yellow
+    }
+}
+
+# Dừng hẳn 1 task (mặc định) hoặc dừng vòng auto và mọi assign nó sinh ra (-All).
+function Invoke-Stop {
+    if ($All) {
+        if (-not $Project) { throw 'Thiếu -Project khi dùng stop -All.' }
+        $r = Resolve-Project $Project
+        $stateDir = Join-Path $Root '.state'
+        New-Item -ItemType Directory -Force $stateDir | Out-Null
+        $stopFile = Join-Path $stateDir 'auto.stop'
+        [IO.File]::WriteAllText($stopFile, (Get-Date).ToUniversalTime().ToString('o'), (New-Object Text.UTF8Encoding $false))
+        Say "Đã đặt cờ dừng hàng đợi auto: $stopFile" Yellow
+        $pidFile = Join-Path $stateDir 'auto.pid'
+        if (Test-Path -LiteralPath $pidFile) {
+            $autoPid = 0
+            if ([int]::TryParse(([IO.File]::ReadAllText($pidFile)).Trim(), [ref]$autoPid) -and $autoPid -gt 0) {
+                Stop-Process -Id $autoPid -Force -ErrorAction SilentlyContinue
+                Say "Đã dừng vòng auto (PID $autoPid)" Yellow
+            }
+        }
+        foreach ($p in @(Get-AssignProcesses $r)) {
+            $taskId = [regex]::Match([string]$p.CommandLine, '-Task\s+([A-Za-z0-9][A-Za-z0-9-]{0,63})').Groups[1].Value
+            if ($taskId) { Stop-TaskProcesses $taskId }
+        }
+        return
+    }
+    if (-not $Task) { throw "Thiếu -Task" }
+    Stop-TaskProcesses $Task
+}
+
+# V9-15: task "Chờ làm" trên bảng việc, kèm phụ thuộc đã đạt hay chưa (phụ thuộc đạt = ✅ Đã merge trên bảng).
+function Test-QueuePending([string]$status) {
+    $t = ([string]$status).Trim()
+    if (-not $t) { return $true }
+    if ($t.Contains('🟡') -or $t.Contains('🔵') -or $t.Contains('🔴') -or $t.Contains('✅')) { return $false }
+    foreach ($w in @('Tạm dừng', 'Bị chặn', 'Chờ người làm', 'Chờ review', 'Đang chạy', 'Chờ duyệt', 'Cần sửa', 'Hủy')) {
+        if ($t.Contains($w)) { return $false }
+    }
+    if ($t.Contains('🟣')) { return $true }
+    return $t -match '(?i)Chờ làm'
+}
+
+function Get-QueueReadyTasks($r) {
+    $boardFile = Join-Path $r.Path 'tasks/README.md'
+    if (-not (Test-Path -LiteralPath $boardFile -PathType Leaf)) { return @() }
+    $rows = @()
+    $merged = @{}
+    foreach ($line in [IO.File]::ReadAllLines($boardFile)) {
+        if ($line -notmatch '^\s*\|') { continue }
+        $cells = $line.Split('|')
+        if ($cells.Count -lt 3) { continue }
+        $idMatch = [regex]::Match($cells[1], '[A-Za-z][A-Za-z0-9]*-\d+')
+        if (-not $idMatch.Success) { continue }
+        $id = $idMatch.Value.ToUpperInvariant()
+        $status = $cells[$cells.Count - 2].Trim()
+        $fileMatch = [regex]::Match($cells[1], '\]\((?<f>[^)]+\.md)\)')
+        $fileName = if ($fileMatch.Success) { $fileMatch.Groups['f'].Value.Replace('\', '/') } else { $null }
+        $rows += [pscustomobject]@{ Id = $id; FileName = $fileName; Status = $status }
+        if ($status.Contains('✅')) { $merged[$id] = $true }
+    }
+    $out = @()
+    foreach ($row in $rows) {
+        if (-not (Test-QueuePending $row.Status)) { continue }
+        if (-not $row.FileName -or $row.FileName.StartsWith('/') -or $row.FileName.Contains(':') -or
+            @($row.FileName.Split('/') | Where-Object { $_ -eq '..' -or $_ -eq '.' }).Count -gt 0) { continue }
+        $full = Join-Path (Join-Path $r.Path 'tasks') ($row.FileName -replace '/', '\')
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) {
+            $out += [pscustomobject]@{ Id = $row.Id; FileName = $row.FileName; Ready = $false; Reason = 'Không đọc được file task' }
+            continue
+        }
+        $text = [IO.File]::ReadAllText($full, [Text.Encoding]::UTF8)
+        $depLine = [regex]::Match($text, '(?im)^[ \t]*-[ \t]*\*\*Phụ thuộc:\*\*[ \t]*(?<deps>[^\r\n]*)')
+        $missing = @()
+        if ($depLine.Success) {
+            foreach ($token in [regex]::Matches($depLine.Groups['deps'].Value, '[A-Za-z][A-Za-z0-9]*-\d+')) {
+                $dep = $token.Value.ToUpperInvariant()
+                if (-not $merged.ContainsKey($dep) -and $missing -notcontains $dep) { $missing += $dep }
+            }
+        }
+        $out += [pscustomobject]@{ Id = $row.Id; FileName = $row.FileName; Ready = ($missing.Count -eq 0); Reason = $(if ($missing.Count) { 'Chờ phụ thuộc: ' + ($missing -join ', ') } else { 'Đủ phụ thuộc' }) }
+    }
+    $out
+}
+
+# V9-15: giao các task "Chờ làm" đủ phụ thuộc, tối đa -Max chạy song song; khóa phạm vi do chính lệnh assign con lo.
+function Invoke-AutoQueue {
+    if (-not $Project) { throw 'Thiếu -Project cho hàng đợi auto.' }
+    if ($Max -lt 1) { throw '-Max phải từ 1 trở lên.' }
+    $r = Resolve-Project $Project
+    $exe = Get-AITeamExe
+    if (-not $exe) { throw 'Không build được CLI (AITeam).' }
+    $stateDir = Join-Path $Root '.state'
+    New-Item -ItemType Directory -Force $stateDir | Out-Null
+    $stopFile = Join-Path $stateDir 'auto.stop'
+    Remove-Item -LiteralPath $stopFile -Force -ErrorAction SilentlyContinue
+    $pidFile = Join-Path $stateDir 'auto.pid'
+    [IO.File]::WriteAllText($pidFile, "$PID", (New-Object Text.UTF8Encoding $false))
+    $lastAttempt = @{}
+    $teamScript = Join-Path $Root 'team.ps1'
+    Say "Hàng đợi auto: tối đa $Max task song song. Dừng: .\team.ps1 stop -All -Project $($r.Info.name)" Cyan
+    try {
+        while (-not (Test-Path -LiteralPath $stopFile)) {
+            $ready = @(Get-QueueReadyTasks $r | Where-Object { $_.Ready })
+            $running = @(Get-AssignProcesses $r)
+            if (-not $ready -and $running.Count -eq 0) {
+                Say 'Hàng đợi: không còn task chờ làm đủ phụ thuộc → kết thúc.' Green
+                return
+            }
+            $now = Get-Date
+            foreach ($item in $ready) {
+                if ($running.Count -ge $Max) { break }
+                $key = $item.Id.ToUpperInvariant()
+                if ($lastAttempt.ContainsKey($key) -and ($now - $lastAttempt[$key]).TotalSeconds -lt 60) { continue }
+                if ($running | Where-Object { $_.CommandLine -match ("-Task\s+" + [regex]::Escape($item.Id) + "\b") }) { continue }
+                $lastAttempt[$key] = $now
+                Start-Process -FilePath 'powershell.exe' -WorkingDirectory $Root -WindowStyle Hidden -ArgumentList @(
+                    '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $teamScript, 'assign', '-Project', $r.Info.name, '-Task', $item.Id) | Out-Null
+                Say "Hàng đợi: giao $($item.Id) ($($item.FileName))" Cyan
+                $running += [pscustomobject]@{ CommandLine = "-Task $($item.Id)" }
+            }
+            Start-Sleep -Seconds 5
+        }
+        Say 'Hàng đợi: đã nhận lệnh dừng.' Yellow
+    } finally {
+        Remove-Item -LiteralPath $pidFile -Force -ErrorAction SilentlyContinue
     }
 }
 # ===== Review / merge gọn cho Claude (tiết kiệm lượt gọi công cụ và token) =====
@@ -3429,6 +3677,7 @@ switch ($Command) {
     "add-project" { Invoke-AddProject }
     "new-task" { Invoke-NewTask }
     "assign" { Invoke-Assign }
+    "auto" { Invoke-AutoQueue }
     "lint-task" { Invoke-LintTask }
     "status" { Invoke-Status }
     "verify" { $null = Invoke-Verify }
