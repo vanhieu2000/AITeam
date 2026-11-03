@@ -100,7 +100,7 @@ public sealed class W202LessonServiceTests : IDisposable
         AddRule(s, "Bẩn", [], [], [], "trước\u001b[31msau");
         var section = s.PromptSection("tinh-nang-loi", "code", null);
         Assert.StartsWith("LUẬT CHUẨN ÁP DỤNG CHO VIỆC NÀY (bắt buộc):", section);
-        Assert.DoesNotContain("\u001b", section);
+        Assert.DoesNotContain("\u001b", section, StringComparison.Ordinal);   // so ordinal: so theo văn hóa coi ESC là ký tự bỏ qua ⇒ luôn "tìm thấy"
         foreach (var line in section.Split('\n').Where(l => l.StartsWith("- [L-", StringComparison.Ordinal)))
             Assert.True(line.Length <= 300 + 40, "Dòng luật quá dài: " + line.Length);
 
