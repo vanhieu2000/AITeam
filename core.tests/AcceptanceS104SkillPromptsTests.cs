@@ -165,7 +165,7 @@ $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
-$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun')
+$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun','Get-ReviewRoundLimit','Get-ReviewRoundCount','Stop-ReviewReassignment') # H7-02 + V6-02
 foreach ($f in $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$true)) {
     if ($f.Name -in $names) { . ([scriptblock]::Create($f.Extent.Text)) }
 }
@@ -204,6 +204,8 @@ function FakeProvider {
         $global:LASTEXITCODE=0
         return ([pscustomobject]@{role=$role;actor='codex';providerId='codex';isExplicit=$false;readOnly=($role -eq 'plan');manual=$false} | ConvertTo-Json -Compress)
     }
+    # V6-02: Invoke-Assign đếm vòng review qua CLI; task mẫu chưa có vòng nào.
+    if ($args[0] -eq 'review-rounds') { $global:LASTEXITCODE=0; return '0' }
     $script:calls++; $a=@($args); $pf=$a[[Array]::IndexOf($a,'--prompt-file')+1]
     $script:captured=[IO.File]::ReadAllText($pf); $script:ro=$a -contains '--read-only'
     $script:cwd=$a[[Array]::IndexOf($a,'--workdir')+1]
