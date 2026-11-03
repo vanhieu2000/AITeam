@@ -1,0 +1,30 @@
+﻿@page "/Work"
+@model AITeam.Hub.Pages.WorkModel
+@using AITeam.Hub.Services
+@{ ViewData["Title"]="Công việc toàn hệ thống"; string[] columns=["Chờ làm","Đang làm","Chờ review","Cần sửa / Tạm dừng","Đã merge · 7 ngày"]; }
+<link rel="stylesheet" href="~/css/work-overview.css" />
+<div id="work-overview" class="work-overview" hx-get="@Url.Page("/Work",new{project=Model.Project,state=Model.FilterState?.ToString()})" hx-trigger="every 30s" hx-select="#work-overview" hx-target="this" hx-swap="outerHTML">
+<header class="work-heading"><div><h2>Công việc toàn hệ thống</h2><p class="muted">Trạng thái từ bảng việc · thời gian và cờ từ từng lượt · cập nhật 30 giây</p></div><a class="btn" href="/Work">Mọi dự án</a></header>
+@if(Model.Error!=null){<p class="panel">@Model.Error</p>}
+@if(Model.Data!=null){
+@foreach(var warning in Model.Data.Warnings){<p class="panel">@warning</p>}
+<section class="panel work-section"><h3>Cần anh</h3>
+@if(Model.NeedsOwner.Count==0&&Model.Data.Approvals.Count==0){<p class="muted">Không có việc cần anh xử lý ngay.</p>}
+@foreach(var item in Model.NeedsOwner){<p><a href="/p/@item.Task.Project/t/@item.Task.Id"><strong>@item.Task.Id · @item.Task.Title</strong></a> · @WorkOverviewService.Label(item.Status) · @item.Task.Project</p>}
+@foreach(var approval in Model.Data.Approvals){<p><a href="/Approvals">@approval.Id · @approval.Title</a> · Chờ duyệt</p>}
+</section>
+<section class="work-section"><h3>Mười trạng thái</h3><div class="work-statuses">
+@foreach(var status in Enum.GetValues<OfficeTaskStatus>()){
+var count=Model.Data.Tasks.Count(t=>t.Status==status&&(Model.Project==null||t.Task.Project==Model.Project));
+<a class="panel work-status" href="@Url.Page("/Work",new{project=Model.Project,state=status.ToString()})" aria-current="@(Model.FilterState==status?"true":null)"><strong>@count</strong><span>@WorkOverviewService.Label(status)</span></a>}
+</div></section>
+<nav class="work-projects" aria-label="Chọn dự án">@foreach(var project in Model.Data.Projects){<a class="btn" href="@Url.Page("/Work",new{project=project.Name})">@project.Name</a>}</nav>
+<section class="work-section"><h3>@(Model.Project??"Mọi dự án") · Kanban</h3>
+<p class="muted">Chọn một trạng thái phía trên để xem đầy đủ cả việc kế hoạch, bị chặn và đã hủy. Task chưa có giờ merge không được tính vào 7 ngày gần nhất.</p>
+<div class="work-kanban">@for(var i=0;i<columns.Length;i++){<section class="work-column"><h4>@columns[i] <span class="muted">@Model.Column(i).Count</span></h4>
+@foreach(var item in Model.Column(i)){<article class="panel work-task"><a href="/p/@item.Task.Project/t/@item.Task.Id"><strong>@item.Task.Id · @item.Task.Title</strong></a><p>@item.Task.Project · @(string.IsNullOrWhiteSpace(item.Task.Agent)?"Chưa giao":item.Task.Agent)</p><p>@(item.Minutes.HasValue?item.Minutes.Value.ToString("0.#")+" phút":"Chưa đo phút") · @item.Runs lượt</p><span class="pill">@WorkOverviewService.Label(item.Status)</span>@foreach(var flag in item.Flags){<span class="pill fix">@flag</span>}</article>}
+</section>}</div>
+</section>
+@if(Model.FilterState!=null){<section class="panel work-section"><h3>@WorkOverviewService.Label(Model.FilterState.Value)</h3>@foreach(var item in Model.Visible){<p><a href="/p/@item.Task.Project/t/@item.Task.Id">@item.Task.Project · @item.Task.Id · @item.Task.Title</a></p>}@if(Model.Visible.Count==0){<p class="muted">Không có task trong trạng thái này.</p>}</section>}
+}
+</div>
