@@ -1,5 +1,9 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using AITeam.Core.Lessons;
+using AITeam.Core.Workflow;
+
 using AITeam.Core.Review;
 using AITeam.Core.Routing;
 using AITeam.Core.Process;
@@ -32,6 +36,8 @@ try
         "parse-run-log" => ParseRunLog(),
         "opencode-check" => await OpenCodeCheck(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
+        "rules-for-task" => RulesForTask(),
+        "lesson-add" => LessonAdd(),
         _ => Help(),
     };
 }
@@ -532,4 +538,77 @@ int WorkflowRole()
     var assignment = WorkflowRoleDispatch.Resolve(Path.Combine(root, "team.json"), role);
     Console.WriteLine(JsonSerializer.Serialize(assignment, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
     return 0;
+}
+int RulesForTask()
+{
+    var taskFile = Arg("--task-file");
+    var step = Arg("--step");
+    var ai = Arg("--ai");
+
+    if (string.IsNullOrWhiteSpace(taskFile) || string.IsNullOrWhiteSpace(step))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--task-file, --step).");
+        return 2;
+    }
+
+    if (!File.Exists(taskFile))
+    {
+        Console.Error.WriteLine($"LỖI: không tìm thấy file task '{taskFile}'.");
+        return 2;
+    }
+
+    try
+    {
+        var taskText = File.ReadAllText(taskFile, Encoding.UTF8);
+        var fileName = Path.GetFileName(taskFile);
+        var m = Regex.Match(fileName, @"^([A-Za-z0-9]+-\d+)");
+        var taskId = m.Success ? m.Groups[1].Value : Path.GetFileNameWithoutExtension(fileName);
+
+        var workflow = new WorkflowConfigService(root);
+        var resolvedType = workflow.Resolve(taskId, taskText);
+
+        var lessonService = new LessonService(root);
+        var section = lessonService.PromptSection(resolvedType.Id, step, ai);
+
+        if (!string.IsNullOrEmpty(section))
+        {
+            Console.WriteLine(section);
+        }
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"LỖI: {ex.Message}");
+        return 2;
+    }
+}
+
+int LessonAdd()
+{
+    var title = Arg("--title");
+    var body = Arg("--body");
+    var kind = Arg("--kind") ?? "meo";
+    var task = Arg("--task");
+    var request = Arg("--request");
+    var step = Arg("--step");
+    var ai = Arg("--ai");
+
+    if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(body))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--title, --body).");
+        return 2;
+    }
+
+    try
+    {
+        var lessonService = new LessonService(root);
+        var lesson = lessonService.AddDraft(title, body, kind, request, task, step, ai);
+        Console.WriteLine(lesson.Id);
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"LỖI: {ex.Message}");
+        return 2;
+    }
 }

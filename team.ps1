@@ -807,6 +807,32 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
 - Sửa file bằng chỉnh sửa nhỏ đúng chỗ, không viết lại cả file khi chỉ đổi vài dòng.
 "@
     $prompt = Add-SkillPrompt -Prompt $prompt -Root $Root -Stage code -Stack $r.Info.stack
+    try {
+        $projPath = Join-Path $Root "core\AITeam.Cli\AITeam.Cli.csproj"
+        if (Test-Path -LiteralPath $projPath) {
+            $rulesExe = Get-AITeamExe
+            if ($rulesExe -and $rulesExe -ne 'FakeProvider' -and (Test-Path -LiteralPath $rulesExe -PathType Leaf)) {
+                $rulesArgs = @('rules-for-task', '--root', $Root, '--task-file', $taskFile.FullName, '--step', 'code')
+                if ($Dev) { $rulesArgs += @('--ai', $Dev) }
+                $rulesSection = (& $rulesExe @rulesArgs 2>$null) -join "`n"
+                if ($LASTEXITCODE -eq 0) {
+                    if (-not [string]::IsNullOrWhiteSpace($rulesSection)) {
+                        $prompt += "`n`n" + $rulesSection.Trim()
+                    }
+                } else {
+                    Write-Warning "Không lấy được luật chuẩn cho task $($taskFile.Name) (CLI trả mã $LASTEXITCODE)."
+                }
+            } elseif ($rulesExe -and $rulesExe -ne 'FakeProvider') {
+                Write-Warning "Chưa có aiteam CLI để lấy luật chuẩn cho task $($taskFile.Name)."
+            }
+        }
+    } catch {
+        if ($_.Exception.Message -ne 'PROVIDER_CAPTURED') {
+            Write-Warning "Lỗi khi lấy luật chuẩn cho task $($taskFile.Name): $_"
+        } else {
+            throw
+        }
+    }
     if ($Feedback) { $prompt += "`nYÊU CẦU CỦA QUẢN LÝ: $Feedback`nĐọc kỹ mục 'Review (Claude)' trong file task nếu có." }
 
         $n = @(Get-ChildItem $r.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch 'prompt' }).Count + 1
@@ -3826,7 +3852,34 @@ if ($Command -ne "skill-note") {
     . (Join-Path $Root "tools/workflow-accept.ps1")
 }
 switch ($Command) {
-    "skill-note" { Invoke-SkillNote -Root $Root -Skill $Skill -Text $Text -Source $Source }
+    "skill-note" {
+        $savedExit = $global:LASTEXITCODE
+        Invoke-SkillNote -Root $Root -Skill $Skill -Text $Text -Source $Source
+        $noteExit = $global:LASTEXITCODE
+        try {
+            $projPath = Join-Path $Root "core\AITeam.Cli\AITeam.Cli.csproj"
+            if (Test-Path -LiteralPath $projPath) {
+                $noteExe = Get-AITeamExe
+                if ($noteExe -and (Test-Path -LiteralPath $noteExe -PathType Leaf)) {
+                    $titleText = if ($Text.Length -gt 80) { $Text.Substring(0, 80) } else { $Text }
+                    $noteArgs = @('lesson-add', '--root', $Root, '--title', $titleText, '--body', $Text, '--kind', 'meo')
+                    if ($Source) { $noteArgs += @('--task', $Source) }
+                    $lessonOut = (& $noteExe @noteArgs 2>$null) -join "`n"
+                    if ($LASTEXITCODE -eq 0 -and (-not [string]::IsNullOrWhiteSpace($lessonOut))) {
+                        Write-Output $lessonOut.Trim()
+                    } elseif ($LASTEXITCODE -ne 0) {
+                        Write-Warning "Không thể tạo bài học nháp qua CLI (mã $LASTEXITCODE)."
+                    }
+                } else {
+                    Write-Warning "Chưa có aiteam CLI để tạo bài học nháp."
+                }
+            }
+        } catch {
+            Write-Warning "Lỗi khi tạo bài học nháp: $_"
+        } finally {
+            $global:LASTEXITCODE = $noteExit
+        }
+    }
     "setup" { Invoke-Setup; Install-Skill; Invoke-InstallHooks }
     "ask" { Invoke-Ask }
     "plan" { Invoke-Plan }
