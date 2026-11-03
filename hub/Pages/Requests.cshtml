@@ -57,6 +57,7 @@
     </div>
 
     <div style="min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+        @if(Model.Selected!=null){<p><a class="btn" href="@Url.Page("/Request",new{id=Model.Selected.Id})">Mở chi tiết yêu cầu</a></p>}
         @if (Model.Selected != null)
         {
             <div class="panel">
