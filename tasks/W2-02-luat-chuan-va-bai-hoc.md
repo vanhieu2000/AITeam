@@ -1,6 +1,6 @@
 ﻿# W2-02 · Luật chuẩn (rules/L-xxx.md) + bài học (lessons/LS-xxx.md) + tự chèn luật khi giao việc
 
-- **Agent:** B
+- **Agent:** A
 - **Model:** `gemini-3.8-flash-high`
 - **Nhánh:** `agent-o/W2-02-luat-chuan-va-bai-hoc`
 - **Yêu cầu:** R-014
