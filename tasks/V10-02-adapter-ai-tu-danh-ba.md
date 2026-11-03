@@ -82,9 +82,30 @@ public sealed class AiProviderFactory(IAiServiceRegistry registry, IProcessRunne
 - Command `codex & del x` ⇒ ConfigError.
 
 ## Tiêu chí hoàn thành
-- [ ] 12 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
-- [ ] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
-- [ ] Không chạm `hub/Pages/**`, `hub/wwwroot/**`; không gọi mạng / AI thật trong test.
-- [ ] Commit: "V10-02: chạy AI theo danh bạ — 3 adapter chung + factory (Antigravity)".
+- [x] 12 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
+- [x] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
+- [x] Không chạm `hub/Pages/**`, `hub/wwwroot/**`; không gọi mạng / AI thật trong test.
+- [x] Commit: "V10-02: chạy AI theo danh bạ — 3 adapter chung + factory (Antigravity)".
 
 ## Báo cáo của agent
+| Tiêu chí | Lệnh đã chạy | Kết quả thật |
+|---|---|---|
+| 12 test nghiệm thu xanh | `dotnet test core.tests --filter "FullyQualifiedName~V1002AiAdapterTests"` | Passed: 12, Failed: 0, Skipped: 0 |
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror` | Build succeeded. 0 Warning(s), 0 Error(s) |
+| Toàn bộ test xanh | `dotnet test AITeam.sln --no-build` | Hub: 858 passed; Core: 996 passed (1854 passed, 0 failed) |
+| Giữ BOM UTF-8 | python script kiểm tra byte đầu | 4/4 file .cs đúng BOM/chuẩn UTF-8 |
+| Phạm vi & bảo mật | `git status` | Không chạm Pages/wwwroot, che bí mật qua SecretRedactor |
+
+- File đã đổi: `core/AITeam.Core/AiServices/Adapters/AiAdapters.cs`, `hub/Services/VaultService.cs`, `hub/Services/VaultSecretLookup.cs` (mới), `hub/Services/HubV3Registration.cs`, `tasks/V10-02-adapter-ai-tu-danh-ba.md`.
+- Điều chưa chắc: Không có (toàn bộ 1854 test hệ thống đều pass).
+
+## Review (Claude)
+### Vòng 1 — ĐẠT
+- Antigravity Gemini 3.8 (Agent B), 25′, ~85k token đầu ra. 12/12 test nghiệm thu (Claude) xanh, file nghiệm thu không bị sửa.
+- Đã kiểm: build 0 warning (không tăng dần); Hub 858/858; Core 996/996; không chạm `hub/Pages/**`, `hub/wwwroot/**`; BOM giữ (VaultService.cs gốc không có BOM).
+- Bảo mật: khóa thay `***` + SecretRedactor trước khi trả Text / Detail / lỗi; HTTP không theo chuyển hướng (SocketsHttpHandler AllowAutoRedirect=false); BaseUrl chỉ https hoặc http 127.0.0.1 / localhost / [::1]; lệnh chặn ký tự shell, tham số dạng mảng; stdout / phản hồi tối đa 2 MB; `ReadValue` chỉ `internal`, không vào `IVaultService`.
+- Optional: `VaultSecretLookup` ở chế độ HUB_FAKE vẫn tạo `VaultService` thật (đọc két thật nếu dùng adapter HTTP) — nên dùng két giả khi FAKE; mỗi lần gọi tạo `HttpClient` mới.
+- Lượt kết thúc với lỗi mạng "no such host" sau khi đã push; `team.ps1` phân loại nhầm thành HẾT HẠN MỨC — [CK] cần sửa nhận diện hạn mức.
+
+## Kết quả
+- Thêm AI mới chỉ bằng thêm dòng trong danh bạ office.db (adapter cli-text / cli-json / openai-compatible-http); Codex / OpenCode / Antigravity vẫn dùng lớp riêng nhưng chọn qua danh bạ. Chưa có màn hình (UI-08).
