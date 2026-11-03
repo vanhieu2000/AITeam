@@ -113,7 +113,26 @@ dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0;fo
 .toggle{width:36px;height:20px;border-radius:10px;background:var(--ok);position:relative;display:inline-block;vertical-align:middle}
 .toggle:after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
 .toggle.off{background:var(--line)}.toggle.off:after{right:auto;left:2px}
-@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.lane{grid-template-columns:1fr 1fr}.lane>div:first-child{grid-column:1/-1}}
+.charts{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}.charts>:nth-child(2){grid-row:span 2}
+.ch-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}.ch-h h2{margin-right:auto}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}.legend i.dash{width:14px;height:0;border-top:2.5px dashed;border-radius:0;vertical-align:3px}
+.chart{width:100%;height:auto;display:block}.chart .gl line{stroke:var(--line)}.chart .ax text{fill:var(--faint);font-size:11px;text-anchor:middle}.chart .ax.y text{text-anchor:end}.chart .lbl{fill:var(--ok);font-size:12px;font-weight:700;text-anchor:middle}
+.hbars{display:grid;gap:8px}.hb{display:grid;grid-template-columns:96px 1fr 56px;gap:8px;align-items:center;font-size:13px}.hb .bar{height:10px}.hb b{text-align:right}
+.stack{display:flex;height:26px;border-radius:6px;overflow:hidden;font-size:12px;font-weight:600;color:#fff}.stack i{display:flex;align-items:center;padding-left:8px;font-style:normal;white-space:nowrap}
+details.note summary{cursor:pointer}details.note table{margin-top:6px}
+.fab{position:fixed;right:24px;bottom:24px;width:56px;height:56px;border-radius:50%;border:0;background:var(--primary);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 24px rgba(15,23,42,.25);z-index:40}
+.fab:hover{filter:brightness(1.08)}.fab .dot{position:absolute;top:6px;right:6px;width:12px;height:12px;border-radius:50%;background:var(--accent-bg);border:2px solid var(--surface)}
+.chatp{position:fixed;right:24px;bottom:92px;width:380px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100dvh - 120px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(15,23,42,.22);display:none;flex-direction:column;z-index:41;overflow:hidden}
+.chatp.on{display:flex}
+.chatp header{display:flex;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.chatp .modes{display:flex;gap:4px;padding:8px 14px 0}.chatp .modes button{flex:1}
+.chatp .modes .on{background:var(--primary-soft);color:var(--primary);border-color:var(--primary-soft);font-weight:600}
+.msgs{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.m{max-width:85%;padding:8px 12px;border-radius:10px;font-size:13px}.m.me{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:3px}.m.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:3px}
+.m small{display:block;opacity:.75;font-size:11px;margin-bottom:2px}
+.compose{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}.compose input{flex:1}
+.set-row{display:grid;grid-template-columns:220px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}.set-row:last-child{border:0}
+@media (max-width:1100px){.charts{grid-template-columns:1fr}.charts>:nth-child(2){grid-row:auto}.kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.lane{grid-template-columns:1fr 1fr}.lane>div:first-child{grid-column:1/-1}}
 @media (max-width:760px){.app{grid-template-columns:1fr}nav.side{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px}.grp,.brand{display:none}main{padding:16px}.lane{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -126,15 +145,13 @@ dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0;fo
   <a class="nav on" data-s="office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Văn phòng</a>
   <a class="nav" data-s="approvals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>Cần anh duyệt<span class="badge b-err num">2</span></a>
   <a class="nav" data-s="tracking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg>Theo dõi việc</a>
-  <a class="nav" data-s="none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Giao việc</a>
-  <a class="nav" data-s="none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Trò chuyện · Nghiên cứu</a>
   <div class="grp">Đánh giá</div>
   <a class="nav" data-s="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Báo cáo &amp; thống kê</a>
   <a class="nav" data-s="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>Xem lại &amp; bài học</a>
   <div class="grp">Cấu hình</div>
   <a class="nav" data-s="workflow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h5l5-6M12 12l5 6"/></svg>Quy trình &amp; vai trò</a>
   <a class="nav" data-s="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/></svg>Tài khoản AI</a>
-  <a class="nav" data-s="none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Cài đặt · Két bí mật</a>
+  <a class="nav" data-s="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Cài đặt · Két bí mật</a>
   <div class="grp">Mockup</div>
   <a class="nav" id="theme">Đổi sáng / tối</a>
 </nav>
@@ -142,7 +159,7 @@ dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0;fo
 <main>
 <!-- 1. VĂN PHÒNG -->
 <section class="screen on" id="office">
-  <header class="top"><div><h1>Văn phòng</h1><div class="sub num">Cập nhật 20:45:12 · tự làm mới 15 giây</div></div><span class="sp"></span><button class="btn pri">+ Giao việc mới</button></header>
+  <header class="top"><div><h1>Văn phòng</h1><div class="sub num">Cập nhật 20:45:12 · tự làm mới 15 giây</div></div><span class="sp"></span><button class="btn pri" data-chat="task">+ Giao việc mới</button></header>
   <div class="alert" role="status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M12 8v5M12 16h.01"/></svg><div><b>2 việc cần anh duyệt</b> · 1 cần mật khẩu CSDL cho HDVTool, 1 thay đổi chạm xác thực Hub.</div><span class="sp"></span><a class="btn" data-go="approvals">Xem ngay</a></div>
   <div class="grid kpis">
     <a class="card kpi" data-go="tracking"><div class="l">Đang chạy</div><div class="v num">3</div><div class="d sub">Codex 1 · OpenCode 2</div></a>
@@ -235,10 +252,53 @@ dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0;fo
   <div class="filters"><select aria-label="Khoảng ngày"><option>30 ngày</option><option>7 ngày</option><option>Tùy chọn…</option></select><select aria-label="Dự án"><option>Tất cả dự án</option></select><select aria-label="Người"><option>Mọi người / AI</option></select><select aria-label="Độ khó"><option>Mọi độ khó</option></select></div>
   <div class="tabs" role="tablist"><button class="tab on">Tổng quan</button><button class="tab">Theo dự án</button><button class="tab">Theo người / AI</button><button class="tab">Lỗi</button></div>
   <div class="grid kpis">
-    <div class="card kpi"><div class="l">Task xong</div><div class="v num">58</div></div>
+    <div class="card kpi"><div class="l">Task xong</div><div class="v num">58</div><div class="d"><span class="badge b-ok">↑ 22% so 30 ngày trước</span></div></div>
     <div class="card kpi"><div class="l">Đạt vòng 1</div><div class="v num">81%</div><div class="d sub">mục tiêu ≥ 67%</div></div>
     <div class="card kpi"><div class="l">Phút AI</div><div class="v num">1.940</div><div class="d sub">TB 33′ / task</div></div>
     <div class="card kpi"><div class="l">Lỗi do thiết kế (TK)</div><div class="v num">12</div><div class="d"><span class="badge b-fix">cao nhất</span></div></div>
+  </div>
+  <div class="grid charts" style="margin-top:16px">
+    <div class="card"><div class="ch-h"><h2>Task xong theo tuần</h2><div class="legend"><span><i style="background:var(--primary)"></i>Task xong</span><span><i class="dash" style="border-color:var(--ok)"></i>Đạt vòng 1 (%)</span></div></div>
+      <svg viewBox="0 0 520 205" class="chart" role="img" aria-label="Task xong theo tuần: 6, 9, 8, 13, 11, 17; đạt vòng 1 từ 60% lên 88%">
+        <g class="gl"><line x1="40" y1="20" x2="510" y2="20"/><line x1="40" y1="60" x2="510" y2="60"/><line x1="40" y1="100" x2="510" y2="100"/><line x1="40" y1="140" x2="510" y2="140"/><line x1="40" y1="180" x2="510" y2="180"/></g>
+        <g class="ax y"><text x="32" y="24">20</text><text x="32" y="64">15</text><text x="32" y="104">10</text><text x="32" y="144">5</text><text x="32" y="184">0</text></g>
+          <g class="ax"><text x="80" y="198">T39</text><text x="160" y="198">T40</text><text x="240" y="198">T41</text><text x="320" y="198">T42</text><text x="400" y="198">T43</text><text x="480" y="198">T44</text></g>
+        <g fill="var(--primary)"><rect x="64" y="132" width="32" height="48" rx="3"/><rect x="144" y="108" width="32" height="72" rx="3"/><rect x="224" y="116" width="32" height="64" rx="3"/><rect x="304" y="76" width="32" height="104" rx="3"/><rect x="384" y="92" width="32" height="88" rx="3"/><rect x="464" y="44" width="32" height="136" rx="3"/></g>
+        <polyline fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-dasharray="6 4" points="80,84 160,73 240,79 320,57 400,49 480,39"/>
+        <g fill="var(--ok)"><circle cx="80" cy="84" r="3.5"/><circle cx="160" cy="73" r="3.5"/><circle cx="240" cy="79" r="3.5"/><circle cx="320" cy="57" r="3.5"/><circle cx="400" cy="49" r="3.5"/><circle cx="480" cy="39" r="3.5"/></g>
+        <text x="480" y="32" class="lbl">88%</text>
+      </svg>
+      <details class="note"><summary>Xem bảng số</summary><table><tr><th>Tuần</th><td>T39</td><td>T40</td><td>T41</td><td>T42</td><td>T43</td><td>T44</td></tr><tr><th>Task xong</th><td class="num">6</td><td class="num">9</td><td class="num">8</td><td class="num">13</td><td class="num">11</td><td class="num">17</td></tr><tr><th>Đạt vòng 1</th><td class="num">60%</td><td class="num">67%</td><td class="num">63%</td><td class="num">77%</td><td class="num">82%</td><td class="num">88%</td></tr></table></details>
+    </div>
+    <div class="card"><div class="ch-h"><h2>Phút AI theo dự án</h2></div>
+      <div class="hbars">
+        <div class="hb"><span>AITeam</span><div class="bar"><i style="width:100%"></i></div><b class="num">1.320′</b></div>
+        <div class="hb"><span>HDVTool</span><div class="bar"><i style="width:31%"></i></div><b class="num">410′</b></div>
+        <div class="hb"><span>ChinaAndroid</span><div class="bar"><i style="width:12%"></i></div><b class="num">160′</b></div>
+        <div class="hb"><span>Khác</span><div class="bar"><i style="width:4%"></i></div><b class="num">50′</b></div>
+      </div>
+      <h2 style="margin-top:16px">Độ khó task đã xong</h2>
+      <div class="stack" role="img" aria-label="S 24 task, M 27 task, L 7 task"><i style="width:41%;background:var(--ok)">S 24</i><i style="width:47%;background:var(--primary)">M 27</i><i style="width:12%;background:var(--fix)">L 7</i></div>
+      <h2 style="margin-top:16px">Task theo người / AI</h2>
+      <div class="hbars">
+        <div class="hb"><span>Codex</span><div class="bar"><i style="width:79%;background:#0F766E"></i></div><b class="num">22</b></div>
+        <div class="hb"><span>OpenCode</span><div class="bar"><i style="width:36%;background:#1D4ED8"></i></div><b class="num">10</b></div>
+        <div class="hb"><span>Minh · Lan</span><div class="bar"><i style="width:100%;background:#64748B"></i></div><b class="num">28</b></div>
+      </div>
+    </div>
+    <div class="card"><div class="ch-h"><h2>Lỗi theo tuần</h2><div class="legend"><span><i style="background:var(--fix)"></i>TK</span><span><i style="background:var(--rev)"></i>AG</span><span><i style="background:var(--faint)"></i>CK</span></div></div>
+      <svg viewBox="0 0 520 170" class="chart" role="img" aria-label="Lỗi theo tuần giảm từ 9 xuống 3">
+        <g class="gl"><line x1="40" y1="20" x2="510" y2="20"/><line x1="40" y1="80" x2="510" y2="80"/><line x1="40" y1="140" x2="510" y2="140"/></g>
+        <g class="ax y"><text x="32" y="24">10</text><text x="32" y="84">5</text><text x="32" y="144">0</text></g><g class="ax"><text x="80" y="162">T39</text><text x="160" y="162">T40</text><text x="240" y="162">T41</text><text x="320" y="162">T42</text><text x="400" y="162">T43</text><text x="480" y="162">T44</text></g>
+        <g><rect x="64" y="68" width="32" height="72" fill="var(--fix)"/><rect x="64" y="44" width="32" height="24" fill="var(--rev)"/><rect x="64" y="32" width="32" height="12" fill="var(--faint)"/>
+           <rect x="144" y="80" width="32" height="60" fill="var(--fix)"/><rect x="144" y="68" width="32" height="12" fill="var(--rev)"/><rect x="144" y="44" width="32" height="24" fill="var(--faint)"/>
+           <rect x="224" y="92" width="32" height="48" fill="var(--fix)"/><rect x="224" y="80" width="32" height="12" fill="var(--rev)"/><rect x="224" y="68" width="32" height="12" fill="var(--faint)"/>
+           <rect x="304" y="104" width="32" height="36" fill="var(--fix)"/><rect x="304" y="92" width="32" height="12" fill="var(--faint)"/>
+           <rect x="384" y="104" width="32" height="36" fill="var(--fix)"/><rect x="384" y="92" width="32" height="12" fill="var(--rev)"/>
+           <rect x="464" y="116" width="32" height="24" fill="var(--fix)"/><rect x="464" y="104" width="32" height="12" fill="var(--faint)"/></g>
+      </svg>
+      <p class="note">Mỗi biểu đồ có "Xem bảng số" và xuất CSV; bấm cột ⇒ danh sách task của tuần đó.</p>
+    </div>
   </div>
   <div class="grid two" style="margin-top:16px">
     <div class="card"><h2>Bảng điểm người / AI</h2>
@@ -319,7 +379,34 @@ dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0;fo
     <div class="card" style="border-style:dashed"><b>Thêm dịch vụ AI</b><dl class="kv"><dt>Kiểu kết nối</dt><dd><select><option>openai-compatible-http</option><option>cli-json</option><option>cli-text</option></select></dd><dt>Địa chỉ</dt><dd><input type="text" value="https://api.example.com/v1" aria-label="Địa chỉ"></dd><dt>Model</dt><dd><input type="text" placeholder="vd. qwen-3-coder" aria-label="Model"></dd><dt>Tên khóa (két)</dt><dd><input type="text" value="QWEN_API_KEY" aria-label="Tên khóa"></dd><dt>Vai trò</dt><dd><div class="chips"><span class="chip">code</span><span class="chip">QC</span><span class="chip">chat</span></div></dd></dl><div class="note">Giá trị khóa nhập bằng két / <code>team.ps1 secret-set</code>, không nhập ở đây.</div></div>
   </div>
 </section>
+
+<!-- 8. CÀI ĐẶT -->
+<section class="screen" id="settings">
+  <header class="top"><div><h1>Cài đặt</h1><div class="sub">Lưu trên máy này. Két bí mật ở tab riêng, không bao giờ hiện giá trị.</div></div><span class="sp"></span><button class="btn pri">Lưu</button></header>
+  <div class="tabs" role="tablist"><button class="tab on">Trợ lý chat</button><button class="tab">Chung</button><button class="tab">Két bí mật</button></div>
+  <div class="card">
+    <div class="set-row"><div><b>Hỏi AI nào mặc định</b><div class="sub">Khi mở nút chat ở góc màn hình</div></div><select><option>Claude (quản lý)</option><option>Codex</option><option>OpenCode · DeepSeek</option><option>Hỏi nhiều AI cùng lúc (nghiên cứu)</option></select></div>
+    <div class="set-row"><div><b>Chế độ mặc định</b><div class="sub">Hỏi đáp hay giao việc</div></div><div class="chips"><label class="chip"><input type="radio" name="md" checked> Hỏi đáp</label><label class="chip"><input type="radio" name="md"> Giao việc</label></div></div>
+    <div class="set-row"><div><b>AI dùng cho "Giao việc"</b><div class="sub">Tin nhắn giao việc luôn qua Claude để thành phiếu R-xxx</div></div><select disabled><option>Claude (cố định)</option></select></div>
+    <div class="set-row"><div><b>AI cho "Nghiên cứu"</b><div class="sub">Chọn nhiều; AI đang hết hạn mức tự bỏ qua</div></div><div class="chips"><label class="chip"><input type="checkbox" checked> Codex</label><label class="chip"><input type="checkbox" checked> OpenCode</label><label class="chip"><input type="checkbox"> Gemini</label></div></div>
+    <div class="set-row"><div><b>Lưu lịch sử chat</b><div class="sub">SQLite cục bộ <code>%USERPROFILE%\.aiteam\hub\office.db</code></div></div><div class="chips"><label class="chip"><input type="checkbox" checked> Lưu 90 ngày</label><button class="btn">Xuất lịch sử</button></div></div>
+  </div>
+</section>
 </main>
+</div>
+
+<button class="fab" id="fab" aria-label="Mở trợ lý chat" aria-expanded="false" aria-controls="chatp"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="dot"></span></button>
+<div class="chatp" id="chatp" role="dialog" aria-label="Trợ lý chat">
+  <header><span class="av" style="background:#7C3AED;width:28px;height:28px;font-size:12px">C</span><div><b>Claude</b><div class="sub" style="font-size:12px">Đổi AI trong Cài đặt</div></div><span class="sp"></span><select aria-label="Hỏi AI"><option>Claude</option><option>Codex</option><option>OpenCode</option><option>Nhiều AI</option></select><button class="btn" id="chatx" aria-label="Đóng">✕</button></header>
+  <div class="modes"><button class="btn on" data-mode="ask">Hỏi đáp</button><button class="btn" data-mode="task">Giao việc</button></div>
+  <div class="msgs">
+    <div class="m ai"><small>Claude · 20:30</small>Chào anh. Hỏi gì về team, hoặc chuyển sang "Giao việc" để tạo yêu cầu mới.</div>
+    <div class="m me"><small>Anh · 20:31</small>V9-18 sao phải sửa vòng 2?</div>
+    <div class="m ai"><small>Claude · 20:31</small>OpenCode ép token null thành 0 khi đọc log Codex. Đã trả về sửa, dự kiến xong 20:50. <a>Xem task</a></div>
+    <div class="m me" id="taskmsg" style="display:none"><small>Anh · Giao việc</small>Thêm xuất PDF cho báo cáo tháng</div>
+    <div class="m ai" id="taskack" style="display:none"><small>Claude</small>Đã tạo <a>R-016</a> "Xuất PDF báo cáo tháng". Em sẽ thiết kế và báo lại; theo dõi ở <a>Theo dõi việc</a>.</div>
+  </div>
+  <div class="compose"><input type="text" id="chatin" placeholder="Nhập câu hỏi…" aria-label="Tin nhắn"><button class="btn pri">Gửi</button></div>
 </div>
 <script>
 const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('.nav[data-s]').forEach(n=>n.classList.toggle('on',n.dataset.s===id));try{location.hash=id}catch(e){}window.scrollTo(0,0)};
@@ -327,6 +414,14 @@ document.querySelectorAll('.nav[data-s]').forEach(n=>n.addEventListener('click',
 document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(a.dataset.go)}));
 document.querySelectorAll('.tabs').forEach(t=>t.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;t.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b))}));
 document.getElementById('theme').addEventListener('click',()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'});
+const fab=document.getElementById('fab'),cp=document.getElementById('chatp'),cin=document.getElementById('chatin');
+const setMode=m=>{cp.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));cin.placeholder=m==='task'?'Mô tả việc cần giao…':'Nhập câu hỏi…';['taskmsg','taskack'].forEach(i=>document.getElementById(i).style.display=m==='task'?'':'none')};
+const openChat=(m)=>{cp.classList.add('on');fab.setAttribute('aria-expanded','true');if(m)setMode(m);cin.focus()};
+fab.addEventListener('click',()=>{cp.classList.contains('on')?(cp.classList.remove('on'),fab.setAttribute('aria-expanded','false')):openChat()});
+document.getElementById('chatx').addEventListener('click',()=>{cp.classList.remove('on');fab.setAttribute('aria-expanded','false');fab.focus()});
+cp.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+document.querySelectorAll('[data-chat]').forEach(b=>b.addEventListener('click',()=>openChat(b.dataset.chat)));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cp.classList.contains('on')){cp.classList.remove('on');fab.focus()}});
 const h=(location.hash||'').slice(1);if(h&&document.getElementById(h))show(h);
 </script>
 </body>

@@ -85,3 +85,5 @@ Chủ dự án: HieuDV.
 
 - [TN] Khi yêu cầu mới đổi hợp đồng (POST-Redirect-GET, trích partial, giới hạn danh sách), đối chiếu assert nghiệm thu trước; xung đột phải ghi đúng file/dòng và dừng mã đó, không nhân bản markup hay đổi assert để qua.
 - [HT] (R-012/H8-14) Chat qua Codex CLI: trạng thái đăng nhập không chứng minh kết nối; proxy có thể chặn chatgpt.com bằng 403. Kiểm phản hồi thật và tách demo, không ghi 0 token khi chưa đo được.
+
+- **Giao diện là của Claude (chủ dự án 03/11, R-014):** KHÔNG sửa `hub/Pages/**` (cả `.cshtml` và `.cshtml.cs`), `hub/wwwroot/**` (CSS / JS / font / ảnh). Task lõi cần dữ liệu hiển thị ⇒ thêm service / model C# và test; Claude tự nối vào giao diện.

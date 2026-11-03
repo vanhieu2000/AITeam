@@ -28,6 +28,10 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-014` để `team.ps1 reque
 ## 3. Nhật ký (ghi ngay khi xảy ra, giờ:phút)
 | Giờ | Sự kiện | Ghi chú |
 |---|---|---|
+| 20:40 | Đọc skill ui-ux-pro-max (dữ liệu CSV; script ngoài bị chặn chạy), khảo sát Hub: 6 khoảng trống | |
+| 21:05 | Thiết kế `docs/design/R-014-van-phong-ai.md` + mockup 6 màn hình, gửi chủ dự án | |
+| 21:20 | Chủ dự án duyệt kèm sửa: nút chat nổi thay Giao việc + Trò chuyện; Báo cáo phải có biểu đồ; SQLite + .ini; 4 loại phải duyệt; **giao diện do Claude làm, AI khác chỉ làm lõi** ⇒ quy trình v5.2 | |
+| 21:40 | Mockup bản 2 (chat nổi, 5 biểu đồ, Cài đặt trợ lý) + kế hoạch 7 task lõi / 9 phần giao diện | chờ duyệt bắt đầu code |
 | | Nhận yêu cầu | |
 
 Sự kiện cần ghi:

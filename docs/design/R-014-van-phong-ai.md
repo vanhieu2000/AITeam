@@ -1,6 +1,6 @@
-﻿# R-014 · Văn phòng AI — thiết kế tổng thể (bản đề xuất, chờ chủ dự án duyệt)
+﻿# R-014 · Văn phòng AI — thiết kế tổng thể (chủ dự án duyệt 03/11 kèm sửa — mục 10)
 
-Mockup tĩnh: `docs/design/R-014-mockup.html` (6 màn hình, mở bằng trình duyệt).
+Mockup tĩnh: `docs/design/R-014-mockup.html` (7 màn hình + nút chat nổi, mở bằng trình duyệt).
 Nguồn học: skill **ui-ux-pro-max** (MIT) — dữ liệu `products.csv`, `colors.csv`, `typography.csv`, `ui-reasoning.csv`, `quick-reference.md`. Không cài skill vào repo, chỉ học quy tắc.
 
 ## 1. Mục tiêu và vai trò
@@ -27,8 +27,7 @@ Mỗi thực thể có MỘT trang chi tiết với địa chỉ cố định; m
 | Làm việc | **Văn phòng** (Tổng quan) | `/` | gộp `/`, `/Overview`, `/Work` |
 | | **Cần anh duyệt** (huy hiệu số) | `/Approvals` | `/Approvals` (đổi phạm vi) |
 | | **Theo dõi việc** | `/Tracking` | `/Work`, Kanban dự án |
-| | Giao việc / Yêu cầu | `/Requests` | giữ |
-| | Trò chuyện AI · Phòng nghiên cứu | `/Chat`, `/Research` | giữ |
+| (mọi trang) | **Nút chat nổi** góc phải dưới: chế độ Hỏi đáp / Giao việc; chọn AI trả lời trong Cài đặt | — | gộp `/Chat`, `/Research`, form `/Requests` (chủ dự án 03/11) |
 | Đánh giá | **Báo cáo & thống kê** | `/Reports` | gộp `/Performance`, `/Team`, phần số liệu `/Process` |
 | | **Mẹo & bài học** | `/Reports/Lessons` | mới |
 | Cấu hình | **Quy trình & vai trò** | `/Workflow` | gộp `/Map`, `/Process` (phần quy trình) |
@@ -63,7 +62,7 @@ Câu hỏi trả lời trong 5 giây: *"Có gì cần tôi? Team đang làm gì?
 
 ### 4.4 Báo cáo & thống kê — `/Reports`
 - Bộ lọc chung: khoảng ngày (7 / 30 ngày / tùy chọn), dự án, người / AI, độ khó.
-- Tab **Tổng quan**: số task xong, phút AI, token, đạt vòng 1, số vòng TB; xu hướng theo tuần (đường) — mỗi biểu đồ có bảng số đi kèm.
+- Tab **Tổng quan**: 4 ô số (task xong, đạt vòng 1, phút AI, lỗi TK) có so sánh kỳ trước; **biểu đồ** (chủ dự án 03/11: phải thấy thống kê): cột task xong theo tuần + đường % đạt vòng 1; thanh ngang phút AI theo dự án; thanh chồng độ khó S/M/L; thanh ngang task theo người / AI; cột chồng lỗi TK / AG / CK theo tuần. Mỗi biểu đồ có "Xem bảng số", xuất CSV, bấm cột ⇒ danh sách task. Vẽ bằng SVG phía server (không thêm thư viện JS nặng).
 - Tab **Theo dự án** và **Theo người / AI**: bảng xếp hạng có sắp xếp (aria-sort), **điểm hiệu suất 0–100** = 40% đạt vòng 1 + 25% trong ngân sách + 20% đúng giờ + 15% không lỗi AG (công thức hiện cạnh điểm).
 - Tab **Lỗi**: ma trận nguyên nhân (TK / AG / CK / HT…) × loại (bảo mật, giao diện, test…), bấm ô ⇒ danh sách lỗi cụ thể ⇒ task.
 - **Xem lại từng bước một yêu cầu** (`/r/R-xxx/review`): dòng thời gian 10 bước; mỗi bước: ai làm (AI nào, model), phút, token, vòng, lỗi phát sinh, chờ bao lâu. Mỗi bước có 2 nút: **"Ghi mẹo"** và **"Đề xuất cải tiến"** ⇒ tạo bản nháp ở Mẹo & bài học, gắn nguồn (yêu cầu / task / bước).
@@ -75,6 +74,11 @@ Câu hỏi trả lời trong 5 giây: *"Có gì cần tôi? Team đang làm gì?
 - Mỗi bước: **người phụ trách** (Claude / AI cụ thể / cổng tự động / chủ dự án), **AI dự phòng**, **skill gắn kèm** (nhiều), **luật chuẩn** áp dụng, giới hạn (phút, vòng), điều kiện cần chủ dự án duyệt (chỉ loại Bảo mật / có bí mật).
 - **Luật chuẩn**: thư viện luật (mã L-xxx), nguồn (từ bài học nào), phạm vi (loại việc / bước / AI), trạng thái. Luật đang hiệu lực tự chèn vào prompt khi giao task đúng loại / bước.
 - Sơ đồ luồng (từ trái sang phải) cho loại việc đang chọn; cấu hình sửa ngay trên trang, có "Lưu" + lịch sử thay đổi (git).
+
+### 4.5b Nút chat nổi + Cài đặt trợ lý
+- Nút tròn góc phải dưới trên mọi trang (aria-label, Esc đóng, giữ tiêu điểm). Khung chat 380 px: chọn AI, 2 chế độ **Hỏi đáp** / **Giao việc**.
+- Giao việc luôn đi qua Claude ⇒ tạo phiếu R-xxx, trả link Theo dõi việc. Hỏi đáp gửi tới AI đã chọn (Claude / Codex / OpenCode / nhiều AI = nghiên cứu).
+- Cài đặt › Trợ lý chat: AI mặc định, chế độ mặc định, danh sách AI cho nghiên cứu, lưu lịch sử (SQLite `office.db`).
 
 ### 4.6 Tài khoản AI — `/AiServices`
 - Danh sách dịch vụ AI dạng thẻ: tên, kiểu kết nối, model, vai trò được làm (code / QC / nghiên cứu / chat), số việc song song, trạng thái đăng nhập, hạn mức còn / giờ hồi, chi phí (miễn phí / trả phí), bật / tắt.
@@ -122,25 +126,37 @@ Bảng chính (SQLite):
 - Hub chỉ nghe `127.0.0.1`; POST có antiforgery; trang `/Secrets` không bao giờ trả giá trị khóa.
 - Nhập `.ini`: giới hạn 256 KB, bỏ khóa lạ, không nhận trường bí mật.
 
-## 9. Kế hoạch triển khai (sau khi duyệt mockup)
-| Đợt | Task | Nội dung | Ai |
-|---|---|---|---|
-| 1 Nền | W2-01 | `config/workflow.json` + loại việc + đọc / ghi + test | Codex |
-| | V10-01 | SQLite `office.db` + `IAiServiceRegistry` + nhập dữ liệu cũ | Codex |
-| | H9-01 | Token giao diện mới + font + khung layout / menu mới | OpenCode |
-| | H9-02 | Approvals: loại `secret/security/sensitive-data/external`, rủi ro, tab "Claude đã tự quyết", tự sinh thẻ bảo mật từ cổng KT | Codex |
-| 2 Màn hình | H9-03 | Văn phòng (gộp 3 trang) | OpenCode |
-| | H9-04 | Theo dõi việc (3 view) | OpenCode |
-| | H9-05 | Báo cáo & thống kê + điểm hiệu suất + ma trận lỗi | Codex |
-| | H9-06 | Xem lại từng bước + Mẹo & bài học + nâng thành luật | Codex |
-| | H9-07 | Quy trình & vai trò (sửa loại việc / bước / skill / luật) | Codex |
-| | H9-08 | Tài khoản AI (thẻ + form thêm + kiểm tra kết nối + xuất / nhập .ini) | OpenCode |
-| 3 Nối | V10-02 | `team.ps1 assign` / prompt đọc loại việc + luật chuẩn + skill theo bước; bỏ danh sách AI viết cứng | Codex |
-| | H9-09 | Liên kết chéo + chuyển hướng trang cũ + xóa trang thừa | OpenCode |
+## 9. Kế hoạch triển khai
+**Phân vai (chủ dự án 03/11):** Claude tự code toàn bộ giao diện + thao tác (`hub/Pages/**`, `hub/wwwroot/**`). AI khác chỉ làm lõi chạy ngầm (service / model C#, Core, CLI, `team.ps1`, dữ liệu) và có test; Phạm vi task lõi cấm `hub/Pages/**`, `hub/wwwroot/**`. Giao diện chỉ gọi service qua interface đã chốt, nên hai bên chạy song song.
 
-Mỗi task có test nghiệm thu dựng trang thật + ảnh 1000 px; chạy song song khi khác file. Ước tính: 2–3 ngày làm việc của team (phụ thuộc hạn mức Codex).
+**Lõi — giao AI (Codex việc khó, OpenCode việc vừa):**
+| Mã | Nội dung | Ai |
+|---|---|---|
+| V10-01 | SQLite `office.db` (`ai_service`, `ai_account`, `ai_quota`, `chat_*`, `settings`) + `IAiServiceRegistry` + nhập dữ liệu cũ + xuất / nhập `.ini` | Codex |
+| V10-02 | Bỏ danh sách AI viết cứng: 3 adapter chung (`cli-json`, `cli-text`, `openai-compatible-http`), factory đọc registry; Codex / OpenCode / agy chạy qua registry | Codex |
+| W2-01 | `config/workflow.json`: loại việc → bước → người phụ trách / dự phòng / skill / luật / giới hạn; `IWorkflowConfigService` đọc / ghi / kiểm hợp lệ | OpenCode |
+| W2-02 | Luật chuẩn `rules/L-xxx.md` + bài học `lessons/LS-xxx.md`: `ILessonService` (tạo nháp, nâng thành luật, bỏ), `skill-note` dùng chung; `assign` chèn luật + skill theo loại việc / bước vào prompt | Codex |
+| V10-03 | Duyệt: thêm `secret / security / sensitive-data / external`, mức rủi ro, nhật ký "Claude tự quyết"; cổng KT tự sinh thẻ `security` khi diff chạm file nhạy cảm; merge / QC không còn chờ chủ dự án | Codex |
+| V10-04 | `IReportService`: số liệu theo khoảng ngày / dự án / người / độ khó, điểm hiệu suất, ma trận lỗi, chuỗi số cho biểu đồ, dòng thời gian từng bước của yêu cầu, xuất CSV | OpenCode |
+| V10-05 | `IChatAssistant`: chế độ hỏi đáp (gửi AI đã chọn qua registry) + giao việc (tạo phiếu R-xxx), lưu lịch sử SQLite | OpenCode |
 
-## 10. Cần chủ dự án quyết
-1. Duyệt bố cục 6 màn hình (mockup).
-2. Lưu tài khoản AI: **SQLite** (đề xuất, có xuất / nhập `.ini`) hay **chỉ `.ini`**.
-3. Danh sách việc phải qua anh duyệt (mục 4.2) đã đủ / thừa / thiếu.
+**Giao diện — Claude tự làm:**
+| Mã | Nội dung | Cần lõi |
+|---|---|---|
+| UI-01 | Token màu / chữ mới, font Inter tự host, layout + menu mới, nút chat nổi (khung), chuyển hướng trang cũ | — |
+| UI-02 | Văn phòng (gộp 3 trang) | dữ liệu có sẵn |
+| UI-03 | Theo dõi việc (theo người / danh sách / Kanban, bộ lọc trên URL) | dữ liệu có sẵn |
+| UI-04 | Cần anh duyệt (thẻ rủi ro, tab Claude tự quyết, mở két) | V10-03 |
+| UI-05 | Báo cáo & thống kê + biểu đồ SVG | V10-04 |
+| UI-06 | Xem lại từng bước + Mẹo & bài học | V10-04, W2-02 |
+| UI-07 | Quy trình & vai trò | W2-01, W2-02 |
+| UI-08 | Tài khoản AI + Cài đặt trợ lý chat | V10-01 |
+| UI-09 | Khung chat nối thật | V10-05 |
+
+Thứ tự: đợt 1 giao song song V10-01, W2-01, V10-03, V10-04 (khác file), cùng lúc Claude làm UI-01 → UI-03 (không chờ lõi). Đợt 2: V10-02, W2-02, V10-05; Claude làm UI-04 → UI-09 khi lõi tương ứng merge. Mỗi task lõi có test nghiệm thu; mỗi màn hình Claude chụp ảnh 1000 px + test dựng trang thật.
+
+## 10. Chủ dự án đã quyết (03/11)
+1. Bố cục duyệt, sửa: gộp Giao việc + Trò chuyện thành nút chat nổi (chọn AI trong Cài đặt); Báo cáo phải có biểu đồ thống kê.
+2. Tài khoản AI: **SQLite + xuất / nhập `.ini`**.
+3. Phải qua chủ dự án: bí mật & dữ liệu nhạy cảm, thay đổi bảo mật, hành động ra ngoài, quyết định sản phẩm.
+4. Giao diện do Claude làm; AI khác chỉ làm lõi.
