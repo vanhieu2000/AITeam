@@ -116,7 +116,7 @@ public static class ReviewRoundCounter
             string trimmed = line.Substring(lineIndent);
 
             // Kiểm tra tiêu đề cấp 2 ngoài khối mã: bắt đầu bằng "##" theo sau là khoảng trắng hoặc kết thúc chuỗi
-            if (trimmed.StartsWith("## ", StringComparison.Ordinal) || trimmed == "##")
+            if (trimmed.StartsWith("## ", StringComparison.Ordinal) || trimmed.StartsWith("##\t", StringComparison.Ordinal) || trimmed == "##")
             {
                 string title = trimmed.Length > 2 ? trimmed.Substring(2).Trim() : "";
                 while (title.EndsWith('#'))

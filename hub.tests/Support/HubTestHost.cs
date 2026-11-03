@@ -41,6 +41,9 @@ public sealed class HubTestHost : IAsyncDisposable
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
         builder.Services.AddScoped<HubPageRenderer>();
         FakeServices.Register(builder.Services);
+        IServiceProvider? builtProvider = null;
+        builder.Host.UseServiceProviderFactory(new CapturingProviderFactory(p => builtProvider = p,
+            builder.Environment.EnvironmentName == "Development"));
         WebApplication? app = null;
         HttpClient? client = null;
         HttpClientHandler? handler = null;
@@ -69,7 +72,7 @@ public sealed class HubTestHost : IAsyncDisposable
                 await SafeDisposeAsync(app.Services, builder.Services);
                 try { await app.DisposeAsync(); } catch { }
             }
-            else await SafeDisposeAsync(null, builder.Services);
+            else await SafeDisposeAsync(builtProvider, builder.Services);
             throw;
         }
     }
@@ -108,6 +111,19 @@ public sealed class HubTestHost : IAsyncDisposable
         {
             if (obj == null || !seen.Add(obj)) return;
             try { if (obj is IAsyncDisposable ad) await ad.DisposeAsync(); else if (obj is IDisposable disp) disp.Dispose(); } catch { }
+        }
+    }
+    // Giữ provider ngay khi DI dựng xong, trước khi WebApplicationBuilder.Build giải quyết IHost/logger.
+    private sealed class CapturingProviderFactory(Action<IServiceProvider> capture, bool validate)
+        : IServiceProviderFactory<IServiceCollection>
+    {
+        private readonly DefaultServiceProviderFactory inner = new(new ServiceProviderOptions { ValidateOnBuild = validate, ValidateScopes = validate });
+        public IServiceCollection CreateBuilder(IServiceCollection services) => inner.CreateBuilder(services);
+        public IServiceProvider CreateServiceProvider(IServiceCollection services)
+        {
+            var provider = inner.CreateServiceProvider(services);
+            capture(provider);
+            return provider;
         }
     }
     private readonly WebApplication _app;

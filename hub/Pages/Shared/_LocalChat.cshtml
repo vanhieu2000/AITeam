@@ -1,0 +1,39 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<link rel="stylesheet" href="~/css/chat.css" />
+<section class="local-chat panel" id="local-chat" aria-label="Trò chuyện trực tiếp với ChatGPT">
+    <header class="lc-header">
+        <div><h2>Trò chuyện với ChatGPT</h2><p class="muted">Trao đổi ngay tại Hub · lịch sử và cấu hình lưu trên máy</p></div>
+        <div class="lc-actions"><span class="lc-badge" id="lc-mode">Đang tải…</span><button class="btn" type="button" id="lc-settings-toggle" aria-expanded="false" aria-controls="lc-settings">Cài đặt AI / model</button></div>
+    </header>
+    <div class="lc-alert" id="lc-error" role="alert" hidden></div>
+    <div class="lc-notice" id="lc-notice" role="status" hidden></div>
+    <details class="lc-help"><summary>ChatGPT trong Hub hoạt động thế nào?</summary><p>Hub dùng Codex CLI chính thức với tài khoản ChatGPT đã đăng nhập trên máy. Anh trò chuyện tại đây, không cần mở tab ChatGPT khác. Đây là hội thoại riêng của Hub; không tự đồng bộ lịch sử trên chatgpt.com.</p><p>Lần đầu cài CLI và chạy <code>codex login</code> trên máy để đăng nhập. Chọn model tài khoản được phép dùng; để trống nếu muốn dùng mặc định CLI. Cần Internet để AI trả lời. Khi mất mạng vẫn xem được lịch sử đã lưu.</p><p>Chat không tự giao task hay sửa dự án. Muốn giao việc cho team, dùng khung “Chat giao việc”. Không nhập mật khẩu hoặc khóa API vào hội thoại.</p></details>
+    <form id="lc-settings" class="lc-settings" hidden>
+        <h3>Cấu hình ChatGPT · lưu cho máy này</h3>
+        <p class="lc-cost-note">Mỗi tin nhắn qua Codex CLI tốn khoảng 13.000 token đầu vào do hướng dẫn hệ thống của CLI.</p>
+        <div class="lc-form-grid">
+            <label>Model<input class="inp" name="model" maxlength="100" placeholder="Để trống: mặc định Codex CLI" /><small>Tên model phải được tài khoản hỗ trợ. Không tự suy đoán model đang được cấp quyền.</small></label>
+            <label>Đường dẫn Codex CLI<input class="inp" name="codexPath" maxlength="1000" placeholder="Tự phát hiện codex trên PATH / npm" /><small>codex, codex.exe hoặc đường dẫn tới codex.js</small></label>
+            <label>Thời gian chờ (giây)<input class="inp" type="number" name="timeoutSeconds" min="30" max="600" value="180" required /></label>
+            <label>Kết nối<select class="inp" name="baseUrl"><option value="https://chatgpt.com/backend-api/codex">Tài khoản ChatGPT · endpoint chính thức</option><option value="">Theo cấu hình Codex CLI hiện có</option></select></label>
+            <label class="lc-wide">Ghi nhớ chung / lời hướng dẫn cho AI<textarea class="inp" name="instructions" rows="3" maxlength="4000"></textarea><small>Ghi điều anh muốn AI nhớ trong mọi hội thoại. Nội dung này được lưu trên máy và gửi cùng từng câu hỏi.</small></label>
+        </div>
+        <div class="lc-actions"><button class="btn pri" type="submit">Lưu cấu hình</button><button class="btn" type="button" id="lc-check">Kiểm tra kết nối / đăng nhập</button><span id="lc-connection" class="muted" role="status">Chưa kiểm tra</span></div>
+        <p class="muted" id="lc-location"></p><small>Lịch sử SQLite chưa mã hóa toàn bộ. Bảo vệ tài khoản máy và bản sao lưu; không đưa database lên Git. Không cần cài máy chủ database.</small>
+    </form>
+    <div class="lc-workspace">
+        <aside class="lc-history" aria-label="Lịch sử hội thoại"><button class="btn pri" type="button" id="lc-new">+ Cuộc trò chuyện mới</button><div id="lc-conversations" class="lc-conversations"></div><small>Đóng rồi mở lại vẫn còn lịch sử.<br>Chế độ minh họa chỉ giữ trong bộ nhớ.</small></aside>
+        <div class="lc-conversation">
+            <div class="lc-conversation-header"><div class="lc-conversation-title"><strong id="lc-title">Bắt đầu trò chuyện</strong><p id="lc-token-summary" class="muted" role="status">Đã dùng 0 token</p></div><div class="lc-actions"><a class="btn" id="lc-export" hidden>Tải lịch sử JSON</a><button class="btn" type="button" id="lc-delete" disabled>Xóa hội thoại…</button></div></div>
+            <div id="lc-messages" class="lc-messages" aria-live="polite" aria-relevant="additions text"><div class="lc-empty"><h3>Anh muốn trao đổi việc gì?</h3><p>Phân tích yêu cầu, hỏi về thiết kế hoặc cùng AI làm rõ ý tưởng trước khi giao team.</p></div></div>
+            <div class="lc-busy" id="lc-busy" role="status" hidden>ChatGPT đang trả lời… Anh có thể chuyển hội thoại; kết quả vẫn được lưu.</div>
+            <form id="lc-compose" class="lc-compose">
+                @Html.AntiForgeryToken()
+                <label for="lc-text" class="muted">Tin nhắn của anh</label><textarea id="lc-text" class="inp" rows="3" maxlength="8000" required placeholder="Nhập câu hỏi hoặc trao đổi với AI…"></textarea>
+                <div class="lc-compose-actions"><small>Enter xuống dòng · Ctrl/⌘ + Enter gửi · tối đa 8.000 ký tự</small><div class="lc-actions"><button class="btn" id="lc-stop" type="button" hidden>Dừng phản hồi</button><button class="btn pri" id="lc-send" type="submit" disabled>Gửi tin nhắn ↑</button></div></div>
+                <small id="lc-context-note">Lịch sử lưu cục bộ; AI nhận phần hội thoại gần nhất để giữ ngữ cảnh.</small>
+            </form>
+        </div>
+    </div>
+</section>
+<script src="~/js/local-chat.js" defer></script>

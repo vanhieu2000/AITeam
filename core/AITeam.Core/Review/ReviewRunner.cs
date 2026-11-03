@@ -72,6 +72,44 @@ public sealed class ReviewRunner
         }
     }
 
+    /// <summary>
+    /// QC đã gán: chỉ dùng providerId (không phân biệt hoa thường khi đối chiếu settings), không gọi router/fallback.
+    /// Thiếu/tắt/không có vai Reviewer => ExitConfig=2; tự duyệt hoặc đang nghỉ => ExitBlocked=3;
+    /// không gọi factory trong các trường hợp này. Provider lỗi/timeout/quota => Blocked, chỉ thử một lần.
+    /// Tái dùng ReviewService để giữ ReadOnly, schema, hash, JSON và ghi state; lỗi bất ngờ => Blocked có lý do.
+    /// </summary>
+    public async Task<ReviewRunOutcome> RunAssignedAsync(ReviewRunInput input, string providerId, CancellationToken ct)
+    {
+        try
+        {
+            var cfg = _settings.Providers.FirstOrDefault(p => p.Id.Equals(providerId, StringComparison.OrdinalIgnoreCase));
+            if (cfg == null || !cfg.Enabled || !cfg.Roles.Contains(AgentRole.Reviewer))
+                return new(ExitConfig, "LỖI: provider QC thiếu, đang tắt hoặc không có vai trò Reviewer.", [], null);
+            if (cfg.Id.Equals(input.DeveloperProviderId, StringComparison.OrdinalIgnoreCase))
+                return new(ExitBlocked, "BLOCKED: cấm tự duyệt.", [], null);
+            if (_state.RestOf(cfg.Id, _now()) != null)
+                return new(ExitBlocked, "BLOCKED: provider QC đang nghỉ.", [], null);
+            if (!File.Exists(input.TaskFile))
+                return new(ExitConfig, $"LỖI: không thấy file {input.TaskFile}", [], null);
+            if (!File.Exists(input.DiffFile))
+                return new(ExitConfig, $"LỖI: không thấy file {input.DiffFile}", [], null);
+            var task = await File.ReadAllTextAsync(input.TaskFile, ct);
+            var diff = await File.ReadAllTextAsync(input.DiffFile, ct);
+            if (string.IsNullOrWhiteSpace(diff))
+                return new(ExitBlocked, "BLOCKED: diff rỗng — không có gì để review", [], null);
+            var verify = File.Exists(input.VerifyFile) ? await File.ReadAllTextAsync(input.VerifyFile!, ct) : null;
+            var pack = BuildReviewPack(input, task, diff, verify);
+            var provider = new StateRecordingProvider(_factory(cfg), _state, _now);
+            var result = await new ReviewService().ReviewAsync(pack, provider, input.DeveloperProviderId,
+                input.WorkDir, input.LogDir, input.Timeout, ct);
+            var exit = result.Verdict switch { ReviewVerdict.Pass => ExitPass, ReviewVerdict.ChangesRequested => ExitChanges, _ => ExitBlocked };
+            return new(exit, Summarize(result), [], result);
+        }
+        catch (Exception ex)
+        {
+            return new(ExitBlocked, $"BLOCKED: lỗi khi review — {ex.GetType().Name}: {ex.Message}", [], null);
+        }
+    }
     private async Task<ReviewRunOutcome> RunCoreAsync(ReviewRunInput input, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(input.TaskFile) || !File.Exists(input.TaskFile))
