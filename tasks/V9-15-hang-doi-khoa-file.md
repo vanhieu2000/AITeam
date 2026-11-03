@@ -14,3 +14,11 @@
 | Chưa làm | Không thêm auto/locks.json tạm và không tự merge/cherry-pick nhánh khác. Cần tích hợp nền trước để kiểm 2 task cùng file, phụ thuộc đã merge và đổi người khi hết hạn mức. |
 | Kiểm tra | Đọc mã main và yêu cầu C4; thay đổi chỉ tài liệu, không chạy lại build/test, không sửa assert cũ. |
 | Đo đạc | Phút: chưa đo; token: chưa đo. |
+
+## Báo cáo của agent — đợt 2
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Phụ thuộc | Đã fetch main 9bc9a8e; DeveloperSelector/RunDiagnostics đã có, nhưng QuotaObservation.cs của V9-11 chưa tồn tại trên main. |
+| Trạng thái | Chờ đúng mục 3 GIAO-CODEX-DOT-2.md: chỉ làm hàng đợi sau khi V9-11 vào main. V9-11 hiện còn test V911 cũ xung đột đã báo, không tự merge nhánh đó. |
+| Kiểm tra | Chỉ cập nhật nhánh và báo cáo, chưa sửa queue/lock; không chạy build/test không liên quan. Chưa chạy Windows. |
+| Đo đạc | Phút: chưa đo; token: chưa đo. |
