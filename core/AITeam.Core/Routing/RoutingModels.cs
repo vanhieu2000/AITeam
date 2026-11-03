@@ -5,7 +5,14 @@ namespace AITeam.Core.Routing;
 // ĐỊNH TUYẾN PROVIDER (R-002 P0-4/5) — Claude thiết kế, agent KHÔNG đổi file này. Thiết kế: docs/design/V4-MULTI-AI.md mục B2, C (P0-4, P0-5).
 
 /// <summary>Provider đang "nghỉ" (hết hạn mức / chưa đăng nhập) tới giờ Until (giờ địa phương). Lưu theo MÁY, không lên git.</summary>
-public sealed record ProviderRest(string ProviderId, DateTime Until, RunStatus Reason, string Detail, DateTime At);
+public sealed record ProviderRest(string ProviderId, DateTime Until, RunStatus Reason, string Detail, DateTime At)
+{
+    public decimal? UsedPercent { get; init; }
+    public int? WindowMinutes { get; init; }
+    public DateTime? ResetsAt { get; init; }
+    public string Source { get; init; } = "unknown";
+    public DateTime? ExhaustsAt { get; init; }
+}
 
 /// <summary>Kết quả chọn provider. ProviderId null ⇒ không có provider khả dụng; Skipped liệt kê lý do bỏ qua từng provider (để báo người dùng).</summary>
 public sealed record RouteDecision(string? ProviderId, IReadOnlyList<string> Skipped)

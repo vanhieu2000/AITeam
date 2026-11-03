@@ -120,16 +120,22 @@ public sealed class AcceptanceV407RoutingTests : IDisposable
     }
 
     [Fact]
-    public void Broken_state_file_is_treated_as_empty_and_repaired()
+    public void Broken_state_file_is_backed_up_then_rebuilt()
     {
-        Directory.CreateDirectory(Path.Combine(_root, ".state"));
-        File.WriteAllText(Path.Combine(_root, ".state", "providers.json"), "{ hỏng");
+        // V9-11 (R-012) + AGENTS.md: không ghi đè dữ liệu hỏng. File hỏng được giữ nguyên byte
+        // ở bản sao providers.json.hong-*, rồi trạng thái chạy tiếp từ rỗng để dây chuyền không kẹt.
+        var state = Path.Combine(_root, ".state");
+        Directory.CreateDirectory(state);
+        File.WriteAllText(Path.Combine(state, "providers.json"), "{ hỏng");
         var store = new ProviderStateStore(_root);
         Assert.Empty(store.All());
         Assert.Null(store.RestOf("codex", Now));
         store.Record(Run("codex", RunStatus.QuotaExhausted, CodexUsageLimit), Now);
+        store.Record(Run("codex", RunStatus.QuotaExhausted, CodexUsageLimit), Now);
         Assert.Single(new ProviderStateStore(_root).All());
-        Assert.DoesNotContain(Directory.GetFiles(Path.Combine(_root, ".state")), f => !f.EndsWith("providers.json"));
+        var backup = Assert.Single(Directory.GetFiles(state), f => Path.GetFileName(f).StartsWith("providers.json.hong-"));
+        Assert.Equal("{ hỏng", File.ReadAllText(backup));
+        Assert.Equal(2, Directory.GetFiles(state).Length);
     }
 
     // ───────────── ProviderRouter ─────────────

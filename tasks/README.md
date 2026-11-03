@@ -81,6 +81,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V9-02 Đồng bộ test pipeline](V9-02-dong-bo-test-pipeline.md) | C | `agent-c/V9-02-dong-bo-test-pipeline` | ✅ Đã merge 03/11 |
 | [V9-05 Dispose khi Build lỗi](V9-05-dispose-khi-build-loi.md) | C | `agent-c/V9-05-dispose-khi-build-loi` | ✅ Đã merge 03/11 |
 | [V9-07 Cổng kiểm tra harness/khóa build](V9-07-cong-kiem-tra-build-harness.md) | C | `agent-c/V9-07-cong-kiem-tra-build-harness` | ✅ Đã merge 03/11 |
+| [V9-11 Hạn mức và giờ hồi](V9-11-han-muc-va-gio-hoi.md) | C | `agent-c/V9-11-han-muc-va-gio-hoi` | 🟡 Đợt 2 · sao lưu state hỏng theo quyết định Claude |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
