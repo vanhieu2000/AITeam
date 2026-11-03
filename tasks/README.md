@@ -93,6 +93,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V9-15 Hàng đợi và khóa file](V9-15-hang-doi-khoa-file.md) | C | `agent-c/V9-15-hang-doi-khoa-file` | ✅ Đã merge 03/11 (OpenCode vòng 2: khóa + hàng đợi một nguồn C#) |
 | [W1-04 Cổng kiểm tra QC](W1-04-cong-kiem-tra-qc.md) | C | `agent-c/W1-04-cong-kiem-tra-qc` | ✅ Đã merge 03/11 (OpenCode, Claude review) |
 | [H8-15 Sửa nhỏ Hiệu suất và Tài khoản AI](H8-15-sua-nho-hieu-suat-tai-khoan.md) | O | `agent-c/H8-15-sua-nho-hieu-suat-tai-khoan` | ✅ Đã merge 03/11 (OpenCode) |
+| [V9-17 Ghi số đo lượt chạy ngoài assign](V9-17-ghi-luot-chay-ngoai-assign.md) | O | `agent-o/V9-17-ghi-luot-chay-ngoai-assign` | ⚪ Chờ giao (cải tiến 2 sau đánh giá R-012) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
