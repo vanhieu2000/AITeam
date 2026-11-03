@@ -168,7 +168,9 @@ public sealed class ProviderStateStore
                 : now + LoginRest;
             var detail = r.Detail ?? "";
             if (detail.Length > MaxDetail) detail = detail[..MaxDetail];
-            list.Add(new ProviderRest(r.ProviderId, until, r.Status, detail, now));
+            var reset = r.Status == RunStatus.QuotaExhausted ? QuotaResetParser.Parse($"{r.Detail}\n{r.Text}", now) : null;
+            list.Add(new ProviderRest(r.ProviderId, until, r.Status, detail, now)
+            { ResetsAt = reset, Source = reset.HasValue ? "provider" : "unknown" });
         }
 
         Save(list);
@@ -184,8 +186,24 @@ public sealed class ProviderStateStore
         return true;
     }
 
+    public void RecordQuota(string providerId, QuotaObservation quota, DateTime now)
+    {
+        if (string.IsNullOrWhiteSpace(providerId)) throw new ArgumentException("Provider không hợp lệ.");
+        quota.Validate();
+        var all = All();
+        var old = all.FirstOrDefault(p => p.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase));
+        var exhausted = quota.UsedPercent >= 100 && quota.ResetsAt > now;
+        var record = new ProviderRest(providerId,
+            exhausted ? quota.ResetsAt!.Value : old?.Until ?? DateTime.MinValue,
+            exhausted ? RunStatus.QuotaExhausted : old?.Reason ?? RunStatus.Succeeded, old?.Detail ?? "", now)
+        { UsedPercent = quota.UsedPercent, WindowMinutes = quota.WindowMinutes, ResetsAt = quota.ResetsAt, Source = quota.Source, ExhaustsAt = quota.ExhaustsAt };
+        Save(all.Where(p => !p.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase)).Append(record).ToList());
+    }
+
     private void Save(List<ProviderRest> list)
     {
+        if (File.Exists(FilePath) && JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath, Encoding.UTF8), JsonOpts) == null)
+            throw new InvalidDataException("Trạng thái provider bị hỏng; không ghi đè.");
         var dir = Path.GetDirectoryName(FilePath)!;
         Directory.CreateDirectory(dir);
         var tmp = Path.Combine(dir, $"providers.{Guid.NewGuid():N}.tmp");
