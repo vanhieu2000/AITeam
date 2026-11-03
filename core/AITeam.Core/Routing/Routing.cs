@@ -135,13 +135,26 @@ public sealed class ProviderStateStore
     /// <summary>Mọi bản ghi trong file (kể cả đã hết hạn).</summary>
     public IReadOnlyList<ProviderRest> All()
     {
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
+        foreach (var path in new[] { root, Path.GetDirectoryName(FilePath)!, FilePath })
+            if ((File.Exists(path) || Directory.Exists(path)) && (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("Không đọc/di chuyển state provider qua symlink hoặc reparse point.");
+        if (!File.Exists(FilePath)) return [];
         try
         {
-            return File.Exists(FilePath)
-                ? JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath, Encoding.UTF8), JsonOpts) ?? []
-                : [];
+            var records = JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath, Encoding.UTF8), JsonOpts);
+            if (records == null || records.Any(p => p == null || string.IsNullOrWhiteSpace(p.ProviderId)))
+                throw new JsonException("State provider không phải danh sách hợp lệ.");
+            return records;
         }
-        catch { return []; }
+        catch (JsonException)
+        {
+            // Đổi tên nguyên file, không serialize lại: giữ cả byte không hợp lệ và chỉ sao lưu một lần.
+            var backup = FilePath + ".hong-" + DateTime.UtcNow.ToString("yyyyMMddTHHmmssfffffff", CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N");
+            File.Move(FilePath, backup, overwrite: false);
+            return [];
+        }
     }
 
     /// <summary>Bản ghi của provider (so khớp không phân biệt hoa thường) nếu Until &gt; now; ngược lại null.</summary>
@@ -165,8 +178,6 @@ public sealed class ProviderStateStore
         {
             var count = FailureStreakStore.Update(root, r.ProviderId, true);
             if (count < 3) return;
-            // Luồng mới không được ghi đè state hỏng dù reader cũ có cơ chế coi rỗng.
-            if (File.Exists(FilePath)) _ = JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath), JsonOpts) ?? throw new InvalidDataException("State provider rỗng.");
             var rests = All().ToList();
             var prior = rests.FirstOrDefault(p => p.ProviderId.Equals(r.ProviderId, StringComparison.OrdinalIgnoreCase));
             if (prior != null && prior.Until > now + FailureRest) return;
@@ -209,6 +220,8 @@ public sealed class ProviderStateStore
     {
         if (string.IsNullOrWhiteSpace(providerId)) throw new ArgumentException("Provider không hợp lệ.");
         quota.Validate();
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
         var all = All();
         var old = all.FirstOrDefault(p => p.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase));
         var exhausted = quota.UsedPercent >= 100 && quota.ResetsAt > now;
@@ -221,8 +234,7 @@ public sealed class ProviderStateStore
 
     private void Save(List<ProviderRest> list)
     {
-        if (File.Exists(FilePath) && JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath, Encoding.UTF8), JsonOpts) == null)
-            throw new InvalidDataException("Trạng thái provider bị hỏng; không ghi đè.");
+        _ = All(); // Sao lưu nếu nguồn hỏng trước khi ghi state mới.
         var dir = Path.GetDirectoryName(FilePath)!;
         Directory.CreateDirectory(dir);
         var tmp = Path.Combine(dir, $"providers.{Guid.NewGuid():N}.tmp");
