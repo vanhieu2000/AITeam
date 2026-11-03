@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+﻿using AITeam.Core.AiServices.Adapters;
+using AITeam.Core.Process;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using AITeam.Core.Accounts;
 using AITeam.Core.AiServices;
 using AITeam.Core.Workflow;
@@ -60,6 +62,17 @@ public static class HubV3Registration
         services.TryAddSingleton<IProcessStarter, RealProcessStarter>();
         services.TryAddSingleton<ICommandService>(sp => new CommandService(
             sp.GetRequiredService<HubPaths>(), sp.GetRequiredService<ITeamConfigService>(), sp.GetRequiredService<ITaskBoardService>(), sp.GetRequiredService<IProcessStarter>()));
+        // V10-02 (R-014): Chạy AI theo danh bạ - Factory và ISecretLookup
+        services.TryAddSingleton<VaultService>(sp =>
+        {
+            var vault = sp.GetService<IVaultService>() as VaultService;
+            return vault ?? new VaultService(sp.GetRequiredService<HubPaths>(), sp.GetService<ITeamConfigService>());
+        });
+        services.TryAddSingleton<ISecretLookup, VaultSecretLookup>();
+        services.TryAddSingleton<IAiProviderFactory>(sp => new AiProviderFactory(
+            sp.GetRequiredService<IAiServiceRegistry>(),
+            sp.GetService<IProcessRunner>() ?? new ProcessRunner(),
+            sp.GetRequiredService<ISecretLookup>()));
         return services;
     }
 }
