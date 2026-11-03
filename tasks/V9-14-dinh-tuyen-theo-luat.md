@@ -25,3 +25,12 @@
 | Build/toàn bộ | Build -warnaserror -nodeReuse:false 0 warning/0 error; Core 505/833 đạt, 328 lỗi nền; Hub 803/817 đạt, 14 lỗi nền; PS AST 0 lỗi; chưa chạy Windows. Log /tmp/r012-d2-v914-verified-tests. |
 | Giới hạn | Cân tải theo bảng của dự án hiện tại, chưa cộng đồng thời mọi dự án; hook/journal/health CLI thật chưa nghiệm thu Windows. Trạng thái login OpenCode vẫn chưa rõ, không coi kiểm phiên bản là đăng nhập. |
 | Đo đạc | Phút: chưa đo; token: chưa đo. |
+
+## Báo cáo của agent — OpenCode
+- Sửa `team.ps1`: `-Resume` không gọi `Select-TaskDeveloper`; thêm `Get-RecordedDeveloper`/`ConvertTo-DeveloperProvider` đọc `.state/developer-routes.json` (khóa SHA-256 như DeveloperRouteMemory), rồi mã Agent trong file task / bảng việc (C ⇒ codex, O ⇒ opencode, A/B ⇒ agy). Không xác định được ⇒ giữ đường assign cũ, không gọi CLI định tuyến.
+- `Invoke-Assign` thêm cờ `$devFromResume` để agy đọc lại từ file vẫn được dự phòng Codex khi hết hạn mức (giữ test nghiệm thu S1-04).
+- `core.tests/AcceptanceS104SkillPromptsTests.cs`: thêm 2 tên hàm vào danh sách nạp AST (`Get-RecordedDeveloper`, `ConvertTo-DeveloperProvider`) — chỉ phần dựng harness, không đổi assert.
+- Test mới `V914RoutingIntegrationTests.Resume_keeps_recorded_developer_and_does_not_call_router`.
+- Build: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 error.
+- Test: `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → Core 834/834, Hub 817/817 (tổng 1651/1651).
+- Chưa xác minh: chạy assign thật trên Windows khi `.state/developer-routes.json` có sẵn provider codex/opencode.
