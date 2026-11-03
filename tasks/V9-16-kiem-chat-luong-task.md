@@ -1,4 +1,6 @@
 ﻿# V9-16 — Tự kiểm chất lượng task trước khi giao
+
+- **Yêu cầu:** R-012
 - Nhánh: `agent-c/V9-16-kiem-chat-luong-task`; yêu cầu R-012.
 - Đọc: docs/MO-TA-HE-THONG.md, plans/R-012/YEU-CAU-CODEX.md.
 - Phạm vi: theo mã trong yêu cầu R-012; không sửa assert nghiệm thu cũ, không merge main.

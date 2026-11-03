@@ -1,4 +1,6 @@
 ﻿# H8-12 — Hiệu suất và bảng điểm AI
+
+- **Yêu cầu:** R-012
 - Nhánh: `agent-c/H8-12-hieu-suat-bang-diem`; yêu cầu R-012.
 - Đọc: docs/MO-TA-HE-THONG.md, plans/R-012/YEU-CAU-CODEX.md.
 - Phạm vi: theo mã trong yêu cầu R-012; không sửa assert nghiệm thu cũ, không merge main.
