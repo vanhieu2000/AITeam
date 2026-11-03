@@ -1,4 +1,4 @@
-﻿# Quy trình v5 — ĐANG ÁP DỤNG (chủ dự án chốt 02/11/2026, R-012)
+﻿# Quy trình v5.1 — ĐANG ÁP DỤNG (chủ dự án chốt 02/11/2026, R-012; v5.1 03/11 sau đánh giá R-012)
 
 Mục v5 này THẮNG mọi mục cũ bên dưới (v3 / v4 chỉ còn để tra cứu).
 Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, chức năng F1–F14, phân loại nguyên nhân lỗi: **`docs/MO-TA-HE-THONG.md`** (đọc trước khi thiết kế / viết task).
@@ -33,6 +33,11 @@ Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, c
 - Không chạy nhiều `dotnet build` / `verify` song song trên máy (khóa file `obj`).
 - Cổng KT báo "sửa test nghiệm thu" khi quản lý đã CHO PHÉP sửa phần dựng môi trường ⇒ ghi rõ trong "### Vòng N — ĐẠT" (file, dòng, vì sao) rồi `team.ps1 merge`.
 - `merge` xung đột (thường `hub.css` khi 2 task cùng thêm style cuối file) ⇒ giữ cả hai khối, build + toàn bộ test + clone sạch, rồi mới push.
+
+## Đổi hợp đồng và viết task (v5.1, sau R-012)
+- **Đổi hợp đồng** (route, status code, mã lỗi, giới hạn, định dạng file trạng thái) ⇒ trong CÙNG commit: `git grep -n "<chuỗi / giá trị cũ>" -- "*Tests.cs"` và sửa mọi test còn đòi hợp đồng cũ. R-012: bỏ bước này ⇒ 2 đợt Codex dừng hàng loạt (8 nhánh).
+- Task có trang / lệnh mới thay chỗ cái cũ ⇒ ghi rõ "giữ route / tab / lệnh cũ nào" (R-012 H8-12 mất tab Nhân viên).
+- Logic đã có trong C# (CLI `AITeam.exe`) ⇒ task ghi "`team.ps1` chỉ gọi CLI, không viết lại bằng PowerShell" (R-012 V9-15 viết hai lần).
 
 ---
 
