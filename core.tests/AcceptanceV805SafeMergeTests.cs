@@ -212,6 +212,7 @@ public class AcceptanceV805SafeMergeTests
             $fails=New-Object Collections.ArrayList
             Invoke-Expression (Part 'Invoke-Verify' 'foreach \(\$deleted')
             if ($fails.Count -ne 1 -or $fails[0] -ne 'Xóa file test: core.tests/Regression.cs') { throw 'Không chặn xóa test' }
+            $Root=(Get-Location).Path # V9-01: nhánh model sai xóa cache tại $Root/.state
             $script:status=''; $r=@{}; $Task='V8-05'; $taskFile=@{Name='task.md'}; $logText='INVALID MODEL SELECTION'; $errText=''; $NoVerify=$false
             function Set-BoardStatus($r,$Task,$status,$Journal) { $script:status=$status }
             $branch=Part 'Invoke-Assign' 'if \("\$logText`n\$errText" -match'

@@ -1,4 +1,4 @@
-using AITeam.Hub.Models;
+﻿using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +15,7 @@ public static class FakeServices
         services.AddSingleton<IVaultService, FakeVaultService>();
         services.AddSingleton<IInboxService, FakeInboxService>();
         services.AddSingleton<IProcessStarter, NoopProcessStarter>(); // V5-05: dữ liệu giả ⇒ không chạy team.ps1 thật
+        services.AddSingleton<IApprovalService, FakeApprovalService>();
         services.AddHubV3(); // _Layout cần IApprovalService
     }
 }
