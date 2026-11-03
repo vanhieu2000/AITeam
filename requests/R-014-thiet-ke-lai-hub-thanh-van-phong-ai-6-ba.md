@@ -1,4 +1,4 @@
-# R-014 · Thiet ke lai Hub thanh van phong AI: 6 bang dieu khien lien thong
+﻿# R-014 · Thiet ke lai Hub thanh van phong AI: 6 bang dieu khien lien thong
 
 - **Nhận lúc:** 20:36 03/11/2026 · máy HIEUDV
 - **Trạng thái:** 🟡 Đang làm
@@ -37,6 +37,13 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-014` để `team.ps1 reque
 | 21:49 | W2-01 OpenCode xong 10,6′ ⇒ review ĐẠT vòng 1 (672/350 dòng — Optional) ⇒ merge | |
 | 21:32–22:03 | Claude làm UI-01 (token, menu 3 nhóm, nút chat nổi, chế độ nhúng), UI-02 (Văn phòng = bảng điều khiển), UI-03 (Theo dõi việc 3 cách xem); 4 test cũ đổi theo hợp đồng menu mới; 6 test mới; Hub 844/844 | |
 | 22:05 | Clone sạch W2-01: 2 test lõi đỏ do máy tải nặng (V810, V808) ⇒ chạy riêng 3/3 xanh ⇒ push | [HT] test phụ thuộc thời gian |
+| 22:10 | V10-01 OpenCode xong 32,9′ ⇒ review ĐẠT ⇒ merge + clone sạch 844/974 xanh ⇒ push 8fc962f | |
+| 22:06–23:20 | V10-03, V10-04: OpenCode chạy xong test rồi **đứng im > 1 giờ** (không lỗi, không tiến trình con) ⇒ Claude dừng, chạy tiếp đúng phiên ⇒ vẫn im | [HT] OpenCode treo thay vì báo lỗi |
+| 23:36 | Log nội bộ OpenCode: "Free usage limit reached" ⇒ hết lượt miễn phí. Codex hết tới 12:09 04/11; Antigravity không có Argon 4 ⇒ không AI nào chạy được | [HT] hết hạn mức |
+| 23:40 | Chủ dự án (đi ngủ): tiếp tục giao OpenCode + Antigravity, chỉ làm chức năng, KHÔNG sửa giao diện; canh job treo / hết hạn mức. Claude viết `oc-run.ps1` (bộ canh: log đứng 15′ không tiến trình con ⇒ dừng + chạy tiếp phiên; gặp hạn mức ⇒ dừng hẳn) | |
+| 00:10–00:50 | Claude viết task đợt 2: V10-02 (adapter theo danh bạ), W2-02 (luật chuẩn + bài học, assign chèn luật), V10-05 (trợ lý chat) | |
+| 00:55 | Claude build + test 2 worktree, commit hộ code OpenCode. V10-04 review **ĐẠT** ⇒ merge. V10-03 **CẦN SỬA** (mục duyệt commit cũ chặn merge; nhật ký tự quyết không lên git; 3 file thiếu BOM) ⇒ chờ AI rảnh | [AG] BOM ×3 · [AG] chất lượng · [TK] task chưa nói mục commit cũ |
+| 01:05 | Chạy nền `cho-ai.ps1`: 20′/lần thử OpenCode, Argon 4, Codex (sau 12:09) ⇒ có AI thì giao ngay V10-03 sửa, V10-02, W2-02 | |
 | | Nhận yêu cầu | |
 
 Sự kiện cần ghi:
