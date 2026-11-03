@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using AITeam.Core.Accounts;
+using AITeam.Core.AiServices;
 
 namespace AITeam.Hub.Services;
 
@@ -26,6 +28,23 @@ public static class HubV3Registration
             services.TryAddSingleton<IAiAccountsService, FakeAiAccountsService>();
         else
             services.TryAddSingleton<IAiAccountsService>(sp => new AiAccountsService(sp.GetRequiredService<HubPaths>(), sp.GetRequiredService<IAgentRunService>()));
+        // V10-01: danh bạ dịch vụ AI trong SQLite cục bộ (không lưu giá trị bí mật).
+        services.TryAddSingleton<IAiServiceRegistry>(sp =>
+        {
+            var paths = sp.GetRequiredService<HubPaths>();
+            if (Environment.GetEnvironmentVariable("HUB_FAKE") == "1")
+            {
+                var demo = new SqliteAiServiceRegistry(":memory:", paths.AITeamRoot);
+                demo.SeedSampleServices();
+                return demo;
+            }
+            if (Environment.GetEnvironmentVariable("HUB_EMPTY") == "1")
+                return new SqliteAiServiceRegistry(":memory:", paths.AITeamRoot);
+            return new SqliteAiServiceRegistry(
+                Path.Combine(paths.UserProfile, ".aiteam", "hub", "office.db"),
+                paths.AITeamRoot,
+                AiAccountStore.DefaultFile);
+        });
         // V5-05: điều khiển từ Văn phòng. Chế độ giả / rỗng đăng ký NoopProcessStarter TRƯỚC (không chạy lệnh thật).
         services.TryAddSingleton<IProcessStarter, RealProcessStarter>();
         services.TryAddSingleton<ICommandService>(sp => new CommandService(

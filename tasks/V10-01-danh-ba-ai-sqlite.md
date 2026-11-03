@@ -112,4 +112,11 @@ public interface IAiServiceRegistry
 
 ## Báo cáo của agent
 
+## Báo cáo của agent — OpenCode
+- Đã làm: thêm `AiServiceModels.cs` (enum/record/interface đúng hợp đồng) và `SqliteAiServiceRegistry.cs` (schema 5 bảng, nhập dữ liệu cũ một lần từ team.json/team.local.json/accounts.json, Upsert/Get/List/SetEnabled, Validate, tài khoản, hạn mức, settings, xuất/nhập .ini giới hạn 256 KB, chặn khóa bí mật, ghi BEGIN IMMEDIATE).
+- File đã đổi: `core/AITeam.Core/AiServices/` (mới), `core/AITeam.Core/AITeam.Core.csproj` (Microsoft.Data.Sqlite 10.0.14), `hub/Services/HubV3Registration.cs` (DI: office.db thật, HUB_FAKE `:memory:` + 3 dịch vụ mẫu), `core.tests/V1001AiServiceRegistryTests.cs` (mới, 10 ca), file task này.
+- Kiểm: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` ⇒ 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` ⇒ 1797/1797 đạt (Hub 837, Core 960).
+- Quyết định tự đưa ra: `legacyAccountsFile = null` nghĩa là bỏ qua accounts.json cũ (DI truyền đường dẫn thật) để test không đọc hồ sơ máy; dữ liệu cũ được ghi cả khi chưa đủ trường hợp lệ (hiện dạng tắt) để Hub không sập.
+- Chưa xác minh: chưa chạy Hub thật / mở trang giao diện (ngoài phạm vi lõi); test hạn mức/đăng nhập thật của dịch vụ.
+
 ## Review (Claude)
