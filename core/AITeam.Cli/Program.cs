@@ -29,6 +29,7 @@ try
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
         "diagnose-run" => DiagnoseRun(),
+        "parse-run-log" => ParseRunLog(),
         "opencode-check" => await OpenCodeCheck(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         _ => Help(),
@@ -142,6 +143,28 @@ int DiagnoseRun()
     double? average = peers.Count == 0 ? null : peers.Average(r => (double)r.TotalTokens!.Value);
     Console.WriteLine(JsonSerializer.Serialize(AITeam.Core.Metrics.RunDiagnostics.Evaluate(current, previous, average), new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
     return 0;
+}
+
+int ParseRunLog()
+{
+    var dev = Arg("--dev");
+    var logFile = Arg("--log");
+    if (string.IsNullOrWhiteSpace(dev) || string.IsNullOrWhiteSpace(logFile))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--dev, --log).");
+        return 2;
+    }
+    try
+    {
+        var record = AITeam.Core.Metrics.ExternalRunLog.Parse(dev, logFile);
+        Console.WriteLine(JsonSerializer.Serialize(record, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        return 0;
+    }
+    catch (ArgumentException ex)
+    {
+        Console.Error.WriteLine("LỖI: " + ex.Message);
+        return 2;
+    }
 }
 
 async Task<int> OpenCodeCheck()
@@ -339,6 +362,7 @@ int Help()
     Console.WriteLine("aiteam task-info --file <task.md>        Đọc thông tin chuẩn hóa của 1 file task");
     Console.WriteLine("aiteam review --task-file <f> --diff-file <f> [--verify-file <f>] --workdir <d> --logdir <d> --dev <id> [--timeout-min 15] [--out <f>] [--auto]");
     Console.WriteLine("aiteam run --provider <id> --workdir <d> --prompt-file <f> --logdir <d> [--timeout-min 30] [--model <m>] [--out <f>] [--read-only]");
+    Console.WriteLine("aiteam parse-run-log --dev <opencode|codex> --log <f>   Đọc số đo (phút, token, trạng thái) của 1 lượt chạy trực tiếp");
     return 0;
 }
 

@@ -109,4 +109,13 @@
 
 ## Báo cáo của agent
 
+## Báo cáo của agent — OpenCode
+- Đã làm: thêm `ExternalRunLog.Parse` (opencode JSONL + codex text), lệnh CLI `parse-run-log`, lệnh `team.ps1 log-run` ghép bản ghi, chống ghi trùng theo `sourceLog`, run tăng dần, `conversationId` rỗng, chỉ gọi CLI để đọc log.
+- File: `core/AITeam.Core/Metrics/ExternalRunLog.cs` (mới), `core/AITeam.Cli/Program.cs`, `team.ps1`, `core.tests/V917ExternalRunLogTests.cs` (mới), `core.tests/Fixtures/run-logs/*` (mới), file task này.
+- Build: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 error.
+- Test: `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → 837/837 (hub) + 949/949 (core), 0 đỏ.
+- Test mới: 12/12 xanh, gồm harness PowerShell (gọi `Invoke-LogRun` 2 lần cùng log ⇒ 1 file, run=4, agent=O, conversationId rỗng) trên thư mục tạm với `Save-RunMetrics` giả.
+- Chưa xác minh: chưa chạy `team.ps1 log-run` với log OpenCode thật R-012 trên máy (không có file log trong repo; công cụ bị giới hạn lệnh), phần đọc đã test bằng fixture đúng dạng.
+- Quyết định tự chịu: `at` của opencode lấy mốc timestamp lớn nhất (giờ địa phương); codex lấy LastWriteTime; token reasoning cộng vào output, cache.read không cộng.
+
 ## Review (Claude)

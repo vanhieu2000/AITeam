@@ -1,0 +1,2 @@
+{"type":"step_start","timestamp":1793700300000,"sessionID":"ses_gia","part":{"type":"step-start"}}
+{"type":"step_finish","timestamp":1793700301000,"sessionID":"ses_gia","part":{"type":"step-finish","reason":"stop","tokens":{"total":56,"input":5,"output":1,"reasoning":0,"cache":{"write":0,"read":50}},"cost":0}}
