@@ -5,11 +5,14 @@
 .perf-head h2{margin:0}
 .perf-error{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
 .perf-warning{background:#fff7db}
+.perf-warnings summary{cursor:pointer;font-weight:600}
+.perf-warnings ul{margin:8px 0 0;padding-left:20px}
 .perf-section{margin:16px 0}
 .perf-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px}
 .perf-metric{padding:14px;border:1px solid var(--border,#dbe2ec);border-radius:10px;background:var(--surface,#fff)}
 .perf-metric h4{margin:0 0 8px;font-size:15px}
 .perf-value{margin:0 0 6px;font-size:27px;font-weight:700}
+.perf-value--text{font-size:18px;font-weight:600;color:var(--muted,#526275)}
 .perf-metric .small{margin:2px 0}
 .perf-bars{display:grid;gap:14px;margin-top:12px}
 .perf-bar-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:center}

@@ -13,6 +13,7 @@
         ? "—"
         : string.Join(" · ", groups.OrderByDescending(g => g.Value).ThenBy(g => g.Key).Select(g => g.Key + " " + g.Value));
     string PassText(bool? passed) => passed switch { true => "ĐẠT", false => "Cần sửa", null => "chưa đo" };
+    string ValueClass(string value) => value is "Chưa đủ dữ liệu" or "chưa đo" ? "perf-value perf-value--text" : "perf-value";
 }
 <link rel="stylesheet" href="~/css/performance.css" />
 <div class="perf">
@@ -39,9 +40,17 @@
 
     @if (Model.Data is { } data)
     {
-        foreach (var warning in data.Warnings)
+        @if (data.Warnings.Count > 0)
         {
-            <p class="panel perf-warning">@warning</p>
+            <details class="panel perf-warning perf-warnings">
+                <summary>Không đọc được @data.Warnings.Count nguồn dữ liệu (chi tiết)</summary>
+                <ul>
+                    @foreach (var warning in data.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            </details>
         }
 
         <section class="panel perf-section">
@@ -51,7 +60,10 @@
                 {
                     <article class="perf-metric">
                         <h4>@metric.Label</h4>
-                        <p class="perf-value">@metric.Display(true)</p>
+                        @{
+                            var current = metric.Display(true);
+                        }
+                        <p class="@ValueClass(current)">@current</p>
                         <p class="small">Tuần trước: @metric.Display(false) · Đích: @metric.Target</p>
                     </article>
                 }
