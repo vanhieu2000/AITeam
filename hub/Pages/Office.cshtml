@@ -20,6 +20,7 @@
     </div>
 }
 
+@if(Model.SelectedThread!=null){<p><a class="btn" href="@Url.Page("/Request",new{id=Model.SelectedThread.Id})">Chi tiết @Model.SelectedThread.Id</a></p>}
 <div class="office-workspace">
     <section class="office-agents" hx-get="?handler=Desks" hx-trigger="every 10s" hx-target="#office-desks" hx-swap="outerHTML">
         <partial name="_OfficeDesks" model="Model" />

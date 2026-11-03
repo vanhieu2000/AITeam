@@ -1,5 +1,6 @@
 ﻿@page "/p/{name}/t/{id}"
 @model AITeam.Hub.Pages.TaskModel
+@using AITeam.Core.Metrics
 @using AITeam.Hub.Models
 @using AITeam.Hub.Services
 @using AITeam.Hub.Pages
@@ -38,6 +39,13 @@
         .ToList() ?? new List<TaskSection>();
 }
 
+<link rel="stylesheet" href="~/css/work-details.css" />
+@if(Model.Detail!=null){
+<div class="task-detail-links">
+@if(Model.Insight?.Request!=null){<a class="btn sm" href="@Url.Page("/Request",new{id=Model.Insight.Request})">Yêu cầu @Model.Insight.Request</a>}
+@foreach(var run in Model.Detail.Runs.Take(30)){<a class="btn sm" href="@Url.Page("/Run",new{project=Model.Name,task=Model.Id,n=run.Attempt})">Chi tiết lượt @run.Attempt</a>}
+@foreach(var group in FindingParser.Parse(reviewSection?.Markdown).GroupBy(f=>f.Cause)){<span class="pill fix">@group.Key · @group.Count()</span>}
+</div>}
 @if (Model.Detail == null)
 {
     <div class="panel" style="max-width: 600px; margin: 40px auto; text-align: center; padding: 30px;">

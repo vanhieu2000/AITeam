@@ -1,0 +1,19 @@
+﻿@page "/Request"
+@model AITeam.Hub.Pages.RequestModel
+@using AITeam.Hub.Services
+@{ViewData["Title"]="Chi tiết yêu cầu";var d=Model.Data;string[] steps=["Tiếp nhận","Thiết kế","Kế hoạch","Chuẩn bị task","Giao việc","Cổng kiểm tra","Review","Merge","Đánh giá task","Báo cáo yêu cầu"];}
+<link rel="stylesheet" href="~/css/work-details.css" />
+<div class="work-details">
+@if(Model.Error!=null){<p class="panel detail-section">@Model.Error</p>}
+@if(d!=null){
+<h2>@d.Request.Id · @d.Request.Title</h2><p class="muted">@d.Request.Status · @d.Request.ReceivedAt</p>
+@foreach(var warning in d.Warnings){<p class="panel detail-section">@warning</p>}
+<section class="panel detail-section"><h3>Lời yêu cầu nguyên văn</h3><blockquote>@(string.IsNullOrEmpty(d.Request.Verbatim)?"Chưa ghi lời yêu cầu nguyên văn.":d.Request.Verbatim)</blockquote></section>
+<section class="panel detail-section"><h3>Mười bước</h3><p class="muted">Bước hiện tại theo trạng thái task; bước thiếu bằng chứng được giữ là chưa xác nhận.</p><ol class="request-steps">@for(var i=0;i<steps.Length;i++){<li class="@(i+1==d.CurrentStep?"current":"")"><strong>@(i+1). @steps[i]</strong><span>@(i+1==d.CurrentStep&&!d.Request.Evaluated?"Hiện tại":d.Evidence[i]?"Đã có kết quả":"Chưa xác nhận")</span></li>}</ol></section>
+<section class="panel detail-section"><h3>Công việc và số đo</h3><p>@(d.Runs.Any(r=>r.Seconds.HasValue)?(d.Runs.Where(r=>r.Seconds.HasValue).Sum(r=>r.Seconds!.Value)/60).ToString("0.#")+" phút đã đo":"Chưa đo phút") · @(d.Runs.Any(r=>r.Tokens.HasValue)?d.Runs.Where(r=>r.Tokens.HasValue).Sum(r=>r.Tokens!.Value).ToString("N0")+" token đã đo":"Chưa đo token") · @d.Runs.Count(r=>r.Tokens==null) lượt chưa đo token</p>
+@if(d.Tasks.Count==0){<p class="muted">Chưa có task đã đồng bộ cho yêu cầu này.</p>}
+@foreach(var task in d.Tasks){<article class="request-task"><a href="/p/@task.Card.Project/t/@task.Card.Id"><strong>@task.Card.Id · @task.Card.Title</strong></a><p>@task.Card.Project · @AITeam.Hub.Pages.IndexModel.StatePill(task.Card.State).Text · @task.Card.Agent</p>@foreach(var group in task.Findings.GroupBy(f=>f.Cause)){<span class="pill fix">@group.Key · @group.Count()</span>}</article>}
+</section>
+<section class="panel detail-section"><h3>Nhật ký</h3>@if(d.Request.Events.Count==0){<p class="muted">Chưa có nhật ký.</p>}@foreach(var entry in d.Request.Events){<p><strong>@entry.Time · @entry.Text</strong><br />@entry.Note</p>}</section>
+}
+</div>
