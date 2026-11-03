@@ -1,6 +1,7 @@
 ﻿# V10-02 · Chạy AI theo danh bạ: 3 adapter chung + factory đọc registry
 
-- **Agent:** O
+- **Agent:** B
+- **Model:** `gemini-3.8-flash-high`
 - **Nhánh:** `agent-o/V10-02-adapter-ai-tu-danh-ba`
 - **Yêu cầu:** R-014
 - **Loại việc:** Tính năng lõi / CLI

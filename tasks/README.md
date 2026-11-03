@@ -95,10 +95,10 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H8-15 Sửa nhỏ Hiệu suất và Tài khoản AI](H8-15-sua-nho-hieu-suat-tai-khoan.md) | O | `agent-c/H8-15-sua-nho-hieu-suat-tai-khoan` | ✅ Đã merge 03/11 (OpenCode) |
 | [V9-17 Ghi số đo lượt chạy ngoài assign](V9-17-ghi-luot-chay-ngoai-assign.md) | O | `agent-o/V9-17-ghi-luot-chay-ngoai-assign` | ✅ Đã merge 03/11 (OpenCode vòng 2) |
 | [V10-01 Danh bạ AI SQLite](V10-01-danh-ba-ai-sqlite.md) | O | `agent-c/V10-01-danh-ba-ai-sqlite` | ✅ Đã merge 03/11 (OpenCode, thay Codex hết hạn mức) |
-| [V10-03 Duyệt chỉ việc nhạy cảm](V10-03-duyet-nhay-cam.md) | O | `agent-c/V10-03-duyet-nhay-cam` | 🔴 Cần sửa vòng 1 (chờ AI rảnh: OpenCode / Codex hết hạn mức) |
+| [V10-03 Duyệt chỉ việc nhạy cảm](V10-03-duyet-nhay-cam.md) | A | `agent-c/V10-03-duyet-nhay-cam` | 🔴 Cần sửa vòng 1 (chờ AI rảnh: OpenCode / Codex hết hạn mức) |
 | [W2-01 Cấu hình loại việc](W2-01-cau-hinh-loai-viec.md) | O | `agent-o/W2-01-cau-hinh-loai-viec` | ✅ Đã merge 03/11 (OpenCode) |
 | [V10-04 Dịch vụ báo cáo](V10-04-dich-vu-bao-cao.md) | O | `agent-o/V10-04-dich-vu-bao-cao` | ✅ Đã merge 04/11 (OpenCode) |
-| [V10-02 Chạy AI theo danh bạ](V10-02-adapter-ai-tu-danh-ba.md) | O | `agent-o/V10-02-adapter-ai-tu-danh-ba` | ⏳ Chờ AI rảnh |
+| [V10-02 Chạy AI theo danh bạ](V10-02-adapter-ai-tu-danh-ba.md) | B | `agent-o/V10-02-adapter-ai-tu-danh-ba` | ⏳ Chờ AI rảnh |
 | [W2-02 Luật chuẩn + bài học](W2-02-luat-chuan-va-bai-hoc.md) | O | `agent-o/W2-02-luat-chuan-va-bai-hoc` | ⏳ Chờ AI rảnh |
 | [V10-05 Trợ lý chat](V10-05-tro-ly-chat.md) | O | `agent-o/V10-05-tro-ly-chat` | ⏳ Chờ V10-02 |
 
