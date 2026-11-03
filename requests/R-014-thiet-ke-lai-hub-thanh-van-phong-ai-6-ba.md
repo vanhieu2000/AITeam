@@ -61,6 +61,7 @@ Sự kiện cần ghi:
 - merge;
 - báo chủ dự án.
 
+- 2026-11-04 01:27:46 +05:30 | V10-02 | Assign | lượt 1 | LỖI <!-- workflow:V10-02:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
 
