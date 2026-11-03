@@ -91,6 +91,8 @@ public sealed class DevRunner
                 if (d.Length > 200) d = d[..200];
                 summary += $" — {d}";
             }
+            if (r.Status is not (RunStatus.Succeeded or RunStatus.QuotaExhausted or RunStatus.NotLoggedIn) && _state.RestOf(cfg.Id, _now()) is { } failureRest)
+                summary += $" — CẢNH BÁO: {failureRest.Detail} Nghỉ tới {failureRest.Until:HH:mm dd/MM}.";
             return new(exit, r.Status.ToString(), summary, r);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
