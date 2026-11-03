@@ -165,7 +165,7 @@ $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
-$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry')
+$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun','Get-ReviewRoundLimit','Get-ReviewRoundCount','Stop-ReviewReassignment') # H7-02 + V6-02
 foreach ($f in $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$true)) {
     if ($f.Name -in $names) { . ([scriptblock]::Create($f.Extent.Text)) }
 }
@@ -186,7 +186,7 @@ if ($null -ne $x.stack) { $info | Add-Member NoteProperty stack $x.stack }
 $r=[pscustomobject]@{Info=$info;Path=$repo;Logs=$logs;Work=$workRoot}
 $cfg=[pscustomobject]@{developers=@();agy=[pscustomobject]@{exe='fake-agy';model=''};github=[pscustomobject]@{owner='giả'}}
 function Get-Config { $cfg }; function Resolve-Project { $r }; function Get-PlanDir { $planDir }
-function Get-AITeamExe { 'FakeProvider' }; function Say { }; function git { '' }
+function Get-AITeamExe { 'FakeProvider' }; function Say { }; function git { $global:LASTEXITCODE=0; '' } # V9-06: assign kiểm mã thoát git fetch/merge
 function Find-TaskFile { Get-Item (Join-Path $repo 'tasks/S1-04.md') }
 function Select-FreeAgent { 'A' }; function ConvertTo-AsciiSlug { 'ket-noi' }
 function Copy-Template { param($template,$path,$vars) [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path)) | Out-Null; [IO.File]::WriteAllText($path,'- **Yêu cầu:** R-xxx') }
@@ -196,7 +196,16 @@ function Set-McpConfig { $false }; function Get-StaffName { 'giả' }; function 
 function Test-AgentTouchedMain { }; function Get-RunRecord { }; function Save-RunMetrics { }
 function Test-QuotaExhausted { $x.mode -eq 'fallback' }
 $script:captured=$null; $script:calls=0; $script:ro=$false; $script:cwd=$repo
+# Khóa giả chỉ chạy action trong sandbox, không dùng khóa Codex trên máy.
+function Invoke-WorkflowCodexLock { param([scriptblock]$Action) & $Action }
 function FakeProvider {
+    if ($args[0] -eq 'workflow-role') {
+        $role=$args[[Array]::IndexOf($args,'--role')+1]
+        $global:LASTEXITCODE=0
+        return ([pscustomobject]@{role=$role;actor='codex';providerId='codex';isExplicit=$false;readOnly=($role -eq 'plan');manual=$false} | ConvertTo-Json -Compress)
+    }
+    # V6-02: Invoke-Assign đếm vòng review qua CLI; task mẫu chưa có vòng nào.
+    if ($args[0] -eq 'review-rounds') { $global:LASTEXITCODE=0; return '0' }
     $script:calls++; $a=@($args); $pf=$a[[Array]::IndexOf($a,'--prompt-file')+1]
     $script:captured=[IO.File]::ReadAllText($pf); $script:ro=$a -contains '--read-only'
     $script:cwd=$a[[Array]::IndexOf($a,'--workdir')+1]

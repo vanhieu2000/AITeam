@@ -1,9 +1,14 @@
-@page
+﻿@page
 @model AITeam.Hub.Pages.SettingsModel
 @{
     ViewData["Title"] = "Cài đặt";
     var isTeam = string.Equals(Model.Tab, "team", StringComparison.OrdinalIgnoreCase) || Model.CurrentProject == null;
 }
+<div class="panel" style="padding:14px;margin-bottom:14px">
+    <strong>ChatGPT, model và ghi nhớ hội thoại</strong>
+    <p class="muted">Cấu hình model, lời hướng dẫn, kiểm tra đăng nhập và lịch sử SQLite lưu trên máy.</p>
+    <a class="btn pri" href="/Chat#settings">Mở cài đặt chat</a>
+</div>
 
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {

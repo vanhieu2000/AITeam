@@ -43,7 +43,7 @@ Bàn giao người duyệt bản kế hoạch gắn phiên bản đầu vào và
 - [ ] Giả định CHƯA XÁC MINH vẫn được nêu đúng trạng thái; blocker không bị giấu trong ước lượng.
 
 ## Lỗi hay gặp
-- AGENTS.md:48 — V4-08: test tiến trình dùng bin/Debug đã chạy nhầm bản cũ; task có tiến trình con phải ghi ProjectReference và đường dẫn AppContext.BaseDirectory vào hợp đồng/test, không dựa vào bản build máy cá nhân.
+- AGENTS.md:49 — V4-08: test tiến trình dùng bin/Debug đã chạy nhầm bản cũ; task có tiến trình con phải ghi ProjectReference và đường dẫn AppContext.BaseDirectory vào hợp đồng/test, không dựa vào bản build máy cá nhân.
 - Hai task khác mục tiêu vẫn xung đột nếu sửa cùng file; kiểm tập file và phụ thuộc trước khi cho song song.
 
 ## Ví dụ ngắn tốt / xấu

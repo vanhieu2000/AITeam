@@ -16,14 +16,21 @@ public class OfficeModel : PageModel
     private readonly IRequestService? _requests;
     private readonly IOfficeChatService? _chat;
     private readonly ITeamConfigService? _config;
+    private readonly LocalChatStore? _localChat;
+    public ChatConversation? LatestAiConversation { get; private set; }
+    public string? AiConversationNotice { get; private set; }
+    private readonly IResearchService? _research;
+    public ResearchModel? ResearchPane { get; private set; }
 
-    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null)
+    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null, LocalChatStore? localChat = null, IResearchService? research = null)
     {
         _office = office;
         _commands = commands;
         _requests = requests;
         _chat = chat;
         _config = config;
+        _localChat = localChat;
+        _research = research;
     }
 
     [BindProperty(SupportsGet = true)] public string? RequestId { get; set; }
@@ -123,6 +130,8 @@ public class OfficeModel : PageModel
     /// <summary>Nạp View (bắt lỗi ⇒ Error) rồi LoadControl().</summary>
     public void OnGet()
     {
+        try { LatestAiConversation = _localChat?.Conversations().FirstOrDefault(); }
+        catch (Exception) { AiConversationNotice = "Chưa đọc được hội thoại. Mở Trò chuyện AI để kiểm tra."; }
         try
         {
             View = _office.Get();
@@ -134,6 +143,34 @@ public class OfficeModel : PageModel
         }
         LoadControl();
         LoadChat();
+        LoadResearch();
+    }
+
+    private void LoadResearch()
+    {
+        if (_research == null || _requests == null) return;
+        ResearchPane = new ResearchModel(_research, _requests) { Embedded = true };
+        ResearchPane.OnGet(SelectedThread?.Id);
+    }
+
+    public IActionResult OnGetResearch()
+    {
+        LoadChat(); LoadResearch();
+        return Self("_OfficeResearch");
+    }
+
+    public IActionResult OnPostResearchAsk(string? r, string? question, string[]? ai, bool includeRequestText)
+    {
+        RequestId = r; OnGet();
+        if (ResearchPane?.Current != null) ResearchPane.OnPostAsk(r, question, ai, includeRequestText);
+        return Page();
+    }
+
+    public IActionResult OnPostResearchSaveManual(string? r, string? questionId, string? ai, string? question, string? answer, string? sources)
+    {
+        RequestId = r; OnGet();
+        if (ResearchPane?.Current != null) ResearchPane.OnPostSaveManual(r, questionId, ai, question, answer, sources);
+        return Page();
     }
 
     /// <summary>
