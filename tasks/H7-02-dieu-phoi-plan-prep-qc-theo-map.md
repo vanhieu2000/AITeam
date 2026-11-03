@@ -1,10 +1,10 @@
-# H7-02 · Điều phối plan/prep/QC theo Map
+﻿# H7-02 · Điều phối plan/prep/QC theo Map
 
-- **Agent:** B
-- **Nhánh:** `agent-b/H7-02-dieu-phoi-plan-prep-qc-theo-map`
+- **Agent:** C
+- **Nhánh:** `agent-c/H7-02-map-plan-prep-qc`
 - **Ưu tiên:** trung bình
 - **Ngân sách:** ~350 dòng
-- **Yêu cầu:** R-009
+- **Yêu cầu:** R-012 (tiếp nối R-009)
 - **Thời gian tối đa:** 25 phút
 - **Review AI:** có
 - **Độ khó:** M <!-- S (≤150 dòng, rõ ràng) · M (≤400, vài file) · L (>400 / nhiều module / rủi ro cao) -->
@@ -75,6 +75,18 @@ Theo brief R-009 mục 6; H7-01 đã có trong WorkflowRolesService. Hiện plan
 - [ ] Báo cáo bảng từng tiêu chí → lệnh/kết quả thật, file đổi/lý do, quyết định và điều chưa xác minh.
 
 ## Báo cáo của agent
+### Đợt A1 · tiếp tục từ origin/main 759ddaf
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Tích hợp Map | Nhánh mới từ origin/main; lấy đúng phần triển khai của 7f21688, không lấy cache .dotnet hoặc các file UI/docs cũ. |
+| Bất biến nghiệm thu | H702/Fixtures giữ byte nhánh nguồn; S1-04 chỉ nạp helper/stub workflow-role đã có ở nhánh nguồn, không đổi assert. |
+| Build | dotnet build AITeam.sln -warnaserror -nodeReuse:false: đạt, 0 warning, 0 error. |
+| H702 | 55/68 đạt; 13 ca không đạt cần powershell.exe/cmd.exe Windows. CLI workflow-role chạy thật trả JSON plan/codex/readOnly=true. |
+| Toàn bộ | Hub 776/790 đạt (14 lỗi Windows); Core 452/758 đạt (306 lỗi: Windows và 4 tham chiếu tài liệu lệch từ main). 0 skip. |
+| test-verify | powershell -NoProfile -File tools/test-verify.ps1: chưa chạy được, command not found (127). |
+- Trạng thái: đã tích hợp để review, DỪNG nghiệm thu do môi trường Linux không có Windows PowerShell 5.1; không nhận test toàn bộ xanh, không merge main.
+- Phút: chưa đo. Token: chưa đo. Tiếp tục A2 theo thứ tự, không giả lập powershell.exe bằng pwsh để che lỗi.
+
 <!-- Lập trình viên điền bảng tiêu chí → bằng chứng, file đổi/lý do, quyết định, điều chưa xác minh. -->
 
 ### Ghi nhận bước chuẩn bị (Codex, 26/10/2026)

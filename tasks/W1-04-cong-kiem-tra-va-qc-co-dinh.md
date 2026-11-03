@@ -30,3 +30,10 @@
 | Chỉ định | A3 trong YEU-CAU-CODEX.md ghi rõ chỉ bắt đầu W1-04 khi W1-03 vào main. |
 | Trạng thái | BỊ CHẶN bởi phụ thuộc chưa merge; không thay sản phẩm/test và không tự merge. |
 - Chưa chạy build/test cho mã chưa triển khai; chỉ báo cáo/tạo task. Phút: chưa đo; token: chưa đo.
+
+## Báo cáo của agent — đợt 2
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Phụ thuộc | GIAO-CODEX-DOT-2.md mục 5 yêu cầu chờ Claude báo W1-03 đã merge. tasks/README.md trên main 9bc9a8e vẫn ghi W1-03 Chờ review; chưa nhận thông báo đủ điều kiện. |
+| Trạng thái | Chưa triển khai gate/QC dựa trên khung W1-03 chưa chốt; không tự merge. Đã cập nhật nhánh cũ và push báo cáo. |
+| Kiểm tra/đo | Chỉ tài liệu, không chạy lại build/test; chưa chạy Windows. Phút: chưa đo; token: chưa đo. |
