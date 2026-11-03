@@ -821,6 +821,7 @@ function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$bran
 # Review AI cho task vừa qua cổng KT: aiteam review --auto (tự quyết có review không), reviewer ≠ agy (cấm tự duyệt).
 # Trả $null nếu bỏ qua / không chạy được; ngược lại { Code (0 PASS · 1 CẦN SỬA · 3 BLOCKED · 4 bỏ qua), Json, Out }.
 function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$devProvider = "agy") {
+    $assignment = Resolve-WorkflowAssignment 'qc'
     if ($NoReview) { Say "Bỏ qua review AI (-NoReview)."; return $null }
     $exe = Get-AITeamExe
     if (-not $exe) { Say "Không build được aiteam.exe ⇒ bỏ qua review AI." Yellow; return $null }
@@ -844,7 +845,7 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
         $a+=@('--verify-file',(Join-Path $r.Logs $script:AcceptVerify.verify.source))
     }
     Say "Review AI (aiteam review --auto)…" Cyan
-    Invoke-WorkflowCodexLock -Action { Invoke-CodexRetry $exe $a $out }   # QC Codex dùng chung khóa toàn máy với prep
+    Invoke-WorkflowRoleRun $assignment $exe $a 2>&1 | ForEach-Object { Say "  $_" }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $ErrorActionPreference = $eap
     $json = $null; if (Test-Path $out) { try { $json = Read-Json $out } catch { } }
@@ -1107,7 +1108,15 @@ function ConvertTo-AsciiSlug([string]$text) {
 function Invoke-Qc {
     $ctx = Get-TaskContext
     if (-not (Test-Path $ctx.Work)) { throw "Chưa có thư mục làm việc $($ctx.Work)" }
-    $rv = Invoke-AutoReview $ctx.R $ctx.TaskFile.Name $ctx.Work "agy"
+    $devProvider = if ($ctx.AgentId -ceq 'C') { 'codex' } else { 'agy' }
+    $lastRun = Get-ChildItem $ctx.R.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue |
+        Where-Object { $_.BaseName -match ('^' + [regex]::Escape($Task) + '-\d+$') } |
+        Sort-Object LastWriteTime | Select-Object -Last 1
+    if ($lastRun) {
+        $run = Read-Json $lastRun.FullName
+        if ($run.provider -in @('codex','agy')) { $devProvider = $run.provider }
+    }
+    $rv = Invoke-AutoReview $ctx.R $ctx.TaskFile.Name $ctx.Work $devProvider
     if (-not $rv) { Say "Review AI bỏ qua (task không bật Review AI?)." Yellow; return }
     $text = @{ 0 = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS"; 1 = "🔴 Cần sửa · AI review CẦN SỬA"; 3 = "🔵 Chờ review · AI review BLOCKED (Claude review)" }[[int]$rv.Code]
     Say "QC: mã $($rv.Code) · $($rv.Out)" Cyan
@@ -1129,7 +1138,46 @@ function Invoke-Qc {
 }
 
 # Bước 2: plans/R-xxx/brief.md (Claude viết, ≤ 20 dòng) ⇒ Codex đọc repo CHỈ ĐỌC ⇒ plans/R-xxx/plan.md. -Name = tiền tố mã task (vd. V6).
+# /// <summary>Đọc quyết định qua aiteam workflow-role --root $Root --role $Role; JSON camelCase.
+# /// CLI lỗi hoặc JSON không hợp lệ phải throw, không trả mặc định; không ghi team.json.</summary>
+function Resolve-WorkflowAssignment([string]$Role) {
+    $exe = Get-AITeamExe
+    if (-not $exe) { throw 'Không build được aiteam.exe' }
+    $json = & $exe workflow-role --root $Root --role $Role
+    if ($LASTEXITCODE -ne 0) { throw 'Không đọc được cấu hình phân vai.' }
+    try { $assignment = ($json -join "`n") | ConvertFrom-Json } catch { throw 'Phân vai không hợp lệ.' }
+    if (-not $assignment -or $assignment.role -cne $Role -or
+        $assignment.actor -cnotin @('claude','codex','minh','lan','gate','owner') -or
+        $assignment.isExplicit -isnot [bool] -or $assignment.readOnly -isnot [bool] -or $assignment.manual -isnot [bool] -or
+        $assignment.readOnly -ne ($Role -ne 'prep')) { throw 'Phân vai không hợp lệ.' }
+    $provider = switch -CaseSensitive ($assignment.actor) { 'codex' {'codex'} 'minh' {'agy'} 'lan' {'agy'} default {$null} }
+    if (-not $assignment.isExplicit -and $Role -eq 'qc') { $provider = $null }
+    if ($assignment.providerId -cne $provider -or $assignment.manual -ne ($assignment.actor -cin @('claude','gate','owner'))) { throw 'Phân vai không hợp lệ.' }
+    if ($assignment.manual) { throw 'Tác nhân được gán cần thực hiện thủ công.' }
+    return $assignment
+}
+
+# /// <summary>Chạy đúng Assignment bằng $Exe với mảng Arguments; không Invoke-Expression.
+# /// Manual => throw "Tác nhân được gán cần thực hiện thủ công." trước gọi exe.
+# /// run: thêm --provider đúng người; plan thêm --read-only, prep không thêm; review: thêm
+# /// --reviewer-provider khi IsExplicit, QC cũ không thêm. Giữ mã LASTEXITCODE.
+# /// Chỉ bọc Invoke-WorkflowCodexLock khi ProviderId=codex; không khóa agy/thủ công.
+# /// Không fallback; không đổi --out/--root/timeout hay cờ khác trong Arguments.</summary>
+function Invoke-WorkflowRoleRun($Assignment, [string]$Exe, [string[]]$Arguments) {
+    if ($Assignment.Manual) { throw 'Tác nhân được gán cần thực hiện thủ công.' }
+    $callArgs = @($Arguments)
+    if ($callArgs[0] -ceq 'run') {
+        $callArgs += @('--provider', $Assignment.ProviderId)
+        if ($Assignment.Role -ceq 'plan' -and '--read-only' -notin $callArgs) { $callArgs += '--read-only' }
+    } elseif ($callArgs[0] -ceq 'review' -and $Assignment.IsExplicit) {
+        $callArgs += @('--reviewer-provider', $Assignment.ProviderId)
+    }
+    if ($Assignment.ProviderId -ceq 'codex') {
+        Invoke-WorkflowCodexLock -Action { & $Exe @callArgs }
+    } else { & $Exe @callArgs }
+}
 function Invoke-Plan {
+    $assignment = Resolve-WorkflowAssignment 'plan'
     $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
     $dir = Get-PlanDir $Request
     $brief = Join-Path $dir "brief.md"
@@ -1147,7 +1195,7 @@ function Invoke-Plan {
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     $before = git -C $r.Path status --porcelain
     Say "[$(Get-Date -Format HH:mm:ss)] $Request → Codex lập kế hoạch (chỉ đọc) trong $($r.Path)" Cyan
-    & $exe run --provider codex --read-only --workdir $r.Path --prompt-file $pf --logdir (Join-Path $r.Logs "$Request.plan") --timeout-min 20 --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
+    Invoke-WorkflowRoleRun $assignment $exe @("run", "--workdir", $r.Path, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$Request.plan"), "--timeout-min", "20", "--out", $out, "--root", $Root) 2>&1 | ForEach-Object { Say "  $_" }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
     $after = git -C $r.Path status --porcelain
     $ErrorActionPreference = $eap
@@ -1167,6 +1215,7 @@ function Invoke-Plan {
 # file task + khung + test nghiệm thu ⇒ build phải 0 lỗi ⇒ commit + push nhánh, file task + dòng bảng việc lên main
 # ⇒ giao Antigravity (assign; task có "Review AI: có" ⇒ Codex QC sau cổng KT). -NoLaunch: chỉ chuẩn bị, không giao.
 function Invoke-Prep {
+    $assignment = Resolve-WorkflowAssignment 'prep'
     $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
     $dir = Get-PlanDir $Request
     $planFile = Join-Path $dir "plan.md"
@@ -1212,7 +1261,7 @@ function Invoke-Prep {
     $out = Join-Path $r.Logs "$Task.prep.json"
     $exe = Get-AITeamExe
     Say "[$(Get-Date -Format HH:mm:ss)] $Task → Codex chuẩn bị task (đặc tả + khung + test nghiệm thu) trong $work" Cyan
-    Invoke-WorkflowCodexLock -Action { Invoke-CodexRetry $exe @("run", "--provider", "codex", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$Task.prep"), "--timeout-min", "20", "--out", $out, "--root", $Root) $out }
+    Invoke-WorkflowRoleRun $assignment $exe @("run", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$Task.prep"), "--timeout-min", "20", "--out", $out, "--root", $Root) 2>&1 | ForEach-Object { Say "  $_" }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
     if ($code -ne 0) {

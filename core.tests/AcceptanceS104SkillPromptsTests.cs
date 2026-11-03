@@ -165,7 +165,7 @@ $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
-$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry')
+$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun')
 foreach ($f in $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$true)) {
     if ($f.Name -in $names) { . ([scriptblock]::Create($f.Extent.Text)) }
 }
@@ -196,7 +196,14 @@ function Set-McpConfig { $false }; function Get-StaffName { 'giả' }; function 
 function Test-AgentTouchedMain { }; function Get-RunRecord { }; function Save-RunMetrics { }
 function Test-QuotaExhausted { $x.mode -eq 'fallback' }
 $script:captured=$null; $script:calls=0; $script:ro=$false; $script:cwd=$repo
+# Khóa giả chỉ chạy action trong sandbox, không dùng khóa Codex trên máy.
+function Invoke-WorkflowCodexLock { param([scriptblock]$Action) & $Action }
 function FakeProvider {
+    if ($args[0] -eq 'workflow-role') {
+        $role=$args[[Array]::IndexOf($args,'--role')+1]
+        $global:LASTEXITCODE=0
+        return ([pscustomobject]@{role=$role;actor='codex';providerId='codex';isExplicit=$false;readOnly=($role -eq 'plan');manual=$false} | ConvertTo-Json -Compress)
+    }
     $script:calls++; $a=@($args); $pf=$a[[Array]::IndexOf($a,'--prompt-file')+1]
     $script:captured=[IO.File]::ReadAllText($pf); $script:ro=$a -contains '--read-only'
     $script:cwd=$a[[Array]::IndexOf($a,'--workdir')+1]
