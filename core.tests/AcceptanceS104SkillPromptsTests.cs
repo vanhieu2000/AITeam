@@ -165,7 +165,7 @@ $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
-$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Assert-PrepPlanApproval','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun','Get-ReviewRoundLimit','Get-ReviewRoundCount','Stop-ReviewReassignment') # W1-03 + H7-02 + V6-02
+$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Assert-PrepPlanApproval','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun','Get-ReviewRoundLimit','Get-ReviewRoundCount','Stop-ReviewReassignment','Get-RecordedDeveloper','ConvertTo-DeveloperProvider') # H7-02 + V6-02 + W1-03 + V9-14
 foreach ($f in $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$true)) {
     if ($f.Name -in $names) { . ([scriptblock]::Create($f.Extent.Text)) }
 }

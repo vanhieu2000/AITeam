@@ -18,6 +18,7 @@ try
         "task-info" => TaskInfo(),
         "review-findings" => ReviewFindings(),
         "lint-task" => await LintTask(),
+        "route-developer" => await RouteDeveloper(),
         "check-harness-change" => CheckHarnessChange(),
         "review" => await Review(),
         "workflow-role" => WorkflowRole(),
@@ -99,6 +100,15 @@ int ReviewFindings()
     if (new FileInfo(file).Length > 10 * 1024 * 1024) throw new InvalidDataException("Review quá lớn.");
     Console.WriteLine(JsonSerializer.Serialize(AITeam.Core.Metrics.FindingParser.Parse(File.ReadAllText(file))));
     return 0;
+}
+
+async Task<int> RouteDeveloper()
+{
+    var file=Arg("--input") ?? throw new InvalidDataException("Thiếu --input");
+    if(new FileInfo(file).Length>1024*1024)throw new InvalidDataException("Ảnh chụp định tuyến quá lớn.");
+    var snapshot=JsonSerializer.Deserialize<DeveloperRoutingSnapshot>(File.ReadAllText(file),new JsonSerializerOptions{PropertyNameCaseInsensitive=true}) ?? throw new InvalidDataException("Ảnh chụp định tuyến rỗng.");
+    var decision=await DeveloperRouting.SelectAsync(root,snapshot,new ProcessRunner(),DateTimeOffset.Now,CancellationToken.None);
+    Console.WriteLine(JsonSerializer.Serialize(decision));return 0;
 }
 
 async Task<int> Providers()
