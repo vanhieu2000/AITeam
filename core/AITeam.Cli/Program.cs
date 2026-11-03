@@ -16,6 +16,7 @@ try
     {
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
+        "check-harness-change" => CheckHarnessChange(),
         "review" => await Review(),
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
@@ -37,6 +38,15 @@ catch (Exception ex)
 {
     Console.Error.WriteLine($"LỖI: {ex.Message}");
     return 1;
+}
+
+int CheckHarnessChange()
+{
+    var file = Arg("--diff-file") ?? throw new InvalidDataException("Thiếu --diff-file");
+    if (new FileInfo(file).Length > 10 * 1024 * 1024) throw new InvalidDataException("Diff harness quá lớn.");
+    var allowed = AcceptanceHarnessPolicy.Allows(File.ReadAllText(file), args.Contains("--allow"));
+    Console.WriteLine(allowed ? "Chấp nhận thay harness đã khai báo; Claude vẫn cần review phạm vi dựng môi trường." : "Chặn: chưa khai báo hoặc sửa assert/điều kiện chọn test.");
+    return allowed ? 0 : 2;
 }
 
 async Task<int> Providers()

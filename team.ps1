@@ -1530,12 +1530,26 @@ function Get-PsExe { (Get-Process -Id $PID).Path }
 
 # Chạy lệnh build/test của dự án trong thư mục cho trước, lấy mã thoát + toàn bộ output.
 function Invoke-ShellCapture([string]$command, [string]$dir) {
-    Push-Location $dir
+    $buildMutex = $null; $buildOwned = $false; $locationPushed = $false
     try {
+        if ($command -match '(?i)\bdotnet\s+build\b') {
+            # Dùng chung giữa worktree/tiến trình trên máy, không để hai build tranh tệp/worker.
+            $buildMutex = New-Object Threading.Mutex($false, 'Global\AITeam.Build')
+            try { $buildOwned = $buildMutex.WaitOne([TimeSpan]::FromMinutes(15)) }
+            catch [Threading.AbandonedMutexException] { $buildOwned = $true }
+            if (-not $buildOwned) { throw 'Hết thời gian chờ build khác; chưa chạy build.' }
+            $command = [regex]::Replace($command, '(?i)\bdotnet\s+build\b', '$0 -nodeReuse:false')
+            $command = [regex]::Replace($command, '(?i)(?:-|/)(?:nr|nodeReuse):\s*true\b', '-nodeReuse:false')
+        }
+        Push-Location $dir; $locationPushed = $true
         if ($env:OS -eq 'Windows_NT') { $out = cmd /c "$command 2>&1" | Out-String }
         else { $out = sh -c "$command 2>&1" | Out-String }
         return [pscustomobject]@{ Code = $LASTEXITCODE; Output = $out }
-    } finally { Pop-Location }
+    } finally {
+        if ($locationPushed) { Pop-Location }
+        if ($buildOwned) { $buildMutex.ReleaseMutex() }
+        if ($buildMutex) { $buildMutex.Dispose() }
+    }
 }
 
 # 3 byte đầu của file trong một commit (Start-Process ghi stdout nguyên byte, không bị đổi mã như pipe của PowerShell).
@@ -1614,6 +1628,14 @@ function Invoke-Verify {
 
     # 3. Test nghiệm thu do Claude viết trước: phải còn nguyên
     $accept = Get-BacktickPaths (Get-Section $ctx.Text "Test nghiệm thu")
+    $allowedHarness = @()
+    foreach ($permission in [regex]::Matches($ctx.Text, '(?m)^-\s+\*\*Cho phép sửa harness:\*\*\s*([^\r\n]+)')) {
+        $declared = @(Get-BacktickPaths $permission.Groups[1].Value)
+        if ($declared.Count -eq 0) { $declared = @($permission.Groups[1].Value.Trim()) }
+        foreach ($path in $declared) {
+            if ($accept -contains $path -and $path -notmatch '(^|[\\/])\.\.([\\/]|$)|^[\\/]|:') { $allowedHarness += $path }
+        }
+    }
     foreach ($a in $accept) {
         if (-not (Test-Path (Join-Path $work $a))) { [void]$fails.Add("Thiếu file test nghiệm thu: $a"); continue }
         # Test nghiệm thu nằm sẵn trên main, hoặc là commit đầu tiên Claude đẩy lên nhánh task (vì tham chiếu lớp chưa có).
@@ -1622,7 +1644,25 @@ function Invoke-Verify {
         if ($LASTEXITCODE -ne 0) { $ref = git -C $work log --reverse --diff-filter=A --format=%H "$base..HEAD" -- $a 2>$null | Select-Object -First 1 }
         if (-not $ref) { [void]$fails.Add("Không tìm thấy commit thêm test nghiệm thu: $a"); continue }
         git -C $work diff --quiet $ref HEAD -- $a 2>$null
-        if ($LASTEXITCODE -ne 0) { [void]$fails.Add("Agent đã SỬA test nghiệm thu (không được phép): $a") }
+        if ($LASTEXITCODE -ne 0) {
+            $harnessOk = $false
+            if ($allowedHarness -contains $a) {
+                $policyExe = Get-AITeamExe
+                if ($policyExe) {
+                    $diffFile = [IO.Path]::GetTempFileName()
+                    try {
+                        $diffLines = @(git -C $work diff --no-ext-diff --no-textconv --unified=0 $ref HEAD -- $a 2>$null)
+                        if ($LASTEXITCODE -eq 0) {
+                            [IO.File]::WriteAllText($diffFile, ($diffLines -join "`n"), (New-Object Text.UTF8Encoding $false))
+                            $policyMessage = @(& $policyExe check-harness-change --allow --diff-file $diffFile)
+                            $harnessOk = $LASTEXITCODE -eq 0
+                        }
+                    } finally { Remove-Item -LiteralPath $diffFile -ErrorAction SilentlyContinue }
+                }
+            }
+            if ($harnessOk) { [void]$notes.Add("Đã cho phép sửa harness khai báo: $a; không đổi assert/thuộc tính test, Claude review phần dựng môi trường.") }
+            else { [void]$fails.Add("Agent đã SỬA test nghiệm thu (không được phép hoặc đụng assert): $a") }
+        }
     }
     if ($accept.Count -gt 0 -and -not ($fails | Where-Object { $_ -match 'test nghiệm thu' })) { [void]$notes.Add("Test nghiệm thu còn nguyên: $($accept.Count) file") }
 
