@@ -34,3 +34,15 @@
 | Tự quyết | Task không khai `Phạm vi` thì bỏ qua khóa (lint đã chặn luồng thật) để không phá harness S104; xung đột khóa không đổi trạng thái bảng (giữ 🟣 để auto giao lại sau); `auto` chỉ giao lại cùng task sau 60 giây. |
 | Chưa xác minh | Chưa chạy `auto`/`stop -All` trên tiến trình thật và chưa đo phút/token; hàng đợi chưa dùng `QuotaObservation` vì V9-11 chưa có trên main (định tuyến V9-14 đã dùng trong `Invoke-Assign`). |
 | File đổi | `core/AITeam.Core/Queue/ScopeLocks.cs` (mới), `core/AITeam.Core/Queue/TaskQueue.cs` (mới), `core/AITeam.Cli/Program.cs`, `team.ps1`, `core.tests/V915QueueTests.cs` (mới), file task này. |
+
+## Báo cáo của agent — OpenCode (vòng 2)
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Một nguồn logic | `team.ps1`: xóa hàm lồng `Invoke-ScopeLockFile`, `Get-QueueReadyTasks`, `Test-QueuePending`; thêm hàm cấp cao nhất `Invoke-ScopeLock` (`-Action acquire|release`) gọi `lock-acquire`/`lock-release` của CLI C#. |
+| `Invoke-Assign` | Gọi `Invoke-ScopeLock -Action acquire -TaskId -Provider -TaskFile -BoardFile -ProjectPath`; giữ `$script:ScopeLockOwn`, nhả trong `finally`. |
+| `Invoke-AutoQueue` | Đọc danh sách bằng `& $exe queue-ready --board … --tasks …` rồi lọc `ready`; không còn logic PowerShell song song. |
+| `lock-release` | `Program.cs` truyền `--project` vào `ScopeLockStore` như `lock-acquire`; thêm test CLI roundtrip trong `V915QueueTests.cs`. |
+| Harness cũ | `AcceptanceS104SkillPromptsTests.cs` thêm `function Invoke-ScopeLock { $true }` ở phần dựng harness, giữ nguyên assert (V602/V914 không chạy tới nhánh khóa). |
+| Test | `V915QueueTests`: thay ca PowerShell cũ bằng CLI `queue-ready`, `lock-acquire`/`lock-release` thật; ca assign dùng CLI thật qua `aiteam.dll`. |
+| Build/test | `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → 835 Hub + 937 Core đạt, 0 hỏng. |
+

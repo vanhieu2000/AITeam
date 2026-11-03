@@ -187,6 +187,8 @@ $r=[pscustomobject]@{Info=$info;Path=$repo;Logs=$logs;Work=$workRoot}
 $cfg=[pscustomobject]@{developers=@();agy=[pscustomobject]@{exe='fake-agy';model=''};github=[pscustomobject]@{owner='giả'}}
 function Get-Config { $cfg }; function Resolve-Project { $r }; function Get-PlanDir { $planDir }
 function Get-AITeamExe { 'FakeProvider' }; function Say { }; function git { $global:LASTEXITCODE=0; '' } # V9-06: assign kiểm mã thoát git fetch/merge
+# V9-15: khóa phạm vi do Invoke-ScopeLock (top-level, gọi CLI) lo; harness thay bằng hàm giả để không chạy CLI thật.
+function Invoke-ScopeLock { $true }
 function Find-TaskFile { Get-Item (Join-Path $repo 'tasks/S1-04.md') }
 function Select-FreeAgent { 'A' }; function ConvertTo-AsciiSlug { 'ket-noi' }
 function Copy-Template { param($template,$path,$vars) [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path)) | Out-Null; [IO.File]::WriteAllText($path,'- **Yêu cầu:** R-xxx') }

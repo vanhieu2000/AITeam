@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using AITeam.Core.Queue;
 using AITeam.Core.Tests.Support;
 
@@ -7,6 +8,25 @@ namespace AITeam.Core.Tests;
 /// <summary>Nghiệm thu V9-15: khóa phạm vi file (.state/locks.json) và hàng đợi task theo phụ thuộc.</summary>
 public sealed class V915QueueTests
 {
+    /// <summary>Đường dẫn dotnet.exe từ PATH của tiến trình test (PATH trong harness bị thay bằng thư mục giả).</summary>
+    private static string DotnetExe()
+    {
+        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
+        {
+            if (string.IsNullOrWhiteSpace(dir)) continue;
+            var candidate = Path.Combine(dir.Trim('"'), "dotnet.exe");
+            if (File.Exists(candidate)) return candidate;
+        }
+        return "dotnet";
+    }
+
+    /// <summary>Vỏ lệnh chạy đúng aiteam.dll của bản build này — harness PowerShell gọi y như Get-AITeamExe thật.</summary>
+    private static void WriteCliWrapper(string root)
+    {
+        var dll = Path.Combine(AppContext.BaseDirectory, "aiteam.dll");
+        File.WriteAllText(Path.Combine(root, "cli.cmd"),
+            "@echo off\r\n\"" + DotnetExe() + "\" \"" + dll + "\" %*\r\n", new UTF8Encoding(false));
+    }
     [Fact]
     public void Locks_on_the_same_file_do_not_share()
     {
@@ -136,42 +156,60 @@ public sealed class V915QueueTests
     }
 
     [Fact]
-    public async Task PowerShell_queue_reads_board_and_dependencies()
+    public async Task Queue_ready_cli_reports_dependencies_for_auto_assign()
     {
-        using var sandbox = new TeamScript();
-        var root = sandbox.Root;
-        Directory.CreateDirectory(Path.Combine(root, "tasks"));
-        File.WriteAllText(Path.Combine(root, "tasks", "README.md"),
+        using var repo = new TempRepo(false);
+        repo.Write("tasks/README.md",
             "| Việc | Agent | Nhánh | Trạng thái |\r\n" +
             "| [A-1 Việc A](A-1-viec-a.md) | C | `b-a` | ✅ Đã merge |\r\n" +
             "| [B-2 Việc B](B-2-viec-b.md) | O | `b-b` | 🟣 Chờ làm |\r\n" +
-            "| [C-3 Việc C](C-3-viec-c.md) | A | `b-c` | 🟣 Chờ làm |\r\n", new UTF8Encoding(false));
-        File.WriteAllText(Path.Combine(root, "tasks", "A-1-viec-a.md"), "## Phạm vi\r\n- `a.cs`\r\n", new UTF8Encoding(false));
-        File.WriteAllText(Path.Combine(root, "tasks", "B-2-viec-b.md"), "## Phạm vi\r\n- `b.cs`\r\n- **Phụ thuộc:** A-1\r\n", new UTF8Encoding(false));
-        File.WriteAllText(Path.Combine(root, "tasks", "C-3-viec-c.md"), "## Phạm vi\r\n- `c.cs`\r\n- **Phụ thuộc:** B-2\r\n", new UTF8Encoding(false));
-        var result = await sandbox.RunAsync("team.ps1", ["Get-QueueReadyTasks", "Test-QueuePending"], $$"""
-            $r = [pscustomobject]@{ Path = $Root; Info = [pscustomobject]@{ name = 'P' } }
-            $items = @(Get-QueueReadyTasks $r)
-            "COUNT=$($items.Count)"
-            "READY=" + ((@($items | Where-Object { $_.Ready }) | ForEach-Object { $_.Id }) -join ',')
-            "WAIT=" + ((@($items | Where-Object { -not $_.Ready }) | ForEach-Object { $_.Id + ':' + $_.Reason }) -join ';')
-            """);
-        Assert.Equal(0, result.Process.Code);
-        Assert.Contains("COUNT=2", result.Process.Output);
-        Assert.Contains("READY=B-2", result.Process.Output);
-        Assert.Contains("WAIT=C-3:Chờ phụ thuộc: B-2", result.Process.Output);
+            "| [C-3 Việc C](C-3-viec-c.md) | A | `b-c` | 🟣 Chờ làm |\r\n", bom: false);
+        repo.Write("tasks/A-1-viec-a.md", "## Phạm vi\r\n- `a.cs`\r\n", bom: false);
+        repo.Write("tasks/B-2-viec-b.md", "## Phạm vi\r\n- `b.cs`\r\n- **Phụ thuộc:** A-1\r\n", bom: false);
+        repo.Write("tasks/C-3-viec-c.md", "## Phạm vi\r\n- `c.cs`\r\n- **Phụ thuộc:** B-2\r\n", bom: false);
+        var dll = Path.Combine(AppContext.BaseDirectory, "aiteam.dll");
+        var result = await TestShell.Run(repo.Root, "dotnet", 60, dll, "queue-ready",
+            "--board", Path.Combine(repo.Root, "tasks", "README.md"), "--tasks", Path.Combine(repo.Root, "tasks"));
+        Assert.Equal(0, result.Code);
+        using var doc = JsonDocument.Parse(result.Output);
+        var rows = doc.RootElement.EnumerateArray()
+            .ToDictionary(r => r.GetProperty("id").GetString()!, StringComparer.OrdinalIgnoreCase);
+        Assert.True(rows["B-2"].GetProperty("ready").GetBoolean());
+        Assert.False(rows["C-3"].GetProperty("ready").GetBoolean());
+        Assert.Contains("B-2", rows["C-3"].GetProperty("reason").GetString());
     }
 
     [Fact]
-    public async Task PowerShell_auto_queue_exits_when_nothing_is_ready()
+    public async Task Lock_cli_release_uses_project_scope_like_acquire()
+    {
+        using var aiteam = new TempRepo(false);
+        using var project = new TempRepo(false);
+        var taskFile = project.Write("tasks/A-1-viec-a.md", "## Phạm vi\r\n- `core/A.cs`\r\n", bom: false);
+        var dll = Path.Combine(AppContext.BaseDirectory, "aiteam.dll");
+        var acquire = await TestShell.Run(aiteam.Root, "dotnet", 60, dll, "lock-acquire",
+            "--root", aiteam.Root, "--project", project.Root, "--task", "A-1", "--provider", "agy", "--task-file", taskFile);
+        Assert.Equal(0, acquire.Code);
+        Assert.True(File.Exists(Path.Combine(aiteam.Root, ".state", "locks.json")));
+
+        var release = await TestShell.Run(aiteam.Root, "dotnet", 60, dll, "lock-release",
+            "--root", aiteam.Root, "--project", project.Root, "--task", "A-1");
+        Assert.Equal(0, release.Code);
+        Assert.Contains("OK", release.Output);
+        Assert.False(File.Exists(Path.Combine(aiteam.Root, ".state", "locks.json")));
+    }
+
+    [Fact]
+    public async Task PowerShell_auto_queue_uses_cli_for_ready_tasks()
     {
         using var sandbox = new TeamScript();
+        var root = sandbox.Root;
+        File.WriteAllText(Path.Combine(root, "cli.cmd"),
+            "@echo off\r\n> \"%~dp0cli-args.txt\" echo %*\r\necho []\r\nexit /b 0\r\n", new UTF8Encoding(false));
         var result = await sandbox.RunAsync("team.ps1", ["Invoke-AutoQueue"], """
             $Project = 'P'
             $Max = 2
             function Resolve-Project($name) { [pscustomobject]@{ Path = $Root; Info = [pscustomobject]@{ name = $name }; Logs = $Root } }
-            function Get-AITeamExe { 'C:\fake\aiteam.exe' }
-            function Get-QueueReadyTasks($r) { @() }
+            function Get-AITeamExe { Join-Path $Root 'cli.cmd' }
             function Get-AssignProcesses($r) { @() }
             function Say($text, $color) { $text }
             Invoke-AutoQueue
@@ -179,6 +217,10 @@ public sealed class V915QueueTests
         Assert.Equal(0, result.Process.Code);
         Assert.Contains("không còn task chờ làm", result.Process.Output);
         Assert.False(File.Exists(Path.Combine(sandbox.Root, ".state", "auto.pid")));
+        var args = File.ReadAllText(Path.Combine(root, "cli-args.txt"));
+        Assert.Contains("queue-ready", args);
+        Assert.Contains("--board", args);
+        Assert.Contains("--tasks", args);
     }
 
     [Fact]
@@ -186,6 +228,7 @@ public sealed class V915QueueTests
     {
         using var sandbox = new TeamScript();
         var root = sandbox.Root;
+        WriteCliWrapper(root);
         Directory.CreateDirectory(Path.Combine(root, "tasks"));
         Directory.CreateDirectory(Path.Combine(root, ".state"));
         File.WriteAllText(Path.Combine(root, "tasks", "B-2-viec-b.md"),
@@ -193,8 +236,9 @@ public sealed class V915QueueTests
         File.WriteAllText(Path.Combine(root, ".state", "locks.json"),
             """[{"task":"A-1","provider":"codex","at":"2026-01-01T00:00:00","scope":["core/a.cs"]}]""",
             new UTF8Encoding(false));
-        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign"], """
+        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign", "Invoke-ScopeLock"], """
             $Project = 'P'; $Task = 'B-2'; $Resume = $true; $Dev = 'agy'
+            function Get-AITeamExe { Join-Path $Root 'cli.cmd' }
             function Get-Config { [pscustomobject]@{ developers = @(); agy = [pscustomobject]@{ exe = 'agy'; model = '' }; github = [pscustomobject]@{ owner = 'x' } } }
             function Resolve-Project($name) { [pscustomobject]@{ Path = $Root; Info = [pscustomobject]@{ name = $name }; Logs = $Root; Work = $Root } }
             function Find-TaskFile($r, $id) { Get-Item (Join-Path $Root "tasks/$id-viec-b.md") }
@@ -216,11 +260,13 @@ public sealed class V915QueueTests
     {
         using var sandbox = new TeamScript();
         var root = sandbox.Root;
+        WriteCliWrapper(root);
         Directory.CreateDirectory(Path.Combine(root, "tasks"));
         File.WriteAllText(Path.Combine(root, "tasks", "B-2-viec-b.md"),
             "## Phạm vi\r\n- `core/b.cs`\r\n- **Agent:** A\r\n- **Nhánh:** `agent-a/B-2`\r\n", new UTF8Encoding(false));
-        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign"], """
+        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign", "Invoke-ScopeLock"], """
             $Project = 'P'; $Task = 'B-2'; $Resume = $true; $Dev = 'agy'
+            function Get-AITeamExe { Join-Path $Root 'cli.cmd' }
             function Get-Config { [pscustomobject]@{ developers = @(); agy = [pscustomobject]@{ exe = 'agy'; model = '' }; github = [pscustomobject]@{ owner = 'x' } } }
             function Resolve-Project($name) { [pscustomobject]@{ Path = $Root; Info = [pscustomobject]@{ name = $name }; Logs = $Root; Work = $Root } }
             function Find-TaskFile($r, $id) { Get-Item (Join-Path $Root "tasks/$id-viec-b.md") }

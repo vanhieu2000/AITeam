@@ -117,7 +117,8 @@ int LockAcquire()
 int LockRelease()
 {
     var task = Arg("--task") ?? throw new InvalidDataException("Thiếu --task");
-    var store = new ScopeLockStore(root);
+    // Cùng scopeRoot với lock-acquire (--project) để nhả đúng vùng dự án đã khóa.
+    var store = new ScopeLockStore(root, Arg("--project"));
     Console.WriteLine(store.Release(task) ? "OK" : "KHÔNG CÓ");
     return 0;
 }
