@@ -69,12 +69,12 @@ public interface IChatAssistant
 ## Test nghiệm thu
 `hub.tests/V1005ChatAssistantTests.cs` — Claude đã viết sẵn, đang đỏ 8/8 (registry SQLite thư mục tạm, factory / codexChat / office giả). Gồm:
 - Settings mặc định; Save rồi đọc lại; ResearchAis 5 mục hoặc id lạ ⇒ ArgumentException.
-- Ask với `codex` ⇒ gọi codexChat, không gọi factory; với `mycli` ⇒ gọi provider giả ReadOnly, thư mục tạm bị xóa.
+- Ask với codex ⇒ gọi codexChat, không gọi factory; với mycli ⇒ gọi provider giả ReadOnly, thư mục tạm bị xóa.
 - Ask lần 2 cùng ConversationId ⇒ prompt chứa câu hỏi lần 1; KeepHistory=false ⇒ ConversationId null, store không có hội thoại mới.
 - Task ⇒ office.Send đúng project + text, không gọi AI; project null ⇒ ArgumentException.
 - Research 2 AI (1 ok, 1 lỗi) ⇒ Text có 2 khối, Error null; cả 2 lỗi ⇒ Error khác null.
 - QuotaExhausted ⇒ Error đúng mẫu + RecordQuota được gọi.
-- `ai` = id đang tắt ⇒ Error "AI không hợp lệ hoặc đang tắt.".
+- ai = id đang tắt ⇒ Error "AI không hợp lệ hoặc đang tắt.".
 
 ## Tiêu chí hoàn thành
 - [ ] 8 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
