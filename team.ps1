@@ -797,13 +797,15 @@ function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$bran
     Invoke-CodexRetry $exe @("run", "--provider", "codex", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$TaskName.codex"), "--timeout-min", $maxMin, "--out", $out, "--root", $Root) $out
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
-    $in = if ($j -and $j.inputTokens -ge 0) { [long]$j.inputTokens } else { 0 }
-    $outTok = if ($j -and $j.outputTokens -ge 0) { [long]$j.outputTokens } else { 0 }
+    $tokensKnown = $j -and $null -ne $j.inputTokens -and $null -ne $j.outputTokens -and $j.inputTokens -ge 0 -and $j.outputTokens -ge 0 -and $j.tokensKnown -ne $false
+    $in = if ($tokensKnown) { [long]$j.inputTokens } else { $null }
+    $outTok = if ($tokensKnown) { [long]$j.outputTokens } else { $null }
     $agyLike = [ordered]@{
         status = $(if ($code -eq 0) { "SUCCESS" } else { "ERROR" }); provider = "codex"
         response = $(if ($j) { $j.text } else { "" }); error = $(if ($code -ne 0 -and $j) { $j.summary } else { $null })
         duration_seconds = $(if ($j) { [int]$j.durationSec } else { 0 })
-        usage = [ordered]@{ input_tokens = $in; output_tokens = $outTok; thinking_tokens = 0; total_tokens = $in + $outTok }
+        tokensKnown = [bool]$tokensKnown
+        usage = $(if ($tokensKnown) { [ordered]@{ input_tokens = $in; output_tokens = $outTok; thinking_tokens = $j.thinkingTokens; total_tokens = $in + $outTok } } else { $null })
         conversation_id = ""
     }
     [IO.File]::WriteAllText($logFile, ($agyLike | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding $false))
@@ -2022,6 +2024,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         $ErrorActionPreference = $eap
     }
     $u = if ($j) { $j.usage } else { $null }
+    $tokensKnown = $u -and $null -ne $u.input_tokens -and $null -ne $u.output_tokens -and $u.input_tokens -ge 0 -and $u.output_tokens -ge 0 -and $j.tokensKnown -ne $false
     [ordered]@{
         at = (Get-Item $logFile).LastWriteTime.ToString("s")
         head = $(if ($work -and (Test-Path $work)) { git -C $work rev-parse HEAD 2>$null } else { $null })
@@ -2033,9 +2036,11 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         model = $(if ($model) { $model } else { "mặc định" })
         status = $(if ($j) { $j.status } else { "KHÔNG CÓ KẾT QUẢ" })
         durationSec = $(if ($j) { [int]$j.duration_seconds } else { $null })
-        outputTokens = $(if ($u) { [int]$u.output_tokens } else { $null })
-        thinkingTokens = $(if ($u) { [int]$u.thinking_tokens } else { $null })
-        totalTokens = $(if ($u) { [int]$u.total_tokens } else { $null })
+        tokensKnown = [bool]$tokensKnown
+        inputTokens = $(if ($tokensKnown) { [long]$u.input_tokens } else { $null })
+        outputTokens = $(if ($tokensKnown) { [long]$u.output_tokens } else { $null })
+        thinkingTokens = $(if ($tokensKnown -and $null -ne $u.thinking_tokens) { [long]$u.thinking_tokens } else { $null })
+        totalTokens = $(if ($tokensKnown) { if ($null -ne $u.total_tokens -and $u.total_tokens -ge 0) { [long]$u.total_tokens } else { [long]$u.input_tokens + [long]$u.output_tokens } } else { $null })
         linesAdded = $added; linesRemoved = $removed; filesChanged = $files
         verifyOk = $(if ($verify) { [bool]$verify.Ok } else { $null })
         verifyFails = $(if ($verify) { @($verify.Fails).Count } else { $null })
