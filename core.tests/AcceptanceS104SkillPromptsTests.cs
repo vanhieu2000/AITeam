@@ -194,6 +194,8 @@ function Assert-NotClaimedElsewhere { }; function Get-ScopeOverlaps { }; functio
 function Get-ClaimText { 'giả' }; function Set-ManagerIdentity { $false }; function Set-AgentIdentity { }
 function Set-McpConfig { $false }; function Get-StaffName { 'giả' }; function Get-EmptyInput { '' }
 function Test-AgentTouchedMain { }; function Get-RunRecord { }; function Save-RunMetrics { }
+# V9-16 (R-012): lint task có test riêng (V916TaskLintTests); harness skill-prompt giả lập lint đạt.
+function Invoke-LintTask { }
 function Test-QuotaExhausted { $x.mode -eq 'fallback' }
 $script:captured=$null; $script:calls=0; $script:ro=$false; $script:cwd=$repo
 function FakeProvider {
