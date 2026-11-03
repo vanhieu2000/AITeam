@@ -73,7 +73,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H7-05 Nhúng Phòng nghiên cứu](H7-05-nhung-phong-nghien-cuu.md) | C | `agent-c/H7-05-nhung-phong-nghien-cuu` | ✅ Đã merge 03/11 (Claude cập nhật test V5-07) |
 | [O-02 OpenCode DeepSeek](O-02-opencode-deepseek.md) | C | `agent-c/O-02-opencode-deepseek` | ✅ Đã merge 03/11 · chưa chạy model thật (proxy 403) |
 | [V9-06 Codex ổn định](V9-06-codex-on-dinh.md) | C | `agent-c/V9-06-codex-on-dinh` | ✅ Đã merge 03/11 |
-| [V9-14 Định tuyến theo luật](V9-14-dinh-tuyen-theo-luat.md) | C | `agent-c/V9-14-dinh-tuyen-theo-luat` | 🔴 Phần 2 cần sửa: -Resume không định tuyến lại (OpenCode đang sửa) |
+| [V9-14 Định tuyến theo luật](V9-14-dinh-tuyen-theo-luat.md) | C | `agent-c/V9-14-dinh-tuyen-theo-luat` | ✅ Đã merge 03/11 (phần 2: OpenCode sửa Resume giữ người làm) |
 | [H8-03 Review không lặp](H8-03-review-khong-lap.md) | C | `agent-c/H8-03-review-khong-lap` | ✅ Đã merge 03/11 |
 | [H8-04 Hiệu suất màn hình hẹp](H8-04-hieu-suat-man-hinh-hep.md) | C | `agent-c/H8-04-hieu-suat-man-hinh-hep` | ✅ Đã merge 03/11 |
 | [H8-06 Đơn duyệt mẫu](H8-06-don-duyet-mau.md) | C | `agent-c/H8-06-don-duyet-mau` | ✅ Đã merge 03/11 |
