@@ -44,13 +44,22 @@
         <div class="row" style="gap:14px;flex-wrap:wrap">
             @foreach (var opt in Model.Options)
             {
-                var isDisabled = opt.Mode == AiMode.Disabled;
-                var pillClass = opt.CanAsk ? "ok" : "n";
-                var pillText = opt.CanAsk ? "Tự động" : (isDisabled ? "Tắt" : "Thủ công");
+                var isResting = opt.Resting;
+                var isDisabled = opt.Mode == AiMode.Disabled || isResting;
+                var pillClass = isResting ? "err" : (opt.CanAsk ? "ok" : "n");
+                var pillText = isResting ? "Đang nghỉ" : (opt.CanAsk ? "Tự động" : (opt.Mode == AiMode.Disabled ? "Tắt" : "Thủ công"));
                 <label style="display:inline-flex;align-items:center;gap:6px">
                     <input type="checkbox" name="ai" value="@opt.Ai" checked="@opt.CanAsk" disabled="@isDisabled" />
                     <span>@opt.Name</span>
                     <span class="pill @pillClass">@pillText</span>
+                    @if (isResting)
+                    {
+                        <span class="muted" style="font-size:12px">@opt.RestReason · hồi lúc @(opt.RestUntil!.Value.ToString("HH:mm dd/MM"))</span>
+                    }
+                    else if (opt.QuotaUnknown)
+                    {
+                        <span class="muted" style="font-size:12px">chưa rõ hạn mức</span>
+                    }
                 </label>
             }
         </div>

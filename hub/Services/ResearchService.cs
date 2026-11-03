@@ -8,8 +8,15 @@ namespace AITeam.Hub.Services;
 
 // Phòng nghiên cứu trên Hub (R-005 / V5-07b). Thiết kế: docs/design/V5-VAN-PHONG-MINI.md mục C4 + G2.
 
-/// <summary>Một AI trong phòng. CanAsk: chế độ Automatic VÀ có connector (chatgpt, gemini) ⇒ nút "Hỏi" chạy tự động; còn lại ⇒ thủ công (copy / dán).</summary>
-public sealed record ResearchAiOption(string Ai, string Name, AiMode Mode, AiStatus Status, string StatusText, bool CanAsk, string OfficialUrl);
+/// <summary>
+/// Một AI trong phòng. CanAsk: chế độ Automatic, có connector và provider KHÔNG đang nghỉ ⇒ nút "Hỏi" chạy tự động; còn lại ⇒ thủ công (copy / dán).
+/// RestUntil/RestReason: provider đang nghỉ (chỉ đặt khi còn hiệu lực). QuotaUnknown: không đọc được trạng thái nghỉ ⇒ không khóa.
+/// </summary>
+public sealed record ResearchAiOption(string Ai, string Name, AiMode Mode, AiStatus Status, string StatusText, bool CanAsk, string OfficialUrl,
+    DateTime? RestUntil = null, string? RestReason = null, bool QuotaUnknown = false)
+{
+    public bool Resting => RestUntil.HasValue;
+}
 
 /// <summary>Một lần hỏi tự động. Running ⇒ chưa xong; xong: Error null ⇒ FilePath là file kết quả.</summary>
 public sealed record ResearchJob(string RequestId, string QuestionId, string Ai, DateTime StartedAt, bool Running, string? Error, string? FilePath);
@@ -50,6 +57,7 @@ public sealed class ResearchService : IResearchService
     private readonly IRequestService _requests;
     private readonly IAiAccountsService _accounts;
     private readonly ResearchStore _store;
+    private readonly string _aiteamRoot;
     private readonly Func<string, IResearchConnector?> _connectorFor;
     private readonly Func<DateTime> _now;
     private readonly Action<Func<Task>> _runInBackground;
@@ -64,17 +72,35 @@ public sealed class ResearchService : IResearchService
         _requests = requests;
         _accounts = accounts;
         _store = new ResearchStore(paths.AITeamRoot);
+        _aiteamRoot = paths.AITeamRoot;
         _connectorFor = connectorFor ?? DefaultConnectors(paths);
         _now = now ?? (() => DateTime.Now);
         _runInBackground = runInBackground ?? (f => _ = Task.Run(f));
     }
 
     /// <summary>
-    /// Mỗi ai trong Ais: dòng AiAccountView tương ứng (không có ⇒ bỏ qua); CanAsk = Mode Automatic &amp;&amp; _connectorFor(ai) != null.
+    /// Mỗi ai trong Ais: dòng AiAccountView tương ứng (không có ⇒ bỏ qua).
+    /// CanAsk = Mode Automatic &amp;&amp; có connector &amp;&amp; provider không đang nghỉ.
+    /// Đọc trạng thái nghỉ TRƯỚC khi gọi _accounts.List() để nhận ra file state hỏng (store tự đổi tên file);
+    /// hỏng / lỗi đọc ⇒ không khóa, chỉ ghi cờ QuotaUnknown.
     /// </summary>
     public IReadOnlyList<ResearchAiOption> Options()
     {
-        var map = _accounts.List().ToDictionary(v => v.Service.Id, StringComparer.OrdinalIgnoreCase);
+        var now = _now();
+        var (rests, quotaUnknown) = ReadRests(now);
+        Dictionary<string, AiAccountView> map;
+        try
+        {
+            map = _accounts.List().ToDictionary(v => v.Service.Id, StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            map = AiCatalog.All.ToDictionary(
+                s => s.Id,
+                s => new AiAccountView(s, "", s.DefaultMode, AiStatus.Error, "Chưa rõ trạng thái", "", null),
+                StringComparer.OrdinalIgnoreCase);
+        }
+
         var result = new List<ResearchAiOption>(Ais.Length);
         foreach (var ai in Ais)
         {
@@ -84,11 +110,46 @@ public sealed class ResearchService : IResearchService
                 continue;
             }
             if (!map.TryGetValue(ai, out var v)) continue;
-            var canAsk = v.Mode == AiMode.Automatic && _connectorFor(ai) != null;
-            result.Add(new ResearchAiOption(ai, v.Service.Name, v.Mode, v.Status, v.StatusText, canAsk, v.Service.OfficialUrl));
+            var providerId = AiCatalog.Find(ai)?.ProviderId;
+            var rest = providerId != null && rests.TryGetValue(providerId, out var r) ? r : null;
+            var canAsk = v.Mode == AiMode.Automatic && _connectorFor(ai) != null && rest == null;
+            result.Add(new ResearchAiOption(ai, v.Service.Name, v.Mode, v.Status, v.StatusText, canAsk, v.Service.OfficialUrl,
+                rest?.Until, rest == null ? null : RestReasonText(rest), quotaUnknown && providerId != null));
         }
         return result;
     }
+
+    /// <summary>
+    /// Đọc .state/providers.json một lần: provider còn nghỉ ⇒ bản ghi; file hỏng / lỗi đọc ⇒ quotaUnknown = true.
+    /// ProviderStateStore.All() tự đổi tên file JSON hỏng thành .hong-… (giữ nguyên byte) rồi trả rỗng,
+    /// nên file có trước mà biến mất sau khi đọc nghĩa là state hỏng.
+    /// </summary>
+    private (Dictionary<string, ProviderRest> Rests, bool Unknown) ReadRests(DateTime now)
+    {
+        var rests = new Dictionary<string, ProviderRest>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            var store = new ProviderStateStore(_aiteamRoot);
+            var existed = File.Exists(store.FilePath);
+            foreach (var r in store.All())
+            {
+                if (r.Until > now) rests[r.ProviderId] = r;
+            }
+            return (rests, existed && !File.Exists(store.FilePath));
+        }
+        catch
+        {
+            return (rests, true);
+        }
+    }
+
+    private static string RestReasonText(ProviderRest rest) => rest.Reason switch
+    {
+        RunStatus.QuotaExhausted => "hết hạn mức",
+        RunStatus.NotLoggedIn => "chưa đăng nhập",
+        RunStatus.Failed => "lỗi liên tiếp",
+        _ => rest.Reason.ToString(),
+    };
 
     /// <summary>
     /// 1. Phiếu: _requests.Get(requestId) null ⇒ ArgumentException("Phiếu không hợp lệ.").
@@ -114,10 +175,18 @@ public sealed class ResearchService : IResearchService
         var picked = Ais.Where(a => ais != null && ais.Any(x => string.Equals(x, a, StringComparison.OrdinalIgnoreCase))).ToList();
         if (picked.Count == 0) throw new ArgumentException("Chọn ít nhất 1 AI.");
 
-        var (prompt, redacted) = ResearchPrompt.Build(req.Id, req.Title, question ?? "", includeRequestText ? req.Verbatim : null);
         var now = _now();
-        var qid = ResearchStore.NewQuestionId(now);
         var opts = Options().ToDictionary(o => o.Ai, StringComparer.OrdinalIgnoreCase);
+
+        // Trạng thái nghỉ lấy từ máy, KHÔNG tin dữ liệu form: AI đang nghỉ thì không gọi.
+        foreach (var ai in picked)
+        {
+            if (opts.TryGetValue(ai, out var resting) && resting.Resting)
+                throw new ArgumentException($"{resting.Name} đang nghỉ đến {resting.RestUntil:HH:mm dd/MM} ({resting.RestReason}).");
+        }
+
+        var (prompt, redacted) = ResearchPrompt.Build(req.Id, req.Title, question ?? "", includeRequestText ? req.Verbatim : null);
+        var qid = ResearchStore.NewQuestionId(now);
         var outcomes = new List<ResearchAiOutcome>(picked.Count);
         var qTrim = question!.Trim();
 
