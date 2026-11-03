@@ -94,8 +94,8 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-04 Cổng kiểm tra QC](W1-04-cong-kiem-tra-qc.md) | C | `agent-c/W1-04-cong-kiem-tra-qc` | ✅ Đã merge 03/11 (OpenCode, Claude review) |
 | [H8-15 Sửa nhỏ Hiệu suất và Tài khoản AI](H8-15-sua-nho-hieu-suat-tai-khoan.md) | O | `agent-c/H8-15-sua-nho-hieu-suat-tai-khoan` | ✅ Đã merge 03/11 (OpenCode) |
 | [V9-17 Ghi số đo lượt chạy ngoài assign](V9-17-ghi-luot-chay-ngoai-assign.md) | O | `agent-o/V9-17-ghi-luot-chay-ngoai-assign` | ✅ Đã merge 03/11 (OpenCode vòng 2) |
-| [V10-01 Danh bạ AI SQLite](V10-01-danh-ba-ai-sqlite.md) | C | `agent-c/V10-01-danh-ba-ai-sqlite` | 🟡 Đang chạy · máy HIEUDV · 21:32 03/11 |
-| [V10-03 Duyệt chỉ việc nhạy cảm](V10-03-duyet-nhay-cam.md) | C | `agent-c/V10-03-duyet-nhay-cam` | 🟡 Đang chạy · máy HIEUDV · 21:32 03/11 |
+| [V10-01 Danh bạ AI SQLite](V10-01-danh-ba-ai-sqlite.md) | O | `agent-c/V10-01-danh-ba-ai-sqlite` | ✅ Đã merge 03/11 (OpenCode, thay Codex hết hạn mức) |
+| [V10-03 Duyệt chỉ việc nhạy cảm](V10-03-duyet-nhay-cam.md) | O | `agent-c/V10-03-duyet-nhay-cam` | 🟡 Đang chạy · máy HIEUDV · 21:32 03/11 |
 | [W2-01 Cấu hình loại việc](W2-01-cau-hinh-loai-viec.md) | O | `agent-o/W2-01-cau-hinh-loai-viec` | ✅ Đã merge 03/11 (OpenCode) |
 | [V10-04 Dịch vụ báo cáo](V10-04-dich-vu-bao-cao.md) | O | `agent-o/V10-04-dich-vu-bao-cao` | 🟡 Đang chạy · máy HIEUDV · 21:32 03/11 |
 

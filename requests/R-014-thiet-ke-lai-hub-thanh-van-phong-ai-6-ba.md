@@ -32,6 +32,11 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-014` để `team.ps1 reque
 | 21:05 | Thiết kế `docs/design/R-014-van-phong-ai.md` + mockup 6 màn hình, gửi chủ dự án | |
 | 21:20 | Chủ dự án duyệt kèm sửa: nút chat nổi thay Giao việc + Trò chuyện; Báo cáo phải có biểu đồ; SQLite + .ini; 4 loại phải duyệt; **giao diện do Claude làm, AI khác chỉ làm lõi** ⇒ quy trình v5.2 | |
 | 21:40 | Mockup bản 2 (chat nổi, 5 biểu đồ, Cài đặt trợ lý) + kế hoạch 7 task lõi / 9 phần giao diện | chờ duyệt bắt đầu code |
+| 21:25 | Chủ dự án duyệt kế hoạch. Viết 4 task lõi đợt 1 (V10-01, V10-03, W2-01, V10-04) có hợp đồng interface chốt sẵn | |
+| 21:32 | Giao: Codex V10-01, V10-03 ⇒ **hết hạn mức ngay** (tới 12:09 04/11) ⇒ chuyển cả 4 task cho OpenCode chạy song song | |
+| 21:49 | W2-01 OpenCode xong 10,6′ ⇒ review ĐẠT vòng 1 (672/350 dòng — Optional) ⇒ merge | |
+| 21:32–22:03 | Claude làm UI-01 (token, menu 3 nhóm, nút chat nổi, chế độ nhúng), UI-02 (Văn phòng = bảng điều khiển), UI-03 (Theo dõi việc 3 cách xem); 4 test cũ đổi theo hợp đồng menu mới; 6 test mới; Hub 844/844 | |
+| 22:05 | Clone sạch W2-01: 2 test lõi đỏ do máy tải nặng (V810, V808) ⇒ chạy riêng 3/3 xanh ⇒ push | [HT] test phụ thuộc thời gian |
 | | Nhận yêu cầu | |
 
 Sự kiện cần ghi:
