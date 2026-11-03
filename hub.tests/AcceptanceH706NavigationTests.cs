@@ -235,6 +235,7 @@ public sealed class AcceptanceH706NavigationTests
 
     [Theory]
     [InlineData("/Office", "/")]
+    [InlineData("/Work", "/")]
     [InlineData("/Approvals", "/Approvals")]
     [InlineData("/Projects", "/Projects")]
     [InlineData("/Project", "/Projects")]
@@ -249,12 +250,12 @@ public sealed class AcceptanceH706NavigationTests
         var html = await f.RenderProjects(page);
         var side = Regex.Match(html, @"<aside\b[\s\S]*?</aside>").Value;
         var links = Elements(side, "a");
-        // H8-14 (R-012): thêm "Trò chuyện AI" ngay sau Văn phòng.
-        Assert.Equal(new[] { "/", "/Chat", "/Approvals", "/Projects", "/Performance", "/Process", "/Settings", "/AI", "/Map" },
+        // R-014 (Claude, chủ dự án duyệt 03/11): menu 3 nhóm; Trò chuyện / Giao việc chuyển sang nút chat nổi.
+        Assert.Equal(new[] { "/", "/Approvals", "/Tracking", "/Projects", "/Performance", "/Process", "/Map", "/AI", "/Settings" },
             links.Select(a => Regex.Match(a, "href=\"([^\"]+)\"").Groups[1].Value));
         var selected = Assert.Single(links, a => Regex.IsMatch(a, "class=\"[^\"]*\\bon\\b"));
         Assert.Contains($"href=\"{active}\"", selected);
-        foreach (var label in new[] { "Văn phòng", "Trò chuyện AI", "Đơn duyệt", "Dự án", "Đánh giá", "Hiệu suất", "Quy trình & cải tiến", "Hệ thống", "Cài đặt", "Tài khoản", "Map" })
+        foreach (var label in new[] { "Làm việc", "Văn phòng", "Cần anh duyệt", "Theo dõi việc", "Dự án", "Đánh giá", "Báo cáo & thống kê", "Xem lại & bài học", "Cấu hình", "Quy trình & vai trò", "Tài khoản AI", "Cài đặt" })
             Assert.Contains(label, Text(side));
         Assert.DoesNotContain("Antigravity", Text(side));
         Assert.Equal(0, f.BoardReads);

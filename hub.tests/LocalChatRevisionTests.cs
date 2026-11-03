@@ -23,9 +23,10 @@ public sealed class LocalChatRevisionTests
         Assert.DoesNotContain("<script>không chạy</script>", html);
         Assert.True(html.IndexOf("id=\"office-chat-shortcut\"", StringComparison.Ordinal) > html.IndexOf("office-workspace", StringComparison.Ordinal));
         var chat = await host.Client.GetStringAsync("/Chat");
-        Assert.Matches("href=\"/Chat\" class=\"nav on\"", chat);
-        Assert.True(chat.IndexOf("<span>Văn phòng</span>", StringComparison.Ordinal) < chat.IndexOf("<span>Trò chuyện AI</span>", StringComparison.Ordinal));
-        Assert.True(chat.IndexOf("<span>Trò chuyện AI</span>", StringComparison.Ordinal) < chat.IndexOf("<span>Đơn duyệt</span>", StringComparison.Ordinal));
+        // R-014 (Claude, chủ dự án duyệt 03/11): Trò chuyện không còn trong menu, mở bằng nút chat nổi trên mọi trang.
+        Assert.DoesNotContain("<span>Trò chuyện AI</span>", chat);
+        Assert.Contains("id=\"fab\"", chat);
+        Assert.Contains("data-src=\"/Chat?embed=1\"", chat);
     }
 
     [Fact]

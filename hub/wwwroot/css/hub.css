@@ -1,28 +1,34 @@
 /* ===== AITeam Hub v2 - Token & Giao diện phẳng ===== */
 :root {
-  --bg: #f6f7f9;
+  /* R-014: bảng màu Swiss + Data-Dense (ui-ux-pro-max: Analytics / Productivity). Màu theo vai trò, không theo trang. */
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-2: #f1f3f6;
-  --line: #e3e6eb;
-  --line-2: #d5dae1;
-  --text: #14171c;
-  --muted: #6b7280;
-  --faint: #9aa1ab;
-  --accent: #2563eb;
-  --accent-soft: #e8effd;
-  --run: #b45309;
-  --run-soft: #fdf3e1;     /* 🟡 đang chạy / đã giao */
-  --rev: #2563eb;
-  --rev-soft: #e8effd;     /* 🔵 chờ review */
+  --surface-2: #f1f5f9;
+  --line: #e2e8f0;
+  --line-2: #cbd5e1;
+  --text: #1e293b;
+  --muted: #475569;
+  --faint: #64748b;
+  --accent: #1e40af;
+  --accent-soft: #dbeafe;
+  --cta: #d97706;          /* một hành động chính mỗi màn hình */
+  --cta-text: #1a1204;
+  --run: #1d4ed8;
+  --run-soft: #dbeafe;     /* đang chạy / đã giao */
+  --rev: #6d28d9;
+  --rev-soft: #ede9fe;     /* chờ review */
   --fix: #c2410c;
-  --fix-soft: #fdece4;     /* 🔴 cần sửa */
+  --fix-soft: #ffedd5;     /* cần sửa */
   --ok: #15803d;
-  --ok-soft: #e5f4ea;      /* ✅ đã merge / ổn */
+  --ok-soft: #dcfce7;      /* đã merge / ổn */
   --err: #b91c1c;
-  --err-soft: #fbe9e9;
-  --r: 6px;
-  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
-  --mono: Consolas, "Cascadia Code", monospace;
+  --err-soft: #fee2e2;
+  --warn: #a16207;
+  --warn-soft: #fef9c3;
+  --r: 8px;
+  --font: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", "Inter", system-ui, sans-serif;
+  --mono: "Cascadia Code", Consolas, monospace;
+  --shadow-pop: 0 16px 40px rgba(15, 23, 42, .22);
 
   /* Aliases cho các thành phần cũ */
   --font-system: var(--font);
@@ -47,26 +53,31 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #111418;
-  --surface: #181c21;
-  --surface-2: #1f242a;
-  --line: #2a3038;
-  --line-2: #363d47;
-  --text: #e6e8eb;
-  --muted: #9aa3ad;
-  --faint: #6b7480;
-  --accent: #5b8def;
-  --accent-soft: #1d2a40;
-  --run: #e0a84a;
-  --run-soft: #33280f;
-  --rev: #5b8def;
-  --rev-soft: #1d2a40;
-  --fix: #ef8a5a;
-  --fix-soft: #3a2016;
-  --ok: #4cc27a;
-  --ok-soft: #14301f;
-  --err: #f07171;
-  --err-soft: #3a1717;
+  --bg: #0b1220;
+  --surface: #111a2e;
+  --surface-2: #0e1627;
+  --line: #22304a;
+  --line-2: #2f3f5e;
+  --text: #e2e8f0;
+  --muted: #a5b4c8;
+  --faint: #8a9bb3;
+  --accent: #93b4ff;
+  --accent-soft: #1b2b52;
+  --cta: #f59e0b;
+  --cta-text: #1a1204;
+  --run: #93c5fd;
+  --run-soft: #172a4d;
+  --rev: #c4b5fd;
+  --rev-soft: #2a2150;
+  --fix: #fdba74;
+  --fix-soft: #3a2414;
+  --ok: #86efac;
+  --ok-soft: #12321f;
+  --err: #fca5a5;
+  --err-soft: #3b1717;
+  --warn: #fde68a;
+  --warn-soft: #3a3010;
+  --shadow-pop: 0 16px 40px rgba(0, 0, 0, .5);
 
   /* Aliases cho các thành phần cũ (Dark) */
   --primary: var(--accent);
@@ -1449,3 +1460,53 @@ textarea.inp, textarea.form-control {
 }
 .approvals-table .btn { min-height: 32px; }
 .approval-detail { white-space: pre-wrap; }
+
+/* ===== R-014 · Văn phòng AI: thành phần dùng chung (Claude) ===== */
+.num, .tab-num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.btn.cta { background: var(--cta); border-color: var(--cta); color: var(--cta-text); font-weight: 600; }
+.btn.cta:hover { filter: brightness(.95); color: var(--cta-text); }
+.nav .cnt.alert { background: var(--err); color: #fff; }
+.side .grp:first-of-type { padding-top: 4px; }
+
+/* Nút chat nổi + khung chat (thay mục Giao việc / Trò chuyện trong menu) */
+.fab {
+  position: fixed; right: 24px; bottom: 24px; z-index: 40;
+  width: 56px; height: 56px; border-radius: 50%; border: 0;
+  background: var(--accent); color: #fff; display: grid; place-items: center;
+  cursor: pointer; box-shadow: var(--shadow-pop);
+}
+:root[data-theme="dark"] .fab { color: #0b1220; }
+.fab:hover { filter: brightness(1.08); }
+.fab svg { width: 26px; height: 26px; }
+.chatp {
+  position: fixed; right: 24px; bottom: 92px; z-index: 41;
+  width: 400px; max-width: calc(100vw - 32px);
+  height: 600px; max-height: calc(100dvh - 120px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: var(--shadow-pop); display: none; flex-direction: column; overflow: hidden;
+}
+.chatp.on { display: flex; }
+.chatp-h { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.chatp-h b { font-size: 14px; }
+.chatp-modes { display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.chatp-modes .btn { flex: 1; justify-content: center; }
+.chatp-modes .btn[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); font-weight: 600; }
+.chatp iframe { flex: 1; width: 100%; border: 0; background: var(--bg); }
+.chatp-foot { padding: 6px 12px; font-size: 12px; color: var(--faint); border-top: 1px solid var(--line); display: flex; gap: 8px; }
+
+/* Trang mở trong khung chat (?embed=1): không có thanh bên */
+body.embed .app { display: block; height: 100vh; }
+body.embed .main { height: 100vh; }
+body.embed .top { height: 44px; padding: 0 12px; }
+body.embed .content { padding: 12px; }
+
+/* Hình đại diện tròn cho người / AI */
+.av { width: 32px; height: 32px; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 700; color: #fff; flex: none; font-size: 12px; }
+.av.sm { width: 24px; height: 24px; font-size: 10.5px; }
+
+@media (max-width: 760px) {
+  .fab { right: 16px; bottom: 16px; }
+  .chatp { right: 16px; bottom: 84px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
