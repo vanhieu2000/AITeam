@@ -16,6 +16,7 @@ try
     {
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
+        "route-developer" => await RouteDeveloper(),
         "check-harness-change" => CheckHarnessChange(),
         "review" => await Review(),
         "workflow-role" => WorkflowRole(),
@@ -79,6 +80,15 @@ async Task<int> OpenCodeCheck()
     var health = await provider.CheckAsync(CancellationToken.None);
     Console.WriteLine(JsonSerializer.Serialize(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
     return health.Installed ? 0 : 1;
+}
+
+async Task<int> RouteDeveloper()
+{
+    var file=Arg("--input") ?? throw new InvalidDataException("Thiếu --input");
+    if(new FileInfo(file).Length>1024*1024)throw new InvalidDataException("Ảnh chụp định tuyến quá lớn.");
+    var snapshot=JsonSerializer.Deserialize<DeveloperRoutingSnapshot>(File.ReadAllText(file),new JsonSerializerOptions{PropertyNameCaseInsensitive=true}) ?? throw new InvalidDataException("Ảnh chụp định tuyến rỗng.");
+    var decision=await DeveloperRouting.SelectAsync(root,snapshot,new ProcessRunner(),DateTimeOffset.Now,CancellationToken.None);
+    Console.WriteLine(JsonSerializer.Serialize(decision));return 0;
 }
 
 async Task<int> Providers()

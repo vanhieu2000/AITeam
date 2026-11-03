@@ -495,20 +495,72 @@ function Stop-ReviewReassignment($r, [string]$taskFile, [string]$taskId, $cfg) {
     return $true
 }
 
+function Select-TaskDeveloper($r, $taskFile, [string]$text, $cfg) {
+    $loads = @{ codex = 0; opencode = 0; agy = 0 }
+    $board = Join-Path $r.Path 'tasks/README.md'
+    if (Test-Path -LiteralPath $board) {
+        foreach ($line in [IO.File]::ReadAllLines($board)) {
+            if ($line -notmatch '^\|' -or -not $line.Contains('🟡')) { continue }
+            $cells=$line.Split('|')
+            if ($cells.Count -gt 3) {
+                $id=$cells[2].Trim().ToUpperInvariant()
+                if ($id -eq 'C') { $loads.codex++ } elseif ($id -eq 'O') { $loads.opencode++ } elseif ($id -in @('A','B')) { $loads.agy++ }
+            }
+        }
+    }
+    $required=if($cfg.agy.requiredModel){[string]$cfg.agy.requiredModel}else{'argon-4'}
+    $agyInstalled=($cfg.agy.exe -and (Test-Path -LiteralPath $cfg.agy.exe))
+    $models=@()
+    if($agyInstalled){$modelState=Get-AgyModelsCached; if($modelState){$models=@($modelState.models)}}
+    $pinned=[regex]::Match($text,'(?im)^\s*-\s*\*\*Dev:\*\*\s*`?(codex|opencode|agy)`?\s*$').Groups[1].Value.ToLowerInvariant()
+    $difficulty=[regex]::Match($text,'\*\*Độ khó:\*\*\s*([SML])\b').Groups[1].Value
+    if(-not $difficulty){$difficulty='L'}
+    $budgetText=[regex]::Match($text,'\*\*Ngân sách:\*\*\s*~?(\d+)').Groups[1].Value
+    $snapshot=@{
+        Task=@{ Dev=$pinned; PrivateRepository= -not ($r.Info.private -is [bool] -and -not $r.Info.private); Difficulty=$difficulty;
+            PlannedLines=$(if($budgetText){[int]$budgetText}else{$null}); Scope=@(Get-BacktickPaths (Get-Section $text 'Phạm vi'));
+            ScopeLocked=(@(Get-ScopeOverlaps $r $taskFile $text).Count -gt 0) }
+        ProjectPath=$r.Path; TaskId=$taskFile.BaseName;
+        Loads=$loads; AgyModels=$models; AgyInstalled=[bool]$agyInstalled; RequiredAgyModel=$required
+    }
+    $routeFile=[IO.Path]::GetTempFileName()
+    try {
+        [IO.File]::WriteAllText($routeFile,($snapshot|ConvertTo-Json -Depth 6),(New-Object Text.UTF8Encoding $false))
+        $routeExe=Get-AITeamExe
+        if(-not $routeExe){throw 'Không build được CLI định tuyến.'}
+        $routeJson=@(& $routeExe route-developer --root $Root --input $routeFile)
+        if($LASTEXITCODE -ne 0){throw 'Không chọn được người làm: CLI định tuyến lỗi.'}
+        ($routeJson -join "`n") | ConvertFrom-Json
+    } finally {Remove-Item -LiteralPath $routeFile -ErrorAction SilentlyContinue}
+}
+
 function Invoke-Assign {
     if ($Task -cnotmatch '\A[A-Za-z0-9][A-Za-z0-9-]{0,63}\z') { throw 'LỖI: mã task không hợp lệ.' }
     $cfg = Get-Config
     $r = Resolve-Project $Project
+    if (-not $Task) { throw "Thiếu -Task" }
+    $taskFile = Find-TaskFile $r $Task
+    if ($Resume -and (Stop-ReviewReassignment $r $taskFile.FullName $Task $cfg)) { return }
+    $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
+    $routeReason=$null
+    if (-not $Dev) {
+        $selection=Select-TaskDeveloper $r $taskFile $text $cfg
+        $routeReason=[regex]::Replace([string]$selection.Reason,'[\r\n|<>]',' ')
+        if (-not $selection.ProviderId) {
+            Say "Chờ người làm: $routeReason; thử lại: $($selection.RetryAt)" Yellow
+            Set-BoardStatus $r $Task '⏸ Chờ người làm' -Journal @{TaskFile=$taskFile.Name;Event='Assign';Result="ĐỊNH TUYẾN: $routeReason"}
+            return
+        }
+        $Dev=[string]$selection.ProviderId
+        Say "Định tuyến: $Dev — $routeReason" Cyan
+    }
     if ($Dev -eq 'opencode') {
         $ocModel = if ($cfg.opencode.model) { [string]$cfg.opencode.model } else { 'opencode/deepseek-v4.1-flash-free' }
         if ($ocModel -notmatch '(?i)deepseek') { throw 'OpenCode chỉ được dùng model DeepSeek.' }
         $knownPublic = $r.Info.private -is [bool] -and -not $r.Info.private
         if (-not $knownPublic -and $cfg.opencode.paid -ne $true) { throw 'Repo private/không rõ riêng tư không được chạy OpenCode free; khai báo private=false cho repo public hoặc opencode.paid=true.' }
     }
-    if (-not $Task) { throw "Thiếu -Task" }
-    $taskFile = Find-TaskFile $r $Task
-    if ($Resume -and (Stop-ReviewReassignment $r $taskFile.FullName $Task $cfg)) { return }
-    $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
+
     $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
     if (-not $branch) { throw 'File task thiếu dòng **Nhánh:** `tên-nhánh`' }
@@ -549,7 +601,9 @@ function Invoke-Assign {
     foreach ($o in (Get-ScopeOverlaps $r $taskFile $text)) {
         Say "CẢNH BÁO: trùng phạm vi với task đang chạy $o ⇒ dễ xung đột khi merge (cân nhắc giao tuần tự)." Yellow
     }
-    Set-BoardStatus $r $Task (Get-ClaimText)
+    if ($routeReason) {
+        Set-BoardStatus $r $Task (Get-ClaimText) -Journal @{TaskFile=$taskFile.Name;Event='Assign';Result="ĐỊNH TUYẾN $Dev — $routeReason"}
+    } else { Set-BoardStatus $r $Task (Get-ClaimText) }
 
     New-Item -ItemType Directory -Force $r.Logs | Out-Null
     $work = Join-Path $r.Work ("$agentId-$Task".ToLower())
