@@ -2086,6 +2086,33 @@ function Get-GitBlobHead([string]$repo, [string]$rev, [string]$file) {
 
 function Test-HasBom([byte[]]$bytes) { $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF }
 
+# Cảnh báo (không chặn) khi file TEST mới thêm tự dựng ProcessStartInfo thay vì helper chung.
+# Chỉ xét file trạng thái A trong origin/main...HEAD; miễn helper Support của core.tests/hub.tests.
+# Tên file có dấu/khoảng trắng: dùng git diff --name-status -z, không cắt theo khoảng trắng.
+function Get-NewTestProcessStartInfoWarnings {
+    param([string]$Work, [string]$NameStatus)
+    $warnings = @()
+    if (-not $PSBoundParameters.ContainsKey('NameStatus')) {
+        $NameStatus = (@(git -C $Work diff --name-status -z --diff-filter=A origin/main...HEAD 2>$null) -join '')
+        if ($LASTEXITCODE -ne 0) { return $warnings }
+    }
+    if (-not $NameStatus) { return $warnings }
+    $parts = @($NameStatus -split ([string][char]0))
+    for ($i = 0; $i + 1 -lt $parts.Count; $i += 2) {
+        $status = $parts[$i]; $path = $parts[$i + 1]
+        if ($status -ne 'A' -or -not $path) { continue }
+        if ($path -match '(?i)^(core\.tests|hub\.tests)/Support/') { continue }
+        if ($path -notmatch '(?i)(^|/)tests?/|tests?\.cs$') { continue }
+        $full = Join-Path $Work ($path -replace '/', [IO.Path]::DirectorySeparatorChar)
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
+        $text = [IO.File]::ReadAllText($full)
+        if ($text -match 'new\s+(System\.Diagnostics\.|Diagnostics\.)?ProcessStartInfo\b') {
+            $warnings += "Test mới tự dựng ProcessStartInfo thay vì helper TestShell/TeamScript: $path"
+        }
+    }
+    return $warnings
+}
+
 function Invoke-Verify {
     $cfg = Get-Config
     $ctx = Get-TaskContext
@@ -2234,6 +2261,9 @@ function Invoke-Verify {
         }
         if ($sus.Count -gt 0) { [void]$warns.Add("Test có thể luôn pass (return sớm / Assert.True(true)): " + (($sus | Select-Object -First 5) -join ' | ')) }
     }
+
+    # 5b. Cảnh báo (không chặn) test MỚI tự dựng ProcessStartInfo; helper Support được miễn.
+    foreach ($processWarning in @(Get-NewTestProcessStartInfoWarnings -Work $work)) { [void]$warns.Add($processWarning) }
 
     # 6. Báo cáo của agent
     $report = [regex]::Replace((Get-Section $ctx.Text "Báo cáo của agent"), '(?s)<!--.*?-->', '').Trim()
