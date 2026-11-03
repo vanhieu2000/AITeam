@@ -1,6 +1,6 @@
 ﻿# V10-01 · Danh bạ dịch vụ AI trong SQLite cục bộ (office.db) + xuất / nhập .ini
 
-- **Agent:** C
+- **Agent:** O
 - **Nhánh:** `agent-c/V10-01-danh-ba-ai-sqlite`
 - **Yêu cầu:** R-014
 - **Loại việc:** Tính năng lõi / CLI
@@ -112,4 +112,17 @@ public interface IAiServiceRegistry
 
 ## Báo cáo của agent
 
+## Báo cáo của agent — OpenCode
+- Đã làm: thêm `AiServiceModels.cs` (enum/record/interface đúng hợp đồng) và `SqliteAiServiceRegistry.cs` (schema 5 bảng, nhập dữ liệu cũ một lần từ team.json/team.local.json/accounts.json, Upsert/Get/List/SetEnabled, Validate, tài khoản, hạn mức, settings, xuất/nhập .ini giới hạn 256 KB, chặn khóa bí mật, ghi BEGIN IMMEDIATE).
+- File đã đổi: `core/AITeam.Core/AiServices/` (mới), `core/AITeam.Core/AITeam.Core.csproj` (Microsoft.Data.Sqlite 10.0.14), `hub/Services/HubV3Registration.cs` (DI: office.db thật, HUB_FAKE `:memory:` + 3 dịch vụ mẫu), `core.tests/V1001AiServiceRegistryTests.cs` (mới, 10 ca), file task này.
+- Kiểm: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` ⇒ 0 warning, 0 error; `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` ⇒ 1797/1797 đạt (Hub 837, Core 960).
+- Quyết định tự đưa ra: `legacyAccountsFile = null` nghĩa là bỏ qua accounts.json cũ (DI truyền đường dẫn thật) để test không đọc hồ sơ máy; dữ liệu cũ được ghi cả khi chưa đủ trường hợp lệ (hiện dạng tắt) để Hub không sập.
+- Chưa xác minh: chưa chạy Hub thật / mở trang giao diện (ngoài phạm vi lõi); test hạn mức/đăng nhập thật của dịch vụ.
+
 ## Review (Claude)
+### Vòng 1 — ĐẠT
+- Codex hết hạn mức ngay khi giao (tới 12:09 04/11) ⇒ chuyển OpenCode, giữ nhánh.
+- Đã kiểm: SQL tham số hóa toàn bộ (1 CommandText, còn lại qua Command(db, sql, params)); Validate đủ mẫu id / tên / lệnh (chặn & | ; < > ^ % " ', ký tự điều khiển, đường dẫn phải .exe/.cmd/.bat) / URL (https hoặc 127.0.0.1 / localhost, chặn user:pass) / secret_key_name; ImportIni bỏ mọi khóa chứa key/token/password/secret trừ secret_key_name, chỉ báo TÊN khóa; 10 test không return sớm.
+- OpenCode: 32,9 phút, ~119k token; 1797/1797 test.
+- Optional: 1003 dòng code / ngân sách 450 (2,2×) — lần sau tách lõi SQLite và xuất/nhập .ini thành 2 task.
+

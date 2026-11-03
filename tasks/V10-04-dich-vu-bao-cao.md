@@ -98,3 +98,14 @@ public interface IReportService
 ## Báo cáo của agent
 
 ## Review (Claude)
+
+## Kết quả
+- Có dịch vụ số liệu cho màn Báo cáo (chưa có màn hình — UI-05 của Claude): lọc ngày / dự án / người / độ khó, 4 ô KPI so kỳ trước, chuỗi số theo tuần, điểm hiệu suất 0–100, ma trận lỗi, dòng thời gian từng yêu cầu, xuất CSV an toàn.
+- Kiểm chứng: build 0 warning; Hub 845/845; Core đạt (2 test S106 / V805 chỉ hỏng khi 2 worktree chạy song song, chạy riêng đạt).
+
+## Review (Claude)
+### Vòng 1 — ĐẠT
+- Phiên OpenCode bị ngắt sau khi chạy test (hết lượt miễn phí lúc 23:36) ⇒ báo cáo agent để trống; Claude commit hộ code của OpenCode, không sửa code.
+- Đã kiểm: hợp đồng đúng chữ ký; chưa đo ⇒ null (không thành 0); điểm chia lại trọng số đúng mô tả; CSV có BOM + chặn = + - @; đọc file qua HubMetricReader.ReadText, chặn reparse point ở Timeline; 8 test, không return sớm; không chạm hub/Pages/**, hub/wwwroot/**; BOM giữ.
+- Optional: tham số 
+ow của Query chưa dùng; số âm trong CSV cũng bị thêm '; 516 / 450 dòng (1,15×).

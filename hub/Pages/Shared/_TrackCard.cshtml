@@ -1,0 +1,27 @@
+@model AITeam.Hub.Pages.TrackItem
+@using AITeam.Hub.Pages
+@using AITeam.Hub.Services
+@* R-014 · UI-03: thẻ task dùng chung cho view Theo người và Kanban. *@
+<a class="tcard" href="@Model.Url">
+    <span class="tcard-top"><b>@Model.Code</b><span class="pill @TrackingModel.PillClass(Model.Card.Status)">@WorkOverviewService.Label(Model.Card.Status)</span></span>
+    <span class="tcard-title">@Model.Card.Task.Title</span>
+    <span class="tcard-meta">
+        <span class="chip-s" title="Độ khó">@Model.Difficulty</span>
+        @if (Model.Card.Minutes is { } m)
+        {
+            <span class="num">@Math.Round(m)′</span>
+        }
+        @if (Model.Card.Runs > 1)
+        {
+            <span class="num">@Model.Card.Runs lượt</span>
+        }
+        @if (Model.Request != null)
+        {
+            <span>@Model.Request</span>
+        }
+        @foreach (var f in Model.Card.Flags.Take(2))
+        {
+            <span class="flag">@f</span>
+        }
+    </span>
+</a>

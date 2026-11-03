@@ -173,7 +173,7 @@ public class OfficeModel : PageModel
         if (ResearchPane?.Current == null) return Page();
         var result = ResearchPane.OnPostAsk(r, question, ai, includeRequestText);
         if (result is RedirectToPageResult && ResearchPane.Asked != null)
-            return Redirect("/?RequestId=" + Uri.EscapeDataString(r ?? ResearchPane.Current.Id) + "&q=" + Uri.EscapeDataString(ResearchPane.Asked.QuestionId));
+            return Redirect("/?RequestId=" + Uri.EscapeDataString(r ?? ResearchPane.Current.Id) + "&q=" + Uri.EscapeDataString(ResearchPane.Asked.QuestionId) + "&embed=1");
         return Page();
     }
 

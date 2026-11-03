@@ -18,14 +18,14 @@ public sealed class LocalChatRevisionTests
         var html = await host.Client.GetStringAsync("/");
         Assert.DoesNotContain("id=\"local-chat\"", html);
         Assert.DoesNotContain("local-chat.js", html);
-        Assert.Contains("Mở trò chuyện", html);
-        Assert.Contains("Hội thoại gần nhất <script>", System.Net.WebUtility.HtmlDecode(html));
+        // R-014 (Claude, chủ dự án duyệt 03/11): lối tắt "Trò chuyện AI" trên Văn phòng thay bằng nút chat nổi có trên mọi trang.
         Assert.DoesNotContain("<script>không chạy</script>", html);
-        Assert.True(html.IndexOf("id=\"office-chat-shortcut\"", StringComparison.Ordinal) > html.IndexOf("office-workspace", StringComparison.Ordinal));
+        Assert.Contains("id=\"fab\"", html);
         var chat = await host.Client.GetStringAsync("/Chat");
-        Assert.Matches("href=\"/Chat\" class=\"nav on\"", chat);
-        Assert.True(chat.IndexOf("<span>Văn phòng</span>", StringComparison.Ordinal) < chat.IndexOf("<span>Trò chuyện AI</span>", StringComparison.Ordinal));
-        Assert.True(chat.IndexOf("<span>Trò chuyện AI</span>", StringComparison.Ordinal) < chat.IndexOf("<span>Đơn duyệt</span>", StringComparison.Ordinal));
+        // R-014 (Claude, chủ dự án duyệt 03/11): Trò chuyện không còn trong menu, mở bằng nút chat nổi trên mọi trang.
+        Assert.DoesNotContain("<span>Trò chuyện AI</span>", chat);
+        Assert.Contains("id=\"fab\"", chat);
+        Assert.Contains("data-src=\"/Chat?embed=1\"", chat);
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 ﻿# V10-03 · Duyệt chỉ việc nhạy cảm + nhật ký "Claude tự quyết"
 
-- **Agent:** C
+- **Agent:** A
+- **Model:** `gemini-3.8-flash-high`
 - **Nhánh:** `agent-c/V10-03-duyet-nhay-cam`
 - **Yêu cầu:** R-014
 - **Loại việc:** Bảo mật

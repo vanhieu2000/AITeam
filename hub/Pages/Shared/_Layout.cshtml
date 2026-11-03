@@ -1,25 +1,27 @@
 ﻿@inject AITeam.Hub.Services.IApprovalService ApprovalService
 @{
+    // R-014 (Claude): menu 3 nhóm, nút chat nổi thay mục Giao việc / Trò chuyện. Thiết kế: docs/design/R-014-van-phong-ai.md mục 3.
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-    var isOfficeActive = currentPage.Equals("/Office", StringComparison.OrdinalIgnoreCase)
-        || string.IsNullOrEmpty(currentPage)
-        || currentPage == "/";
-    var isApprovalsActive = currentPage.Equals("/Approvals", StringComparison.OrdinalIgnoreCase);
-    var isProjectsActive = currentPage.Equals("/Projects", StringComparison.OrdinalIgnoreCase)
-        || currentPage.Equals("/Project", StringComparison.OrdinalIgnoreCase);
     var requestPath = Context.Request.Path;
-    var isPerformanceActive = currentPage.Equals("/Performance", StringComparison.OrdinalIgnoreCase)
-        || currentPage.Equals("/Overview", StringComparison.OrdinalIgnoreCase)
-        || requestPath.StartsWithSegments("/Performance", StringComparison.OrdinalIgnoreCase)
-        || requestPath.StartsWithSegments("/Overview", StringComparison.OrdinalIgnoreCase);
-    var isProcessActive = currentPage.Equals("/Process", StringComparison.OrdinalIgnoreCase);
-    var isSettingsActive = currentPage.Equals("/Settings", StringComparison.OrdinalIgnoreCase);
-    var isAiActive = currentPage.Equals("/AI", StringComparison.OrdinalIgnoreCase);
-    var isMapActive = currentPage.Equals("/Map", StringComparison.OrdinalIgnoreCase);
-    var isChatActive = currentPage.Equals("/Chat", StringComparison.OrdinalIgnoreCase);
+    bool IsPage(params string[] pages) => pages.Any(p => currentPage.Equals(p, StringComparison.OrdinalIgnoreCase));
+    bool IsPath(params string[] paths) => paths.Any(p => requestPath.StartsWithSegments(p, StringComparison.OrdinalIgnoreCase));
 
-    var pendingApprovals = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending);
+    var isOffice = string.IsNullOrEmpty(currentPage) || currentPage == "/" || IsPage("/Office", "/Index", "/Work", "/Inbox", "/Agents") || IsPath("/Overview", "/Work");
+    var isApprovals = IsPage("/Approvals");
+    var isTracking = IsPage("/Tracking", "/Task", "/Requests", "/Request", "/Run");
+    var isProjects = IsPage("/Projects", "/Project");
+    var isReports = IsPage("/Performance", "/Team") || IsPath("/Performance", "/Reports");
+    var isLessons = IsPage("/Process");
+    var isWorkflow = IsPage("/Map", "/Workflow");
+    var isAi = IsPage("/AI", "/AiAccounts", "/Providers", "/Accounts");
+    var isSettings = IsPage("/Settings", "/Secrets", "/Vault");
+
+    // Chỉ đếm việc chủ dự án phải quyết (bí mật, bảo mật, dữ liệu nhạy cảm, ra ngoài, quyết định sản phẩm).
+    // Merge / cải tiến là việc Claude tự quyết nên không làm sáng huy hiệu.
+    var ownerPending = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending
+        && a.Kind != AITeam.Hub.Models.ApprovalKind.Merge && a.Kind != AITeam.Hub.Models.ApprovalKind.Improvement);
     var reqTheme = Context.Request.Query["theme"].ToString();
+    var embed = Context.Request.Query["embed"] == "1";
 }
 <!DOCTYPE html>
 <html lang="vi" @(reqTheme == "dark" ? "data-theme=\"dark\"" : "")>
@@ -30,99 +32,83 @@
     <script>
         (function() {
             var urlParams = new URLSearchParams(window.location.search);
-            var urlTheme = urlParams.get('theme');
-            var theme = urlTheme || localStorage.getItem('hub-theme') || 'light';
-            if (theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-            }
+            var theme = urlParams.get('theme');
+            try { theme = theme || localStorage.getItem('hub-theme'); } catch (e) { }
+            if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.removeAttribute('data-theme');
+            // Trang mở trong khung trợ lý: sau khi gửi form / chuyển hướng vẫn giữ chế độ nhúng (không hiện thanh bên lồng nhau).
+            try {
+                if (window.self !== window.top && urlParams.get('embed') !== '1') {
+                    urlParams.set('embed', '1');
+                    window.location.replace(window.location.pathname + '?' + urlParams.toString() + window.location.hash);
+                }
+            } catch (e) { }
         })();
     </script>
-    <link rel="stylesheet" href="~/css/hub.css" />
+    <link rel="stylesheet" href="~/css/hub.css" asp-append-version="true" />
     <script src="~/lib/htmx.min.js"></script>
 </head>
-<body>
+<body class="@(embed ? "embed" : "")">
     <div class="app">
-        <!-- ===== Thanh bên trái 208px ===== -->
-        <aside class="side">
-            <div class="brand"><i></i>AITeam Hub</div>
+        @if (!embed)
+        {
+        <aside class="side" aria-label="Menu chính">
+            <div class="brand"><i></i>AITeam · Văn phòng AI</div>
 
-            <a href="/" class="nav @(isOfficeActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2 14V6.5L8 2l6 4.5V14M6 14v-4h4v4"/>
-                </svg>
+            <div class="grp">Làm việc</div>
+            <a href="/" class="nav @(isOffice ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="6"/><rect x="9" y="2" width="5" height="3.5"/><rect x="9" y="7.5" width="5" height="6.5"/><rect x="2" y="10" width="5" height="4"/></svg>
                 <span>Văn phòng</span>
             </a>
-            <a href="/Chat" class="nav @(isChatActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h12v9H7l-4 3v-3H2z"/></svg>
-                <span>Trò chuyện AI</span>
-            </a>
-            <a href="/Approvals" class="nav @(isApprovalsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2.5" y="2" width="11" height="12" rx="1.5"/>
-                    <path d="M5.5 8.2l1.8 1.8 3.4-3.6"/>
-                </svg>
-                <span>Đơn duyệt</span>
-                @if (pendingApprovals > 0)
+            <a href="/Approvals" class="nav @(isApprovals ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5l5.5 2.5v3.5c0 3.4-2.4 5.6-5.5 6.5-3.1-.9-5.5-3.1-5.5-6.5V4z"/><path d="M5.6 8l1.7 1.7 3.1-3.3"/></svg>
+                <span>Cần anh duyệt</span>
+                @if (ownerPending > 0)
                 {
-                    <span class="cnt" style="background: var(--fix); color: #fff;">@pendingApprovals</span>
+                    <span class="cnt alert num" aria-label="@ownerPending việc chờ duyệt">@ownerPending</span>
                 }
             </a>
-            <a href="/Projects" class="nav @(isProjectsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="2" width="12" height="12" rx="1.5"/>
-                    <path d="M5 5h6M5 8h6M5 11h4"/>
-                </svg>
+            <a href="/Tracking" class="nav @(isTracking ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4h11M2.5 8h7M2.5 12h4.5"/></svg>
+                <span>Theo dõi việc</span>
+            </a>
+            <a href="/Projects" class="nav @(isProjects ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 4.5a1 1 0 011-1h3.5l1.5 1.5h6a1 1 0 011 1V12a1 1 0 01-1 1h-11a1 1 0 01-1-1z"/></svg>
                 <span>Dự án</span>
             </a>
 
             <div class="grp">Đánh giá</div>
-            <a href="/Performance" class="nav @(isPerformanceActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2 13.5h12M4 11V7M8 11V4M12 11V8.5"/>
-                </svg>
-                <span>Hiệu suất</span>
+            <a href="/Performance" class="nav @(isReports ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13.5h12M4 11V7M8 11V3.5M12 11V8.5"/></svg>
+                <span>Báo cáo &amp; thống kê</span>
             </a>
-            <a href="/Process" class="nav @(isProcessActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2 13.5h12M4 11V7M8 11V4M12 11V8.5"/>
-                </svg>
-                <span>Quy trình &amp; cải tiến</span>
+            <a href="/Process" class="nav @(isLessons ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 13h4M6.5 15h3M8 1.5a4.5 4.5 0 00-2.6 8.2V11.5h5.2V9.7A4.5 4.5 0 008 1.5z"/></svg>
+                <span>Xem lại &amp; bài học</span>
             </a>
 
-            <div class="grp">Hệ thống</div>
-            <a href="/Settings" class="nav @(isSettingsActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="8" cy="8" r="2"/>
-                    <path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/>
-                </svg>
+            <div class="grp">Cấu hình</div>
+            <a href="/Map" class="nav @(isWorkflow ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="3.5" cy="8" r="1.5"/><circle cx="12.5" cy="3.5" r="1.5"/><circle cx="12.5" cy="12.5" r="1.5"/><path d="M5 8h3l3-4M8 8l3 4"/></svg>
+                <span>Quy trình &amp; vai trò</span>
+            </a>
+            <a href="/AI" class="nav @(isAi ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M6 6h4v4H6zM6 1v2M10 1v2M6 13v2M10 13v2M13 6h2M13 10h2M1 6h2M1 10h2"/></svg>
+                <span>Tài khoản AI</span>
+            </a>
+            <a href="/Settings" class="nav @(isSettings ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>
                 <span>Cài đặt</span>
-            </a>
-            <a href="/AI" class="nav @(isAiActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="5" cy="6" r="2"/><circle cx="11" cy="6" r="2"/>
-                    <path d="M1.5 13c.5-2 1.8-3 3.5-3s3 1 3.5 3M7.5 13c.5-2 1.8-3 3.5-3s3 1 3.5 3"/>
-                </svg>
-                <span>Tài khoản</span>
-            </a>
-            <a href="/Map" class="nav @(isMapActive ? "on" : "")">
-                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <polygon points="1 3 5 1 11 3 15 1 15 13 11 15 5 13 1 15"/>
-                    <path d="M5 1v12M11 3v12"/>
-                </svg>
-                <span>Map</span>
             </a>
 
             <div class="foot">
-                <span>v2.0</span>
+                <span>v3.0</span>
                 <button class="btn sm ghost" id="theme" type="button" onclick="toggleTheme()">Tối</button>
             </div>
         </aside>
+        }
 
-        <!-- ===== Vùng chính ===== -->
         <div class="main">
-            <!-- Thanh trên 52px -->
             <header class="top">
                 @if (ViewData["Crumb"] != null)
                 {
@@ -142,26 +128,72 @@
         </div>
     </div>
 
+    @if (!embed)
+    {
+    <button class="fab" id="fab" type="button" aria-label="Mở trợ lý chat" aria-expanded="false" aria-controls="chatp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    </button>
+    <section class="chatp" id="chatp" role="dialog" aria-label="Trợ lý chat">
+        <div class="chatp-h">
+            <span class="av sm" style="background:#6d28d9">AI</span>
+            <b>Trợ lý</b>
+            <span class="sp" style="flex:1"></span>
+            <a class="btn sm ghost" id="chatp-full" href="/Chat" target="_top">Mở rộng</a>
+            <button class="btn sm ghost" id="chatp-x" type="button" aria-label="Đóng trợ lý">✕</button>
+        </div>
+        <div class="chatp-modes" role="tablist">
+            <button class="btn sm" type="button" role="tab" data-mode="ask" data-src="/Chat?embed=1" aria-selected="true">Hỏi đáp</button>
+            <button class="btn sm" type="button" role="tab" data-mode="task" data-src="/?embed=1" aria-selected="false">Giao việc</button>
+            <button class="btn sm" type="button" role="tab" data-mode="research" data-src="/Research?embed=1" aria-selected="false">Nghiên cứu</button>
+        </div>
+        <iframe id="chatp-frame" title="Nội dung trợ lý" loading="lazy"></iframe>
+        <div class="chatp-foot">Chọn AI trả lời mặc định trong <a href="/Settings" target="_top">Cài đặt</a>.</div>
+    </section>
+    }
+
     <script>
         function updateThemeUI() {
             var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             var themeBtn = document.getElementById('theme');
-            if (themeBtn) {
-                themeBtn.textContent = isDark ? 'Sáng' : 'Tối';
-            }
+            if (themeBtn) themeBtn.textContent = isDark ? 'Sáng' : 'Tối';
         }
         function toggleTheme() {
-            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            var nextTheme = isDark ? 'light' : 'dark';
-            if (nextTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('hub-theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('hub-theme', 'light');
-            }
+            var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            if (next === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.removeAttribute('data-theme');
+            try { localStorage.setItem('hub-theme', next); } catch (e) { }
             updateThemeUI();
         }
+        (function () {
+            var fab = document.getElementById('fab'), panel = document.getElementById('chatp');
+            if (!fab || !panel) return;
+            var frame = document.getElementById('chatp-frame'), full = document.getElementById('chatp-full');
+            var tabs = panel.querySelectorAll('[data-mode]');
+            function select(mode) {
+                tabs.forEach(function (t) {
+                    var on = t.dataset.mode === mode;
+                    t.setAttribute('aria-selected', on ? 'true' : 'false');
+                    if (on) {
+                        if (frame.getAttribute('src') !== t.dataset.src) frame.setAttribute('src', t.dataset.src);
+                        full.setAttribute('href', t.dataset.src.replace(/[?&]embed=1/, ''));
+                    }
+                });
+                try { localStorage.setItem('hub-chat-mode', mode); } catch (e) { }
+            }
+            function open(mode) {
+                panel.classList.add('on'); fab.setAttribute('aria-expanded', 'true');
+                var saved = null; try { saved = localStorage.getItem('hub-chat-mode'); } catch (e) { }
+                select(mode || saved || 'ask');
+            }
+            function close() { panel.classList.remove('on'); fab.setAttribute('aria-expanded', 'false'); fab.focus(); }
+            fab.addEventListener('click', function () { panel.classList.contains('on') ? close() : open(); });
+            document.getElementById('chatp-x').addEventListener('click', close);
+            tabs.forEach(function (t) { t.addEventListener('click', function () { select(t.dataset.mode); }); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && panel.classList.contains('on')) close(); });
+            document.querySelectorAll('[data-chat]').forEach(function (b) {
+                b.addEventListener('click', function (e) { e.preventDefault(); open(b.dataset.chat); });
+            });
+        })();
         document.addEventListener('DOMContentLoaded', updateThemeUI);
     </script>
 </body>

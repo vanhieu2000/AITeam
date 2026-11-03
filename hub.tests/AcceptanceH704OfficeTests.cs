@@ -147,12 +147,17 @@ public class AcceptanceH704OfficeTests
             services.AddSingleton(Office(full));
             services.AddSingleton(Fake<IRequestService>((m, _) => Empty(m)));
         });
+        // R-014 (Claude, chủ dự án duyệt 03/11): "/" là bảng điều khiển (bàn làm việc); khung giao việc chuyển vào nút chat nổi ("/?embed=1").
         var html = await host.Client.GetStringAsync("/");
-        Assert.Contains("office-workspace", html);
         Assert.Contains("office-agents", html);
-        Assert.Contains("office-chat", html);
-        Assert.True(html.IndexOf("office-agents", StringComparison.Ordinal) < html.IndexOf("office-chat", StringComparison.Ordinal));
+        Assert.DoesNotContain("id=\"office-text\"", html);
         Assert.DoesNotContain("<img src=x", html);
+        var embedded = await host.Client.GetStringAsync("/?embed=1");
+        Assert.Contains("office-workspace", embedded);
+        Assert.Contains("office-chat", embedded);
+        Assert.DoesNotContain("class=\"side\"", embedded);
+        Assert.DoesNotContain("<img src=x", embedded);
+        Assert.DoesNotContain("<script>alert(2)", embedded);
         Assert.DoesNotContain("<script>alert(2)", html);
         if (full)
         {
@@ -160,7 +165,7 @@ public class AcceptanceH704OfficeTests
                 Assert.Contains("data-desk-key=\"" + key + "\"", html);
             Assert.Contains("&lt;img", html);
         }
-        else Assert.Contains("Chat giao việc", WebUtility.HtmlDecode(html));
+        else Assert.Contains("Giao việc cho Claude", WebUtility.HtmlDecode(embedded));
         var page = new OfficeModel(Office(full));
         page.OnGet();
         var desks = await new HubPageRenderer(host.Services).RenderAsync("_OfficeDesks", page);
@@ -192,7 +197,8 @@ public class AcceptanceH704OfficeTests
         using var env = new TestEnvironment();
         await using var host = await HubTestHost.StartAsync(env, services => services.AddSingleton(Office(false)));
         var html = await host.Client.GetStringAsync("/");
-        var form = Regex.Matches(html, @"<form\b[^>]*>[\s\S]*?</form>", RegexOptions.IgnoreCase)
+        var embedded = await host.Client.GetStringAsync("/?embed=1");   // R-014: khung giao việc nằm trong nút chat nổi
+        var form = Regex.Matches(embedded, @"<form\b[^>]*>[\s\S]*?</form>", RegexOptions.IgnoreCase)
             .Cast<Match>().Select(m => m.Value).Single(f => f.Contains("handler=Chat", StringComparison.Ordinal));
         Assert.Contains("__RequestVerificationToken", form);
         Assert.Contains("name=\"text\"", form);
