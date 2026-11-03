@@ -13,7 +13,7 @@
 `docs/MO-TA-HE-THONG.md` mục 7.2; yêu cầu B3; `hub/Services/InsightParsers.cs`; `hub.tests/AcceptanceH301Tests.cs`.
 
 ## Phạm vi
-- Hiện chỉ báo cáo này và bảng việc; chưa đổi parser dùng chung khi hợp đồng cũ chưa được chốt.
+- `core/AITeam.Core/Metrics/FindingParser.cs` (tạo mới), `core/AITeam.Cli/Program.cs`, `team.ps1`, `hub/Services/InsightParsers.cs`, test mới `core.tests/V912FindingParserTests.cs`, fixture V912 từ năm review thật; task/bảng việc.
 
 ## Không làm
 - Không sửa assert, không tự đưa NV thành mã thứ mười, không thay đổi H8-14/V9-04 hoặc merge main.
@@ -31,3 +31,14 @@
 - DỪNG trước khi đổi parser theo chỉ định chủ dự án; không sửa assert hoặc sinh mã thứ mười để qua test.
 - Chưa chạy build/test mới vì chỉ thay tài liệu; chưa viết parser thay thế hoặc gắn vào metrics/staff-report. Phút: chưa đo; token: chưa đo.
 - Cần quản lý chốt ánh xạ NV cũ hoặc cập nhật hợp đồng nghiệm thu trước khi tiếp tục; không merge main.
+
+## Báo cáo của agent — đợt 2
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Cập nhật | Pull f268d9d của Claude và gộp main 9bc9a8e vào nhánh cũ; không sửa assert. |
+| Parser chung | FindingParser giữ chín mã chuẩn, NV/mã lạ → khác; giữ nhóm, nội dung nguyên văn và vòng; bỏ comment/code fence/checkbox. Hub dùng adapter trình bày cũ bỏ dấu chấm cuối, còn Core/JSON giữ nguyên. |
+| Ba nơi | CLI review-findings dùng Core; Get-ReviewFindings gọi CLI cho staff-report và metrics.findings; Hub InsightParsers cũng dùng Core. Bảng điểm mới thuộc D3, không đổi hợp đồng projection cũ ở mã này. |
+| Test/fixture | 13 test mới đạt, có năm mục review trích từ task thật (Fixtures/V912/SOURCE.md); test Claude NV → khác đạt. |
+| Build/toàn bộ | Build -warnaserror -nodeReuse:false 0 warning/0 error; Core 514/842 đạt, 328 lỗi nền; Hub 803/817 đạt, 14 lỗi nền. PS AST 0 lỗi; chưa chạy Windows. Log /tmp/r012-d2-v912-verified-tests. |
+| Giới hạn | Đường gọi PowerShell chưa chạy Windows 5.1; không gọi AI. Giữ tương thích định dạng ReviewIssue cũ; JSON Core giữ văn bản gốc. |
+| Đo đạc | Phút: chưa đo; token: chưa đo. |

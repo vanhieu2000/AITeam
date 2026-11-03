@@ -16,6 +16,7 @@ try
     {
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
+        "review-findings" => ReviewFindings(),
         "check-harness-change" => CheckHarnessChange(),
         "review" => await Review(),
         "workflow-role" => WorkflowRole(),
@@ -79,6 +80,14 @@ async Task<int> OpenCodeCheck()
     var health = await provider.CheckAsync(CancellationToken.None);
     Console.WriteLine(JsonSerializer.Serialize(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
     return health.Installed ? 0 : 1;
+}
+
+int ReviewFindings()
+{
+    var file = Arg("--file") ?? throw new InvalidDataException("Thiếu --file");
+    if (new FileInfo(file).Length > 10 * 1024 * 1024) throw new InvalidDataException("Review quá lớn.");
+    Console.WriteLine(JsonSerializer.Serialize(AITeam.Core.Metrics.FindingParser.Parse(File.ReadAllText(file))));
+    return 0;
 }
 
 async Task<int> Providers()

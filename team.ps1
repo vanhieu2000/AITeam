@@ -2211,6 +2211,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         run = [regex]::Match([IO.Path]::GetFileNameWithoutExtension($logFile), '-(\d+)$').Groups[1].Value
         agent = $agentId
         model = $(if ($model) { $model } else { "mặc định" })
+        findings = @(Get-ReviewFindings (Get-Section $taskText "Review (Claude)"))
         status = $(if ($j) { $j.status } else { "KHÔNG CÓ KẾT QUẢ" })
         durationSec = $(if ($j) { [int]$j.duration_seconds } else { $null })
         tokensKnown = [bool]$tokensKnown
@@ -2815,7 +2816,16 @@ function Get-StaffName([string]$id) {
 
 # Lỗi trong mục Review ghi dạng: "- [AG] (bảo mật) ..." — AG: agent làm sai · TK: task / thiết kế của Claude thiếu · CK: cổng kiểm tra đáng lẽ phải bắt.
 function Get-ReviewFindings([string]$review) {
-    @([regex]::Matches($review, '\[(AG|TK|CK)\]\s*\(([^)]+)\)') | ForEach-Object { [pscustomobject]@{ Cause = $_.Groups[1].Value; Kind = $_.Groups[2].Value.Trim().ToLower() } })
+    if ([string]::IsNullOrWhiteSpace($review)) { return @() }
+    $findingExe = Get-AITeamExe
+    if (-not $findingExe) { throw 'Không build được CLI để phân loại lỗi.' }
+    $findingFile = [IO.Path]::GetTempFileName()
+    try {
+        [IO.File]::WriteAllText($findingFile, $review, (New-Object Text.UTF8Encoding $false))
+        $findingJson = @(& $findingExe review-findings --file $findingFile)
+        if ($LASTEXITCODE -ne 0) { throw 'Không đọc được lỗi có cấu trúc.' }
+        @((($findingJson -join "`n") | ConvertFrom-Json))
+    } finally { Remove-Item -LiteralPath $findingFile -ErrorAction SilentlyContinue }
 }
 
 # agy báo thời gian / token CỘNG DỒN cả hội thoại khi giao lại bằng -Resume ⇒ đổi về số của riêng từng lượt.
