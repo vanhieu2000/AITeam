@@ -35,3 +35,14 @@
 | Build | `dotnet build AITeam.sln -warnaserror -nodeReuse:false` ⇒ 0 warning, 0 error. |
 | Test | `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` ⇒ Hub 817/817, Core 829/829 đạt. |
 | Chưa làm | Khóa nhà cung cấp hết hạn mức/giờ hồi (chờ V9-11 vào main). |
+
+## Báo cáo của agent — OpenCode
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Gộp main + khóa AI đang nghỉ | Gộp `origin/main` 94daec3. `ResearchAiOption` thêm `RestUntil/RestReason/QuotaUnknown`; `Options()` đọc `ProviderStateStore` theo `AiCatalog.ProviderId` (chatgpt ⇒ codex), nghỉ ⇒ `CanAsk=false`. |
+| Giao diện | `_ResearchPanel.cshtml`: ô chọn disabled, hiện lý do + "hồi lúc HH:mm dd/MM"; Thủ công luôn bật; Razor encode mọi chữ động. |
+| Server + state hỏng | `Ask` chặn AI đang nghỉ bằng "… đang nghỉ đến …" (trả trang, không gọi connector); file state hỏng ⇒ không khóa, chú thích "chưa rõ hạn mức", trang 200. |
+| Test mới | `hub.tests/H801RestLockTests.cs` 4 test: HTML disabled + giờ hồi; POST không gọi AI + báo lỗi; hết giờ mở lại; state hỏng không sập. |
+| Build | `dotnet build AITeam.sln -warnaserror -nodeReuse:false` ⇒ 0 warning, 0 error. |
+| Test | `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` ⇒ Hub 826/826, Core 912/912 đạt. |
+| Còn vướng | Không. |

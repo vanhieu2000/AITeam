@@ -1,0 +1,39 @@
+.perf,.perf *{box-sizing:border-box;min-width:0}
+.perf{overflow-wrap:anywhere}
+.performance-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.perf-head{display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap}
+.perf-head h2{margin:0}
+.perf-error{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
+.perf-warning{background:#fff7db}
+.perf-section{margin:16px 0}
+.perf-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px}
+.perf-metric{padding:14px;border:1px solid var(--border,#dbe2ec);border-radius:10px;background:var(--surface,#fff)}
+.perf-metric h4{margin:0 0 8px;font-size:15px}
+.perf-value{margin:0 0 6px;font-size:27px;font-weight:700}
+.perf-metric .small{margin:2px 0}
+.perf-bars{display:grid;gap:14px;margin-top:12px}
+.perf-bar-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:center}
+.perf-bar{display:flex;height:30px;border-radius:6px;overflow:hidden;background:var(--surface-2,#edf1f6);max-width:100%}
+.perf-bar span{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 6px;color:#fff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.perf-bar .perf-bar-empty{flex:1;background:transparent;color:var(--muted,#526275)}
+.perf-legend{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:12px}
+.perf-legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+.perf-legend i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.perf-table-wrap{max-width:100%;overflow-x:auto}
+.perf-table{width:100%;border-collapse:collapse;min-width:860px}
+.perf-table th,.perf-table td{padding:10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border,#dbe2ec);overflow-wrap:anywhere}
+.perf-table th.num,.perf-table td.num{text-align:right;white-space:nowrap}
+.perf-tasks{margin-top:6px}
+.perf-tasks summary{cursor:pointer;font-weight:600;padding:6px 0}
+.perf-tasks .perf-table{margin-top:8px}
+.cause-TK{background:#276bd6}
+.cause-TN{background:#684bad}
+.cause-AG{background:#a14e20}
+.cause-CK{background:#0f766e}
+.cause-HT{background:#b45309}
+.cause-HM{background:#be123c}
+.cause-CH{background:#475569}
+.cause-TO{background:#7c3aed}
+.cause-DP{background:#0369a1}
+.cause-khac{background:#6b7280}
+@media(max-width:1100px){.perf-bar-row{grid-template-columns:minmax(0,1fr)}}
