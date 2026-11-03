@@ -1,4 +1,4 @@
-@page "/p/{name}/t/{id}"
+﻿@page "/p/{name}/t/{id}"
 @model AITeam.Hub.Pages.TaskModel
 @using AITeam.Hub.Models
 @using AITeam.Hub.Services
@@ -369,37 +369,6 @@ else
                                     <span class="faint" style="font-size:12px;">@(isOpen ? "Thu gọn ▲" : "Mở rộng ▼")</span>
                                 </div>
                                 <div class="b">
-                                    @if (r.Items.Count > 0)
-                                    {
-                                        <div style="margin-bottom: 10px;">
-                                            @foreach (var item in r.Items)
-                                            {
-                                                var sevClass = item.Severity switch
-                                                {
-                                                    ReviewSeverity.Blocker => "sev blk",
-                                                    ReviewSeverity.Required => "sev req",
-                                                    ReviewSeverity.Optional => "sev opt",
-                                                    _ => ""
-                                                };
-                                                var sevText = item.Severity switch
-                                                {
-                                                    ReviewSeverity.Blocker => "BLOCKER",
-                                                    ReviewSeverity.Required => "REQUIRED",
-                                                    ReviewSeverity.Optional => "OPTIONAL",
-                                                    _ => ""
-                                                };
-
-                                                <div class="item">
-                                                    @if (!string.IsNullOrEmpty(sevText))
-                                                    {
-                                                        <span class="@sevClass">@sevText</span>
-                                                    }
-                                                    <span>@MarkdownRenderer.RenderInlineSafe(item.Text)</span>
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-
                                     @if (!string.IsNullOrWhiteSpace(r.Markdown))
                                     {
                                         <div class="markdown-body" style="font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:8px; margin-top:8px;">

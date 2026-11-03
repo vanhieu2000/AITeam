@@ -12,6 +12,7 @@
     var isSettingsActive = currentPage.Equals("/Settings", StringComparison.OrdinalIgnoreCase);
     var isAiActive = currentPage.Equals("/AI", StringComparison.OrdinalIgnoreCase);
     var isMapActive = currentPage.Equals("/Map", StringComparison.OrdinalIgnoreCase);
+    var isChatActive = currentPage.Equals("/Chat", StringComparison.OrdinalIgnoreCase);
 
     var pendingApprovals = ApprovalService.GetAll().Count(a => a.Status == AITeam.Hub.Models.ApprovalStatus.Pending);
     var reqTheme = Context.Request.Query["theme"].ToString();
@@ -48,6 +49,10 @@
                     <path d="M2 14V6.5L8 2l6 4.5V14M6 14v-4h4v4"/>
                 </svg>
                 <span>Văn phòng</span>
+            </a>
+            <a href="/Chat" class="nav @(isChatActive ? "on" : "")">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h12v9H7l-4 3v-3H2z"/></svg>
+                <span>Trò chuyện AI</span>
             </a>
             <a href="/Approvals" class="nav @(isApprovalsActive ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">

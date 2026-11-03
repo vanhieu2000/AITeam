@@ -44,7 +44,7 @@ Bàn giao biên bản cho người lập kế hoạch; nếu ĐẠT thì gửi n
 - [ ] Chỉ bản ĐẠT được bàn giao chuẩn bị task; bản CẦN SỬA phải qua duyệt lại.
 
 ## Lỗi hay gặp
-- AGENTS.md:52 — V5-05: xác nhận trên nút submit bị HTMX 2 bỏ qua; không duyệt kế hoạch chỉ dựa câu “đã có xác nhận”, phải kiểm căn cứ về phần tử phát request và tiêu chí nghiệm thu tương ứng.
+- AGENTS.md:53 — V5-05: xác nhận trên nút submit bị HTMX 2 bỏ qua; không duyệt kế hoạch chỉ dựa câu “đã có xác nhận”, phải kiểm căn cứ về phần tử phát request và tiêu chí nghiệm thu tương ứng.
 - Đánh dấu ĐẠT có điều kiện dù còn giả định trọng yếu khiến bước sau hiểu là được làm; ghi CẦN SỬA và điều kiện duyệt lại.
 
 ## Ví dụ ngắn tốt / xấu

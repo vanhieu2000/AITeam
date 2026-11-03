@@ -343,23 +343,34 @@ public sealed class AcceptanceV802PipelineTests
         $ErrorActionPreference = 'Stop'
         [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
         . (Join-Path $PSScriptRoot 'module.ps1')
-        # Hẹn hai child trước khi đo: tốc độ khởi động PowerShell không quyết định khoảng chồng.
-        if ($Together) {
-            $trace = Join-Path $PSScriptRoot 'trace'
-            [IO.File]::WriteAllText((Join-Path $trace "$Name.ready"),'sẵn sàng')
-            $wait = [Diagnostics.Stopwatch]::StartNew()
-            while (@(Get-ChildItem $trace -Filter '*.ready').Count -lt 2) {
-                if ($wait.Elapsed.TotalSeconds -gt 20) { throw 'Không có hai child đồng thời.' }
-                Start-Sleep -Milliseconds 20
-            }
+        # Đồng hồ logic dùng chung: giữ thứ tự sự kiện, không phụ thuộc độ phân giải giờ Windows.
+        function Write-TraceStamp([string]$file) {
+            $clockName = 'Local\AITeam.TestClock.' + (Split-Path $PSScriptRoot -Leaf)
+            $clockLock = New-Object Threading.Mutex($false, $clockName)
+            $owned = $false
+            try {
+                $owned = $clockLock.WaitOne(20000)
+                if (-not $owned) { throw 'Không lấy được khóa đồng hồ test.' }
+                $clockFile = Join-Path $PSScriptRoot 'clock.txt'
+                $tick = if (Test-Path $clockFile) { [long][IO.File]::ReadAllText($clockFile) + 1 } else { 1 }
+                [IO.File]::WriteAllText($clockFile, [string]$tick)
+                [IO.File]::WriteAllText($file, [string]$tick)
+            } finally { if ($owned) { $clockLock.ReleaseMutex() }; $clockLock.Dispose() }
         }
         $script:fakeAction = {
             $trace = Join-Path $PSScriptRoot 'trace'
-            [IO.File]::WriteAllText((Join-Path $trace "$Name.start"),[string][DateTime]::UtcNow.Ticks)
+            Write-TraceStamp (Join-Path $trace "$Name.start")
             [IO.File]::WriteAllText((Join-Path $trace "$Name-$PID.event"),'đã gọi tiến trình giả')
-            Start-Sleep -Milliseconds $Delay
+            if ($Together) {
+                # Chỉ kết thúc khi cả hai child thực sự đã ghi bắt đầu; task thứ ba thấy dấu có sẵn.
+                $ready = [Threading.SpinWait]::SpinUntil([Func[bool]]{ @(Get-ChildItem $trace -Filter '*.start').Count -ge 2 }, 20000)
+                if (-not $ready) { throw 'Không có hai child thực sự bắt đầu trong giới hạn.' }
+            } else {
+                # Đây là khối lượng công việc giả cho test tranh chấp khóa, không dùng để đoán child đã sẵn sàng.
+                Start-Sleep -Milliseconds $Delay
+            }
             if ($Code -ne 0) { [Environment]::Exit($Code) }
-            [IO.File]::WriteAllText((Join-Path $trace "$Name.end"),[string][DateTime]::UtcNow.Ticks)
+            Write-TraceStamp (Join-Path $trace "$Name.end")
             Write-Output 'Log dài tiếng Việt chỉ lưu trong file'
         }
         if ($Worker) {

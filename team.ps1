@@ -53,7 +53,7 @@ param(
     [string] $Agent = "A",
     [string] $Request = "",
     [string] $Kind = "",
-    [ValidateSet("", "agy", "codex")] [string] $Dev = "",
+    [ValidateSet("", "agy", "codex", "opencode")] [string] $Dev = "",
     [switch] $NoLaunch,
     [string] $Name = "",
     [string[]] $Names = @(),
@@ -212,6 +212,15 @@ function Invoke-Doctor {
     $cfg = Get-Config
     $ok = $true
     Say "== Kiểm tra công cụ team ==" Cyan
+    $ocModel = if ($cfg.opencode.model) { [string]$cfg.opencode.model } else { 'opencode/deepseek-v4.1-flash-free' }
+    if ($ocModel -notmatch '(?i)deepseek') { Say '  [LỖI] OpenCode chỉ được dùng DeepSeek.' Red; $ok = $false }
+    $ocCli = Get-AITeamExe
+    if ($ocCli) {
+        $ocInfo = & $ocCli opencode-check --root $Root
+        if ($LASTEXITCODE -eq 0) { Say ('  [OK] OpenCode / DeepSeek: ' + ($ocInfo -join ' ')) Green }
+        else { Say '  [THIẾU/LỖI] OpenCode CLI hoặc model; kiểm tra opencode.exe và opencode.model.' Yellow; $ok = $false }
+    } else { Say '  [THIẾU] Chưa có aiteam CLI để kiểm tra OpenCode.' Yellow; $ok = $false }
+
     if (Get-Command git -ErrorAction SilentlyContinue) { Say "  [OK] git $((git --version) -replace 'git version ','')" Green } else { Say "  [THIẾU] git: winget install Git.Git" Red; $ok = $false }
 
     $gh = Get-Gh
@@ -417,21 +426,100 @@ function Select-FreeAgent($r, [string]$suggested) {
     }
 }
 
-function Invoke-LintTask([string]$WorkDir = '', [string]$TaskPath = '') {
+function Invoke-LintTask([string]$WorkDir = '', [string]$TaskPath = '', [switch]$StructureOnly) {
     $lintProject = Resolve-Project $Project
     if (-not $WorkDir) { $WorkDir = $lintProject.Path }
     if (-not $TaskPath) { $TaskPath = (Find-TaskFile $lintProject $Task).FullName }
     $lintExe = Get-AITeamExe
     if (-not $lintExe) { throw 'Không build được CLI để lint task.' }
-    & $lintExe lint-task --root $Root --workdir $WorkDir --task-file $TaskPath
+    $lintArgs = @('lint-task', '--root', $Root, '--workdir', $WorkDir, '--task-file', $TaskPath)
+    if ($StructureOnly -or $Resume) { $lintArgs += '--resume' }
+    & $lintExe @lintArgs
     if ($LASTEXITCODE -ne 0) { throw 'Task không đạt kiểm chất lượng TK/TN; chưa giao AI. Xem lý do phía trên.' }
 }
 
+# /// Trả ngưỡng từ cấu hình hợp nhất cfg.review.maxRounds; thiếu/không nguyên dương => 3.
+function Get-ReviewRoundLimit($cfg) {
+    $raw = $null
+    try { $raw = $cfg.review.maxRounds } catch { }
+    if ($null -eq $raw) { return 3 }
+    $n = 0
+    if ($raw -is [int] -and $raw -gt 0) { return $raw }
+    if ($raw -is [string] -and [int]::TryParse($raw, [ref]$n) -and $n -gt 0) { return $n }
+    return 3
+}
+
+# /// Chỉ gọi CLI V6-01 review-rounds --task-file <taskFile> --logs <r.Logs> --task <taskId>.
+# /// Dùng Get-AITeamExe, truyền đối số rời, không đếm lại bằng PowerShell.
+# /// Chỉ nhận mã 0 + đúng một số nguyên không âm; thiếu CLI/lỗi/output sai =>
+# /// ném lỗi "Không xác định được số vòng review; dừng giao lại."; không coi là 0.
+function Get-ReviewRoundCount($r, [string]$taskFile, [string]$taskId) {
+    try {
+        $exe = Get-AITeamExe
+        if (-not $exe) { throw 'Thiếu CLI' }
+        $arguments = @('review-rounds', '--task-file', $taskFile, '--logs', $r.Logs, '--task', $taskId)
+        $stdout = @(& $exe @arguments 2>$null)
+        $code = $LASTEXITCODE
+        $value = 0
+        $output = ($stdout -join "`n").Trim()
+        if ($code -ne 0 -or $output -notmatch '\A[0-9]+\z' -or
+            -not [int]::TryParse($output, [ref]$value)) { throw 'Kết quả CLI không hợp lệ' }
+        return $value
+    } catch {
+        throw 'Không xác định được số vòng review; dừng giao lại.'
+    }
+}
+
+# /// Trả false dưới ngưỡng. Đạt ngưỡng => tái dùng decision pending cùng project/task
+# /// (đối chiếu title theo tiền tố task vì decision cũ có task=null), hoặc gọi
+# /// Invoke-ApprovalRequest -Kind decision qua biến script hiện có, khôi phục biến sau gọi.
+# /// Title: "Cần anh duyệt · <Task> · quá N vòng review".
+# /// Detail: dự án, task, "Tổng/ngưỡng: N/M", "giao tiếp", "Claude tự sửa", "bỏ task".
+# /// Ghi đúng "⏸ Chờ anh quyết · quá N vòng review", trả true; lỗi CLI cũng dừng,
+# /// báo đúng câu lỗi ở Get-ReviewRoundCount, không tạo decision sai, không chạy agent.
+# /// Không tự thực hiện lựa chọn. Lỗi ghi approval/bảng phải báo ra, không nuốt.
+function Stop-ReviewReassignment($r, [string]$taskFile, [string]$taskId, $cfg) {
+    $ErrorActionPreference = 'Stop'
+    $count = Get-ReviewRoundCount $r $taskFile $taskId
+    $limit = Get-ReviewRoundLimit $cfg
+    if ($count -lt $limit) { return $false }
+    # Tái dùng decision pending cùng project/task
+    $prefix = "Cần anh duyệt · $taskId $([char]0x00B7) "
+    $existing = @(Get-Approvals | Where-Object {
+        $_.kind -eq 'decision' -and $_.status -eq 'pending' -and
+        $_.project -eq $r.Info.name -and ($_.task -eq $taskId -or
+            (-not $_.task -and $_.title -and $_.title.StartsWith($prefix, [StringComparison]::Ordinal)))
+    })
+    if (-not $existing.Count) {
+        # Gọi Invoke-ApprovalRequest qua biến script
+        $savedKind = $script:Kind; $savedTitle = $script:Title; $savedPrompt = $script:Prompt; $savedProject = $script:Project
+        try {
+            $script:Kind = 'decision'
+            $script:Title = "Cần anh duyệt · $taskId · quá $count vòng review"
+            $script:Prompt = "Dự án: $($r.Info.name)`nTask: $taskId`nTổng/ngưỡng: $count/$limit`n`nLựa chọn:`n- giao tiếp`n- Claude tự sửa`n- bỏ task"
+            $script:Project = $r.Info.name
+            $null = Invoke-ApprovalRequest
+        } finally {
+            $script:Kind = $savedKind; $script:Title = $savedTitle; $script:Prompt = $savedPrompt; $script:Project = $savedProject
+        }
+    }
+    $null = Set-BoardStatus $r $taskId "⏸ Chờ anh quyết · quá $count vòng review"
+    return $true
+}
+
 function Invoke-Assign {
+    if ($Task -cnotmatch '\A[A-Za-z0-9][A-Za-z0-9-]{0,63}\z') { throw 'LỖI: mã task không hợp lệ.' }
     $cfg = Get-Config
     $r = Resolve-Project $Project
+    if ($Dev -eq 'opencode') {
+        $ocModel = if ($cfg.opencode.model) { [string]$cfg.opencode.model } else { 'opencode/deepseek-v4.1-flash-free' }
+        if ($ocModel -notmatch '(?i)deepseek') { throw 'OpenCode chỉ được dùng model DeepSeek.' }
+        $knownPublic = $r.Info.private -is [bool] -and -not $r.Info.private
+        if (-not $knownPublic -and $cfg.opencode.paid -ne $true) { throw 'Repo private/không rõ riêng tư không được chạy OpenCode free; khai báo private=false cho repo public hoặc opencode.paid=true.' }
+    }
     if (-not $Task) { throw "Thiếu -Task" }
     $taskFile = Find-TaskFile $r $Task
+    if ($Resume -and (Stop-ReviewReassignment $r $taskFile.FullName $Task $cfg)) { return }
     $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
     $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
@@ -478,6 +566,7 @@ function Invoke-Assign {
     New-Item -ItemType Directory -Force $r.Logs | Out-Null
     $work = Join-Path $r.Work ("$agentId-$Task".ToLower())
     git -C $r.Path fetch origin --quiet
+    if ($LASTEXITCODE -ne 0) { throw "Không fetch được origin trước khi giao task." }
     # Nhánh đã có worktree (vd. lần trước gõ -Task ngắn hơn) ⇒ dùng lại đúng thư mục đó thay vì báo lỗi "already used by worktree".
     $existing = (git -C $r.Path worktree list --porcelain) -join "`n"
     $m = [regex]::Match($existing, "worktree ([^\n]+)\nHEAD [0-9a-f]+\nbranch refs/heads/$([regex]::Escape($branch))(\n|$)")
@@ -489,14 +578,17 @@ function Invoke-Assign {
         $remoteHas = git -C $r.Path ls-remote --heads origin $branch
         if ($remoteHas) { git -C $r.Path worktree add $work -B $branch "origin/$branch" --quiet }
         else { git -C $r.Path worktree add $work -B $branch origin/main --quiet }
-    } else {
-        # git in cảnh báo (vd. LF→CRLF) ra stderr; PowerShell 5.1 + Stop coi là lỗi và dừng assign.
-        $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-        git -C $work merge origin/main --no-edit --quiet 2>$null
-        $ErrorActionPreference = $eap
     }
+    $eap = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        git -C $work fetch origin --quiet 2>$null
+        if ($LASTEXITCODE -ne 0) { throw "Không fetch được origin trong worktree; chưa giao task." }
+        git -C $work merge origin/main --no-edit --quiet 2>$null
+        if ($LASTEXITCODE -ne 0) { throw "Không cập nhật được origin/main (có thể xung đột); chưa giao task." }
+    } finally { $ErrorActionPreference = $eap }
 
-    try { Invoke-LintTask -WorkDir $work -TaskPath (Join-Path $work "tasks/$($taskFile.Name)") }
+    try { Invoke-LintTask -WorkDir $work -TaskPath (Join-Path $work "tasks/$($taskFile.Name)") -StructureOnly:$Resume }
     catch { Set-BoardStatus $r $Task "Bị chặn"; throw }
 
     $devInfo = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
@@ -514,7 +606,7 @@ function Invoke-Assign {
     Set-AgentIdentity $r.Path $work $devInfo $r.Info.name
     # V5-02 (R-005): MCP Gateway cho agy ⇒ agent báo tiến độ lên Văn phòng. Codex hiện tắt MCP theo lần gọi.
     $mcpNote = ""
-    if ($Dev -ne "codex" -and (Set-McpConfig $r $work $taskFile $agentId)) {
+    if ($Dev -notin @("codex", "opencode") -and (Set-McpConfig $r $work $taskFile $agentId)) {
         $mcpNote = "`nBÁO TIẾN ĐỘ QUA MCP (chủ dự án theo dõi trên trang Văn phòng): có công cụ aiteam_post_message. Gọi NGẮN (1 câu): khi bắt đầu; sau mỗi phần chạy được; khi gặp vướng cần quản lý quyết (kind question); khi xong (kind done, kèm số test pass). Không gọi quá 15 lần. Công cụ khác: aiteam_get_test_results (kết quả cổng kiểm tra lần trước)."
     }
     $prompt = @"
@@ -563,7 +655,8 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     # Model theo task (dòng **Model:** `tên` trong file task) > model mặc định trong team.json.
     $taskModel = [regex]::Match($text, '\*\*Model:\*\*\s*`([^`]+)`').Groups[1].Value
     $model = if ($taskModel) { $taskModel } else { $cfg.agy.model }
-    if ($Dev -ne 'codex' -and $model) {
+    if ($Dev -eq 'opencode') { $model = $ocModel }
+    if ($Dev -notin @('codex', 'opencode') -and $model) {
         $available = Get-AgyModels $cfg
         if ($null -ne $available) {
             $resolved = if ($null -ne $cfg.agy.modelFallback) {
@@ -587,7 +680,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     $mainBefore = (git -C $r.Path rev-parse origin/main 2>$null)
     $devProvider = "agy"
     $logText = ""; $errText = ""
-    if ($Dev -ne "codex") {
+    if ($Dev -notin @("codex", "opencode")) {
         $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
             -RedirectStandardOutput $log -RedirectStandardError $err
         $logText = Get-Content $log -Raw -ErrorAction SilentlyContinue
@@ -595,6 +688,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
     }
     if ("$logText`n$errText" -match '(?i)invalid model selection') {
+        Clear-AgyModelCache
         Set-BoardStatus $r $Task '🔴 Lỗi agent · model không hợp lệ' -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
         if ($NoVerify) { return @{ Ok = $false; Quota = $false } }; return
     }
@@ -612,15 +706,16 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     Test-AgentTouchedMain $r $work $mainBefore
 
     # R-004: -Dev codex ⇒ Codex viết code; agy hết hạn mức ⇒ tự chuyển sang Codex (trừ -Dev agy). Codex không ghi được .git ⇒ team.ps1 commit + push.
-    $agyQuota = ($Dev -ne "codex") -and (Test-QuotaExhausted $logText $errText)
-    if ($Dev -eq "codex" -or ($agyQuota -and $Dev -ne "agy")) {
+    $agyQuota = ($Dev -notin @("codex", "opencode")) -and (Test-QuotaExhausted $logText $errText)
+    if ($Dev -in @("codex", "opencode") -or ($agyQuota -and $Dev -ne "agy")) {
         if ($agyQuota) {
             Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
             Say "Antigravity hết hạn mức → tự chuyển $Task sang Codex (dự phòng)." Yellow
             $log = Join-Path $r.Logs ("$Task-{0}.json" -f ($n + 1))
         }
-        $devProvider = "codex"; $model = "codex"
-        $cx = Invoke-CodexDevelop $r $Task $work $branch $prompt $log $maxMin
+        $devProvider = if ($Dev -eq 'opencode') { 'opencode' } else { 'codex' }
+        $model = if ($devProvider -eq 'opencode') { $ocModel } else { 'codex' }
+        $cx = Invoke-CodexDevelop $r $Task $work $branch $prompt $log $maxMin $devProvider $(if ($devProvider -eq 'opencode') { $ocModel } else { $null }) $(if ($devProvider -eq 'opencode') { $knownPublic } else { $false })
         if (-not $cx.Ok) {
             Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
             Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
@@ -629,12 +724,16 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }; if ($NoVerify) { return @{ Ok = $false; Quota = $true } }; return }
     if ($NoVerify) {
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
-        $agentOk = if ($devProvider -eq 'codex') { [bool]$cx.Ok } else { $proc -and $proc.ExitCode -eq 0 -and $logText -match '"status"\s*:\s*"SUCCESS"' }
+        $agentOk = if ($devProvider -in @('codex','opencode')) { [bool]$cx.Ok } else { $proc -and $proc.ExitCode -eq 0 -and $logText -match '"status"\s*:\s*"SUCCESS"' }
         Set-BoardStatus $r $Task $(if ($agentOk) { "🔵 Chờ review" } else { "🔴 Lỗi agent" }) -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = $(if ($agentOk) { 'XONG' } else { 'LỖI' }) }
         return @{ Ok = [bool]$agentOk; Quota = $false }
     }
     if ($devProvider -eq 'codex') { dotnet build-server shutdown 2>&1 | Out-Null }
     $gate = Invoke-WorkflowGate -Verify { Invoke-Verify } -Qc {
+        if ($devProvider -eq 'opencode') {
+            if ($NoReview) { return $null }
+            return @{ Code = 3; Json = @{ summary = 'OpenCode đã code; Claude review theo quy trình v5.' }; Out = '' }
+        }
         Invoke-AutoReview $r $taskFile.Name $work $devProvider
     }
     $v = $gate.Verify
@@ -656,7 +755,12 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     if (-not $v.Ok -and -not $script:VerifyRetried -and $script:AssignRuns -lt 3) {
         $script:VerifyRetried = $true
         # Lỗi cơ học (chưa commit / build / test / BOM...) → trả agent sửa luôn 1 lần, không tốn lượt review của Claude.
-        Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $true)
+        $runMetrics = Get-RunRecord $r $Task $log $agentId $model $work $v $true
+        Save-RunMetrics $runMetrics
+        if ($runMetrics.pause) {
+            Set-BoardStatus $r $Task '⏸ Tạm dừng · có thể test nghiệm thu sai (TN)'
+            return
+        }
         Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi." Yellow
         Set-BoardStatus $r $Task '🔴 Cần sửa · tự giao lại' -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'KHÔNG ĐẠT' }
         $script:Resume = $true
@@ -664,13 +768,19 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         Invoke-Assign
         return
     }
-    Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $false)
+    $runMetrics = Get-RunRecord $r $Task $log $agentId $model $work $v $false
+    Save-RunMetrics $runMetrics
+    if ($runMetrics.pause) {
+        Set-BoardStatus $r $Task '⏸ Tạm dừng · có thể test nghiệm thu sai (TN)'
+        return
+    }
     # Bảng việc theo kết quả cổng KT (dòng này từng bị mất ⇒ task xong vẫn hiện 🟡 trên bảng / Văn phòng — R-005). Review AI bên dưới có thể ghi đè.
     $boardText = $(if ($v.Ok) { "🔵 Chờ review · cổng KT ĐẠT" } else { "🔴 Cần sửa · cổng KT KHÔNG ĐẠT" })
     if ($v.Ok -and $rv) {
         switch ($rv.Code) {
             0 { $boardText = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS" }
             1 {
+                if (Stop-ReviewReassignment $r (Join-Path $work "tasks/$($taskFile.Name)") $Task $cfg) { return }
                 if (-not $script:ReviewRetried -and $rv.Json -and $rv.Json.feedback) {
                     $script:ReviewRetried = $true; $script:VerifyRetried = $false
                     Say "AI review CẦN SỬA → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi của reviewer." Yellow
@@ -776,8 +886,16 @@ function Invoke-CodexRetry($exe, [string[]]$arguments, [string]$out) {
     $current = $arguments
     for ($attempt = 0; $attempt -lt 3; $attempt++) {
         if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out }
-        $lines = @(& $exe @current 2>&1)
-        $code = $LASTEXITCODE
+        try {
+            $lines = @(& $exe @current 2>&1)
+            $code = $LASTEXITCODE
+        } finally {
+            # Chạy cả khi Codex lỗi, bị hủy hoặc -NoVerify; không che kết quả lượt gọi.
+            $savedExit = $LASTEXITCODE
+            try { dotnet build-server shutdown 2>&1 | Out-Null }
+            catch { Say "Không dừng được build server: $($_.Exception.Message)" Yellow }
+            $global:LASTEXITCODE = $savedExit
+        }
         $lines | ForEach-Object { Say "  $_" }
         $text = ($lines -join "`n")
         if (Test-Path -LiteralPath $out) { $text += "`n" + [IO.File]::ReadAllText($out) }
@@ -797,32 +915,44 @@ function Invoke-CodexRetry($exe, [string[]]$arguments, [string]$out) {
 
 # R-004: Codex viết code trong worktree qua `aiteam run`. Codex KHÔNG ghi được .git (sandbox — thử thật 24/10) ⇒ commit + push ở đây.
 # Ghi $logFile cùng định dạng log agy (status / usage / duration_seconds) để số đo, Hub, báo cáo dùng lại được.
-function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin) {
+function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin, [string]$runtimeProvider = 'codex', [string]$runtimeModel = '', [bool]$publicRepository = $false) {
     $exe = Get-AITeamExe
     if (-not $exe) { return [pscustomobject]@{ Ok = $false; Status = "không build được aiteam.exe" } }
     $codexPromptPrefix = "CHẠY BẰNG CODEX (dự phòng Antigravity): KHÔNG chạy lệnh git (sandbox chặn ghi .git) — hệ thống tự commit + push sau khi bạn xong; bỏ qua mọi yêu cầu commit / push bên dưới. Vẫn phải điền mục 'Báo cáo của agent' trong file task.`n`n"
+    if ($runtimeProvider -eq 'opencode') { $codexPromptPrefix = "CHẠY BẰNG OPENCODE DEEPSEEK: chỉ làm trong phạm vi task và quyền đã cấp; không dùng model khác.`n`n" }
     $pf = $logFile -replace '\.json$', '.codex.prompt.md'
     [IO.File]::WriteAllText($pf, $codexPromptPrefix + $prompt, (New-Object Text.UTF8Encoding $false))
     $out = $logFile -replace '\.json$', '.codex.json'
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Say "[$(Get-Date -Format HH:mm:ss)] $TaskName → Codex (aiteam run), thư mục $work" Cyan
-    Invoke-CodexRetry $exe @("run", "--provider", "codex", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$TaskName.codex"), "--timeout-min", $maxMin, "--out", $out, "--root", $Root) $out
+    $runArgs = @("run", "--provider", $runtimeProvider, "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$TaskName.$runtimeProvider"), "--timeout-min", $maxMin, "--out", $out, "--root", $Root, "--title", $TaskName)
+    if ($runtimeModel) { $runArgs += @('--model', $runtimeModel) }
+    if ($runtimeProvider -eq 'opencode' -and $publicRepository) { $runArgs += '--public-repo' }
+    if ($runtimeProvider -eq 'codex') { Invoke-CodexRetry $exe $runArgs $out } else { & $exe @runArgs }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
-    $in = if ($j -and $j.inputTokens -ge 0) { [long]$j.inputTokens } else { 0 }
-    $outTok = if ($j -and $j.outputTokens -ge 0) { [long]$j.outputTokens } else { 0 }
+    $tokensKnown = $j -and $null -ne $j.inputTokens -and $null -ne $j.outputTokens -and $j.inputTokens -ge 0 -and $j.outputTokens -ge 0 -and $j.tokensKnown -ne $false
+    $in = if ($tokensKnown) { [long]$j.inputTokens } else { $null }
+    $outTok = if ($tokensKnown) { [long]$j.outputTokens } else { $null }
     $agyLike = [ordered]@{
-        status = $(if ($code -eq 0) { "SUCCESS" } else { "ERROR" }); provider = "codex"
+        status = $(if ($code -eq 0) { "SUCCESS" } else { "ERROR" }); provider = $runtimeProvider
         response = $(if ($j) { $j.text } else { "" }); error = $(if ($code -ne 0 -and $j) { $j.summary } else { $null })
         duration_seconds = $(if ($j) { [int]$j.durationSec } else { 0 })
-        usage = [ordered]@{ input_tokens = $in; output_tokens = $outTok; thinking_tokens = 0; total_tokens = $in + $outTok }
+        tokensKnown = [bool]$tokensKnown
+        usage = $(if ($tokensKnown) { [ordered]@{ input_tokens = $in; output_tokens = $outTok; thinking_tokens = $j.thinkingTokens; total_tokens = $in + $outTok } } else { $null })
         conversation_id = ""
+    }
+    if ($runtimeProvider -eq 'opencode') {
+        $known = $j -and $null -ne $j.inputTokens -and $j.inputTokens -ge 0 -and $null -ne $j.outputTokens -and $j.outputTokens -ge 0 -and $null -ne $j.totalTokens
+        $agyLike.tokensKnown = [bool]$known
+        $agyLike.usage = $(if ($known) { [ordered]@{ input_tokens = $j.inputTokens; output_tokens = $j.outputTokens; thinking_tokens = $null; total_tokens = $j.totalTokens } } else { $null })
+        $agyLike.error = if ($j) { $j.detail } else { 'Chưa nhận kết quả OpenCode.' }
     }
     [IO.File]::WriteAllText($logFile, ($agyLike | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding $false))
     if ($code -eq 0) {
         if (@(git -C $work status --porcelain 2>$null | Where-Object { $_ }).Count -gt 0) {
             git -C $work add -A 2>$null
-            git -C $work commit -q -m "${TaskName}: Codex viết code (dự phòng Antigravity)" 2>&1 | Select-Object -Last 3 | ForEach-Object { Say "  $_" Yellow }
+            git -C $work commit -q -m "${TaskName}: $runtimeProvider viết code" 2>&1 | Select-Object -Last 3 | ForEach-Object { Say "  $_" Yellow }
         }
         git -C $work push -q -u origin $branch 2>$null
     }
@@ -834,6 +964,7 @@ function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$bran
 # Review AI cho task vừa qua cổng KT: aiteam review --auto (tự quyết có review không), reviewer ≠ agy (cấm tự duyệt).
 # Trả $null nếu bỏ qua / không chạy được; ngược lại { Code (0 PASS · 1 CẦN SỬA · 3 BLOCKED · 4 bỏ qua), Json, Out }.
 function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$devProvider = "agy") {
+    $assignment = Resolve-WorkflowAssignment 'qc'
     if ($NoReview) { Say "Bỏ qua review AI (-NoReview)."; return $null }
     $exe = Get-AITeamExe
     if (-not $exe) { Say "Không build được aiteam.exe ⇒ bỏ qua review AI." Yellow; return $null }
@@ -857,7 +988,7 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
         $a+=@('--verify-file',(Join-Path $r.Logs $script:AcceptVerify.verify.source))
     }
     Say "Review AI (aiteam review --auto)…" Cyan
-    Invoke-WorkflowCodexLock -Action { Invoke-CodexRetry $exe $a $out }   # QC Codex dùng chung khóa toàn máy với prep
+    Invoke-WorkflowRoleRun $assignment $exe $a 2>&1 | ForEach-Object { Say "  $_" }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $ErrorActionPreference = $eap
     $json = $null; if (Test-Path $out) { try { $json = Read-Json $out } catch { } }
@@ -968,7 +1099,19 @@ function Invoke-Cleanup {
     }
 }
 
+function Clear-AgyModelCache {
+    $cacheState = Join-Path $Root '.state'
+    $cacheFile = Join-Path $cacheState 'agy-models.json'
+    foreach ($cachePath in @($cacheState, $cacheFile)) {
+        if ((Test-Path -LiteralPath $cachePath) -and (([IO.File]::GetAttributes($cachePath) -band [IO.FileAttributes]::ReparsePoint) -ne 0)) {
+            throw "Không xóa cache model qua symlink/reparse point: $cachePath"
+        }
+    }
+    if (Test-Path -LiteralPath $cacheFile) { Remove-Item -LiteralPath $cacheFile -Force }
+}
+
 function Invoke-SwitchAccount {
+    Clear-AgyModelCache
     $cfg = Get-Config
     Say "Mở Antigravity CLI trong cửa sổ mới:" Cyan
     Say "  1. Gõ /logout rồi Enter"
@@ -1120,7 +1263,15 @@ function ConvertTo-AsciiSlug([string]$text) {
 function Invoke-Qc {
     $ctx = Get-TaskContext
     if (-not (Test-Path $ctx.Work)) { throw "Chưa có thư mục làm việc $($ctx.Work)" }
-    $rv = Invoke-AutoReview $ctx.R $ctx.TaskFile.Name $ctx.Work "agy"
+    $devProvider = if ($ctx.AgentId -ceq 'C') { 'codex' } else { 'agy' }
+    $lastRun = Get-ChildItem $ctx.R.Logs -Filter "$Task-*.json" -ErrorAction SilentlyContinue |
+        Where-Object { $_.BaseName -match ('^' + [regex]::Escape($Task) + '-\d+$') } |
+        Sort-Object LastWriteTime | Select-Object -Last 1
+    if ($lastRun) {
+        $run = Read-Json $lastRun.FullName
+        if ($run.provider -in @('codex','agy')) { $devProvider = $run.provider }
+    }
+    $rv = Invoke-AutoReview $ctx.R $ctx.TaskFile.Name $ctx.Work $devProvider
     if (-not $rv) { Say "Review AI bỏ qua (task không bật Review AI?)." Yellow; return }
     $text = @{ 0 = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS"; 1 = "🔴 Cần sửa · AI review CẦN SỬA"; 3 = "🔵 Chờ review · AI review BLOCKED (Claude review)" }[[int]$rv.Code]
     Say "QC: mã $($rv.Code) · $($rv.Out)" Cyan
@@ -1142,7 +1293,46 @@ function Invoke-Qc {
 }
 
 # Bước 2: plans/R-xxx/brief.md (Claude viết, ≤ 20 dòng) ⇒ Codex đọc repo CHỈ ĐỌC ⇒ plans/R-xxx/plan.md. -Name = tiền tố mã task (vd. V6).
+# /// <summary>Đọc quyết định qua aiteam workflow-role --root $Root --role $Role; JSON camelCase.
+# /// CLI lỗi hoặc JSON không hợp lệ phải throw, không trả mặc định; không ghi team.json.</summary>
+function Resolve-WorkflowAssignment([string]$Role) {
+    $exe = Get-AITeamExe
+    if (-not $exe) { throw 'Không build được aiteam.exe' }
+    $json = & $exe workflow-role --root $Root --role $Role
+    if ($LASTEXITCODE -ne 0) { throw 'Không đọc được cấu hình phân vai.' }
+    try { $assignment = ($json -join "`n") | ConvertFrom-Json } catch { throw 'Phân vai không hợp lệ.' }
+    if (-not $assignment -or $assignment.role -cne $Role -or
+        $assignment.actor -cnotin @('claude','codex','minh','lan','gate','owner') -or
+        $assignment.isExplicit -isnot [bool] -or $assignment.readOnly -isnot [bool] -or $assignment.manual -isnot [bool] -or
+        $assignment.readOnly -ne ($Role -ne 'prep')) { throw 'Phân vai không hợp lệ.' }
+    $provider = switch -CaseSensitive ($assignment.actor) { 'codex' {'codex'} 'minh' {'agy'} 'lan' {'agy'} default {$null} }
+    if (-not $assignment.isExplicit -and $Role -eq 'qc') { $provider = $null }
+    if ($assignment.providerId -cne $provider -or $assignment.manual -ne ($assignment.actor -cin @('claude','gate','owner'))) { throw 'Phân vai không hợp lệ.' }
+    if ($assignment.manual) { throw 'Tác nhân được gán cần thực hiện thủ công.' }
+    return $assignment
+}
+
+# /// <summary>Chạy đúng Assignment bằng $Exe với mảng Arguments; không Invoke-Expression.
+# /// Manual => throw "Tác nhân được gán cần thực hiện thủ công." trước gọi exe.
+# /// run: thêm --provider đúng người; plan thêm --read-only, prep không thêm; review: thêm
+# /// --reviewer-provider khi IsExplicit, QC cũ không thêm. Giữ mã LASTEXITCODE.
+# /// Chỉ bọc Invoke-WorkflowCodexLock khi ProviderId=codex; không khóa agy/thủ công.
+# /// Không fallback; không đổi --out/--root/timeout hay cờ khác trong Arguments.</summary>
+function Invoke-WorkflowRoleRun($Assignment, [string]$Exe, [string[]]$Arguments) {
+    if ($Assignment.Manual) { throw 'Tác nhân được gán cần thực hiện thủ công.' }
+    $callArgs = @($Arguments)
+    if ($callArgs[0] -ceq 'run') {
+        $callArgs += @('--provider', $Assignment.ProviderId)
+        if ($Assignment.Role -ceq 'plan' -and '--read-only' -notin $callArgs) { $callArgs += '--read-only' }
+    } elseif ($callArgs[0] -ceq 'review' -and $Assignment.IsExplicit) {
+        $callArgs += @('--reviewer-provider', $Assignment.ProviderId)
+    }
+    if ($Assignment.ProviderId -ceq 'codex') {
+        Invoke-WorkflowCodexLock -Action { & $Exe @callArgs }
+    } else { & $Exe @callArgs }
+}
 function Invoke-Plan {
+    $assignment = Resolve-WorkflowAssignment 'plan'
     $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
     $dir = Get-PlanDir $Request
     $brief = Join-Path $dir "brief.md"
@@ -1160,7 +1350,7 @@ function Invoke-Plan {
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     $before = git -C $r.Path status --porcelain
     Say "[$(Get-Date -Format HH:mm:ss)] $Request → Codex lập kế hoạch (chỉ đọc) trong $($r.Path)" Cyan
-    & $exe run --provider codex --read-only --workdir $r.Path --prompt-file $pf --logdir (Join-Path $r.Logs "$Request.plan") --timeout-min 20 --out $out --root $Root 2>&1 | ForEach-Object { Say "  $_" }
+    Invoke-WorkflowRoleRun $assignment $exe @("run", "--workdir", $r.Path, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$Request.plan"), "--timeout-min", "20", "--out", $out, "--root", $Root) 2>&1 | ForEach-Object { Say "  $_" }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
     $after = git -C $r.Path status --porcelain
     $ErrorActionPreference = $eap
@@ -1180,6 +1370,7 @@ function Invoke-Plan {
 # file task + khung + test nghiệm thu ⇒ build phải 0 lỗi ⇒ commit + push nhánh, file task + dòng bảng việc lên main
 # ⇒ giao Antigravity (assign; task có "Review AI: có" ⇒ Codex QC sau cổng KT). -NoLaunch: chỉ chuẩn bị, không giao.
 function Invoke-Prep {
+    $assignment = Resolve-WorkflowAssignment 'prep'
     $r = Resolve-Project $(if ($Project) { $Project } else { "AITeam" })
     $dir = Get-PlanDir $Request
     $planFile = Join-Path $dir "plan.md"
@@ -1225,7 +1416,7 @@ function Invoke-Prep {
     $out = Join-Path $r.Logs "$Task.prep.json"
     $exe = Get-AITeamExe
     Say "[$(Get-Date -Format HH:mm:ss)] $Task → Codex chuẩn bị task (đặc tả + khung + test nghiệm thu) trong $work" Cyan
-    Invoke-WorkflowCodexLock -Action { Invoke-CodexRetry $exe @("run", "--provider", "codex", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$Task.prep"), "--timeout-min", "20", "--out", $out, "--root", $Root) $out }
+    Invoke-WorkflowRoleRun $assignment $exe @("run", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$Task.prep"), "--timeout-min", "20", "--out", $out, "--root", $Root) 2>&1 | ForEach-Object { Say "  $_" }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
     if ($code -ne 0) {
@@ -1543,12 +1734,26 @@ function Get-PsExe { (Get-Process -Id $PID).Path }
 
 # Chạy lệnh build/test của dự án trong thư mục cho trước, lấy mã thoát + toàn bộ output.
 function Invoke-ShellCapture([string]$command, [string]$dir) {
-    Push-Location $dir
+    $buildMutex = $null; $buildOwned = $false; $locationPushed = $false
     try {
+        if ($command -match '(?i)\bdotnet\s+build\b') {
+            # Dùng chung giữa worktree/tiến trình trên máy, không để hai build tranh tệp/worker.
+            $buildMutex = New-Object Threading.Mutex($false, 'Global\AITeam.Build')
+            try { $buildOwned = $buildMutex.WaitOne([TimeSpan]::FromMinutes(15)) }
+            catch [Threading.AbandonedMutexException] { $buildOwned = $true }
+            if (-not $buildOwned) { throw 'Hết thời gian chờ build khác; chưa chạy build.' }
+            $command = [regex]::Replace($command, '(?i)\bdotnet\s+build\b', '$0 -nodeReuse:false')
+            $command = [regex]::Replace($command, '(?i)(?:-|/)(?:nr|nodeReuse):\s*true\b', '-nodeReuse:false')
+        }
+        Push-Location $dir; $locationPushed = $true
         if ($env:OS -eq 'Windows_NT') { $out = cmd /c "$command 2>&1" | Out-String }
         else { $out = sh -c "$command 2>&1" | Out-String }
         return [pscustomobject]@{ Code = $LASTEXITCODE; Output = $out }
-    } finally { Pop-Location }
+    } finally {
+        if ($locationPushed) { Pop-Location }
+        if ($buildOwned) { $buildMutex.ReleaseMutex() }
+        if ($buildMutex) { $buildMutex.Dispose() }
+    }
 }
 
 # 3 byte đầu của file trong một commit (Start-Process ghi stdout nguyên byte, không bị đổi mã như pipe của PowerShell).
@@ -1627,6 +1832,14 @@ function Invoke-Verify {
 
     # 3. Test nghiệm thu do Claude viết trước: phải còn nguyên
     $accept = Get-BacktickPaths (Get-Section $ctx.Text "Test nghiệm thu")
+    $allowedHarness = @()
+    foreach ($permission in [regex]::Matches($ctx.Text, '(?m)^-\s+\*\*Cho phép sửa harness:\*\*\s*([^\r\n]+)')) {
+        $declared = @(Get-BacktickPaths $permission.Groups[1].Value)
+        if ($declared.Count -eq 0) { $declared = @($permission.Groups[1].Value.Trim()) }
+        foreach ($path in $declared) {
+            if ($accept -contains $path -and $path -notmatch '(^|[\\/])\.\.([\\/]|$)|^[\\/]|:') { $allowedHarness += $path }
+        }
+    }
     foreach ($a in $accept) {
         if (-not (Test-Path (Join-Path $work $a))) { [void]$fails.Add("Thiếu file test nghiệm thu: $a"); continue }
         # Test nghiệm thu nằm sẵn trên main, hoặc là commit đầu tiên Claude đẩy lên nhánh task (vì tham chiếu lớp chưa có).
@@ -1635,7 +1848,25 @@ function Invoke-Verify {
         if ($LASTEXITCODE -ne 0) { $ref = git -C $work log --reverse --diff-filter=A --format=%H "$base..HEAD" -- $a 2>$null | Select-Object -First 1 }
         if (-not $ref) { [void]$fails.Add("Không tìm thấy commit thêm test nghiệm thu: $a"); continue }
         git -C $work diff --quiet $ref HEAD -- $a 2>$null
-        if ($LASTEXITCODE -ne 0) { [void]$fails.Add("Agent đã SỬA test nghiệm thu (không được phép): $a") }
+        if ($LASTEXITCODE -ne 0) {
+            $harnessOk = $false
+            if ($allowedHarness -contains $a) {
+                $policyExe = Get-AITeamExe
+                if ($policyExe) {
+                    $diffFile = [IO.Path]::GetTempFileName()
+                    try {
+                        $diffLines = @(git -C $work diff --no-ext-diff --no-textconv --unified=0 $ref HEAD -- $a 2>$null)
+                        if ($LASTEXITCODE -eq 0) {
+                            [IO.File]::WriteAllText($diffFile, ($diffLines -join "`n"), (New-Object Text.UTF8Encoding $false))
+                            $policyMessage = @(& $policyExe check-harness-change --allow --diff-file $diffFile)
+                            $harnessOk = $LASTEXITCODE -eq 0
+                        }
+                    } finally { Remove-Item -LiteralPath $diffFile -ErrorAction SilentlyContinue }
+                }
+            }
+            if ($harnessOk) { [void]$notes.Add("Đã cho phép sửa harness khai báo: $a; không đổi assert/thuộc tính test, Claude review phần dựng môi trường.") }
+            else { [void]$fails.Add("Agent đã SỬA test nghiệm thu (không được phép hoặc đụng assert): $a") }
+        }
     }
     if ($accept.Count -gt 0 -and -not ($fails | Where-Object { $_ -match 'test nghiệm thu' })) { [void]$notes.Add("Test nghiệm thu còn nguyên: $($accept.Count) file") }
 
@@ -1982,6 +2213,10 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         $ErrorActionPreference = $eap
     }
     $u = if ($j) { $j.usage } else { $null }
+    $tokensKnown = $u -and $null -ne $u.input_tokens -and $null -ne $u.output_tokens -and $u.input_tokens -ge 0 -and $u.output_tokens -ge 0 -and $j.tokensKnown -ne $false
+    $taskText = try { Get-Content (Find-TaskFile $r $TaskName).FullName -Raw -Encoding UTF8 } catch { "" }
+    $maxText = [regex]::Match($taskText, '\*\*Thời gian tối đa:\*\*\s*(\d+)').Groups[1].Value
+    $failureLog = if ($verify -and $verify.Report -and (Test-Path -LiteralPath $verify.Report) -and (Get-Item -LiteralPath $verify.Report).Length -le 4194304) { [IO.File]::ReadAllText($verify.Report) } else { "" }
     [ordered]@{
         at = (Get-Item $logFile).LastWriteTime.ToString("s")
         head = $(if ($work -and (Test-Path $work)) { git -C $work rev-parse HEAD 2>$null } else { $null })
@@ -1993,9 +2228,16 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         model = $(if ($model) { $model } else { "mặc định" })
         status = $(if ($j) { $j.status } else { "KHÔNG CÓ KẾT QUẢ" })
         durationSec = $(if ($j) { [int]$j.duration_seconds } else { $null })
-        outputTokens = $(if ($u) { [int]$u.output_tokens } else { $null })
-        thinkingTokens = $(if ($u) { [int]$u.thinking_tokens } else { $null })
-        totalTokens = $(if ($u) { [int]$u.total_tokens } else { $null })
+        tokensKnown = [bool]$tokensKnown
+        inputTokens = $(if ($tokensKnown) { [long]$u.input_tokens } else { $null })
+        outputTokens = $(if ($tokensKnown) { [long]$u.output_tokens } else { $null })
+        thinkingTokens = $(if ($tokensKnown -and $null -ne $u.thinking_tokens) { [long]$u.thinking_tokens } else { $null })
+        totalTokens = $(if ($tokensKnown) { if ($null -ne $u.total_tokens -and $u.total_tokens -ge 0) { [long]$u.total_tokens } else { [long]$u.input_tokens + [long]$u.output_tokens } } else { $null })
+        maxMinutes = $(if ($maxText -and [int]$maxText -gt 0) { [int]$maxText } else { 30 })
+        difficulty = [regex]::Match($taskText, '\*\*Độ khó:\*\*\s*([SML])\b').Groups[1].Value
+        hasOutput = [bool]($j -and -not [string]::IsNullOrWhiteSpace([string]$j.response))
+        diagnosticError = $(if ($j) { [string]$j.error + " " + [string]$j.status } else { "" })
+        failureLog = $failureLog
         linesAdded = $added; linesRemoved = $removed; filesChanged = $files
         verifyOk = $(if ($verify) { [bool]$verify.Ok } else { $null })
         verifyFails = $(if ($verify) { @($verify.Fails).Count } else { $null })
@@ -2007,13 +2249,59 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
     }
 }
 
+# V9-13: phân tích bằng máy, không gọi AI; dữ liệu lỗi thô chỉ tồn tại trong file tạm.
+function Add-RunFlags($record, [string]$history) {
+    $temp = [IO.Path]::GetTempFileName()
+    $savedExit = $global:LASTEXITCODE
+    try {
+        [IO.File]::WriteAllText($temp, ($record | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding $false))
+        $exe = Get-AITeamExe
+        if (-not $exe) { throw 'Chưa có CLI phân tích lượt.' }
+        $text = & $exe diagnose-run --input $temp --history $history
+        if ($LASTEXITCODE -ne 0) { throw 'Phân tích lượt thất bại.' }
+        $result = ($text -join "`n") | ConvertFrom-Json
+        $record.flags = @($result.flags)
+        $record.pause = [bool]$result.pause
+        $record.failureFingerprint = $result.failureFingerprint
+        $record.failureFingerprints = @($result.failureFingerprints)
+    } finally {
+        $record.Remove('diagnosticError'); $record.Remove('failureLog')
+        Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
+        $global:LASTEXITCODE = $savedExit
+    }
+}
+
+function Add-RunFlagsJournal($record) {
+    if (-not $record.flags -or $record.request -notmatch '\AR-[0-9]{3,4}\z') { return }
+    $folder = Join-Path $Root 'requests'
+    $files = @(Get-ChildItem -LiteralPath $folder -Filter "$($record.request)*.md" -ErrorAction SilentlyContinue | Where-Object { $_.BaseName -eq $record.request -or $_.BaseName.StartsWith("$($record.request)-",[StringComparison]::Ordinal) })
+    if ($files.Count -ne 1) { return }
+    $file = $files[0].FullName
+    for ($node=$file; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+        if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) { throw 'Nguồn nhật ký không an toàn.' }
+    }
+    $body = [IO.File]::ReadAllText($file)
+    $stamp = "Cờ tự động $($record.project)/$($record.task) lượt $($record.run)"
+    if ($body.Contains($stamp)) { return }
+    $heading = [regex]::Match($body, '(?m)^##\s+3[.)]?\s+Nhật ký[^\r\n]*\r?\n')
+    if (-not $heading.Success) { return }
+    $start = $heading.Index + $heading.Length
+    $next = [regex]::Match($body.Substring($start), '(?m)^##\s+')
+    $at = if ($next.Success) { $start + $next.Index } else { $body.Length }
+    $nl = if ($body.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $line = "| $(Get-Date -Format 'HH:mm dd/MM/yyyy') | $stamp | $(@($record.flags) -join ', ')$(if ($record.pause) { ' — có thể test nghiệm thu sai; Tạm dừng' }) |$nl"
+    [IO.File]::WriteAllText($file, $body.Insert($at,$line), (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($file)))))
+}
+
 function Save-RunMetrics($record) {
     Invoke-RepoTransaction -RepoPath $Root -Action {
         $dir = Join-Path $Root "metrics\runs"
         New-Item -ItemType Directory -Force $dir | Out-Null
         $name = "{0}-{1}-{2}-{3}.json" -f ($record.at -replace '[^0-9]', ''), $record.machine, $record.project, ($record.log -replace '\.json$', '')
         $file = Join-Path $dir $name
-        [IO.File]::WriteAllText($file, ($record | ConvertTo-Json), $Utf8)
+        Add-RunFlags $record $dir
+        Add-RunFlagsJournal $record
+        [IO.File]::WriteAllText($file, ($record | ConvertTo-Json -Depth 8), $Utf8)
         if ($script:AcceptVerify -and $record.task -ceq $script:AcceptVerify.task -and $record.head -ceq $script:AcceptVerify.head -and [string]$record.run -eq [string]$script:AcceptVerify.run) {
             $metricRepo=Resolve-Project $record.project
             Invoke-RepoTransaction -RepoPath $metricRepo.Path -Action {
