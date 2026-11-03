@@ -104,10 +104,10 @@ public interface ILessonService
 `core.tests/W202LessonServiceTests.cs` — Claude đã viết sẵn, đang đỏ 8/8 (thư mục tạm). Gồm:
 - AddDraft ⇒ LS-001, file có BOM, đọc lại bằng nhau; thêm lần 2 ⇒ LS-002.
 - Promote LS-001 ⇒ L-001 Active, bài học thành Promoted + RuleId; Promote lại ⇒ InvalidOperationException; Drop bài học Promoted ⇒ InvalidOperationException.
-- ForTask: luật A (mọi loại, bước code), luật B (chỉ `giao-dien`), luật C (Retired) ⇒ `("tinh-nang-loi","code",null)` chỉ có A.
-- PromptSection: thân 1000 ký tự ⇒ cắt ≤ 300; chuỗi có `\u001b` ⇒ bị bỏ; 20 luật ⇒ 15 + "…còn 5 luật"; không luật ⇒ "".
-- File `rules/L-009.md` hỏng + `rules/x.md` ⇒ `Rules()` không ném lỗi, không chứa chúng.
-- Tham số taskId `../x` ⇒ ArgumentException.
+- ForTask: luật A (mọi loại, bước code), luật B (chỉ giao-dien), luật C (Retired) ⇒ ("tinh-nang-loi","code",null) chỉ có A.
+- PromptSection: thân 1000 ký tự ⇒ cắt ≤ 300; chuỗi có \u001b ⇒ bị bỏ; 20 luật ⇒ 15 + "…còn 5 luật"; không luật ⇒ "".
+- File rules/L-009.md hỏng + rules/x.md ⇒ Rules() không ném lỗi, không chứa chúng.
+- Tham số taskId ../x ⇒ ArgumentException.
 - (Agent tự viết thêm trong W202CliTests) CLI rules-for-task với file task có dòng Loại việc: Sửa lỗi ⇒ stdout chứa luật của sua-loi.
 
 ## Tiêu chí hoàn thành
