@@ -65,6 +65,31 @@ public sealed class VaultService : IVaultService
         return false;
     }
 
+    internal string? ReadValue(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || !ValidNameRegex.IsMatch(name))
+        {
+            return null;
+        }
+
+        var dict = ReadVault();
+        if (!dict.TryGetValue(name, out var cipherBase64) || string.IsNullOrWhiteSpace(cipherBase64))
+        {
+            return null;
+        }
+
+        try
+        {
+            byte[] cipherBytes = Convert.FromBase64String(cipherBase64);
+            byte[] plainBytes = ProtectedData.Unprotect(cipherBytes, VaultEntropy, DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(plainBytes);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public void ExportEnv(string project, IReadOnlyList<string> names)
     {
         // Review H-001: chỉ ghi vào dự án có trong projects.json — không nhận đường dẫn tùy ý từ form web.

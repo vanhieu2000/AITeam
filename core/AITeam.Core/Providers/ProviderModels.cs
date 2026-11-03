@@ -4,7 +4,7 @@
 public enum AgentRole { Planner, Architect, Developer, Reviewer, QA, Manager }
 
 /// <summary>Loại runtime. Chỉ dùng CLI đăng nhập chính thức của từng hãng.</summary>
-public enum ProviderKind { Antigravity, Codex, ClaudeCli, OpenCode }
+public enum ProviderKind { Antigravity, Codex, ClaudeCli, OpenCode, Generic }
 
 /// <summary>Chế độ chạy: viết code trong worktree, hoặc chỉ đọc (review / phân tích).</summary>
 public enum RunMode { Develop, ReadOnly }
