@@ -197,6 +197,8 @@ function Test-AgentTouchedMain { }; function Get-RunRecord { }; function Save-Ru
 function Test-QuotaExhausted { $x.mode -eq 'fallback' }
 $script:captured=$null; $script:calls=0; $script:ro=$false; $script:cwd=$repo
 function FakeProvider {
+    # V6-02: Invoke-Assign đếm vòng review qua CLI; task mẫu chưa có vòng nào.
+    if ($args[0] -eq 'review-rounds') { $global:LASTEXITCODE=0; return '0' }
     $script:calls++; $a=@($args); $pf=$a[[Array]::IndexOf($a,'--prompt-file')+1]
     $script:captured=[IO.File]::ReadAllText($pf); $script:ro=$a -contains '--read-only'
     $script:cwd=$a[[Array]::IndexOf($a,'--workdir')+1]

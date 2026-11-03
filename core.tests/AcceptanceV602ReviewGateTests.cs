@@ -128,6 +128,10 @@ public sealed class AcceptanceV602ReviewGateTests
     {
         var result = await Run("""
             Set-Rounds 2
+            # R-012: Invoke-Assign đọc task trong worktree ($work/tasks/<tên>) — dựng đủ biến như lúc chạy thật.
+            $taskFile=$tf; $work=Join-Path $Root 'wt'
+            New-Item -ItemType Directory -Force (Join-Path $work 'tasks') | Out-Null
+            Copy-Item -LiteralPath $tf.FullName (Join-Path $work "tasks/$($tf.Name)") -Force
             [IO.File]::WriteAllText((Join-Path $r.Logs 'V6-02.review-1.json'),'{"verdict":"CHANGES_REQUESTED"}')
             $script:ReviewRetried=__RETRIED__; $rv=@{Code=1;Json=@{feedback=''}}; $v=@{Ok=$true}
             $node=$ast.Find({param($n) $n -is [Management.Automation.Language.SwitchStatementAst] -and $n.Extent.Text.Contains('$boardText')},$true)
