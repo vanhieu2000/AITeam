@@ -89,8 +89,10 @@ public interface IClaudeDecisionLog
 - `core.tests/V1003SensitiveGateTests.cs` (harness PowerShell theo mẫu test hiện có, thư mục tạm, không push thật): `Get-SensitiveChanges` bắt `hub/Services/VaultService.cs`, `.env.local`, `Migrations/001.sql`, bỏ qua `hub/Pages/Tasks.cshtml`; `Assert-MergeApproval` chặn khi có `security` pending, chặn khi `rejected`, cho qua khi chỉ có `merge` pending cũ; `approval-request -Kind secret` thiếu `-Name` ⇒ lỗi; `Add-ClaudeDecision` ghi đúng một dòng JSON hợp lệ.
 
 ## Tiêu chí hoàn thành
-- Build 0 warning; toàn bộ test xanh; giữ BOM.
-- Commit: `V10-03: duyệt chỉ việc nhạy cảm, nhật ký Claude tự quyết, cổng KT bắt file nhạy cảm (Codex)`.
+- [ ] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
+- [ ] Đủ 3 mục Required của review vòng 1, có test xác nhận.
+- [ ] Không sửa `hub/Pages/**`, `hub/wwwroot/**`.
+- [ ] Commit: `V10-03: duyệt chỉ việc nhạy cảm, nhật ký Claude tự quyết, cổng KT bắt file nhạy cảm (Codex)`.
 
 ## Báo cáo của agent
 
