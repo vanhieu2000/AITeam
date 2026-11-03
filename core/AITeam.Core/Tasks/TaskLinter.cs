@@ -15,7 +15,9 @@ public static class TaskLinter
     {
         text = Regex.Replace(text, @"<!--[\s\S]*?-->", "");
         var errors = new List<string>();
-        foreach (var name in Required) if (string.IsNullOrWhiteSpace(Section(text, name))) errors.Add("TK: thiếu nội dung mục " + name);
+        foreach (var name in Required)
+            if (!(name == "Test nghiệm thu" && HasTestExemption(text)) && string.IsNullOrWhiteSpace(Section(text, name)))
+                errors.Add("TK: thiếu nội dung mục " + name);
         if (!Regex.IsMatch(Section(text, "Tiêu chí hoàn thành"), @"(?m)^\s*-\s+\[[ xX]\]\s+\S")) errors.Add("TK: tiêu chí thiếu checkbox có nội dung");
         var scope = Section(text, "Phạm vi");
         var paths = Regex.Matches(scope, "`([^`]+)`");
@@ -30,15 +32,28 @@ public static class TaskLinter
             var line = scope[lineStart..lineEnd];
             if (!File.Exists(path) && !Directory.Exists(path) && !line.Contains("tạo mới", StringComparison.OrdinalIgnoreCase)) errors.Add("TK: đường dẫn không tồn tại, chưa ghi tạo mới: " + relative);
         }
-        if (AcceptanceFilters(text).Count == 0) errors.Add("TN: thiếu đường dẫn file test nghiệm thu .cs");
+        if (!NoLogic(text) && AcceptanceFilters(text).Count == 0) errors.Add("TN: thiếu đường dẫn file test nghiệm thu .cs");
         return new(errors.Count == 0, errors);
+    }
+    private static bool HasTestExemption(string text) => Regex.IsMatch(text,
+        @"(?im)^[ \t]*-[ \t]*\*\*Test nghiệm thu:\*\*[ \t]*Không[ \t]*[—–-][ \t]*\S[^\r\n]*$");
+    private static bool NoLogic(string text)
+    {
+        text = Regex.Replace(text, @"<!--[\s\S]*?-->", "");
+        if (HasTestExemption(text)) return true;
+        var paths = Regex.Matches(Section(text, "Phạm vi"), "`([^`]+)`").Select(m => m.Groups[1].Value.Replace('\\', '/')).ToArray();
+        return paths.Length > 0 && paths.All(p =>
+            p.EndsWith(".md", StringComparison.OrdinalIgnoreCase) || p.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+            (p.StartsWith("docs/design/", StringComparison.OrdinalIgnoreCase) &&
+                new[] { ".html", ".css", ".png", ".svg" }.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase)) ||
+            p.TrimEnd('/') is "docs" or "plans" or "requests");
     }
     private static IReadOnlyList<string> AcceptanceFilters(string text) => Regex.Matches(Section(text, "Test nghiệm thu"), "`([^`]+\\.cs)`")
         .Select(m => Path.GetFileNameWithoutExtension(m.Groups[1].Value.Replace('\\', '/'))).Distinct().ToList();
 
-    public static async Task<TaskLintResult> RunAsync(string root, string text, IProcessRunner runner, CancellationToken ct)
+    public static async Task<TaskLintResult> RunAsync(string root, string text, IProcessRunner runner, CancellationToken ct, bool resume = false)
     {
-        var check = Inspect(root, text); if (!check.Ok) return check;
+        var check = Inspect(root, text); if (!check.Ok || resume || NoLogic(text)) return check;
         var solutions = Directory.GetFiles(root, "*.sln");
         if (solutions.Length != 1) return new(false, ["TN: cần đúng một solution .sln tại gốc để kiểm test nghiệm thu"]);
         var build = await runner.RunAsync(new("dotnet", ["build", solutions[0], "-warnaserror", "-nodeReuse:false"], root, null, TimeSpan.FromMinutes(3)), ct);
