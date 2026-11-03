@@ -1,7 +1,7 @@
 # ChatGPT ngay trong AITeam Hub
 
 ## Chức năng đã có trên nhánh H8-14
-- Khung trò chuyện ngay trên Văn phòng `/`, trang riêng `/Chat`, liên kết cài đặt từ `/AI` và `/Settings`.
+- Chat đầy đủ tại `/Chat`, mở bằng menu **Trò chuyện AI** ngay dưới **Văn phòng**. Văn phòng `/` chỉ có thẻ nhỏ hội thoại gần nhất sau thẻ tác nhân/Chat giao việc, không polling chat 2 giây. Cài đặt vẫn mở từ `/AI` và `/Settings`.
 - Tạo nhiều hội thoại, gửi tin nhắn, theo dõi phản hồi nền, dừng, sao chép, xuất toàn bộ hội thoại JSON và xóa có xác nhận.
 - SQLite lưu tin nhắn, trạng thái từng lượt, model, token nếu biết, ghi nhớ chung và cấu hình kết nối. Không cần cài SQL Server/PostgreSQL.
 - Khởi động lại giữ lịch sử; lượt bị ngắt được báo rõ, không tự gửi lại gây tốn hạn mức.
@@ -59,3 +59,9 @@ Nhánh này triển khai bổ sung chat và SQLite, cấu hình model, V9-04 và
 |---|---|---|---|---|
 | H8-14 | `agent-c/H8-14-chatgpt-local` | Đã triển khai; chờ kiểm chứng ChatGPT thật/Windows và chủ dự án kiểm tra | Chưa có số đo tin cậy | Chưa có số đo tin cậy |
 | V9-04 | Cùng nhánh H8-14 theo đợt sửa trực tiếp | Parser tab + test hồi quy đã đạt; chưa merge main | Chưa đo riêng | Chưa đo riêng |
+
+## Đợt chỉnh theo review H8-14
+- Đầu hội thoại cộng token đã đo của toàn bộ lượt trong DB, không giới hạn 200 tin hiển thị; số lượt chưa đo ghi riêng.
+- Cài đặt ghi rõ chi phí khoảng 13.000 token đầu vào/tin nhắn từ hướng dẫn hệ thống Codex CLI. Đây là chú thích ước lượng, không được cộng giả vào số token thực đo.
+- CodexPath tùy chọn phải là file tồn tại trong một thư mục PATH hoặc cây `%APPDATA%\npm`. Để trống để tự phát hiện. Nếu CLI bị gỡ, vẫn xem lịch sử/sửa cấu hình được; lưu hoặc chạy với đường dẫn sai sẽ báo lỗi.
+- Giữ nguyên các test menu H7-06 cũ dù chúng không chấp nhận mục /Chat mới; kết quả test mới và đầy đủ được ghi trong file task H8-14.

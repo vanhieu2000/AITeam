@@ -90,6 +90,8 @@
             el('location').textContent = 'Database: ' + state.location;
             el('context-note').textContent = state.contextNote + ' Hiện ' + state.messages.length + ' tin nhắn gần nhất (xuất JSON để xem toàn bộ).';
             el('title').textContent = state.conversations.find(c => c.id === selected)?.title || 'Bắt đầu trò chuyện';
+            el('token-summary').textContent = 'Đã dùng ' + state.tokenSummary.totalTokens.toLocaleString('vi-VN') + ' token'
+                + (state.tokenSummary.unmeasuredTurns ? ' · ' + state.tokenSummary.unmeasuredTurns + ' lượt chưa đo được' : '');
             if (!initialized) {
                 for (const [key, value] of Object.entries(state.settings)) {
                     const input = el('settings').elements.namedItem(key); if (input) input.value = value;

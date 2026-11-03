@@ -17,7 +17,7 @@
 
 ## Phạm vi
 - Tạo mới: `hub/Services/LocalChatStore.cs`, `hub/Services/LocalChatClient.cs`, `hub/Pages/Chat.cshtml`, `hub/Pages/Chat.cshtml.cs`, `hub/Pages/Shared/_LocalChat.cshtml`, `hub/wwwroot/css/chat.css`, `hub/wwwroot/js/local-chat.js`, `hub.tests/LocalChat*Tests.cs`.
-- Đăng ký/đường vào: `hub/AITeam.Hub.csproj`, `hub/Program.cs`, `hub/Pages/Office.cshtml`, `hub/Pages/Settings.cshtml`, `hub/Pages/AI.cshtml`.
+- Đăng ký/đường vào: `hub/AITeam.Hub.csproj`, `hub/Program.cs`, `hub/Pages/Office.cshtml`, `hub/Pages/Settings.cshtml`, `hub/Pages/AI.cshtml`, `hub/Pages/Shared/_Layout.cshtml`.
 - Sửa nhỏ kèm theo yêu cầu V9-04: `core/AITeam.Core/Review/ReviewRoundCounter.cs`, tạo mới `core.tests/ReviewTabHeadingTests.cs`.
 - Dẫn chiếu tài liệu bị lệch từ upstream: `skills/02-y-tuong/SKILL.md`, `skills/03-research/SKILL.md`, `skills/04-ke-hoach/SKILL.md`, `skills/05-duyet-ke-hoach/SKILL.md`.
 - Tài liệu: `docs/CHAT-LOCAL.md`, `docs/design/R-012-hub-offline-mockup.html`, `docs/screenshots/H8-14/`, file task này, `tasks/README.md`, nhật ký R-012, bài học cuối `AGENTS.md`.
@@ -40,13 +40,15 @@
 Test mới trong `hub.tests/LocalChatTests.cs`, `hub.tests/LocalChatClientTests.cs`, `hub.tests/LocalChatHttpTests.cs`, `core.tests/ReviewTabHeadingTests.cs`. Không đổi assert/test cũ.
 
 ## Báo cáo của agent
-- Đã triển khai chat + SQLite + cấu hình model/ghi nhớ; sửa V9-04 và 4 trích dẫn dòng AGENTS sai từ upstream; giữ BOM/CRLF.
+- Đợt sửa theo yêu cầu: tách chat đầy đủ khỏi Văn phòng, menu trái “Trò chuyện AI” ngay sau “Văn phòng”; Văn phòng chỉ có thẻ hội thoại gần nhất sau workspace, không tải script/polling chat.
+- File sửa: Office.cshtml/.cs, _Layout.cshtml, _LocalChat.cshtml, Chat.cshtml.cs, LocalChatStore.cs, chat.css, local-chat.js; thêm LocalChatRevisionTests.cs và thay hai ảnh yêu cầu; giữ BOM UTF-8, không sửa test cũ.
+| Tiêu chí | Bằng chứng |
+|---|---|
+| 1 · Menu/thẻ nhỏ/không polling | Test HTTP Razor mới đạt; Chromium xác nhận thẻ sau workspace và 0 request State trên Văn phòng. |
+| 2 · Không cắt/tràn 375/1000 | Chromium: #local-chat 349/349 và 750/750; mọi nút scrollWidth ≤ clientWidth, cả khi mở/đóng cài đặt; ảnh docs/screenshots/H8-14/chat-375.png và chat-1000.png. |
+| 3 · Tổng token/ghi rõ lượt chưa đo | Test 102 lượt, ngoài giới hạn hiển thị 200 tin: tổng 1.010 token, 1 lượt chưa đo; header cập nhật theo hội thoại; đã thêm nguyên văn dòng 13.000 token trong cài đặt. |
+| 4 · CodexPath | Test file tồn tại/PATH/npm, file thiếu/ngoài thư mục và cấu hình CLI đã bị gỡ đạt; báo lỗi rõ lúc lưu, vẫn đọc được lịch sử. |
 - Build `dotnet build AITeam.sln -warnaserror -nodeReuse:false`: 0 warning, 0 error.
-- Tiêu chí lưu/đọc, gửi trùng, hủy, snapshot/khóa DB → 16 test LocalChat đạt; parser tab → test mới đạt.
-- Tiêu chí HTTP/bảo mật → test host thật: CSRF, ID, Host; Chromium kiểm phản hồi không render HTML.
-- Tiêu chí UI → 2 tin, reload giữ lịch sử/model, 1000/375 không tràn; ảnh `docs/screenshots/H8-14/`.
-- CLI đăng nhập ChatGPT sẵn có; gọi thật bị proxy 403, chưa xác minh phản hồi AI thật; không ghi credential/log nhạy cảm vào nhánh.
-- Test đầy đủ: báo số chính xác ở nhật ký R-012; còn lỗi Windows, không nhận toàn suite xanh.
-- Quyết định: dùng SQLite local và đăng nhập CLI chính thức, không tự điều khiển website; chủ dự án đã bỏ bước hỏi duyệt mockup.
-- Chưa xong: nghiệm thu Windows, gọi ChatGPT thật và các nhóm R-012 còn lại trong `docs/CHAT-LOCAL.md`.
-- Phút/token của phiên Codex: chưa có số đo tin cậy, không ghi 0 giả.
+- Test `dotnet test AITeam.sln --no-build`: Hub 787/810 đạt, 23 lỗi (14 lỗi Windows cũ + 9 ca menu cũ); Core 402/691 đạt, 289 lỗi Windows cũ; 0 skip. Cả 20 test LocalChat đạt, gồm 4 test mới.
+- Test menu cũ AcceptanceH706NavigationTests.cs:252 khóa danh sách không có /Chat, xung đột trực tiếp yêu cầu mới; giữ nguyên, không né hoặc sửa assert.
+- Chưa xác minh phản hồi ChatGPT thật do proxy cloud 403 và nghiệm thu Windows; không merge main. Phút/token phiên sửa chưa có số đo tin cậy.

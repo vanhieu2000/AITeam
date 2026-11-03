@@ -14,7 +14,7 @@ public sealed record ChatSettings
     public int TimeoutSeconds { get; init; } = 180;
     public string Instructions { get; init; } = "Trả lời bằng tiếng Việt. Bạn là trợ lý của chủ dự án AITeam. Hãy nhớ nội dung hội thoại được cung cấp, nói rõ điều chưa biết và không tự nhận đã thực hiện công việc.";
 
-    public void Validate()
+    public void Validate(bool validateExecutable = true)
     {
         if (Model == null || !Regex.IsMatch(Model, @"\A(?:[a-zA-Z0-9][a-zA-Z0-9._/-]{0,99})?\z"))
             throw new ArgumentException("Tên model không hợp lệ.");
@@ -25,17 +25,40 @@ public sealed record ChatSettings
             var name = Path.GetFileName(CodexPath);
             if (name is not ("codex" or "codex.exe" or "codex.js"))
                 throw new ArgumentException("Chọn codex, codex.exe hoặc codex.js; không chọn shell/script khác.");
+            if (validateExecutable) ValidateCodexPath(CodexPath, Environment.GetEnvironmentVariable("PATH") ?? "", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
         }
         if (BaseUrl != "" && BaseUrl != "https://chatgpt.com/backend-api/codex")
             throw new ArgumentException("Chat tài khoản ChatGPT chỉ dùng endpoint chính thức; để trống để dùng cấu hình CLI.");
         if (Instructions == null || Instructions.Length > 4000 || TimeoutSeconds is < 30 or > 600)
             throw new ArgumentException("Lời hướng dẫn tối đa 4000 ký tự; thời gian chờ từ 30 đến 600 giây.");
     }
+
+    internal static void ValidateCodexPath(string path, string searchPath, string appData)
+    {
+        var roots = searchPath.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Trim('"')).Where(Path.IsPathFullyQualified).ToList();
+        var npm = string.IsNullOrEmpty(appData) ? null : Path.GetFullPath(Path.Combine(appData, "npm"));
+        var candidate = Path.IsPathFullyQualified(path) ? path : roots.Select(r => Path.Combine(r, path)).FirstOrDefault(File.Exists);
+        if (candidate == null || !File.Exists(candidate)) throw new ArgumentException("Không tìm thấy file Codex CLI. Chọn file đang tồn tại trong PATH hoặc %APPDATA%\\npm.");
+        var info = new FileInfo(candidate);
+        var full = Path.GetFullPath(info.ResolveLinkTarget(true)?.FullName ?? info.FullName);
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        static string PhysicalDirectory(string directory) => Path.TrimEndingDirectorySeparator(new DirectoryInfo(directory).ResolveLinkTarget(true)?.FullName ?? Path.GetFullPath(directory));
+        var directory = Path.GetDirectoryName(full)!;
+        if (roots.Any(r => Directory.Exists(r) && string.Equals(directory, PhysicalDirectory(r), comparison))) return;
+        if (npm != null && Directory.Exists(npm))
+        {
+            var root = PhysicalDirectory(npm);
+            if (string.Equals(directory, root, comparison) || full.StartsWith(root + Path.DirectorySeparatorChar, comparison)) return;
+        }
+        throw new ArgumentException("File Codex CLI phải nằm trong một thư mục PATH hoặc %APPDATA%\\npm; không chấp nhận file ngoài các thư mục này.");
+    }
 }
 
 public sealed record ChatConversation(string Id, string Title, string UpdatedAt, bool Busy);
 public sealed record ChatMessage(long Id, string Role, string Text, string Status, string At, string Model, long? Tokens, string? Error);
 public sealed record ChatTurn(long MessageId, string ConversationId, IReadOnlyList<ChatMessage> Context, ChatSettings Settings);
+public sealed record ChatTokenSummary(long TotalTokens, int UnmeasuredTurns);
 
 /// <summary>SQLite cục bộ, câu lệnh tham số hóa; connection riêng mỗi thao tác, không giữ khóa DB trong lúc gọi AI.</summary>
 public sealed class LocalChatStore : IDisposable
@@ -134,7 +157,8 @@ public sealed class LocalChatStore : IDisposable
             var json = cmd.ExecuteScalar() as string;
             var settings = json == null ? new ChatSettings() : JsonSerializer.Deserialize<ChatSettings>(json)
                 ?? throw new InvalidDataException("Cấu hình chat bị hỏng; không ghi đè.");
-            settings.Validate(); return settings;
+            // CLI bị gỡ sau khi lưu vẫn phải cho xem lịch sử và sửa cấu hình.
+            settings.Validate(validateExecutable: false); return settings;
         }
     }
     public void SaveSettings(ChatSettings settings)
@@ -183,6 +207,17 @@ public sealed class LocalChatStore : IDisposable
             using var r = cmd.ExecuteReader(); var rows = new List<ChatMessage>();
             while (r.Read()) rows.Add(new(r.GetInt64(0), r.GetString(1), r.GetString(2), r.GetString(3), r.GetString(4), r.GetString(5), r.IsDBNull(6) ? null : r.GetInt64(6), r.IsDBNull(7) ? null : r.GetString(7)));
             return rows;
+        }
+    }
+
+    public ChatTokenSummary TokenSummary(string id)
+    {
+        lock (_gate)
+        {
+            using var db = Open(); RequireConversation(db, id);
+            using var cmd = Command(db, "SELECT COALESCE(SUM(tokens),0),COALESCE(SUM(CASE WHEN tokens IS NULL THEN 1 ELSE 0 END),0) FROM messages WHERE conversation=$id AND role='assistant'", ("$id", id));
+            using var reader = cmd.ExecuteReader(); reader.Read();
+            return new(reader.GetInt64(0), reader.GetInt32(1));
         }
     }
 

@@ -29,6 +29,7 @@ public sealed class ChatModel(LocalChatStore store, ILocalChatClient client) : P
         location = store.Location,
         conversations = store.Conversations(),
         messages = string.IsNullOrEmpty(conversationId) ? [] : store.Messages(conversationId),
+        tokenSummary = string.IsNullOrEmpty(conversationId) ? new ChatTokenSummary(0, 0) : store.TokenSummary(conversationId),
         settings = store.Settings(),
         contextNote = "AI nhận tối đa 40 tin nhắn gần nhất và câu hỏi hiện tại, giới hạn 48.000 ký tự. Lịch sử đầy đủ vẫn lưu trên máy."
     }));
