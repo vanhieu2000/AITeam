@@ -14,7 +14,10 @@ public sealed record DevRunInput(
     string LogDir,
     TimeSpan Timeout,
     string? Model = null,
-    RunMode Mode = RunMode.Develop);   // R-006: ReadOnly cho bước lập kế hoạch (Codex chỉ đọc repo)
+    RunMode Mode = RunMode.Develop)
+{
+    public string? Title { get; init; }
+}
 
 /// <summary>ExitCode: 0 xong · 1 lỗi khác · 2 đầu vào / cấu hình sai · 5 provider đang nghỉ (không gọi) · 6 hết hạn mức · 7 chưa đăng nhập · 8 quá giờ.</summary>
 public sealed record DevRunOutcome(int ExitCode, string Status, string Summary, AgentRunResult? Result);
@@ -70,7 +73,7 @@ public sealed class DevRunner
                 return new(ExitResting, "Resting", $"NGHỈ: {cfg.Id} nghỉ tới {rest.Until.ToString("HH:mm dd/MM", CultureInfo.InvariantCulture)} ({rest.Reason})", null);
 
             Directory.CreateDirectory(input.LogDir);
-            var req = new AgentRunRequest(input.WorkDir, input.PromptFile, input.Mode, input.Timeout, input.Model, null, input.LogDir);
+            var req = new AgentRunRequest(input.WorkDir, input.PromptFile, input.Mode, input.Timeout, input.Model, null, input.LogDir) { Title = input.Title };
             var r = await _factory(cfg).RunAsync(req, ct);
             _state.Record(r, _now());
 
@@ -117,6 +120,7 @@ public sealed class DevRunner
             durationSec = r is null ? 0 : (int)Math.Round(r.Duration.TotalSeconds),
             inputTokens = r is { Tokens.IsKnown: true } ? r.Tokens.Input : -1L,
             outputTokens = r is { Tokens.IsKnown: true } ? r.Tokens.Output : -1L,
+            totalTokens = r is { Tokens.IsKnown: true } ? (long?)r.Tokens.Total : null,
             conversationId = r?.ConversationId,
             text = r?.Text ?? "",
             detail = r?.Detail ?? "",

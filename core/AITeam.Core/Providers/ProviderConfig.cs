@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using AITeam.Core.Process;
 
@@ -16,6 +16,9 @@ public sealed record ProviderConfig
     public int MaxConcurrent { get; init; } = 1;
     public int TimeoutMinutes { get; init; } = 30;
     public bool Enabled { get; init; } = true;
+    public bool Paid { get; init; }
+    public bool PrivateRepository { get; init; } = true;
+    public string? PermissionsFile { get; init; }
 }
 
 /// <summary>Danh sách provider + thứ tự ưu tiên theo vai trò (routing / fallback).</summary>
@@ -90,6 +93,7 @@ public sealed record ProviderSettings(IReadOnlyList<ProviderConfig> Providers, I
     {
         ProviderKind.Antigravity => new AgyProvider(c, runner),
         ProviderKind.Codex => new CodexProvider(c, runner),
+        ProviderKind.OpenCode => new OpenCodeProvider(c, runner),
         _ => throw new NotSupportedException($"Chưa hỗ trợ provider {c.Kind} (P1)"),
     };
 

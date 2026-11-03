@@ -19,6 +19,7 @@ try
         "review" => await Review(),
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
+        "opencode-check" => await OpenCodeCheck(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         _ => Help(),
     };
@@ -37,6 +38,14 @@ catch (Exception ex)
 {
     Console.Error.WriteLine($"LỖI: {ex.Message}");
     return 1;
+}
+
+async Task<int> OpenCodeCheck()
+{
+    var provider = new OpenCodeProvider(OpenCodeProvider.Configuration(root, false), new ProcessRunner());
+    var health = await provider.CheckAsync(CancellationToken.None);
+    Console.WriteLine(JsonSerializer.Serialize(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return health.Installed ? 0 : 1;
 }
 
 async Task<int> Providers()
@@ -297,9 +306,14 @@ async Task<int> Run()
     var settings = ProviderSettings.Load(root);
     var state = new ProviderStateStore(root);
     var proc = new ProcessRunner();
+    if (string.Equals(provider, "opencode", StringComparison.OrdinalIgnoreCase))
+    {
+        var openCode = OpenCodeProvider.Configuration(root, args.Contains("--public-repo"), settings.Providers.FirstOrDefault(p => p.Id.Equals("opencode", StringComparison.OrdinalIgnoreCase)));
+        settings = settings with { Providers = settings.Providers.Where(p => !p.Id.Equals("opencode", StringComparison.OrdinalIgnoreCase)).Append(openCode).ToList() };
+    }
     var runner = new DevRunner(settings, state, c => settings.Create(c, proc), () => DateTime.Now);
     var mode = args.Contains("--read-only") ? RunMode.ReadOnly : RunMode.Develop;   // R-006: lập kế hoạch chỉ đọc
-    var input = new DevRunInput(provider, workDir, promptFile, logDir, TimeSpan.FromMinutes(timeoutMin), model, mode);
+    var input = new DevRunInput(provider, workDir, promptFile, logDir, TimeSpan.FromMinutes(timeoutMin), model, mode) { Title = Arg("--title") };
     var outcome = await runner.RunAsync(input, CancellationToken.None);
 
     Console.WriteLine(outcome.Summary);

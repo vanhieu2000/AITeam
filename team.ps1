@@ -53,7 +53,7 @@ param(
     [string] $Agent = "A",
     [string] $Request = "",
     [string] $Kind = "",
-    [ValidateSet("", "agy", "codex")] [string] $Dev = "",
+    [ValidateSet("", "agy", "codex", "opencode")] [string] $Dev = "",
     [switch] $NoLaunch,
     [string] $Name = "",
     [string[]] $Names = @(),
@@ -212,6 +212,15 @@ function Invoke-Doctor {
     $cfg = Get-Config
     $ok = $true
     Say "== Kiểm tra công cụ team ==" Cyan
+    $ocModel = if ($cfg.opencode.model) { [string]$cfg.opencode.model } else { 'opencode/deepseek-v4.1-flash-free' }
+    if ($ocModel -notmatch '(?i)deepseek') { Say '  [LỖI] OpenCode chỉ được dùng DeepSeek.' Red; $ok = $false }
+    $ocCli = Get-AITeamExe
+    if ($ocCli) {
+        $ocInfo = & $ocCli opencode-check --root $Root
+        if ($LASTEXITCODE -eq 0) { Say ('  [OK] OpenCode / DeepSeek: ' + ($ocInfo -join ' ')) Green }
+        else { Say '  [THIẾU/LỖI] OpenCode CLI hoặc model; kiểm tra opencode.exe và opencode.model.' Yellow; $ok = $false }
+    } else { Say '  [THIẾU] Chưa có aiteam CLI để kiểm tra OpenCode.' Yellow; $ok = $false }
+
     if (Get-Command git -ErrorAction SilentlyContinue) { Say "  [OK] git $((git --version) -replace 'git version ','')" Green } else { Say "  [THIẾU] git: winget install Git.Git" Red; $ok = $false }
 
     $gh = Get-Gh
@@ -420,6 +429,12 @@ function Select-FreeAgent($r, [string]$suggested) {
 function Invoke-Assign {
     $cfg = Get-Config
     $r = Resolve-Project $Project
+    if ($Dev -eq 'opencode') {
+        $ocModel = if ($cfg.opencode.model) { [string]$cfg.opencode.model } else { 'opencode/deepseek-v4.1-flash-free' }
+        if ($ocModel -notmatch '(?i)deepseek') { throw 'OpenCode chỉ được dùng model DeepSeek.' }
+        $knownPublic = $r.Info.private -is [bool] -and -not $r.Info.private
+        if (-not $knownPublic -and $cfg.opencode.paid -ne $true) { throw 'Repo private/không rõ riêng tư không được chạy OpenCode free; khai báo private=false cho repo public hoặc opencode.paid=true.' }
+    }
     if (-not $Task) { throw "Thiếu -Task" }
     $taskFile = Find-TaskFile $r $Task
     $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
@@ -501,7 +516,7 @@ function Invoke-Assign {
     Set-AgentIdentity $r.Path $work $devInfo $r.Info.name
     # V5-02 (R-005): MCP Gateway cho agy ⇒ agent báo tiến độ lên Văn phòng. Codex hiện tắt MCP theo lần gọi.
     $mcpNote = ""
-    if ($Dev -ne "codex" -and (Set-McpConfig $r $work $taskFile $agentId)) {
+    if ($Dev -notin @("codex", "opencode") -and (Set-McpConfig $r $work $taskFile $agentId)) {
         $mcpNote = "`nBÁO TIẾN ĐỘ QUA MCP (chủ dự án theo dõi trên trang Văn phòng): có công cụ aiteam_post_message. Gọi NGẮN (1 câu): khi bắt đầu; sau mỗi phần chạy được; khi gặp vướng cần quản lý quyết (kind question); khi xong (kind done, kèm số test pass). Không gọi quá 15 lần. Công cụ khác: aiteam_get_test_results (kết quả cổng kiểm tra lần trước)."
     }
     $prompt = @"
@@ -550,7 +565,8 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     # Model theo task (dòng **Model:** `tên` trong file task) > model mặc định trong team.json.
     $taskModel = [regex]::Match($text, '\*\*Model:\*\*\s*`([^`]+)`').Groups[1].Value
     $model = if ($taskModel) { $taskModel } else { $cfg.agy.model }
-    if ($Dev -ne 'codex' -and $model) {
+    if ($Dev -eq 'opencode') { $model = $ocModel }
+    if ($Dev -notin @('codex', 'opencode') -and $model) {
         $available = Get-AgyModels $cfg
         if ($null -ne $available) {
             $resolved = if ($null -ne $cfg.agy.modelFallback) {
@@ -574,7 +590,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     $mainBefore = (git -C $r.Path rev-parse origin/main 2>$null)
     $devProvider = "agy"
     $logText = ""; $errText = ""
-    if ($Dev -ne "codex") {
+    if ($Dev -notin @("codex", "opencode")) {
         $proc = Start-Process -FilePath $cfg.agy.exe -ArgumentList $argLine -WorkingDirectory $work -NoNewWindow -Wait -PassThru -RedirectStandardInput (Get-EmptyInput) `
             -RedirectStandardOutput $log -RedirectStandardError $err
         $logText = Get-Content $log -Raw -ErrorAction SilentlyContinue
@@ -599,15 +615,16 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     Test-AgentTouchedMain $r $work $mainBefore
 
     # R-004: -Dev codex ⇒ Codex viết code; agy hết hạn mức ⇒ tự chuyển sang Codex (trừ -Dev agy). Codex không ghi được .git ⇒ team.ps1 commit + push.
-    $agyQuota = ($Dev -ne "codex") -and (Test-QuotaExhausted $logText $errText)
-    if ($Dev -eq "codex" -or ($agyQuota -and $Dev -ne "agy")) {
+    $agyQuota = ($Dev -notin @("codex", "opencode")) -and (Test-QuotaExhausted $logText $errText)
+    if ($Dev -in @("codex", "opencode") -or ($agyQuota -and $Dev -ne "agy")) {
         if ($agyQuota) {
             Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
             Say "Antigravity hết hạn mức → tự chuyển $Task sang Codex (dự phòng)." Yellow
             $log = Join-Path $r.Logs ("$Task-{0}.json" -f ($n + 1))
         }
-        $devProvider = "codex"; $model = "codex"
-        $cx = Invoke-CodexDevelop $r $Task $work $branch $prompt $log $maxMin
+        $devProvider = if ($Dev -eq 'opencode') { 'opencode' } else { 'codex' }
+        $model = if ($devProvider -eq 'opencode') { $ocModel } else { 'codex' }
+        $cx = Invoke-CodexDevelop $r $Task $work $branch $prompt $log $maxMin $devProvider $(if ($devProvider -eq 'opencode') { $ocModel } else { $null }) $(if ($devProvider -eq 'opencode') { $knownPublic } else { $false })
         if (-not $cx.Ok) {
             Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
             Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
@@ -616,12 +633,16 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }; if ($NoVerify) { return @{ Ok = $false; Quota = $true } }; return }
     if ($NoVerify) {
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
-        $agentOk = if ($devProvider -eq 'codex') { [bool]$cx.Ok } else { $proc -and $proc.ExitCode -eq 0 -and $logText -match '"status"\s*:\s*"SUCCESS"' }
+        $agentOk = if ($devProvider -in @('codex','opencode')) { [bool]$cx.Ok } else { $proc -and $proc.ExitCode -eq 0 -and $logText -match '"status"\s*:\s*"SUCCESS"' }
         Set-BoardStatus $r $Task $(if ($agentOk) { "🔵 Chờ review" } else { "🔴 Lỗi agent" }) -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = $(if ($agentOk) { 'XONG' } else { 'LỖI' }) }
         return @{ Ok = [bool]$agentOk; Quota = $false }
     }
     if ($devProvider -eq 'codex') { dotnet build-server shutdown 2>&1 | Out-Null }
     $gate = Invoke-WorkflowGate -Verify { Invoke-Verify } -Qc {
+        if ($devProvider -eq 'opencode') {
+            if ($NoReview) { return $null }
+            return @{ Code = 3; Json = @{ summary = 'OpenCode đã code; Claude review theo quy trình v5.' }; Out = '' }
+        }
         Invoke-AutoReview $r $taskFile.Name $work $devProvider
     }
     $v = $gate.Verify
@@ -784,32 +805,42 @@ function Invoke-CodexRetry($exe, [string[]]$arguments, [string]$out) {
 
 # R-004: Codex viết code trong worktree qua `aiteam run`. Codex KHÔNG ghi được .git (sandbox — thử thật 24/10) ⇒ commit + push ở đây.
 # Ghi $logFile cùng định dạng log agy (status / usage / duration_seconds) để số đo, Hub, báo cáo dùng lại được.
-function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin) {
+function Invoke-CodexDevelop($r, [string]$TaskName, [string]$work, [string]$branch, [string]$prompt, [string]$logFile, [string]$maxMin, [string]$runtimeProvider = 'codex', [string]$runtimeModel = '', [bool]$publicRepository = $false) {
     $exe = Get-AITeamExe
     if (-not $exe) { return [pscustomobject]@{ Ok = $false; Status = "không build được aiteam.exe" } }
     $codexPromptPrefix = "CHẠY BẰNG CODEX (dự phòng Antigravity): KHÔNG chạy lệnh git (sandbox chặn ghi .git) — hệ thống tự commit + push sau khi bạn xong; bỏ qua mọi yêu cầu commit / push bên dưới. Vẫn phải điền mục 'Báo cáo của agent' trong file task.`n`n"
+    if ($runtimeProvider -eq 'opencode') { $codexPromptPrefix = "CHẠY BẰNG OPENCODE DEEPSEEK: chỉ làm trong phạm vi task và quyền đã cấp; không dùng model khác.`n`n" }
     $pf = $logFile -replace '\.json$', '.codex.prompt.md'
     [IO.File]::WriteAllText($pf, $codexPromptPrefix + $prompt, (New-Object Text.UTF8Encoding $false))
     $out = $logFile -replace '\.json$', '.codex.json'
     $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Say "[$(Get-Date -Format HH:mm:ss)] $TaskName → Codex (aiteam run), thư mục $work" Cyan
-    Invoke-CodexRetry $exe @("run", "--provider", "codex", "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$TaskName.codex"), "--timeout-min", $maxMin, "--out", $out, "--root", $Root) $out
+    $runArgs = @("run", "--provider", $runtimeProvider, "--workdir", $work, "--prompt-file", $pf, "--logdir", (Join-Path $r.Logs "$TaskName.$runtimeProvider"), "--timeout-min", $maxMin, "--out", $out, "--root", $Root, "--title", $TaskName)
+    if ($runtimeModel) { $runArgs += @('--model', $runtimeModel) }
+    if ($runtimeProvider -eq 'opencode' -and $publicRepository) { $runArgs += '--public-repo' }
+    if ($runtimeProvider -eq 'codex') { Invoke-CodexRetry $exe $runArgs $out } else { & $exe @runArgs }
     $code = $LASTEXITCODE; $global:LASTEXITCODE = 0   # mã của aiteam (4 = bỏ qua…) không rò thành mã thoát của assign
     $j = $null; if (Test-Path $out) { try { $j = Read-Json $out } catch { } }
     $in = if ($j -and $j.inputTokens -ge 0) { [long]$j.inputTokens } else { 0 }
     $outTok = if ($j -and $j.outputTokens -ge 0) { [long]$j.outputTokens } else { 0 }
     $agyLike = [ordered]@{
-        status = $(if ($code -eq 0) { "SUCCESS" } else { "ERROR" }); provider = "codex"
+        status = $(if ($code -eq 0) { "SUCCESS" } else { "ERROR" }); provider = $runtimeProvider
         response = $(if ($j) { $j.text } else { "" }); error = $(if ($code -ne 0 -and $j) { $j.summary } else { $null })
         duration_seconds = $(if ($j) { [int]$j.durationSec } else { 0 })
         usage = [ordered]@{ input_tokens = $in; output_tokens = $outTok; thinking_tokens = 0; total_tokens = $in + $outTok }
         conversation_id = ""
     }
+    if ($runtimeProvider -eq 'opencode') {
+        $known = $j -and $null -ne $j.inputTokens -and $j.inputTokens -ge 0 -and $null -ne $j.outputTokens -and $j.outputTokens -ge 0 -and $null -ne $j.totalTokens
+        $agyLike.tokensKnown = [bool]$known
+        $agyLike.usage = $(if ($known) { [ordered]@{ input_tokens = $j.inputTokens; output_tokens = $j.outputTokens; thinking_tokens = $null; total_tokens = $j.totalTokens } } else { $null })
+        $agyLike.error = if ($j) { $j.detail } else { 'Chưa nhận kết quả OpenCode.' }
+    }
     [IO.File]::WriteAllText($logFile, ($agyLike | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding $false))
     if ($code -eq 0) {
         if (@(git -C $work status --porcelain 2>$null | Where-Object { $_ }).Count -gt 0) {
             git -C $work add -A 2>$null
-            git -C $work commit -q -m "${TaskName}: Codex viết code (dự phòng Antigravity)" 2>&1 | Select-Object -Last 3 | ForEach-Object { Say "  $_" Yellow }
+            git -C $work commit -q -m "${TaskName}: $runtimeProvider viết code" 2>&1 | Select-Object -Last 3 | ForEach-Object { Say "  $_" Yellow }
         }
         git -C $work push -q -u origin $branch 2>$null
     }

@@ -74,3 +74,5 @@ Theo `docs/HUB-DESIGN.md` mục 7:
 - **H-003 (B):** nối trang với dịch vụ thật; trang Agent, Hộp thư. Sau H-001 và H-002.
 - **H-004 (A):** trang Cài đặt, Tài khoản, Bí mật; lệnh `team.ps1 hub`. Sau H-001.
 - **H-005 (B):** module "AITeam Hub" trong HDV Tool (WebView2), làm ở dự án HDVTool.
+
+| O-02 | OpenCode/DeepSeek | agent-c/O-02-opencode-deepseek | Chờ kiểm mạng/Windows; 8 test mới đạt |
