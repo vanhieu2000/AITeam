@@ -1,10 +1,10 @@
 ﻿# V6-02 · Chặn giao lại và xin quyết định
 
-- **Agent:** A
-- **Nhánh:** `agent-a/V6-02-chan-giao-lai-va-xin-quyet-dinh`
+- **Agent:** C
+- **Nhánh:** `agent-c/V6-02-chan-giao-lai`
 - **Ưu tiên:** trung bình
 - **Ngân sách:** ~330 dòng
-- **Yêu cầu:** R-006
+- **Yêu cầu:** R-012 (tiếp nối R-006)
 - **Thời gian tối đa:** 15 phút
 - **Review AI:** có
 - **Độ khó:** M
@@ -69,6 +69,18 @@
 - [ ] `powershell -NoProfile -File tools/test-verify.ps1`: pass; không yêu cầu chạy app hay chụp ảnh.
 
 ## Báo cáo của agent
+### Đợt A2 — DỪNG, chưa sửa sản phẩm
+| Tiêu chí | Bằng chứng |
+|---|---|
+| Nguồn | Nhánh mới từ origin/main 759ddaf; kiểm tra nhánh V6-02 cũ tại 6cfc8c1. |
+| Đặc tả | Code=1 bắt buộc dùng Join-Path $work tasks/<tên file>. |
+| Test | AcceptanceV602ReviewGateTests.cs:27–33 chỉ tạo $r.Work và $tf, không tạo $work/$taskFile. |
+| Hai Fresh_ai_log | Dòng 127–143 chạy riêng SwitchStatementAst, Assert.Equal(0,result.Code). |
+| Sản phẩm | team.ps1 nguồn 6cfc8c1:730 cần $work/$taskFile; Join-Path nhận null. Báo cáo nhánh nguồn đã ghi hai ca đỏ này. |
+- Dừng theo chỉ định chủ dự án: không sửa assert/harness, không thêm mã nhận biết test; cần quản lý chốt phần dựng môi trường trước khi tiếp tục.
+- Chưa tái hiện runtime Windows: Linux không có powershell.exe/PowerShell 5.1; kết luận trên là đối chiếu mã và báo cáo trước, không tự nhận đã chạy.
+- Chỉ đổi task/bảng việc; không merge main. Phút: chưa đo; token: chưa đo.
+
 <!-- Agent điền tối đa 15 dòng: bảng từng tiêu chí → lệnh + số pass/fail/skip/warning thật, file đổi/lý do, quyết định tự đưa ra, điều chưa xác minh. -->
 
 ## Điều chưa chắc khi chuẩn bị

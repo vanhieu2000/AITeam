@@ -466,5 +466,8 @@ finally {
 if ($LASTEXITCODE -ne 0) { $script:failed++ }
 & dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV803AcceptTests --blame-hang-timeout 2m
 if ($LASTEXITCODE -ne 0) { $script:failed++ }
+# Kịch bản 20 V6-02: repo/remote/root tạm, 3 vòng chặn Resume, decision không nhân đôi.
+& dotnet test (Join-Path $src 'core.tests/AITeam.Core.Tests.csproj') --no-build --filter FullyQualifiedName~AcceptanceV602ReviewGateTests.Resume_three_rounds_creates_one_pending_decision_and_updates_real_board --blame-hang-timeout 2m
+if ($LASTEXITCODE -ne 0) { $script:failed++ }
 if ($script:failed -gt 0) { Write-Host "$($script:failed) kiểm tra HỎNG" -ForegroundColor Red; exit 1 }
 Write-Host "Tất cả kiểm tra ĐẠT" -ForegroundColor Green

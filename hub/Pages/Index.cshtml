@@ -15,6 +15,15 @@
     .performance-page .panel { overflow-x:auto; }
     .performance-page .hd { flex-wrap:wrap; }
     .performance-page .inp { min-width:0; max-width:100%; }
+    .performance-columns { grid-template-columns:minmax(0,1fr) minmax(0,340px); }
+    .performance-page .kv-row { flex-wrap:wrap; gap:6px; }
+    .performance-page .kv-row > *, .performance-page .hd > * { min-width:0; overflow-wrap:anywhere; }
+    .performance-page .hd { height:auto; min-height:40px; padding-top:8px; padding-bottom:8px; }
+    .performance-page td { white-space:normal; overflow-wrap:anywhere; }
+    @@media (max-width:1100px) {
+        .performance-columns { grid-template-columns:minmax(0,1fr); }
+        .performance-page .kpis { grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)) !important; }
+    }
     .performance-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
 </style>
 @section Actions {
@@ -172,7 +181,7 @@ else
 })();
 </script>
 
-<div class="grid" style="grid-template-columns: minmax(0, 1fr) minmax(0, 340px);">
+<div class="grid performance-columns">
     <!-- Cột trái: Bảng dự án + Hoạt động gần đây -->
     <div class="grid" style="align-content: start;">
         <div class="panel">
@@ -232,7 +241,7 @@ else
                                     }
                                 </td>
                                 <td class="num">@p.MergedCount</td>
-                                <td class="muted" style="overflow: hidden; text-overflow: ellipsis; max-width: 220px;" title="@p.LatestActivity">
+                                <td class="muted" style="overflow-wrap:anywhere; max-width:220px;" title="@p.LatestActivity">
                                     @p.LatestActivity
                                 </td>
                             </tr>
@@ -273,7 +282,7 @@ else
                                             break;
                                     }
                                 </td>
-                                <td style="overflow: hidden; text-overflow: ellipsis; max-width: 280px;">
+                                <td style="overflow-wrap:anywhere; max-width:280px;">
                                     <a href="/p/@act.Project/t/@act.Task"><b>@act.Task</b></a>
                                     <span class="muted">· @act.Project</span>
                                 </td>

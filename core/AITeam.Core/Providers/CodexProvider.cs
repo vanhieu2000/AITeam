@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using AITeam.Core.Process;
 
 namespace AITeam.Core.Providers;
@@ -20,8 +20,9 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
     internal (string Exe, List<string> Prefix) ResolveLaunch()
     {
         var exe = config.Exe;
-        if (string.IsNullOrWhiteSpace(exe) || exe.Equals("codex", StringComparison.OrdinalIgnoreCase))
+        if (OperatingSystem.IsWindows() && (string.IsNullOrWhiteSpace(exe) || exe.Equals("codex", StringComparison.OrdinalIgnoreCase)))
             exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm", "node_modules", "@openai", "codex", "bin", "codex.js");
+        if (string.IsNullOrWhiteSpace(exe)) exe = "codex";
         if (exe.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
             return (string.IsNullOrWhiteSpace(config.NodeExe) ? "node" : config.NodeExe!, [exe]);
         return (exe, []);
@@ -34,6 +35,13 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
             "-C", r.WorkDir,
             "--sandbox", r.Mode == RunMode.ReadOnly ? "read-only" : "workspace-write",
             "-c", "notify=[]", "-c", "mcp_servers={}"]);
+        args.AddRange(["-c", "windows.sandbox=\"unelevated\""]);
+        if (!string.IsNullOrWhiteSpace(config.BaseUrl))
+        {
+            if (!Uri.TryCreate(config.BaseUrl, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http") || !string.IsNullOrEmpty(uri.UserInfo))
+                throw new InvalidDataException("codex.baseUrl phải là URL HTTP(S) không chứa thông tin đăng nhập.");
+            args.AddRange(["-c", "openai_base_url=" + JsonSerializer.Serialize(config.BaseUrl)]);
+        }
         var model = r.Model ?? config.Model;
         if (!string.IsNullOrWhiteSpace(model)) args.AddRange(["-m", model]);
         if (r.OutputSchemaFile != null) args.AddRange(["--output-schema", r.OutputSchemaFile]);
@@ -81,11 +89,12 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
                         thread = e.TryGetProperty("thread_id", out var th) ? th.GetString() : null; break;
                     case "turn.completed":
                         completed = true;
-                        if (e.TryGetProperty("usage", out var u))
-                            tokens = new TokenUsage(
-                                u.TryGetProperty("input_tokens", out var i) ? i.GetInt64() : 0,
-                                u.TryGetProperty("cached_input_tokens", out var c) ? c.GetInt64() : 0,
-                                u.TryGetProperty("output_tokens", out var o) ? o.GetInt64() : 0);
+                        tokens = TokenUsage.Unknown;
+                        if (e.TryGetProperty("usage", out var u) && u.ValueKind == JsonValueKind.Object
+                            && ReadToken(u, "input_tokens") is { } input && ReadToken(u, "output_tokens") is { } output
+                            && input <= long.MaxValue - output)
+                            tokens = new TokenUsage(input, ReadToken(u, "cached_input_tokens") ?? 0, output)
+                            { Thinking = ReadToken(u, "reasoning_output_tokens") };
                         break;
                     case "turn.failed":
                         error = e.TryGetProperty("error", out var er) && er.TryGetProperty("message", out var m) ? m.GetString() : line; break;
@@ -100,6 +109,9 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
         return new AgentRunResult(id, kind, ok ? lastMessage : "", tokens, res.Duration, model, thread,
             ok ? "" : AgyProvider.Clip(error ?? res.StdErr));
     }
+
+    private static long? ReadToken(JsonElement usage, string name) => usage.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number) && number >= 0 ? number : null;
 
     public async Task<ProviderHealth> CheckAsync(CancellationToken ct)
     {

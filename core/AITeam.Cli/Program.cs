@@ -16,9 +16,15 @@ try
     {
         "providers" => await Providers(),
         "task-info" => TaskInfo(),
+        "review-findings" => ReviewFindings(),
+        "lint-task" => await LintTask(),
+        "check-harness-change" => CheckHarnessChange(),
         "review" => await Review(),
+        "workflow-role" => WorkflowRole(),
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
+        "diagnose-run" => DiagnoseRun(),
+        "opencode-check" => await OpenCodeCheck(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         _ => Help(),
     };
@@ -37,6 +43,62 @@ catch (Exception ex)
 {
     Console.Error.WriteLine($"LỖI: {ex.Message}");
     return 1;
+}
+
+async Task<int> LintTask()
+{
+    var work = Path.GetFullPath(Arg("--workdir") ?? root);
+    var taskFile = Arg("--task-file") ?? throw new InvalidDataException("Thiếu --task-file");
+    var result = await TaskLinter.RunAsync(work, await File.ReadAllTextAsync(taskFile), new ProcessRunner(), CancellationToken.None, resume: args.Contains("--resume"));
+    foreach (var error in result.Errors) Console.Error.WriteLine(error);
+    if (result.Ok) Console.WriteLine("Task đạt kiểm tra theo loại công việc và chế độ giao.");
+    return result.Ok ? 0 : 2;
+}
+
+int CheckHarnessChange()
+{
+    var file = Arg("--diff-file") ?? throw new InvalidDataException("Thiếu --diff-file");
+    if (new FileInfo(file).Length > 10 * 1024 * 1024) throw new InvalidDataException("Diff harness quá lớn.");
+    var allowed = AcceptanceHarnessPolicy.Allows(File.ReadAllText(file), args.Contains("--allow"));
+    Console.WriteLine(allowed ? "Chấp nhận thay harness đã khai báo; Claude vẫn cần review phạm vi dựng môi trường." : "Chặn: chưa khai báo hoặc sửa assert/điều kiện chọn test.");
+    return allowed ? 0 : 2;
+}
+
+int DiagnoseRun()
+{
+    var file = Arg("--input") ?? throw new FileNotFoundException("Thiếu --input.");
+    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString };
+    var current = JsonSerializer.Deserialize<AITeam.Core.Metrics.RunDiagnosticInput>(File.ReadAllText(file), options)
+        ?? throw new InvalidDataException("Số đo lượt không hợp lệ.");
+    var history = new List<AITeam.Core.Metrics.RunDiagnosticInput>();
+    var directory = Arg("--history");
+    if (directory != null && Directory.Exists(directory))
+        foreach (var item in Directory.EnumerateFiles(directory, "*.json"))
+        {
+            try { var row = JsonSerializer.Deserialize<AITeam.Core.Metrics.RunDiagnosticInput>(File.ReadAllText(item), options); if (row != null) history.Add(row); }
+            catch (JsonException) { /* Không coi file số đo hỏng là lượt đo 0. */ }
+        }
+    var previous = history.Where(r => r.Project == current.Project && r.Task == current.Task && r.Run == current.Run - 1).LastOrDefault();
+    var peers = history.Where(r => current.Difficulty is "S" or "M" or "L" && r.Difficulty == current.Difficulty && r.KnownTokens).ToList();
+    double? average = peers.Count == 0 ? null : peers.Average(r => (double)r.TotalTokens!.Value);
+    Console.WriteLine(JsonSerializer.Serialize(AITeam.Core.Metrics.RunDiagnostics.Evaluate(current, previous, average), new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return 0;
+}
+
+async Task<int> OpenCodeCheck()
+{
+    var provider = new OpenCodeProvider(OpenCodeProvider.Configuration(root, false), new ProcessRunner());
+    var health = await provider.CheckAsync(CancellationToken.None);
+    Console.WriteLine(JsonSerializer.Serialize(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return health.Installed ? 0 : 1;
+}
+
+int ReviewFindings()
+{
+    var file = Arg("--file") ?? throw new InvalidDataException("Thiếu --file");
+    if (new FileInfo(file).Length > 10 * 1024 * 1024) throw new InvalidDataException("Review quá lớn.");
+    Console.WriteLine(JsonSerializer.Serialize(AITeam.Core.Metrics.FindingParser.Parse(File.ReadAllText(file))));
+    return 0;
 }
 
 async Task<int> Providers()
@@ -228,6 +290,29 @@ async Task<int> Review()
         return 2;
     }
 
+    var assignment = WorkflowRoleDispatch.Resolve(Path.Combine(root, "team.json"), "qc");
+    var requested = Arg("--reviewer-provider");
+    if (requested != null && (!assignment.IsExplicit ||
+        !string.Equals(requested, assignment.ProviderId, StringComparison.OrdinalIgnoreCase)))
+    {
+        Console.Error.WriteLine("LỖI: provider QC không khớp phân vai.");
+        return 2;
+    }
+    if (assignment.Manual)
+    {
+        Console.Error.WriteLine("LỖI: Tác nhân được gán cần thực hiện thủ công.");
+        return 3;
+    }
+    var settings = ProviderSettings.Load(root);
+    if (assignment.IsExplicit)
+    {
+        var assigned = settings.Providers.FirstOrDefault(p => p.Id.Equals(assignment.ProviderId, StringComparison.OrdinalIgnoreCase));
+        if (assigned == null || !assigned.Enabled || !assigned.Roles.Contains(AgentRole.Reviewer))
+        {
+            Console.Error.WriteLine("LỖI: provider QC thiếu, đang tắt hoặc không có vai trò Reviewer.");
+            return 2;
+        }
+    }
     var utf8NoBom = new UTF8Encoding(false);
     if (args.Contains("--auto") && File.Exists(taskFile))
     {
@@ -256,13 +341,13 @@ async Task<int> Review()
     }
 
     var timeoutMin = int.TryParse(Arg("--timeout-min"), out var tm) && tm > 0 ? tm : 15;
-    var settings = ProviderSettings.Load(root);
+
     var state = new ProviderStateStore(root);
     var router = new ProviderRouter(settings, state);
     var proc = new ProcessRunner();
     var runner = new ReviewRunner(settings, router, state, c => settings.Create(c, proc), () => DateTime.Now);
     var input = CreateReviewInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, timeoutMin, root);
-    var outcome = await runner.RunAsync(input, CancellationToken.None);
+    var outcome = assignment.IsExplicit ? await runner.RunAssignedAsync(input, assignment.ProviderId!, CancellationToken.None) : await runner.RunAsync(input, CancellationToken.None);
 
     Console.WriteLine(outcome.Summary);
     foreach (var note in outcome.Notes)
@@ -297,9 +382,14 @@ async Task<int> Run()
     var settings = ProviderSettings.Load(root);
     var state = new ProviderStateStore(root);
     var proc = new ProcessRunner();
+    if (string.Equals(provider, "opencode", StringComparison.OrdinalIgnoreCase))
+    {
+        var openCode = OpenCodeProvider.Configuration(root, args.Contains("--public-repo"), settings.Providers.FirstOrDefault(p => p.Id.Equals("opencode", StringComparison.OrdinalIgnoreCase)));
+        settings = settings with { Providers = settings.Providers.Where(p => !p.Id.Equals("opencode", StringComparison.OrdinalIgnoreCase)).Append(openCode).ToList() };
+    }
     var runner = new DevRunner(settings, state, c => settings.Create(c, proc), () => DateTime.Now);
     var mode = args.Contains("--read-only") ? RunMode.ReadOnly : RunMode.Develop;   // R-006: lập kế hoạch chỉ đọc
-    var input = new DevRunInput(provider, workDir, promptFile, logDir, TimeSpan.FromMinutes(timeoutMin), model, mode);
+    var input = new DevRunInput(provider, workDir, promptFile, logDir, TimeSpan.FromMinutes(timeoutMin), model, mode) { Title = Arg("--title") };
     var outcome = await runner.RunAsync(input, CancellationToken.None);
 
     Console.WriteLine(outcome.Summary);
@@ -335,4 +425,19 @@ static ReviewRunInput CreateReviewInput(string taskFile, string diffFile, string
     string workDir, string logDir, string dev, int timeoutMin, string root)
 {
     return new ReviewRunInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, TimeSpan.FromMinutes(timeoutMin), root);
+}
+/// <summary>workflow-role --role plan|prep|qc --root d: Resolve(team.json), JSON camelCase duy nhất trên stdout,
+/// mã 0. Thiếu/sai role: stderr "LỖI: thiếu hoặc sai --role (plan, prep, qc).", mã 2.
+/// Lỗi đọc/schema: Main bắt, mã khác 0; khung chưa làm: "LỖI: chưa làm", mã 1.</summary>
+int WorkflowRole()
+{
+    var role = Arg("--role");
+    if (role is not ("plan" or "prep" or "qc"))
+    {
+        Console.Error.WriteLine("LỖI: thiếu hoặc sai --role (plan, prep, qc).");
+        return 2;
+    }
+    var assignment = WorkflowRoleDispatch.Resolve(Path.Combine(root, "team.json"), role);
+    Console.WriteLine(JsonSerializer.Serialize(assignment, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return 0;
 }

@@ -10,6 +10,8 @@ public static class HubV3Registration
     {
         services.TryAddSingleton<IApprovalService, ApprovalService>();
         services.TryAddSingleton<IGitHistory, GitHistory>();
+        services.TryAddSingleton<WorkOverviewService>();
+        services.TryAddSingleton<WorkDetailService>();
         services.TryAddSingleton<ITeamInsightsService, TeamInsightsService>();
         services.TryAddSingleton<IRequestService, RequestService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();

@@ -64,26 +64,22 @@ Theo brief R-011 mục 2; phụ thuộc W1-01 đã có helper. Ba hàm PowerShel
 - [ ] Báo cáo từng tiêu chí → lệnh/kết quả thật, file/lý do, quyết định tự đưa ra, điều chưa xác minh.
 
 ## Báo cáo của agent
-Agent triển khai điền sau, chưa coi khung là tính năng hoàn thành.
-
 | Tiêu chí | Bằng chứng |
 |---|---|
-| Triển khai | Chưa làm; ba thân hàm ném NotImplementedException. |
-| Build lần 1 | `dotnet build AITeam.sln`: mã 1, Build FAILED, 0 Warning(s), 0 Error(s), không có chẩn đoán. |
-| Build lần 2 | `dotnet build AITeam.sln -m:1 -nr:false -p:UseSharedCompilation=false -v:normal`: mã 1, 8 warning NU1900 (không truy cập NuGet), 4 lỗi CS1009 cùng dòng 186 của test. Đã sửa chuỗi thành verbatim; chưa build lại do giới hạn tối đa 2 lần. |
-| Test | 47 ca xUnit (45 InlineData + 2 Fact), chưa chạy do build chưa đạt. Chưa có số pass/fail/skip thực thi; dự kiến đỏ ở ba hàm chưa triển khai. |
-| Kiểm tĩnh | Parser.ParseFile(team.ps1): 0 lỗi AST; cả 5 file chuẩn bị có UTF-8 BOM. Chưa xác nhận biên dịch C# sau sửa escape. |
-
-### File chuẩn bị và quyết định
-- `team.ps1`: ba hàm khung và hai điểm nối luồng, không viết thân; giữ catch CLI hiện có.
-- Hai mẫu `templates/codex-plan.md`, `templates/codex-prep.md`: hợp đồng khai báo UI/Mockup và khóa duyệt.
-- `core.tests/AcceptanceW103PlanApprovalTests.cs`: test nghiệm thu bất biến; RealFile.Copy plan/CSS thật, TeamScript giả git/AI và TestShell tạo junction tạm. Không có ProcessStartInfo riêng, không chạy git/AI thật trong test.
-- File task này: đặc tả và bằng chứng chuẩn bị. Dòng Agent/Nhánh/Yêu cầu/Review AI giữ nguyên.
-- Tự quyết định: dùng dòng `- Mockup SHA256: ...` trong mục quyết định, hash mọi byte file xuất và so với nội dung HTML hiện tại; không thêm file trạng thái. Khi snapshot bỏ riêng thư mục `.w101-shims-*` do helper chung tạo, vẫn kiểm toàn bộ file sản phẩm còn lại.
-
-### Điều chưa chắc khi chuẩn bị
-- `agy models` mã 1, chưa đăng nhập/không kết nối được xác thực. Chưa xác minh model khả dụng; giữ `gemini-4-argon-high` theo brief và quyết định thật, quản lý kiểm trước giao.
-- Chưa nghiệm thu mở file trên máy chủ dự án; test chỉ dùng sandbox, không provider thật.
+| Đỏ ban đầu | verify-1 (HEAD ebef924) báo 6 đỏ; chạy lại sau merge tại nhánh này còn 2: `AcceptanceW103…Ui_exports…` (Path trả `\` thay vì `docs/design`) và `AcceptanceS104…ProviderGiaNhanPromptThat_MoiNhanh(prep,codex)` (`Assert-PrepPlanApproval` không được nạp). |
+| Sửa trong Phạm vi | `team.ps1:1151`: trả `Path` dạng `Root\docs/design/<R>-mockup.html` bằng `[IO.Path]::Combine`; vẫn dùng đường dẫn chuẩn hóa để kiểm reparse/ghi file. |
+| Sửa môi trường test (ngoại lệ, không sửa assert) | `core.tests/AcceptanceS104SkillPromptsTests.cs:168` thêm `Assert-PrepPlanApproval` vào danh sách hàm nạp; `:182` thêm mục `## Quyết định của quản lý (giả)` + `- ĐÃ DUYỆT.` cho plan fixture. Lý do: harness chỉ nạp 5 hàm và fixture thiếu duyệt nên `Invoke-Prep` không thể chạy đúng hợp đồng guard mới; assert giữ nguyên. |
+| Build | `dotnet build AITeam.sln -warnaserror` lần đầu lỗi MSB3491 khóa file tạm trong `bin` (môi trường); chạy `-m:1 -nr:false`: 0 warning, 0 lỗi. |
+| Test | `dotnet test AITeam.sln --blame-hang-timeout 3m --no-build`: Hub 721 đạt/0 đỏ, Core 737 đạt/0 đỏ. Lọc W1-03 + S104: 70 đạt/0 đỏ. |
+| Hợp đồng | Giữ tên/chữ ký 3 hàm; guard ngay sau đọc plan, trước Select-FreeAgent/logs/fetch/provider; không sửa assert, không tự duyệt. |
+| Chưa xác minh | Không chạy được `powershell -File tools\test-verify.ps1` (quyền công cụ chỉ cho git/dotnet); chưa mở mockup thật — Claude kiểm ở bước 7. |
+## Báo cáo của agent — OpenCode
+- Gộp `origin/main` (90 commit); conflict chỉ ở harness S1-04: giữ đủ hàm nạp của cả hai bên, mỗi tên một lần (`Assert-PrepPlanApproval` + 5 hàm H7-02/V6-02), không sửa assert.
+- `team.ps1`: chuyển `Resolve-WorkflowAssignment 'prep'` xuống sau `Assert-PrepPlanApproval` để guard chạy trước provider/Select-FreeAgent/logs/fetch (vẫn còn lời gọi cho test AST H7-02); giữ toàn bộ chức năng main và 3 helper W1-03.
+- `core.tests/AcceptanceW103PlanApprovalTests.cs`: chỉ bổ sung harness cho `Real_plan_exports…` (nạp `Resolve-WorkflowAssignment`/`Invoke-WorkflowRoleRun`, fake khóa Codex, cấp JSON workflow-role cho fake codex) vì H7-02 đổi `Invoke-Plan`; không đổi assert.
+- Build: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 lỗi.
+- Test: `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → Hub 817/817, Core 876/876; tổng 1693 đạt, 0 đỏ, 0 skip.
+- Chưa chạy `team.ps1 verify`, chưa mở mockup; không push theo yêu cầu.
 
 ## Review (Claude)
 <!-- Claude điền. -->

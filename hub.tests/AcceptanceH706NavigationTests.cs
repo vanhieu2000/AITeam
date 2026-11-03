@@ -249,11 +249,12 @@ public sealed class AcceptanceH706NavigationTests
         var html = await f.RenderProjects(page);
         var side = Regex.Match(html, @"<aside\b[\s\S]*?</aside>").Value;
         var links = Elements(side, "a");
-        Assert.Equal(new[] { "/", "/Approvals", "/Projects", "/Performance", "/Process", "/Settings", "/AI", "/Map" },
+        // H8-14 (R-012): thêm "Trò chuyện AI" ngay sau Văn phòng.
+        Assert.Equal(new[] { "/", "/Chat", "/Approvals", "/Projects", "/Performance", "/Process", "/Settings", "/AI", "/Map" },
             links.Select(a => Regex.Match(a, "href=\"([^\"]+)\"").Groups[1].Value));
         var selected = Assert.Single(links, a => Regex.IsMatch(a, "class=\"[^\"]*\\bon\\b"));
         Assert.Contains($"href=\"{active}\"", selected);
-        foreach (var label in new[] { "Văn phòng", "Đơn duyệt", "Dự án", "Đánh giá", "Hiệu suất", "Quy trình & cải tiến", "Hệ thống", "Cài đặt", "Tài khoản", "Map" })
+        foreach (var label in new[] { "Văn phòng", "Trò chuyện AI", "Đơn duyệt", "Dự án", "Đánh giá", "Hiệu suất", "Quy trình & cải tiến", "Hệ thống", "Cài đặt", "Tài khoản", "Map" })
             Assert.Contains(label, Text(side));
         Assert.DoesNotContain("Antigravity", Text(side));
         Assert.Equal(0, f.BoardReads);
