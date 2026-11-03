@@ -244,12 +244,18 @@ public sealed class AcceptanceV507ResearchPageTests : IDisposable
     [Fact]
     public void Razor_markup_follows_layout()
     {
-        var page = Source(Path.Combine("hub", "Pages", "Research.cshtml"));
-        Assert.Contains("@page \"/Research\"", page);
-        Assert.Contains("asp-page-handler=\"Ask\"", page);
+        // H7-05 (R-012): form tách vào partial _ResearchPanel dùng chung cho /Research và Văn phòng.
+        var shell = Source(Path.Combine("hub", "Pages", "Research.cshtml"));
+        Assert.Contains("@page \"/Research\"", shell);
+        Assert.Contains("<partial name=\"_ResearchPanel\"", shell);
+        var panel = Source(Path.Combine("hub", "Pages", "Shared", "_ResearchPanel.cshtml"));
+        var page = shell + panel;
+        Assert.Contains("asp-page-handler=\"@askHandler\"", panel);
+        Assert.Contains("asp-page-handler=\"@saveHandler\"", panel);
+        Assert.Contains("\"ResearchAsk\" : \"Ask\"", panel);
+        Assert.Contains("\"ResearchSaveManual\" : \"SaveManual\"", panel);
         Assert.Contains("maxlength=\"2000\"", page);
         Assert.Contains("name=\"includeRequestText\"", page);
-        Assert.Contains("asp-page-handler=\"SaveManual\"", page);
         Assert.Contains("navigator.clipboard", page);
         Assert.Contains("_ResearchResults", page);
         var results = Source(Path.Combine("hub", "Pages", "Shared", "_ResearchResults.cshtml"));

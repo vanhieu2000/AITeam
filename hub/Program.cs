@@ -39,6 +39,7 @@ else
 }
 
 builder.Services.AddHubV3();
+builder.Services.AddLocalChat(Environment.GetEnvironmentVariable("HUB_FAKE") == "1" || Environment.GetEnvironmentVariable("HUB_EMPTY") == "1");
 builder.Services.AddSingleton<IOfficeChatService, OfficeChatService>();
 
 var app = builder.Build();
