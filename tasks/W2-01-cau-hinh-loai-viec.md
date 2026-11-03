@@ -105,3 +105,8 @@ public interface IWorkflowConfigService
 - Chưa xác minh: chưa nối giao diện (ngoài phạm vi, UI-07 của Claude); `team.ps1` chưa dùng cấu hình (W2-02).
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT
+- Đã kiểm: hợp đồng đúng chữ ký; Save kiểm revision hai lần + ghi tạm rồi File.Replace, khóa theo đường dẫn, chặn reparse point cả thư mục cha; Resolve theo dòng Loại việc → tiền tố → chua-phan-loai; 15 test khớp danh sách nghiệm thu, không return sớm; workflow.json có BOM, 6 loại.
+- OpenCode: 10,6 phút, ~95k token, build 0 warning, 1801/1801 test.
+- Optional: code 672 dòng / ngân sách 350 (1,9×, phần lớn là đọc JSON phòng thủ) — lần sau ghi ngân sách ~600 cho task có parser JSON tay; tiền tố `W` (quy trình / công cụ) chưa gán loại việc ⇒ thêm vào `tinh-nang-loi` khi làm UI-07.
+
