@@ -117,6 +117,7 @@ public sealed class ProviderStateStore
     public static readonly TimeSpan DefaultQuotaRest = TimeSpan.FromMinutes(60);
     public static readonly TimeSpan LoginRest = TimeSpan.FromHours(24);
     public const int MaxDetail = 300;
+    public static readonly TimeSpan FailureRest = TimeSpan.FromMinutes(15);
 
     private static readonly UTF8Encoding Utf8NoBom = new(false);
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -157,8 +158,23 @@ public sealed class ProviderStateStore
     /// </summary>
     public void Record(AgentRunResult r, DateTime now)
     {
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
+        if (r.Status == RunStatus.Succeeded) FailureStreakStore.Update(root, r.ProviderId, false);
         if (r.Status is not (RunStatus.Succeeded or RunStatus.QuotaExhausted or RunStatus.NotLoggedIn))
+        {
+            var count = FailureStreakStore.Update(root, r.ProviderId, true);
+            if (count < 3) return;
+            // Luồng mới không được ghi đè state hỏng dù reader cũ có cơ chế coi rỗng.
+            if (File.Exists(FilePath)) _ = JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath), JsonOpts) ?? throw new InvalidDataException("State provider rỗng.");
+            var rests = All().ToList();
+            var prior = rests.FirstOrDefault(p => p.ProviderId.Equals(r.ProviderId, StringComparison.OrdinalIgnoreCase));
+            if (prior != null && prior.Until > now + FailureRest) return;
+            rests.RemoveAll(p => p.ProviderId.Equals(r.ProviderId, StringComparison.OrdinalIgnoreCase));
+            rests.Add(new ProviderRest(r.ProviderId, now + FailureRest, r.Status, $"{count} lỗi liên tiếp; tạm nghỉ 15 phút để quản lý kiểm tra.", now));
+            Save(rests);
             return;
+        }
 
         var list = All().Where(x => !x.ProviderId.Equals(r.ProviderId, StringComparison.OrdinalIgnoreCase)).ToList();
         if (r.Status != RunStatus.Succeeded)
@@ -179,6 +195,9 @@ public sealed class ProviderStateStore
     /// <summary>Xóa trạng thái nghỉ của provider (chủ dự án biết hạn mức đã có lại / vừa đổi tài khoản). Trả false nếu không có bản ghi.</summary>
     public bool Clear(string providerId)
     {
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
+        FailureStreakStore.Update(root, providerId, false);
         var all = All();
         var list = all.Where(x => !x.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase)).ToList();
         if (list.Count == all.Count) return false;
