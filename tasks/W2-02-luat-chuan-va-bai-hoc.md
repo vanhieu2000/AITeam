@@ -132,3 +132,11 @@ public interface ILessonService
 - **Required 1 — bỏ biến môi trường toàn cục** (`team.ps1` gần dòng 89): ` = "1"` đổi chế độ quốc tế hóa của MỌI tiến trình .NET mà team.ps1 chạy (build, test, CLI, agent) chỉ để lách test so ESC. Test đã sửa (commit 3a5d53c) ⇒ XÓA dòng này. Test xác nhận: toàn bộ test vẫn xanh khi không có dòng này.
 - Optional: code assign / skill-note kiểm `'FakeProvider'` và `'PROVIDER_CAPTURED'` (tên của harness test) trong code chạy thật — nên để harness tự stub `Get-AITeamExe`; 942 / 550 dòng (Lessons.cs 544 dòng — phần đọc / ghi file an toàn), lần sau ghi ngân sách ~900 cho task có parser + ghi file.
 - Lỗi: [AG] (chất lượng) sửa biến môi trường toàn cục để lách test · [TK] (test) test nghiệm thu so chuỗi theo văn hóa.
+
+### Vòng 2 — ĐẠT
+- Antigravity xóa `DOTNET_SYSTEM_GLOBALIZATION_USENLS` khỏi team.ps1 (Required 1). BOM giữ.
+- Cổng KT báo "agent sửa test nghiệm thu" vì cổng chỉ coi commit ĐẦU của nhánh là bản Claude; commit sửa test sau đó của Claude (3a5d53c) lại mang danh tính Agent B của worktree ⇒ agent khôi phục test cũ (lỗi). Claude áp lại bản sửa dưới tên HieuDV (188f3e3) và tự kiểm: build 0 warning, Hub 866/866, Core 1009/1009 (13/13 W202).
+- [CK] (test) cổng không nhận bản sửa test nghiệm thu của Claude sau commit đầu ⇒ việc sau: cổng nhận commit "(Claude)" do danh tính quản lý tạo; Claude commit trong worktree agent phải ghi đè danh tính.
+
+## Kết quả
+- Mẹo / đề xuất cải tiến lưu thành bài học nháp `lessons/LS-xxx.md`; Claude nâng thành luật chuẩn `rules/L-xxx.md`. Lệnh `team.ps1 assign` tự chèn luật đang hiệu lực đúng loại việc / bước vào lời giao việc; `skill-note` tự tạo bài học nháp. CLI mới: `rules-for-task`, `lesson-add`. Chưa có màn hình (UI-06 / UI-07).
