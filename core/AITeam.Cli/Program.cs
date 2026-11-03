@@ -18,6 +18,7 @@ try
         "task-info" => TaskInfo(),
         "check-harness-change" => CheckHarnessChange(),
         "review" => await Review(),
+        "workflow-role" => WorkflowRole(),
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
         "diagnose-run" => DiagnoseRun(),
@@ -269,6 +270,29 @@ async Task<int> Review()
         return 2;
     }
 
+    var assignment = WorkflowRoleDispatch.Resolve(Path.Combine(root, "team.json"), "qc");
+    var requested = Arg("--reviewer-provider");
+    if (requested != null && (!assignment.IsExplicit ||
+        !string.Equals(requested, assignment.ProviderId, StringComparison.OrdinalIgnoreCase)))
+    {
+        Console.Error.WriteLine("LỖI: provider QC không khớp phân vai.");
+        return 2;
+    }
+    if (assignment.Manual)
+    {
+        Console.Error.WriteLine("LỖI: Tác nhân được gán cần thực hiện thủ công.");
+        return 3;
+    }
+    var settings = ProviderSettings.Load(root);
+    if (assignment.IsExplicit)
+    {
+        var assigned = settings.Providers.FirstOrDefault(p => p.Id.Equals(assignment.ProviderId, StringComparison.OrdinalIgnoreCase));
+        if (assigned == null || !assigned.Enabled || !assigned.Roles.Contains(AgentRole.Reviewer))
+        {
+            Console.Error.WriteLine("LỖI: provider QC thiếu, đang tắt hoặc không có vai trò Reviewer.");
+            return 2;
+        }
+    }
     var utf8NoBom = new UTF8Encoding(false);
     if (args.Contains("--auto") && File.Exists(taskFile))
     {
@@ -297,13 +321,13 @@ async Task<int> Review()
     }
 
     var timeoutMin = int.TryParse(Arg("--timeout-min"), out var tm) && tm > 0 ? tm : 15;
-    var settings = ProviderSettings.Load(root);
+
     var state = new ProviderStateStore(root);
     var router = new ProviderRouter(settings, state);
     var proc = new ProcessRunner();
     var runner = new ReviewRunner(settings, router, state, c => settings.Create(c, proc), () => DateTime.Now);
     var input = CreateReviewInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, timeoutMin, root);
-    var outcome = await runner.RunAsync(input, CancellationToken.None);
+    var outcome = assignment.IsExplicit ? await runner.RunAssignedAsync(input, assignment.ProviderId!, CancellationToken.None) : await runner.RunAsync(input, CancellationToken.None);
 
     Console.WriteLine(outcome.Summary);
     foreach (var note in outcome.Notes)
@@ -381,4 +405,19 @@ static ReviewRunInput CreateReviewInput(string taskFile, string diffFile, string
     string workDir, string logDir, string dev, int timeoutMin, string root)
 {
     return new ReviewRunInput(taskFile, diffFile, verifyFile, workDir, logDir, dev, TimeSpan.FromMinutes(timeoutMin), root);
+}
+/// <summary>workflow-role --role plan|prep|qc --root d: Resolve(team.json), JSON camelCase duy nhất trên stdout,
+/// mã 0. Thiếu/sai role: stderr "LỖI: thiếu hoặc sai --role (plan, prep, qc).", mã 2.
+/// Lỗi đọc/schema: Main bắt, mã khác 0; khung chưa làm: "LỖI: chưa làm", mã 1.</summary>
+int WorkflowRole()
+{
+    var role = Arg("--role");
+    if (role is not ("plan" or "prep" or "qc"))
+    {
+        Console.Error.WriteLine("LỖI: thiếu hoặc sai --role (plan, prep, qc).");
+        return 2;
+    }
+    var assignment = WorkflowRoleDispatch.Resolve(Path.Combine(root, "team.json"), role);
+    Console.WriteLine(JsonSerializer.Serialize(assignment, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return 0;
 }
