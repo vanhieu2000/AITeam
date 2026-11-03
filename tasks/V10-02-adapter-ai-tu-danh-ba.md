@@ -98,3 +98,14 @@ public sealed class AiProviderFactory(IAiServiceRegistry registry, IProcessRunne
 
 - File đã đổi: `core/AITeam.Core/AiServices/Adapters/AiAdapters.cs`, `hub/Services/VaultService.cs`, `hub/Services/VaultSecretLookup.cs` (mới), `hub/Services/HubV3Registration.cs`, `tasks/V10-02-adapter-ai-tu-danh-ba.md`.
 - Điều chưa chắc: Không có (toàn bộ 1854 test hệ thống đều pass).
+
+## Review (Claude)
+### Vòng 1 — ĐẠT
+- Antigravity Gemini 3.8 (Agent B), 25′, ~85k token đầu ra. 12/12 test nghiệm thu (Claude) xanh, file nghiệm thu không bị sửa.
+- Đã kiểm: build 0 warning (không tăng dần); Hub 858/858; Core 996/996; không chạm `hub/Pages/**`, `hub/wwwroot/**`; BOM giữ (VaultService.cs gốc không có BOM).
+- Bảo mật: khóa thay `***` + SecretRedactor trước khi trả Text / Detail / lỗi; HTTP không theo chuyển hướng (SocketsHttpHandler AllowAutoRedirect=false); BaseUrl chỉ https hoặc http 127.0.0.1 / localhost / [::1]; lệnh chặn ký tự shell, tham số dạng mảng; stdout / phản hồi tối đa 2 MB; `ReadValue` chỉ `internal`, không vào `IVaultService`.
+- Optional: `VaultSecretLookup` ở chế độ HUB_FAKE vẫn tạo `VaultService` thật (đọc két thật nếu dùng adapter HTTP) — nên dùng két giả khi FAKE; mỗi lần gọi tạo `HttpClient` mới.
+- Lượt kết thúc với lỗi mạng "no such host" sau khi đã push; `team.ps1` phân loại nhầm thành HẾT HẠN MỨC — [CK] cần sửa nhận diện hạn mức.
+
+## Kết quả
+- Thêm AI mới chỉ bằng thêm dòng trong danh bạ office.db (adapter cli-text / cli-json / openai-compatible-http); Codex / OpenCode / Antigravity vẫn dùng lớp riêng nhưng chọn qua danh bạ. Chưa có màn hình (UI-08).
