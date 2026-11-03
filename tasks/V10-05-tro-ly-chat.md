@@ -93,3 +93,12 @@ public interface IChatAssistant
 
 - File đã đổi: `hub/Services/ChatAssistant.cs`, `hub/Services/LocalChatStore.cs`, `hub/Services/HubV3Registration.cs`, `tasks/V10-05-tro-ly-chat.md`.
 - Điều chưa chắc: Không có.
+
+## Review (Claude)
+### Vòng 1 — ĐẠT
+- Antigravity Gemini 3.8 (Agent B), 1 lượt. Cổng KT ĐẠT: build 0 warning, Hub 866/866, Core 996/996, 359 / 450 dòng, quét bí mật sạch; 8/8 test nghiệm thu (Claude) xanh, file nghiệm thu nguyên vẹn.
+- Đã kiểm: không chạm `hub/Pages/**`, `hub/wwwroot/**`; prompt + câu trả lời qua SecretRedactor trước khi ghi file tạm / SQLite; thư mục tạm xóa trong finally; lịch sử 20 tin × 2000 ký tự; AppendExchange 1 transaction; hết hạn mức ⇒ RecordQuota 0 % nguồn "chat"; nghiên cứu chạy song song Task.WhenAll; Hủy ⇒ không nuốt OperationCanceledException.
+- Optional: `catch { }` khi xóa thư mục tạm nuốt lỗi im lặng (chấp nhận được, nên ghi log).
+
+## Kết quả
+- Lõi cho nút chat nổi: hỏi đáp chọn AI (Codex qua đường cũ, AI khác qua danh bạ), giao việc vào hộp thư Claude, nghiên cứu hỏi nhiều AI cùng lúc; cài đặt trợ lý lưu trong office.db. Chưa nối giao diện (UI-08 / UI-09 của Claude).
