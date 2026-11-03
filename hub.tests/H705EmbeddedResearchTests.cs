@@ -15,7 +15,7 @@ public sealed class H705EmbeddedResearchTests
     {
         using var env = new TestEnvironment(); var research = new ResearchFake();
         await using var host = await Host(env, research);
-        var html = await host.Client.GetStringAsync("/");
+        var html = await host.Client.GetStringAsync("/?embed=1")  /* R-014: nghiên cứu theo phiếu nằm trong nút chat nổi */;
         Assert.Contains("Chưa có phiếu để nghiên cứu.", WebUtility.HtmlDecode(html));
         Assert.Contains("handler=ResearchAsk", html);
         var response = await host.Client.PostAsync("/?handler=ResearchAsk", new FormUrlEncodedContent(new Dictionary<string, string> { ["r"] = "R-001", ["question"] = "Hỏi" }));
@@ -28,7 +28,7 @@ public sealed class H705EmbeddedResearchTests
     {
         using var env = new TestEnvironment(); var research = new ResearchFake();
         await using var host = await Host(env, research);
-        var html = await host.Client.GetStringAsync("/?RequestId=R-001");
+        var html = await host.Client.GetStringAsync("/?RequestId=R-001&embed=1");
         var token = WebUtility.HtmlDecode(Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
         Assert.NotEmpty(token); host.Client.DefaultRequestHeaders.Add("RequestVerificationToken", token);
         var asked = await host.Client.PostAsync("/?handler=ResearchAsk", new FormUrlEncodedContent(new Dictionary<string, string>
@@ -46,7 +46,7 @@ public sealed class H705EmbeddedResearchTests
         var saved = await host.Client.PostAsync("/?handler=ResearchSaveManual", new FormUrlEncodedContent(new Dictionary<string, string>
         { ["r"] = "R-001", ["questionId"] = "Q-1", ["ai"] = "manual", ["question"] = "Câu hỏi", ["answer"] = "Kết quả riêng R-001 <script>answer</script>", ["sources"] = "" }));
         Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
-        html = await host.Client.GetStringAsync("/?RequestId=R-001");
+        html = await host.Client.GetStringAsync("/?RequestId=R-001&embed=1");
         Assert.Contains("Kết quả riêng R-001", WebUtility.HtmlDecode(html));
         Assert.DoesNotContain("<script>answer</script>", html);
         var other = await host.Client.GetStringAsync("/?handler=Research&requestId=R-002");
@@ -62,7 +62,7 @@ public sealed class H705EmbeddedResearchTests
     {
         using var env = new TestEnvironment(); var research = new ResearchFake { Fail = true };
         await using var host = await Host(env, research);
-        var html = await host.Client.GetStringAsync("/?RequestId=R-001");
+        var html = await host.Client.GetStringAsync("/?RequestId=R-001&embed=1");
         var token = WebUtility.HtmlDecode(Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
         host.Client.DefaultRequestHeaders.Add("RequestVerificationToken", token);
         foreach (var id in new[] { "../escape", "R-999", "R-001" })
