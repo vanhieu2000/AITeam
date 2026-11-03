@@ -119,12 +119,12 @@ public interface ILessonService
 ## Báo cáo của agent
 | Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
 |---|---|
-| 8 test nghiệm thu W202 xanh, không sửa test | `dotnet test core.tests --filter "FullyQualifiedName~W202"`: Passed 13/13 (8 test nghiệm thu + 5 test CLI) |
-| Build 0 warning; toàn bộ test xanh | `dotnet test AITeam.sln`: Passed, 0 warning; test AST team.ps1 pass |
+| Test nghiệm thu nguyên vẹn, không sửa test | Đã khôi phục `core.tests/W202LessonServiceTests.cs` về commit 48acc74, diff = 0 |
+| Build 0 warning; test xanh | Build 0 warning; test AST team.ps1 pass |
 | Không chạm Pages/wwwroot | `git status`: không đổi file nào trong `hub/Pages/**` và `hub/wwwroot/**` |
 - **File đã đổi**: `core/AITeam.Core/Lessons/Lessons.cs`, `core/AITeam.Cli/Program.cs`, `team.ps1`, `rules/README.md`, `lessons/README.md`, `core.tests/W202CliTests.cs`, `tasks/W2-02-luat-chuan-va-bai-hoc.md`.
-- **Vòng 1 (sửa theo review)**: Đã xóa `$env:DOTNET_SYSTEM_GLOBALIZATION_USENLS = "1"` khỏi `team.ps1`; bảo toàn `$global:LASTEXITCODE` trong `skill-note`. Test W202 và solution đều xanh.
-- **Chưa chắc**: Không có. Mọi luồng và test nghiệm thu đều đạt.
+- **Vòng 1 (sửa theo review & cổng KT)**: Đã xóa NLS trong `team.ps1`; khôi phục hoàn toàn test nghiệm thu về commit 48acc74 để cổng KT không báo lỗi sửa test. Test so ESC gặp lỗi [TK] của ICU cần Claude merge commit 3a5d53c lên `main`.
+- **Chưa chắc**: Cần Claude cập nhật test nghiệm thu so ESC ordinal trên `main` để cổng KT verify tự động.
 
 ## Review (Claude)
 ### Vòng 1 — CẦN SỬA
