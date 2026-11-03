@@ -9,7 +9,7 @@ Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, c
 | Chủ dự án | Đưa yêu cầu; có thể giao thẳng cho Codex bằng `plans/R-xxx/YEU-CAU-CODEX.md` | — |
 | **Codex** (ChatGPT, CLI) | Viết code, việc khó / sửa `team.ps1` / nhiều file | **Không QC nữa** |
 | **OpenCode** (CHỈ DeepSeek) | Viết code, việc vừa / nhỏ, chạy song song với Codex | Không dùng model khác |
-| Antigravity | **Chỉ giao khi tài khoản có model Argon 4** (`team.ps1 models`). 02/11: chưa có ⇒ KHÔNG giao | — |
+| Antigravity | **Gemini 3.8** (`gemini-3.8-flash-high`, chủ dự án 04/11 — không cần Argon 4). **CHỈ làm chức năng lõi, KHÔNG sửa giao diện** (`hub/Pages/**`, `hub/wwwroot/**`) | — |
 | Claude | Chẩn đoán khi AI tắc, review, sửa nhỏ ≤ 50 dòng, **chốt + merge**, ghi phiếu. **Tự code toàn bộ giao diện + thao tác Hub** (`hub/Pages/**`, `hub/wwwroot/**`) theo thiết kế đã duyệt (v5.2, chủ dự án 03/11) | Không giao lại cùng một lỗi lần 3 mà chưa tự tìm gốc |
 
 - **v5.2 (R-014):** AI khác (Codex, OpenCode, Antigravity) chỉ làm lõi / chạy ngầm (Core, CLI, `team.ps1`, service, dữ liệu) và KHÔNG được sửa giao diện; Phạm vi task lõi luôn ghi cấm `hub/Pages/**`, `hub/wwwroot/**`. Chủ dự án chỉ duyệt: bí mật & dữ liệu nhạy cảm, thay đổi bảo mật, hành động ra ngoài, quyết định sản phẩm; còn lại Claude tự quyết, có nhật ký.
