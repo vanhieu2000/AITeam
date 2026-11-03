@@ -13,6 +13,10 @@ public static class HubV3Registration
         services.TryAddSingleton<WorkOverviewService>();
         services.TryAddSingleton<WorkDetailService>();
         services.TryAddSingleton<PerformanceService>();
+        // V10-04: số liệu báo cáo & thống kê (lọc ngày/dự án/người/độ khó, điểm, ma trận lỗi, dòng thời gian, CSV).
+        services.TryAddSingleton<IReportService>(sp => new ReportService(
+            sp.GetRequiredService<HubPaths>(), sp.GetRequiredService<ITeamConfigService>(),
+            sp.GetRequiredService<ITaskBoardService>(), sp.GetRequiredService<IGitHistory>()));
         services.TryAddSingleton<ITeamInsightsService, TeamInsightsService>();
         services.TryAddSingleton<IRequestService, RequestService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();
