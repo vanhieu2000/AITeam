@@ -26,6 +26,7 @@
         {
             <partial name="_OfficeControl" model="Model" />
         }
+        <partial name="_OfficeResearch" model="Model" />
     </section>
     <section class="office-chat panel">
         <h3>Chat giao việc</h3>
@@ -57,3 +58,7 @@
         </form>
     </section>
 </div>
+<section id="office-chat-shortcut" class="panel" style="margin-top:16px;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-width:0">
+    <div style="flex:1;min-width:0;overflow-wrap:anywhere"><strong>Trò chuyện AI</strong><p class="muted">@(Model.LatestAiConversation?.Title ?? Model.AiConversationNotice ?? "Chưa có hội thoại. Bắt đầu trò chuyện với AI.")</p></div>
+    <a class="btn pri" href="/Chat">Mở trò chuyện</a>
+</section>

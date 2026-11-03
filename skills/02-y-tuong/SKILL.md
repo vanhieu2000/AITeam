@@ -42,7 +42,7 @@ Bàn giao bản phương án cho người research với bố cục:
 - [ ] Người research nhận đủ câu hỏi và ảnh hưởng của câu trả lời tới lựa chọn.
 
 ## Lỗi hay gặp
-- AGENTS.md:52 — V5-05: HTMX 2 bỏ qua xác nhận đặt trên nút submit; khi đề xuất thao tác nguy hiểm, ghi việc xác minh phần tử phát request thay vì giả định có nút là đủ an toàn.
+- AGENTS.md:53 — V5-05: HTMX 2 bỏ qua xác nhận đặt trên nút submit; khi đề xuất thao tác nguy hiểm, ghi việc xác minh phần tử phát request thay vì giả định có nút là đủ an toàn.
 - Chỉ kể lợi ích của phương án yêu thích khiến so sánh lệch; ghi cả hạn chế và điều kiện làm nó không phù hợp.
 
 ## Ví dụ ngắn tốt / xấu
