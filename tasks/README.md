@@ -67,6 +67,8 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H7-04 Thẻ tác nhân và chat giao việc](H7-04-the-tac-nhan-va-chat-giao-viec.md) | B | `agent-b/H7-04-the-tac-nhan-va-chat-giao-viec` | ✅ Đã merge (vòng 1) |
 | [W1-03 Sinh mockup và khóa prep trước duyệt](W1-03-sinh-mockup-va-khoa-prep-truoc-duyet.md) | A | `agent-a/W1-03-sinh-mockup-va-khoa-prep-truoc-duyet` | 🔵 Chờ review · OpenCode 02/11 xanh hết (2423462: Hub 721, Core 737)
 
+| [V9-12 Lỗi có cấu trúc](V9-12-loi-co-cau-truc.md) | C | `agent-c/V9-12-loi-co-cau-truc` | ⏸ Dừng · test H3-01 bắt giữ mã NV ngoài danh sách mới |
+
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
 ## Kế hoạch / hàng chờ
