@@ -17,6 +17,11 @@ public interface IApprovalService
     /// <summary>Theo id (phải khớp ^A-\d{3}$, sai ⇒ null). Không có / hỏng ⇒ null.</summary>
     Approval? Get(string id);
 
+    /// <summary>Pending và thuộc loại chủ dự án phải duyệt (bí mật / bảo mật / dữ liệu nhạy cảm / ra ngoài / quyết định).
+    /// Huy hiệu menu "Cần anh duyệt" dùng hàm này; merge / improvement KHÔNG tính.</summary>
+    IReadOnlyList<Approval> OwnerPending() =>
+        GetAll().Where(a => a.Status == ApprovalStatus.Pending && ApprovalPolicy.RequiresOwner(a.Kind)).ToList();
+
     /// <summary>
     /// Ghi quyết định. Lỗi:
     /// - id sai mẫu ^A-\d{3}$ ⇒ ArgumentException (chặn "..\x", "A-001.json", "A-1");
@@ -35,6 +40,7 @@ public interface IApprovalService
 public sealed class ApprovalService : IApprovalService
 {
     private static readonly Regex IdRegex = new(@"^A-\d{3}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex SecretNameRegex = new(@"^[A-Z][A-Z0-9_]{1,63}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly JsonSerializerOptions WriteOpts = new()
     {
         WriteIndented = true,
@@ -68,6 +74,9 @@ public sealed class ApprovalService : IApprovalService
         var path = Path.Combine(Folder, id + ".json");
         return File.Exists(path) ? TryRead(path, id) : null;
     }
+
+    public IReadOnlyList<Approval> OwnerPending() =>
+        GetAll().Where(a => a.Status == ApprovalStatus.Pending && ApprovalPolicy.RequiresOwner(a.Kind)).ToList();
 
 
     public Approval Decide(string id, bool approve, string? note)
@@ -116,7 +125,8 @@ public sealed class ApprovalService : IApprovalService
         var id = (string?)obj["id"];
         if (string.IsNullOrEmpty(id) || id != expectedId || !IdRegex.IsMatch(id)) return null;
         var kindStr = (string?)obj["kind"];
-        if (string.IsNullOrEmpty(kindStr) || !Enum.TryParse<ApprovalKind>(kindStr, true, out var kind) || !Enum.IsDefined(kind)) return null;
+        var kind = ParseKind(kindStr);
+        if (kind == null) return null;
         var statusStr = (string?)obj["status"];
         if (string.IsNullOrEmpty(statusStr) || !Enum.TryParse<ApprovalStatus>(statusStr, true, out var status) || !Enum.IsDefined(status)) return null;
         var reqAtStr = (string?)obj["requestedAt"];
@@ -130,10 +140,36 @@ public sealed class ApprovalService : IApprovalService
         var links = obj["links"] is JsonArray arr
             ? arr.Select(x => (string?)x).Where(x => !string.IsNullOrEmpty(x)).Select(x => x!).ToList()
             : (IReadOnlyList<string>)Array.Empty<string>();
+        var files = obj["files"] is JsonArray filesArr
+            ? filesArr.Select(x => (string?)x).Where(x => !string.IsNullOrEmpty(x)).Select(x => x!).ToList()
+            : (IReadOnlyList<string>)Array.Empty<string>();
+        var secretName = (string?)obj["secretName"];
+        if (string.IsNullOrEmpty(secretName) || !SecretNameRegex.IsMatch(secretName)) secretName = null;
 
-        return new Approval(id, kind, (string?)obj["title"] ?? "", (string?)obj["detail"] ?? "",
+        return new Approval(id, kind.Value, (string?)obj["title"] ?? "", (string?)obj["detail"] ?? "",
             (string?)obj["project"] ?? "", (string?)obj["task"], (string?)obj["commit"], links,
-            (string?)obj["requestedBy"] ?? "", reqAt, status, decAt, (string?)obj["note"]);
+            (string?)obj["requestedBy"] ?? "", reqAt, status, decAt, (string?)obj["note"])
+        {
+            Risk = ParseRisk((string?)obj["risk"]),
+            SecretName = secretName,
+            Files = files,
+        };
     }
+
+    // JSON dùng gạch nối (sensitive-data) và file cũ không có risk; enum C# dùng PascalCase.
+    private static ApprovalKind? ParseKind(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value.Replace("-", "").Replace("_", "").Trim();
+        if (!Enum.TryParse<ApprovalKind>(normalized, true, out var kind) || !Enum.IsDefined(kind)) return null;
+        return kind;
+    }
+
+    private static ApprovalRisk ParseRisk(string? value) => value?.Trim().ToLowerInvariant() switch
+    {
+        "low" => ApprovalRisk.Low,
+        "high" => ApprovalRisk.High,
+        _ => ApprovalRisk.Medium,
+    };
 
 }
