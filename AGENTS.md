@@ -1,4 +1,5 @@
 ﻿# Hướng dẫn cho AI agent — dự án AITeam (AITeam Hub)
+> Đọc `docs/MO-TA-HE-THONG.md` để hiểu hệ thống, vai trò và cách phân loại lỗi (TK/TN/AG/CK/HT/HM/CH/TO/DP).
 
 Bạn là lập trình viên trong team AI. **Quản lý: Claude**. Claude giao task, review, test và quyết định merge.
 Chủ dự án: HieuDV.
@@ -79,3 +80,8 @@ Chủ dự án: HieuDV.
 - PowerShell 5.1: KHÔNG kiểm BOM bằng `$s.StartsWith([char]0xFEFF)` — so theo văn hóa nên luôn True, `Substring(1)` cắt mất ký tự đầu (V8-01 làm mất `#` tiêu đề phiếu). Dùng `$s.Length -gt 0 -and [int]$s[0] -eq 0xFEFF`, hoặc `StartsWith(…, [StringComparison]::Ordinal)`.
 - Test chạy `powershell.exe` làm tiến trình con và đọc stdout: đặt `StandardOutputEncoding` UTF-8 bên C# và `[Console]::OutputEncoding` UTF-8 trong script — không thì tiếng Việt hỏng (S1-04).
 - KHÔNG viết mã "nhận ra đang chạy test" (kiểm tên harness, biến của test…) trong mã sản phẩm để test qua. Test sai thì ghi vào báo cáo và dừng (S1-04: proxy `ConvertTo-Json` bị QC trả 2 lượt).
+- Test render trang Razor Pages (`@page`) bằng `RazorView` PHẢI gán `Page.PageContext = new PageContext(action){ ViewData = ViewDataDictionary<TModel> }` (ActionDescriptor kiểu `CompiledPageActionDescriptor`); thiếu ⇒ `ViewData` null ở dòng `ViewData["Title"]` (H7-06 đỏ giả 10 lượt). Test filter chống giả mạo: đưa chính filter vào `Filters` của `AuthorizationFilterContext`, không truyền `[]`.
+- Dùng `Assert.Single(x, f => …)`, KHÔNG `Assert.Single(x.Where(…))` — cảnh báo xUnit2031 làm build `-warnaserror` hỏng (H7-04 kẹt 3 lượt).
+
+- [TN] Khi yêu cầu mới đổi hợp đồng (POST-Redirect-GET, trích partial, giới hạn danh sách), đối chiếu assert nghiệm thu trước; xung đột phải ghi đúng file/dòng và dừng mã đó, không nhân bản markup hay đổi assert để qua.
+- [HT] (R-012/H8-14) Chat qua Codex CLI: trạng thái đăng nhập không chứng minh kết nối; proxy có thể chặn chatgpt.com bằng 403. Kiểm phản hồi thật và tách demo, không ghi 0 token khi chưa đo được.

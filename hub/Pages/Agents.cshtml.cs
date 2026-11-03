@@ -1,4 +1,4 @@
-using AITeam.Hub.Models;
+﻿using AITeam.Hub.Models;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
@@ -40,8 +40,8 @@ public class AgentsModel : PageModel
         get
         {
             if (RunPage.Total == 0) return "0 / 0";
-            int from = (RunPage.Page - 1) * 8 + 1;
-            int to = Math.Min(RunPage.Page * 8, RunPage.Total);
+            int from = (RunPage.Page - 1) * RunPage.PageSize + 1;
+            int to = Math.Min(from + RunPage.Items.Count - 1, RunPage.Total);
             return $"{from}–{to} / {RunPage.Total}";
         }
     }

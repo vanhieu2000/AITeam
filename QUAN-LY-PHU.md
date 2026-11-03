@@ -1,3 +1,5 @@
+﻿> **02/11/2026: TẠM NGƯNG.** Quy trình v5 (`QUY-TRINH.md` mục đầu): Codex chỉ viết code theo `plans/R-012/YEU-CAU-CODEX.md`, KHÔNG làm quản lý phụ, KHÔNG QC. Claude review + chốt.
+
 # Sổ tay QUẢN LÝ (Codex) — chủ dự án giao toàn quyền điều phối 26/10/2026 ~14:10
 
 Chủ dự án 26/10: "để việc của bạn (Claude) qua cho Codex làm; Claude chỉ phụ trách đẩy cập nhật lên git và chạy lại Hub sau khi hoàn thành". Bạn (Codex) điều phối TOÀN BỘ. Chủ dự án: HieuDV. Trả lời ngắn, tiếng Việt, gạch đầu dòng.

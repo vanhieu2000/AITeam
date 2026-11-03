@@ -67,6 +67,8 @@ Sự kiện cần ghi:
 - 20:16 27/10/2026 (Codex quản lý phụ): H7-04 verify-4: Hub 748 + Core 690 test pass, cổng KHÔNG ĐẠT vì 2 warning trong test nghiệm thu; H7-06 lượt 10 dừng QuotaExhausted. H7-02/H7-04/H7-06 quá 3 lượt, giữ tạm dừng; chưa có đề xuất nghiệm thu, không giao thêm.
 
 - 2026-11-02 23:10:54 +05:30 | H7-04 | Qc | lượt 1 | BLOCKED <!-- workflow:H7-04:Qc:1 -->
+- 2026-11-02 23:40:10 +05:30 | H7-04 | Merge | lượt 1 | ĐẠT <!-- workflow:H7-04:Merge:1 -->
+- 2026-11-02 23:41:54 +05:30 | H7-06 | Verify | lượt 3 | KHÔNG ĐẠT <!-- workflow:H7-06:Verify:3 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-009`, rồi điền:
 

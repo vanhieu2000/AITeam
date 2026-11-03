@@ -248,16 +248,17 @@ public sealed class AcceptanceW103PlanApprovalTests
         File.WriteAllText(Path.Combine(logs, "R-011.plan.json"),
             JsonSerializer.Serialize(new { text = planText, summary = "Kế hoạch giả" }), new UTF8Encoding(true));
         RealFile.Copy("plans/R-011/brief.md", box.Root);
-        var r = await box.RunAsync("team.ps1", [.. Helpers, "Invoke-Plan", "Get-PlanDir"], """
+        var r = await box.RunAsync("team.ps1", [.. Helpers, "Invoke-Plan", "Get-PlanDir", "Resolve-WorkflowAssignment", "Invoke-WorkflowRoleRun"], """
             $Request = 'R-011'; $Project = ''; $Name = 'W1'; $Utf8 = New-Object Text.UTF8Encoding $true
             function Resolve-Project { @{ Path=$Root; Logs=(Join-Path $Root 'plan-logs'); Info=@{stack='dotnet'} } }
             function Get-AITeamExe { 'codex' }
+            function Invoke-WorkflowCodexLock { param([scriptblock]$Action) & $Action }
             function Say { param($text, $color) }
             function Add-SkillPrompt { param($Prompt, $Root, $Stage, $Stack) $Prompt }
             function Read-Json { param($path) [IO.File]::ReadAllText($path) | ConvertFrom-Json }
             Invoke-Plan
             'ACCEPTED'
-            """);
+            """, [new FakeCommand("codex", 0, JsonSerializer.Serialize(new { role = "plan", actor = "codex", providerId = "codex", isExplicit = false, readOnly = true, manual = false }))]);
         Assert.Contains(r.Calls, c => c.Name == "codex" && c.Arguments.Contains("--read-only"));
         if (unsafeHtml)
         {

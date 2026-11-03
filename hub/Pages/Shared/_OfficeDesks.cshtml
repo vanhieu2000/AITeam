@@ -1,10 +1,10 @@
 ﻿@model AITeam.Hub.Pages.OfficeModel
 @using AITeam.Hub.Services
 
-<div id="office-desks" hx-get="?handler=Desks" hx-trigger="every 10s" hx-swap="outerHTML">
-@if (Model.View is { } v)
+<div id="office-desks">
+@if (Model.View is { } v && v.Desks.Count > 0)
 {
-    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px">
+    <div class="office-desk-grid">
         @foreach (var d in v.Desks)
         {
             var borderColor = d.State switch
@@ -35,13 +35,13 @@
                 _ => "n"
             };
             var initial = string.IsNullOrEmpty(d.Name) ? "?" : d.Name[..1].ToUpperInvariant();
-            <div class="panel" style="border-left:4px solid @borderColor; margin:0; display:flex; flex-direction:column; gap:10px; min-width:0">
+            <div data-desk-key="@d.Key" class="panel office-desk" style="border-left:4px solid @borderColor; margin:0; display:flex; flex-direction:column; gap:10px; min-width:0">
                 <div class="row" style="justify-content:space-between; align-items:center; gap:8px">
                     <div class="row" style="gap:8px; min-width:0; flex:1">
                         <div style="width:34px; height:34px; border-radius:50%; background:@avatarColor; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0">@initial</div>
                         <div style="min-width:0">
                             <div><b>@d.Name</b></div>
-                            <div class="muted" style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">@d.Role</div>
+                            <div class="muted" style="font-size:12px; overflow-wrap:anywhere">@d.Role</div>
                         </div>
                     </div>
                     <span class="pill @pillClass" style="flex-shrink:0">@d.StateText</span>
@@ -71,7 +71,7 @@
                     <div style="display:flex; flex-direction:column; gap:4px">
                         @foreach (var m in d.Feed)
                         {
-                            <div style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="@m.Text">
+                            <div style="font-size:12px; overflow-wrap:anywhere" title="@m.Text">
                                 <b>@m.At.ToString("HH:mm")</b> @m.Text
                             </div>
                         }
@@ -82,6 +82,10 @@
                     <div class="row" style="margin-top:auto">
                         <a class="btn sm pri" href="/Research">Mở phòng nghiên cứu</a>
                     </div>
+                }
+                @if (Model.ControlsEnabled && d.Key is "A" or "B" or "C")
+                {
+                    <partial name="_OfficeControl" model="Model" view-data="@(new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData) { ["OfficeDeskKey"] = d.Key })" />
                 }
                 @if (d.Task is { } tf && !string.IsNullOrEmpty(tf.Project))
                 {
@@ -98,10 +102,6 @@
                                     <input type="hidden" name="target" value="@tf.Project/@tf.Id" />
                                     <button type="submit" class="btn sm danger" name="command" value="Stop">Dừng</button>
                                 </form>
-                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Chạy lại cổng kiểm tra cho @tf.Id?" style="display:inline; margin:0">
-                                    <input type="hidden" name="target" value="@tf.Project/@tf.Id" />
-                                    <button type="submit" class="btn sm" name="command" value="Verify">Kiểm tra lại</button>
-                                </form>
                             }
                             else if (d.Key == "gate")
                             {
@@ -117,4 +117,8 @@
         }
     </div>
 }
-</div>
+else
+{
+    <p class="muted">Chưa có dữ liệu tác nhân để hiển thị.</p>
+    <button class="btn sm" disabled>Chưa thể giao việc</button>
+}</div>

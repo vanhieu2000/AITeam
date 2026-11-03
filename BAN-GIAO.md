@@ -3,7 +3,7 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-Cập nhật lần cuối: **24/10/2026 ~11:15 · máy nhà DESKTOP-PP14EFS** · **quy trình 3.3: đọc `QUY-TRINH.md`**
+Cập nhật lần cuối: **03/11/2026 ~01:15 · máy công ty (hieudvdmin)** · **quy trình v5: đọc mục đầu `QUY-TRINH.md`**
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
 Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUAT-LOG.md`.
@@ -37,6 +37,9 @@ Chi tiết: `CLAUDE.md` (sổ tay), `docs/VAN-HANH-HIEU-SUAT.md`, `docs/HIEU-SUA
 ## 2. Việc đang dở
 | Việc | Trạng thái | Làm tiếp thế nào |
 |---|---|---|
+| **R-012 Gỡ task tắc + sửa Hub (v5: Codex + OpenCode code, Claude review/chốt)** | 🟡 DỪNG theo lệnh chủ dự án 03/11 ~01:15. ✅ H7-04 merge (OpenCode sửa xUnit2031), ✅ H7-06 merge (gốc: test nghiệm thu dựng trang thiếu PageContext; Claude sửa 3 dòng antiforgery). 🔵 W1-03 nhánh xanh hết (2423462), chưa review. ⏸ H7-02 Codex sửa harness S1-04 (7f21688), chưa merge main. Chưa làm: V6-02, H7-05, W1-04, H8-xx, V9-xx | Chủ dự án tự giao Codex theo `plans/R-012/YEU-CAU-CODEX.md`. Claude: review W1-03 rồi `merge`; H7-02 merge main + test ngoài sandbox |
+| **R-013 OpenCode** | Đã cài máy công ty: OpenCode 1.19.5 (khóa DeepSeek free) + Codex CLI 0.166.0. Thử thật: H7-04 5 phút, H7-06 lượt 2 19 phút, W1-03 18 phút — đều đạt build/test | O-02…O-06 (`assign -Dev opencode`…) nằm trong `plans/R-012/YEU-CAU-CODEX.md`. Máy nhà: cài 2 CLI + chép `templates/opencode-config.jsonc` |
+| **Kho AITeam đang PUBLIC trên GitHub** | ⚠️ trái sổ tay ("luôn private") | Chủ dự án quyết; không đưa bí mật vào repo |
 | **R-005 Văn phòng mini (giám sát + điều khiển + MCP + Tài khoản AI)** | 🟡 ĐANG LÀM — xong 25/10 02:26: V5-01 MCP (`aiteam mcp`), V5-02 assign nối MCP cho agy, V5-04 Văn phòng là trang chủ, V5-05 nút điều khiển (5 lệnh cố định, xác nhận, `.state/audit.jsonl`), V5-06 trang Tài khoản AI; 09:15: V5-07a/b Phòng nghiên cứu (ChatGPT qua Codex hỏi thật được, trả lời tự về; thủ công copy / dán; lưu `research/R-xxx/`). 7/7 đạt vòng 1. IMP-006 xong. Thiết kế: `docs/design/V5-VAN-PHONG-MINI.md` | Phòng nghiên cứu chỉ ChatGPT (tự động) + Thủ công (AI bất kỳ) — chủ dự án quyết; V5-10/11 bỏ. Tiếp: điều tra test MCP chập chờn (`Real_stdio_server…`, việc tách riêng); V5-08 đếm vòng review + Playwright E2E, MCP cho Codex (đang `mcp_servers={}`). Optional: log job Hub tiếng Việt từ PowerShell; xóa tay thư mục thừa `D:\AITeam-v506` |
 | **R-004 Codex developer dự phòng (P1)** | ✅ XONG 24/10 ~11:15: `assign -Dev codex` + tự chuyển Codex khi agy hết hạn mức (Codex chạy thật V4-11: đúng đặc tả, 82 giây); trang Provider trên Hub; hook chặn agent push main (3 dự án); cảnh báo trùng phạm vi; tối đa 2 lượt / assign | Máy công ty: chạy `.\team.ps1 install-hooks` 1 lần (hook pre-push). P1 còn: cảnh báo lỗi liên tiếp theo provider, Pester cho team.ps1, MEMORY.md mỗi repo |
 | **R-003 Hub v3 toàn diện** | ✅ XONG 24/10 ~01:20 — H3-01…05 merge, 5/5 đạt vòng 1, 48 phút agent. Hub mới: Tổng quan (chỉ số + biểu đồ thời gian), Giao việc (chat theo phiếu), Cần anh duyệt, Đội ngũ, Quy trình & cải tiến, tab Dòng thời gian / Đánh giá quy trình trong task | Optional: `request-report` cột Dòng/ngân sách vẫn tính khung + test của Claude; biểu đồ so sánh giữa các chu kỳ IMP |

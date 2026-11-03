@@ -73,6 +73,14 @@ Theo brief R-011 mục 2; phụ thuộc W1-01 đã có helper. Ba hàm PowerShel
 | Test | `dotnet test AITeam.sln --blame-hang-timeout 3m --no-build`: Hub 721 đạt/0 đỏ, Core 737 đạt/0 đỏ. Lọc W1-03 + S104: 70 đạt/0 đỏ. |
 | Hợp đồng | Giữ tên/chữ ký 3 hàm; guard ngay sau đọc plan, trước Select-FreeAgent/logs/fetch/provider; không sửa assert, không tự duyệt. |
 | Chưa xác minh | Không chạy được `powershell -File tools\test-verify.ps1` (quyền công cụ chỉ cho git/dotnet); chưa mở mockup thật — Claude kiểm ở bước 7. |
+## Báo cáo của agent — OpenCode
+- Gộp `origin/main` (90 commit); conflict chỉ ở harness S1-04: giữ đủ hàm nạp của cả hai bên, mỗi tên một lần (`Assert-PrepPlanApproval` + 5 hàm H7-02/V6-02), không sửa assert.
+- `team.ps1`: chuyển `Resolve-WorkflowAssignment 'prep'` xuống sau `Assert-PrepPlanApproval` để guard chạy trước provider/Select-FreeAgent/logs/fetch (vẫn còn lời gọi cho test AST H7-02); giữ toàn bộ chức năng main và 3 helper W1-03.
+- `core.tests/AcceptanceW103PlanApprovalTests.cs`: chỉ bổ sung harness cho `Real_plan_exports…` (nạp `Resolve-WorkflowAssignment`/`Invoke-WorkflowRoleRun`, fake khóa Codex, cấp JSON workflow-role cho fake codex) vì H7-02 đổi `Invoke-Plan`; không đổi assert.
+- Build: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 lỗi.
+- Test: `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → Hub 817/817, Core 876/876; tổng 1693 đạt, 0 đỏ, 0 skip.
+- Chưa chạy `team.ps1 verify`, chưa mở mockup; không push theo yêu cầu.
+
 ## Review (Claude)
 <!-- Claude điền. -->
 

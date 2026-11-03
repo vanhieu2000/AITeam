@@ -1,3 +1,5 @@
+> **Đã thay bằng `YEU-CAU-CODEX.md` (03/11, quy trình v5: Codex không QC, Antigravity chỉ khi có Argon 4).**
+
 # Giao việc R-012 / R-013 — 02/11/2026
 
 **Không dùng Antigravity (`agy`) cho bất kỳ việc nào dưới đây.** Luồng chủ dự án chốt 02/11/2026:

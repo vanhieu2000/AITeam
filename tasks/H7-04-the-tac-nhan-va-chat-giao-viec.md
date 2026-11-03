@@ -68,13 +68,23 @@ Theo brief R-009 mục 1. Brief không nêu mockup riêng. H7-03 đã có IOffic
 - [ ] `dotnet build AITeam.sln`: 0 lỗi, không warning mới sau hoàn thiện.
 - [ ] `dotnet test AITeam.sln`: pass toàn bộ, không sửa/Skip nghiệm thu; thêm test cho logic mới còn thiếu.
 - [ ] GET/partial Razor thật, rỗng/đầy đủ/tên dài/XSS, thẻ lấy dữ liệu thật từ dịch vụ; đủ các điều khiển đúng target.
-- [ ] CSRF thiếu token bị chặn; partial giữ ViewData/ModelState; chat gửi qua H7-03, lỗi/thành công đúng thông báo.
-- [ ] Hai cột theo markup/CSS; breakpoint 1000px đưa chat xuống dưới; polling không thay form và bản nháp.
-- [ ] Báo cáo có bảng từng tiêu chí → bằng chứng lệnh/kết quả thật; file đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
+- [x] CSRF thiếu token bị chặn; partial giữ ViewData/ModelState; chat gửi qua H7-03, lỗi/thành công đúng thông báo.
+- [x] Hai cột theo markup/CSS; breakpoint 1000px đưa chat xuống dưới; polling không thay form và bản nháp.
+- [x] Báo cáo có bảng từng tiêu chí → bằng chứng lệnh/kết quả thật; file đổi và lý do, quyết định tự đưa ra, điều chưa xác minh.
 
 ## Báo cáo của agent
-Antigravity điền sau triển khai.
-
+| Tiêu chí | Bằng chứng / kết quả thật lượt sửa 26/10/2026 |
+|---|---|
+| Build: chưa đạt 0 warning | `dotnet build AITeam.sln --no-restore -m:1 -v:minimal`: mã 0, 0 lỗi, 2 warning xUnit2031 trong nghiệm thu H704 dòng 242/247. |
+| Test toàn bộ: chưa đạt | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 739 pass/9 fail/0 skip; Core chưa tổng kết, đã dừng khi quá 3 phút; 2 ca V805 báo Git không tạo được signal pipe (Win32 error 5). Lần chạy mặc định đã dừng vì MSBuild song song không vào runner. |
+| GET/partial thật, rỗng/đầy/tên dài/XSS, đúng target | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceH704OfficeTests|FullyQualifiedName~AcceptanceW102HubHelpersTests|FullyQualifiedName~AcceptanceV505CommandTests" --blame-hang-timeout 2m`: 93 pass/0 fail/0 skip; hết 4 lỗi được giao. |
+| CSRF, ViewData/ModelState, gửi H7-03 | Cùng lệnh lọc trên: 93/93 pass; không sửa/Skip test nghiệm thu. |
+| Hai cột, breakpoint, polling/bản nháp | Cùng lệnh lọc trên: 93/93 pass; form Giao/Giao lại dùng chung partial theo mã tác nhân, ô góp ý ngoài polling. |
+| Báo cáo, phạm vi, BOM | Đã kiểm byte đầu: cả 3 file Razor và task có BOM UTF-8; báo cáo cập nhật, không sửa dịch vụ/hợp đồng. |
+File đổi: `_OfficeControl.cshtml` tái sử dụng form có token/confirm và trạng thái rỗng; `_OfficeDesks.cshtml` truyền mã thẻ bằng bản sao ViewData; `Office.cshtml` chuyển ô góp ý vào partial ngoài polling; file task ghi báo cáo.
+Quyết định: giữ nguyên test nghiệm thu, không tắt analyzer để che 2 warning; giữ các điều khiển theo tác nhân và tương thích partial cũ.
+Chặn: 2 warning thuộc file nghiệm thu bị cấm sửa; 9 lỗi Hub ngoài phạm vi ở Settings/TeamConfig/WorkflowRoles/Map, có File.Replace bị Access denied.
+Chưa xác minh: Core đầy đủ, giao diện thật (Claude phụ trách); không chạy app/chụp ảnh/git theo chỉ dẫn; hệ thống commit/push, chưa có commit được kiểm.
 ## Ghi chú chuẩn bị (Codex)
 - Đã đọc hợp đồng H7-03 thật; không sửa bộ đọc dữ liệu. Test dùng DTO dịch vụ giả, không nhận là bản sao fixture phiếu/projects.json thật. Không có fixture được chỉ định trong kế hoạch; chưa xác minh dữ liệu phiếu cũ qua giao diện.
 - Khung mới cố ý ném NotImplementedException. Không thêm dịch vụ/DI mới.
@@ -93,4 +103,13 @@ Antigravity điền sau triển khai.
 
 Điều chưa chắc: bộ test hiện kiểm handler gửi mới/bổ sung qua fake H7-03, chọn phiếu sai/mất, lỗi/thiếu dịch vụ, XSS thẻ/lỗi, CSRF thiếu token, partial/markup polling và CSS; chưa chứng minh bản nháp thực sự còn trong DOM trình duyệt. Đây là gói chuẩn bị chưa đạt cổng build, không ghi nhận sẵn sàng giao.
 ## Review (Claude)
-Chờ review.
+### Vòng 1 — ĐẠT (Claude, 02/11/2026)
+- Luồng R-012: OpenCode (DeepSeek) cập nhật main + sửa 2 cảnh báo xUnit2031; Codex QC không chạy được (cầu nối cục bộ tắt) ⇒ Claude review trực tiếp theo yêu cầu chủ dự án.
+- Đã kiểm: diff so với main (8 file, 195 dòng / ngân sách 350); `OfficeModel.LoadChat/OnGetChat/OnPostChat` kiểm mã phiếu bằng regex `\AR-[0-9]{3}\z`, xử lý lỗi + thiếu dịch vụ; Razor mã hóa mọi chuỗi; POST có token. Cổng KT: build 0 warning, Hub 748/748, Core 690/690, quét bí mật sạch.
+- Cổng KT báo "sửa test nghiệm thu": đúng 2 câu `Assert.Single(x.Where(..))` ⇒ `Assert.Single(x, ..)` do Claude CHO PHÉP (cảnh báo xUnit2031 nằm trong test, không đổi ý kiểm tra).
+- Lỗi: - [TK] (test) test nghiệm thu có cảnh báo xUnit2031 khiến cổng KT không đạt 3 lượt.
+
+## Kết quả
+- Văn phòng: mỗi tác nhân là một thẻ, khung chat giao việc theo phiếu R-xxx ngay trên trang (xem / gửi / bổ sung).
+- Kiểm chứng: 1.438 test pass, build 0 warning.
+- Còn cải tiến: chưa thử bản nháp còn trong DOM trình duyệt thật (hàng chờ).
