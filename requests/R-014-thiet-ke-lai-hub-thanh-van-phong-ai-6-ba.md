@@ -44,6 +44,12 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-014` để `team.ps1 reque
 | 00:10–00:50 | Claude viết task đợt 2: V10-02 (adapter theo danh bạ), W2-02 (luật chuẩn + bài học, assign chèn luật), V10-05 (trợ lý chat) | |
 | 00:55 | Claude build + test 2 worktree, commit hộ code OpenCode. V10-04 review **ĐẠT** ⇒ merge. V10-03 **CẦN SỬA** (mục duyệt commit cũ chặn merge; nhật ký tự quyết không lên git; 3 file thiếu BOM) ⇒ chờ AI rảnh | [AG] BOM ×3 · [AG] chất lượng · [TK] task chưa nói mục commit cũ |
 | 01:05 | Chạy nền `cho-ai.ps1`: 20′/lần thử OpenCode, Argon 4, Codex (sau 12:09) ⇒ có AI thì giao ngay V10-03 sửa, V10-02, W2-02 | |
+| 00:15 | Chủ dự án: Antigravity chạy Gemini 3.8 cũng được (không cần Argon 4), chỉ làm chức năng không sửa giao diện ⇒ `team.json` agy.requiredModel = gemini-3.8-flash-high, `QUY-TRINH.md` cập nhật | |
+| 00:20–00:50 | Giao V10-03 sửa (Agent A): lượt 1 dừng xin duyệt kế hoạch (4′) ⇒ Claude duyệt ⇒ lượt 2 sửa đủ 3 Required (10′) ⇒ review vòng 2 ĐẠT ⇒ merge b36ef4c | [HT] agy dừng xin duyệt |
+| 00:30 | Claude viết khung + test nghiệm thu V10-02 (12 đỏ), W2-02 (8 đỏ) đẩy lên nhánh; task sửa đúng mẫu cổng TK (checkbox, "tạo mới") | [TK] task đợt 2 viết thiếu mẫu, thiếu test nghiệm thu trước |
+| 00:55 | Claude gây lỗi: gộp xung đột V10-03 để lại using trùng trong HubV3Registration.cs; clone sạch báo 5 lỗi nhưng Claude kết luận nhầm là khóa file ⇒ phát hiện khi giao V10-02 ⇒ sửa 7d1c7a8 | [TK] review clone sạch thiếu cẩn thận |
+| 01:00 | Cổng TN chặn mọi task có test nghiệm thu chỉ ở 1 dự án test ("No test matches" ở dự án kia) ⇒ Claude sửa TaskLinter + test (ngoại lệ: chặn cả dây chuyền) | [CK] cổng TN |
+| 01:02 | Giao song song V10-02, W2-02 cho Antigravity Gemini 3.8 | |
 | | Nhận yêu cầu | |
 
 Sự kiện cần ghi:
