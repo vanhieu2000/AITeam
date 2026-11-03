@@ -1,6 +1,7 @@
 ﻿# W2-02 · Luật chuẩn (rules/L-xxx.md) + bài học (lessons/LS-xxx.md) + tự chèn luật khi giao việc
 
-- **Agent:** O
+- **Agent:** B
+- **Model:** `gemini-3.8-flash-high`
 - **Nhánh:** `agent-o/W2-02-luat-chuan-va-bai-hoc`
 - **Yêu cầu:** R-014
 - **Loại việc:** Tính năng lõi / CLI
@@ -20,7 +21,7 @@
 - `core/AITeam.Cli/Program.cs` (cách thêm lệnh CLI).
 
 ## Mục tiêu
-Thư mục mới `core/AITeam.Core/Lessons/`. Hợp đồng (Claude chốt — KHÔNG đổi chữ ký):
+**Khung code đã có trên nhánh** (commit "Test nghiệm thu W2-02 (Claude)"): `core/AITeam.Core/Lessons/Lessons.cs` (chữ ký chốt, thân `NotImplementedException`). Agent điền thân, KHÔNG đổi chữ ký. Hợp đồng:
 ```csharp
 namespace AITeam.Core.Lessons;
 
@@ -80,12 +81,14 @@ public interface ILessonService
 - Tạo thư mục `rules/` và `lessons/` trong repo, mỗi thư mục có `README.md` 3–5 dòng giải thích định dạng.
 
 ## Phạm vi (được sửa những gì)
-- `core/AITeam.Core/Lessons/` (mới)
-- `core/AITeam.Cli/` (thêm 2 lệnh)
+- `core/AITeam.Core/Lessons/Lessons.cs` (khung có sẵn — điền thân; được tách thêm file trong thư mục)
+- `core/AITeam.Core/Lessons/` (thư mục)
+- `core/AITeam.Cli/Program.cs` (thêm 2 lệnh; được thêm file trong thư mục CLI)
 - `team.ps1` (chỉ 2 chỗ nêu trên + hàm trợ giúp nhỏ)
-- `rules/README.md`, `lessons/README.md` (mới)
+- `rules/README.md` (tạo mới)
+- `lessons/README.md` (tạo mới)
 - `hub/Services/HubV3Registration.cs`
-- `core.tests/W202LessonServiceTests.cs` (mới)
+- `core.tests/W202CliTests.cs` (tạo mới — test lệnh CLI rules-for-task / lesson-add do agent viết)
 - `tasks/W2-02-luat-chuan-va-bai-hoc.md`
 
 ## Không làm
@@ -99,17 +102,19 @@ public interface ILessonService
 - team.ps1 lưu UTF-8 có BOM.
 
 ## Test nghiệm thu
-`core.tests/W202LessonServiceTests.cs` (thư mục tạm):
+`core.tests/W202LessonServiceTests.cs` — Claude đã viết sẵn, đang đỏ 8/8 (thư mục tạm). Gồm:
 - AddDraft ⇒ LS-001, file có BOM, đọc lại bằng nhau; thêm lần 2 ⇒ LS-002.
 - Promote LS-001 ⇒ L-001 Active, bài học thành Promoted + RuleId; Promote lại ⇒ InvalidOperationException; Drop bài học Promoted ⇒ InvalidOperationException.
 - ForTask: luật A (mọi loại, bước code), luật B (chỉ `giao-dien`), luật C (Retired) ⇒ `("tinh-nang-loi","code",null)` chỉ có A.
 - PromptSection: thân 1000 ký tự ⇒ cắt ≤ 300; chuỗi có `\u001b` ⇒ bị bỏ; 20 luật ⇒ 15 + "…còn 5 luật"; không luật ⇒ "".
 - File `rules/L-009.md` hỏng + `rules/x.md` ⇒ `Rules()` không ném lỗi, không chứa chúng.
 - Tham số taskId `../x` ⇒ ArgumentException.
-- CLI `rules-for-task` với file task có `**Loại việc:** Sửa lỗi` ⇒ stdout chứa luật của `sua-loi`.
+- (Agent tự viết thêm trong W202CliTests) CLI rules-for-task với file task có dòng Loại việc: Sửa lỗi ⇒ stdout chứa luật của sua-loi.
 
 ## Tiêu chí hoàn thành
-- Build 0 warning; toàn bộ test xanh (gồm test PowerShell AST có sẵn của team.ps1); giữ BOM.
-- Commit: `W2-02: luật chuẩn + bài học, assign tự chèn luật theo loại việc (OpenCode)`.
+- [ ] 8 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
+- [ ] Build 0 warning; toàn bộ test xanh (gồm test PowerShell AST có sẵn của team.ps1); giữ BOM (cả file mới).
+- [ ] Không chạm `hub/Pages/**`, `hub/wwwroot/**`.
+- [ ] Commit: "W2-02: luật chuẩn + bài học, assign tự chèn luật theo loại việc (Antigravity)".
 
 ## Báo cáo của agent
