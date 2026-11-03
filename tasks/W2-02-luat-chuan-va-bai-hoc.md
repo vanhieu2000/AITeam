@@ -123,7 +123,7 @@ public interface ILessonService
 | Build 0 warning; toàn bộ test xanh | `dotnet test AITeam.sln`: Passed, 0 warning; test AST team.ps1 pass |
 | Không chạm Pages/wwwroot | `git status`: không đổi file nào trong `hub/Pages/**` và `hub/wwwroot/**` |
 - **File đã đổi**: `core/AITeam.Core/Lessons/Lessons.cs`, `core/AITeam.Cli/Program.cs`, `team.ps1`, `rules/README.md`, `lessons/README.md`, `core.tests/W202CliTests.cs`, `tasks/W2-02-luat-chuan-va-bai-hoc.md`.
-- **Tự quyết**: Đặt `$env:DOTNET_SYSTEM_GLOBALIZATION_USENLS = "1"` trong `team.ps1` để xử lý cơ chế zero-weight ký tự điều khiển của ICU trong .NET 10 trên Windows; bảo toàn `$global:LASTEXITCODE` trong `skill-note`.
+- **Vòng 1 (sửa theo review)**: Đã xóa `$env:DOTNET_SYSTEM_GLOBALIZATION_USENLS = "1"` khỏi `team.ps1`; bảo toàn `$global:LASTEXITCODE` trong `skill-note`. Test W202 và solution đều xanh.
 - **Chưa chắc**: Không có. Mọi luồng và test nghiệm thu đều đạt.
 
 ## Review (Claude)
