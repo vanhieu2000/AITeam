@@ -119,3 +119,12 @@ public interface IClaudeDecisionLog
 - **Required 3 — mất BOM**: core.tests/V1003SensitiveGateTests.cs, hub.tests/V1003ApprovalPolicyTests.cs, hub/Services/ClaudeDecisionLog.cs không có BOM UTF-8.
 - Optional: -Kind secret bắt -Name chữ HOA trong khi két nhận cả chữ thường; mẫu 	oken bắt nhầm file kiểu TokenSummary.cs (chỉ thêm 1 mục duyệt thừa).
 - Lỗi: [AG] (BOM) 3 file mới thiếu BOM · [AG] (chất lượng) mục duyệt theo commit cũ chặn merge · [TK] (chất lượng) task chưa nói rõ xử lý mục của commit cũ.
+### Vòng 2 — ĐẠT
+- Antigravity (Gemini 3.8, Agent A) sửa đủ 3 mục Required: chỉ xét mục nhạy cảm có commit rỗng hoặc = HEAD; Add-ClaudeDecision git add/commit/push nhật ký; 3 file có BOM. Test xác nhận kiểm cả 2 ca (commit cũ không chặn, pending của HEAD chặn).
+- Kiểm: build 0 warning; Hub 858/858; Core 983/983; không chạm `hub/Pages/**`, `hub/wwwroot/**`.
+- Lượt 1 agent dừng xin duyệt kế hoạch (4′) ⇒ Claude duyệt, lượt 2 làm 10′.
+- Optional: `git commit` trong Add-ClaudeDecision commit cả các file khác đang stage ở repo chính (giống Save-ApprovalFile có sẵn) — nên dùng `git commit -- approvals/claude-decisions.jsonl`.
+
+## Kết quả
+- Màn "Cần anh duyệt" chỉ còn việc nhạy cảm (bí mật, bảo mật, dữ liệu nhạy cảm, ra ngoài, quyết định sản phẩm); merge / QC do Claude tự quyết và ghi nhật ký `approvals/claude-decisions.jsonl`. Cổng KT tự tạo mục duyệt bảo mật khi diff chạm file nhạy cảm, merge bị chặn tới khi chủ dự án duyệt đúng commit đó.
+- Chưa có màn hình (UI-04 của Claude).
