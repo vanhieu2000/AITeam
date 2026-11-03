@@ -582,6 +582,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         Say "[$(Get-Date -Format HH:mm:ss)] $Task kết thúc, mã $($proc.ExitCode), log: $log" Cyan
     }
     if ("$logText`n$errText" -match '(?i)invalid model selection') {
+        Clear-AgyModelCache
         Set-BoardStatus $r $Task '🔴 Lỗi agent · model không hợp lệ' -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
         if ($NoVerify) { return @{ Ok = $false; Quota = $false } }; return
     }
@@ -955,7 +956,19 @@ function Invoke-Cleanup {
     }
 }
 
+function Clear-AgyModelCache {
+    $cacheState = Join-Path $Root '.state'
+    $cacheFile = Join-Path $cacheState 'agy-models.json'
+    foreach ($cachePath in @($cacheState, $cacheFile)) {
+        if ((Test-Path -LiteralPath $cachePath) -and (([IO.File]::GetAttributes($cachePath) -band [IO.FileAttributes]::ReparsePoint) -ne 0)) {
+            throw "Không xóa cache model qua symlink/reparse point: $cachePath"
+        }
+    }
+    if (Test-Path -LiteralPath $cacheFile) { Remove-Item -LiteralPath $cacheFile -Force }
+}
+
 function Invoke-SwitchAccount {
+    Clear-AgyModelCache
     $cfg = Get-Config
     Say "Mở Antigravity CLI trong cửa sổ mới:" Cyan
     Say "  1. Gõ /logout rồi Enter"
