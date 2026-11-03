@@ -110,6 +110,37 @@ public sealed class H812PerformanceTests
         Assert.DoesNotContain("/Performance?tab=", pageHtml);
     }
 
+    [Fact]
+    public async Task Page_groups_multiple_read_warnings_into_one_collapsed_details()
+    {
+        using var env = new TestEnvironment();
+        var now = new DateTimeOffset(2026, 11, 4, 10, 0, 0, TimeSpan.FromHours(7));
+        var (config, board) = BuildProject(env, now);
+        var tasksDir = Path.Combine(env.RootDir, "P", "tasks");
+        var oversized = new string('x', 2 * 1024 * 1024 + 1);
+        File.WriteAllText(Path.Combine(tasksDir, "T-001.md"), oversized);
+        File.WriteAllText(Path.Combine(tasksDir, "T-002.md"), oversized);
+        await using var host = await HubTestHost.StartAsync(env, services =>
+        {
+            services.AddSingleton<ITeamConfigService>(config);
+            services.AddSingleton<ITaskBoardService>(board);
+        });
+
+        var response = await host.Client.GetAsync("/Performance");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+
+        var block = Regex.Match(html, "<details[^>]*class=\"[^\"]*perf-warning[^\"]*\"[\\s\\S]*?</details>");
+        Assert.True(block.Success);
+        var text = WebUtility.HtmlDecode(block.Value);
+        Assert.Contains("Không đọc được 2 nguồn dữ liệu (chi tiết)", text);
+        Assert.Contains("Không đọc được file task T-001 của P.", text);
+        Assert.Contains("Không đọc được file task T-002 của P.", text);
+        var decoded = WebUtility.HtmlDecode(html);
+        Assert.Single(Regex.Matches(decoded, "Không đọc được file task T-001 của P\\."));
+        Assert.Single(Regex.Matches(decoded, "Không đọc được file task T-002 của P\\."));
+    }
+
     private static (ITeamConfigService Config, ITaskBoardService Board) BuildProject(TestEnvironment env, DateTimeOffset now)
     {
         var projectRoot = Path.Combine(env.RootDir, "P");

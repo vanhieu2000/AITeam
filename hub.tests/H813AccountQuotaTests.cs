@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text.RegularExpressions;
 using AITeam.Core.Accounts;
 using AITeam.Core.Providers;
 using AITeam.Core.Routing;
@@ -134,6 +135,13 @@ public sealed class H813AccountQuotaTests : IDisposable
         Assert.Contains("Nguồn: không rõ", html);
         Assert.Contains("chưa đo", html);
         Assert.Contains("dưới 20%", html);
+    });
+
+    [Fact]
+    public Task Missing_data_note_is_shown_once_on_the_page() => RenderPage(html =>
+    {
+        Assert.Single(Regex.Matches(html, Regex.Escape("Không dùng số 0 thay dữ liệu thiếu")));
+        return Task.CompletedTask;
     });
 
     private async Task RenderPage(Func<string, Task> assertions)
