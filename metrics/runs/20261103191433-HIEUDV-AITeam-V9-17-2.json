@@ -1,0 +1,47 @@
+{
+    "at":  "2026-11-03T19:14:33",
+    "head":  null,
+    "machine":  "HIEUDV",
+    "project":  "AITeam",
+    "task":  "V9-17",
+    "run":  "2",
+    "agent":  "O",
+    "model":  "opencode-deepseek",
+    "findings":  [
+                     {
+                         "Cause":  "AG",
+                         "Kind":  "dữ liệu",
+                         "Text":  "`Invoke-LogRun` ép `[long]$null` ⇒ token Codex không rõ thành 0 thay vì null.",
+                         "Round":  1
+                     }
+                 ],
+    "status":  "SUCCESS",
+    "durationSec":  316,
+    "tokensKnown":  true,
+    "inputTokens":  39287,
+    "outputTokens":  5975,
+    "thinkingTokens":  null,
+    "totalTokens":  45262,
+    "maxMinutes":  30,
+    "difficulty":  "M",
+    "hasOutput":  true,
+    "linesAdded":  0,
+    "linesRemoved":  0,
+    "filesChanged":  0,
+    "verifyOk":  null,
+    "verifyFails":  null,
+    "autoRetry":  false,
+    "hungBackgroundTask":  false,
+    "log":  "V9-17-2.json",
+    "conversationId":  "",
+    "request":  "R-012",
+    "sourceLog":  "oc-V9-17b.jsonl:142224",
+    "flags":  [
+
+              ],
+    "pause":  false,
+    "failureFingerprint":  null,
+    "failureFingerprints":  [
+
+                            ]
+}
