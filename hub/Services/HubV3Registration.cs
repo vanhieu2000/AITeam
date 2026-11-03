@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+﻿using AITeam.Hub.Models;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AITeam.Hub.Services;
 
@@ -9,6 +10,8 @@ public static class HubV3Registration
     public static IServiceCollection AddHubV3(this IServiceCollection services)
     {
         services.TryAddSingleton<IApprovalService, ApprovalService>();
+        // V10-03: nhật ký "Claude tự quyết" (approvals/claude-decisions.jsonl, append-only).
+        services.TryAddSingleton<IClaudeDecisionLog, ClaudeDecisionLog>();
         services.TryAddSingleton<IGitHistory, GitHistory>();
         services.TryAddSingleton<WorkOverviewService>();
         services.TryAddSingleton<WorkDetailService>();

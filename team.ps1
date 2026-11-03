@@ -31,6 +31,9 @@
   .\team.ps1 secret-set -Name DB_PASSWORD           Lưu bí mật vào kho CỤC BỘ (DPAPI, chỉ user Windows này giải mã được)
   .\team.ps1 secret-list | secret-remove -Name X    Xem tên (không xem giá trị) / xóa bí mật
   .\team.ps1 secret-env -Project Ten -Names A,B     Ghi .env.local (đã bị .gitignore) cho dự án chạy thử trên máy
+  .\team.ps1 approval-request -Kind secret|security|sensitive-data|external|decision -Title "…" [-Risk low|medium|high] [-Name KHÓA]
+  .\team.ps1 claude-decision -Kind qc|merge|improvement|rule|other -Title "…" [-Task X] [-Request R-xxx] [-Detail "…"]
+                                                     Ghi nhật ký "Claude tự quyết" (approvals/claude-decisions.jsonl, chỉ thêm dòng)
   .\team.ps1 hub                                    Mở bảng điều khiển AITeam Hub (chạy ngầm)
   .\team.ps1 review -Project Ten -Task T-003        Gói review gọn: cổng kiểm tra, file đổi, báo cáo agent, ảnh
   .\team.ps1 merge -Project Ten -Task T-003         Merge (cần "Vòng N — ĐẠT"), bảng việc ✅, clone sạch, dọn worktree, làm mới bản chạy thử
@@ -56,6 +59,7 @@ param(
     [string] $Agent = "A",
     [string] $Request = "",
     [string] $Kind = "",
+    [ValidateSet("low", "medium", "high")] [string] $Risk = "medium",
     [ValidateSet("", "agy", "codex", "opencode")] [string] $Dev = "",
     [switch] $NoLaunch,
     [string] $Name = "",
@@ -72,6 +76,7 @@ param(
     [AllowEmptyString()][string] $Source = "",
     [string] $Optional = "",
     [string] $Note = "",
+    [string] $Detail = "",
     [string] $Reject = "",
     [string] $Log = ""
 )
@@ -2192,6 +2197,26 @@ function Invoke-Verify {
     [void]$notes.Add("File thay đổi so với main: $($changed.Count)")
     if ($changed.Count -eq 0) { [void]$fails.Add("Nhánh không có thay đổi nào so với main (agent chưa làm hoặc chưa commit).") }
 
+    # 0. Cổng KT (V10-03 / R-014): diff chạm file nhạy cảm ⇒ tạo mục duyệt bảo mật cho (task, commit HEAD).
+    $sensitiveFiles = @(Get-SensitiveChanges $changed $cfg)
+    if ($sensitiveFiles.Count -gt 0) {
+        $gateHead = (git -C $work rev-parse HEAD 2>$null | Select-Object -First 1)
+        $existingGate = @()
+        try { $existingGate = @(Get-Approvals | Where-Object { ([string]$_.kind).ToLowerInvariant() -eq 'security' -and $_.task -eq $Task -and $_.commit -eq $gateHead }) } catch { }
+        if ($existingGate.Count -gt 0) {
+            [void]$notes.Add("Cổng KT: đã có mục duyệt bảo mật $($existingGate[0].id) cho $Task")
+        } else {
+            try {
+                $gateRisk = if (@($sensitiveFiles | Where-Object { $_ -match '(?i)(^|/)\.env|(^|/)vault|secret' }).Count -gt 0) { 'high' } else { 'medium' }
+                $gateDetail = "Cổng KT phát hiện file nhạy cảm trong diff:`r`n" + (($sensitiveFiles | ForEach-Object { "- $_" }) -join "`r`n")
+                $gateId = New-ApprovalItem -Kind 'security' -Title "Cổng KT: $Task chạm file nhạy cảm" -Description $gateDetail -ProjectValue $r.Info.name -TaskValue $Task -CommitValue $gateHead -RiskValue $gateRisk -FilesValue $sensitiveFiles
+                [void]$notes.Add("Cổng KT: tạo mục duyệt bảo mật $gateId")
+            } catch {
+                [void]$fails.Add("Cổng KT không tạo được mục duyệt bảo mật: $($_.Exception.Message)")
+            }
+        }
+    }
+
     foreach ($deleted in @(git -C $work diff --name-only --diff-filter=D origin/main...HEAD 2>$null)) {
         if ($deleted -match '(?i)(^|/)[^/]*tests/.*\.cs$') { [void]$fails.Add("Xóa file test: $deleted") }
     }
@@ -3189,13 +3214,100 @@ function Get-Approvals {
         try { $a = Read-Json $_.FullName; if ($a.id -eq $_.BaseName) { $a } } catch { Say "Bỏ qua $($_.Name): JSON hỏng" Yellow } })
 }
 
-# team.ps1 approval-request -Kind merge -Project X -Task T [-Title "…"] [-Prompt "chi tiết markdown"]
-# team.ps1 approval-request -Kind decision|improvement -Title "…" -Prompt "…" [-Project X]
-function Invoke-ApprovalRequest {
-    if ($Kind -notin 'merge', 'decision', 'improvement') { throw "-Kind phải là merge / decision / improvement." }
-    $dir = Join-Path $Root "approvals"; New-Item -ItemType Directory -Force $dir | Out-Null
-    $max = (@(Get-ChildItem $dir -Filter 'A-*.json' | ForEach-Object { if ($_.BaseName -match '^A-(\d{3})$') { [int]$Matches[1] } }) + 0 | Measure-Object -Maximum).Maximum
+# V10-03: file nhạy cảm trong diff ⇒ cổng KT sinh mục duyệt bảo mật (R-014 mục 4.2).
+# Mẫu mặc định; ghi đè bằng team.json "approvals": { "sensitivePatterns": [ "...regex..." ] }.
+function Get-SensitiveChanges([string[]]$Files, $cfg) {
+    $patterns = @(
+        '(?i)(^|/)(auth|secret|vault|credential|password|crypto|token)[^/]*\.(cs|ps1|cshtml|json)$',
+        '(?i)(^|/)\.env',
+        '(?i)(^|/)Migrations/',
+        '(?i)SecretRedactor\.cs$',
+        '(?i)tools/secret-scan\.ps1$',
+        '(?i)(^|/)vault'
+    )
+    if ($cfg) {
+        try { $custom = $cfg.approvals.sensitivePatterns } catch { $custom = $null }
+        if ($custom) { $patterns = @($custom) }
+    }
+    $result = New-Object Collections.ArrayList
+    foreach ($file in @($Files)) {
+        if (-not $file) { continue }
+        $name = ([string]$file).Replace('\', '/')
+        foreach ($pattern in $patterns) {
+            try {
+                if ($name -match $pattern) { [void]$result.Add([string]$file); break }
+            } catch { }
+        }
+    }
+    return @($result)
+}
+
+function ConvertTo-ApprovalKindJson([string]$value) {
+    switch (([string]$value).ToLowerInvariant()) {
+        'sensitivedata' { 'sensitive-data' }
+        default { ([string]$value).ToLowerInvariant() }
+    }
+}
+
+function Save-ApprovalFile($obj) {
+    $dir = Join-Path $Root "approvals"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    for ($node = $dir; $node; $node = [IO.Path]::GetDirectoryName($node)) {
+        if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) {
+            throw 'Đường dẫn duyệt không an toàn.'
+        }
+        if ([IO.Path]::GetPathRoot($node) -eq $node) { break }
+    }
+    [IO.File]::WriteAllText((Join-Path $dir "$($obj.id).json"), ($obj | ConvertTo-Json -Depth 4), $Utf8)
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git -C $Root add -- "approvals/$($obj.id).json" 2>$null
+    git -C $Root commit -q -m "Xin duyệt $($obj.id): $($obj.title)" 2>$null
+    git -C $Root push -q 2>$null
+    $ErrorActionPreference = $eap
+    return $obj.id
+}
+
+function New-ApprovalItem {
+    param(
+        [string]$Kind, [string]$Title, [string]$Description = "",
+        [string]$ProjectValue = "", [string]$TaskValue = "", [string]$CommitValue = "",
+        [string]$RiskValue = "medium", [string]$SecretNameValue = "",
+        $FilesValue = @(), $LinksValue = @()
+    )
+    $dir = Join-Path $Root "approvals"
+    $max = 0
+    if (Test-Path $dir) {
+        foreach ($f in @(Get-ChildItem $dir -Filter 'A-*.json')) {
+            if ($f.BaseName -match '^A-(\d{3})$') { $n = [int]$Matches[1]; if ($n -gt $max) { $max = $n } }
+        }
+    }
     $id = 'A-{0:000}' -f ($max + 1)
+    $obj = [ordered]@{
+        id = $id; kind = (ConvertTo-ApprovalKindJson $Kind); title = $Title; detail = $Description
+        project = $ProjectValue
+        task = $(if ($TaskValue) { $TaskValue } else { $null })
+        commit = $(if ($CommitValue) { $CommitValue } else { $null })
+        links = @($LinksValue); requestedBy = "Claude"; requestedAt = (Get-Date -Format s)
+        status = "pending"; decidedAt = $null; note = $null; risk = $RiskValue
+    }
+    if ($SecretNameValue) { $obj.secretName = $SecretNameValue }
+    if (@($FilesValue).Count -gt 0) { $obj.files = @($FilesValue) }
+    return (Save-ApprovalFile $obj)
+}
+
+# team.ps1 approval-request -Kind merge -Project X -Task T [-Title "…"] [-Prompt "chi tiết markdown"]
+# team.ps1 approval-request -Kind decision|improvement|secret|security|sensitive-data|external -Title "…" [-Prompt "…"] [-Risk low|medium|high] [-Name KHÓA]
+# Kind secret bắt buộc -Name là TÊN khóa trong két (KHÔNG BAO GIỜ nhận / ghi giá trị khóa).
+function Invoke-ApprovalRequest {
+    $validKinds = @('merge', 'decision', 'improvement', 'secret', 'security', 'sensitive-data', 'external')
+    if ($Kind -notin $validKinds) { throw "-Kind phải là merge / decision / improvement / secret / security / sensitive-data / external." }
+    $riskValue = if ([string]::IsNullOrWhiteSpace($Risk)) { 'medium' } else { ([string]$Risk).ToLowerInvariant() }
+    if ($riskValue -notin @('low', 'medium', 'high')) { throw "-Risk phải là low / medium / high." }
+    $secretName = $null
+    if ($Kind -eq 'secret') {
+        if ($Name -notmatch '^[A-Z][A-Z0-9_]{1,63}$') { throw "-Kind secret bắt buộc -Name <TÊN_KHÓA> (chữ HOA, số, dấu _, 2–64 ký tự; KHÔNG nhận giá trị khóa)." }
+        $secretName = $Name
+    }
     $taskId = $null; $commit = $null; $links = @(); $title = $Title
     if ($Kind -eq 'merge') {
         $r = Resolve-Project $Project; $tf = Find-TaskFile $r $Task
@@ -3209,38 +3321,67 @@ function Invoke-ApprovalRequest {
         $taskId = Get-TaskId $tf; $links = @("tasks/$($tf.Name)")
         if (-not $title) { $title = "Merge " + ([regex]::Match($text, '^#\s*(.+)$', 'Multiline').Groups[1].Value.Trim()) }
     } elseif (-not $title) { throw "Thiếu -Title." }
-    $obj = [ordered]@{
-        id = $id; kind = $Kind; title = $title; detail = $Prompt; project = $Project; task = $taskId; commit = $commit; links = $links
-        requestedBy = "Claude"; requestedAt = (Get-Date -Format s); status = "pending"; decidedAt = $null; note = $null
-    }
-    [IO.File]::WriteAllText((Join-Path $dir "$id.json"), ($obj | ConvertTo-Json -Depth 4), $Utf8)
-    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-    git -C $Root add -- "approvals/$id.json" 2>$null
-    git -C $Root commit -q -m "Xin duyệt ${id}: $title" 2>$null
-    git -C $Root push -q 2>$null
-    $ErrorActionPreference = $eap
+    $id = New-ApprovalItem -Kind $Kind -Title $title -Description $Prompt -ProjectValue $Project -TaskValue $taskId -CommitValue $commit -RiskValue $riskValue -SecretNameValue $secretName -LinksValue $links
     Say "Đã tạo $id ($Kind) — chủ dự án duyệt tại http://127.0.0.1:5057/Approvals" Green
 }
 
-# Trước khi merge: có mục duyệt merge cho task ⇒ phải "approved" và đúng commit nhánh lúc xin duyệt.
-# Không có mục nào ⇒ cho merge, trừ khi team.json "approvals": { "requireMerge": true }.
-function Assert-MergeApproval($cfg, $taskId, $head) {
-    $items = @(Get-Approvals | Where-Object { $_.kind -eq 'merge' -and $_.task -eq $taskId })
-    if (-not $items) {
-        if ($cfg.approvals -and $cfg.approvals.requireMerge) { throw "Chưa có mục duyệt merge cho $taskId ⇒ chạy approval-request -Kind merge trước." }
-        return $null
+# Nhật ký "Claude tự quyết" (R-014): approvals/claude-decisions.jsonl, CHỈ THÊM DÒNG.
+function Add-ClaudeDecision {
+    param([string]$Kind = "", [string]$Title = "", [string]$Task = "", [string]$Request = "", [string]$Detail = "")
+    if (-not $Title) { throw "Thiếu -Title." }
+    $id = 'D-' + (Get-Date -Format 'yyyyMMddHHmmss') + '-' + ([guid]::NewGuid().ToString('N').Substring(0, 4))
+    $obj = [ordered]@{
+        type = "decision"; id = $id; at = (Get-Date).ToString('o'); kind = ([string]$Kind).ToLowerInvariant(); title = $Title
+        project = $(if ($Project) { $Project } else { $null })
+        task = $(if ($Task) { $Task } else { $null })
+        request = $(if ($Request) { $Request } else { $null })
+        detail = $(if ($Detail) { $Detail } else { $null })
     }
-    $a = $items | Sort-Object { [datetime]$_.requestedAt }, id | Select-Object -Last 1
-    switch ($a.status) {
-        'pending' { throw "$($a.id) đang chờ chủ dự án duyệt trên Hub ⇒ chưa merge." }
-        'rejected' { throw "Chủ dự án đã TỪ CHỐI $($a.id)$(if ($a.note) { ': ' + $a.note }) ⇒ không merge." }
-        'approved' {
-            if ($a.commit -and $a.commit -ne $head) { throw "$($a.id) duyệt commit $($a.commit.Substring(0, 7)) nhưng nhánh giờ là $("$head".Substring(0, [Math]::Min(7, "$head".Length))) ⇒ xin duyệt lại." }
-            Say "Chủ dự án đã duyệt $($a.id)$(if ($a.note) { ' — ' + $a.note }) ✓" Green
-            return $a
+    $dir = Join-Path $Root "approvals"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $file = Join-Path $dir "claude-decisions.jsonl"
+    for ($node = $file; $node; $node = [IO.Path]::GetDirectoryName($node)) {
+        if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) {
+            throw 'Đường dẫn nhật ký không an toàn.'
         }
-        default { throw "$($a.id) có trạng thái lạ '$($a.status)'." }
+        if ([IO.Path]::GetPathRoot($node) -eq $node) { break }
     }
+    $line = ($obj | ConvertTo-Json -Compress -Depth 4) + "`n"
+    $stream = New-Object IO.FileStream($file, [IO.FileMode]::Append, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+    try {
+        $bytes = (New-Object Text.UTF8Encoding($false)).GetBytes($line)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush()
+    } finally { $stream.Dispose() }
+    return $id
+}
+
+# Trước khi merge: CHẶN nếu task còn mục secret|security|sensitive-data|external đang pending / rejected.
+# Mục merge cũ KHÔNG còn bắt buộc (bỏ qua requireMerge); mục approved cho security phải đúng commit HEAD.
+function Assert-MergeApproval($cfg, $taskId, $head) {
+    $sensitiveKinds = @('secret', 'security', 'sensitive-data', 'external')
+    $items = @(Get-Approvals | Where-Object { $_.task -eq $taskId })
+    $sensitive = @($items | Where-Object { $sensitiveKinds -contains ([string]$_.kind).ToLowerInvariant() })
+    $blocked = @($sensitive | Where-Object { $_.status -ne 'approved' })
+    if ($blocked.Count -gt 0) {
+        $b = $blocked | Sort-Object { [datetime]$_.requestedAt }, id | Select-Object -Last 1
+        if ($b.status -eq 'pending') { throw "$($b.id) ($($b.kind)) đang chờ chủ dự án duyệt trên Hub ⇒ chưa merge." }
+        if ($b.status -eq 'rejected') { throw "Chủ dự án đã TỪ CHỐI $($b.id)$(if ($b.note) { ': ' + $b.note }) ⇒ không merge." }
+        throw "$($b.id) có trạng thái lạ '$($b.status)'."
+    }
+    foreach ($s in $sensitive) {
+        if ($s.commit -and $s.commit -ne $head) { throw "$($s.id) duyệt commit $($s.commit.Substring(0, 7)) nhưng nhánh giờ là $("$head".Substring(0, [Math]::Min(7, "$head".Length))) ⇒ xin duyệt lại." }
+    }
+    # Mục merge cũ chỉ còn để không lỗi / giữ luồng nghiệm thu khi chủ dự án đã duyệt; pending / rejected KHÔNG chặn.
+    $mergeItems = @($items | Where-Object { ([string]$_.kind).ToLowerInvariant() -eq 'merge' })
+    if ($mergeItems.Count -eq 0) { return $null }
+    $a = $mergeItems | Sort-Object { [datetime]$_.requestedAt }, id | Select-Object -Last 1
+    if ($a.status -eq 'approved') {
+        if ($a.commit -and $a.commit -ne $head) { throw "$($a.id) duyệt commit $($a.commit.Substring(0, 7)) nhưng nhánh giờ là $("$head".Substring(0, [Math]::Min(7, "$head".Length))) ⇒ xin duyệt lại." }
+        Say "Chủ dự án đã duyệt $($a.id)$(if ($a.note) { ' — ' + $a.note }) ✓" Green
+        return $a
+    }
+    return $null
 }
 
 function Invoke-Merge {
@@ -3348,6 +3489,12 @@ function Invoke-Merge {
         Set-BoardStatus $r $mergeTaskId "✅ Đã merge (vòng $round)"
     }
     Say "Đã merge + push main." Green
+    # V10-03: merge do Claude tự quyết ⇒ ghi nhật ký (không còn chờ chủ dự án).
+    try {
+        $decisionRequest = [regex]::Match($text, '\*\*Yêu cầu:\*\*\s*(R-\d+)').Groups[1].Value
+        $decisionId = Add-ClaudeDecision -Kind 'merge' -Title "Merge $($tf.BaseName)" -Task $mergeTaskId -Request $decisionRequest -Detail "Nhánh $branch · review đạt vòng $round"
+        Say "Nhật ký Claude tự quyết: $decisionId (merge)" Green
+    } catch { Say "Không ghi được nhật ký Claude tự quyết: $($_.Exception.Message)" Yellow }
     if ($approval) {
         # Quyết định chủ dự án bấm trên Hub chỉ nằm trên máy này ⇒ đưa lên git để máy kia cũng thấy.
         git -C $Root add -- "approvals/$($approval.id).json" 2>$null
@@ -3708,6 +3855,7 @@ switch ($Command) {
     "review" { Invoke-ReviewPack }
     "merge" { Invoke-Merge }
     "approval-request" { Invoke-ApprovalRequest }
+    "claude-decision" { $null = Add-ClaudeDecision -Kind $Kind -Title $Title -Task $Task -Request $Request -Detail $Detail }
     "cleanup" { Invoke-Cleanup }
     "switch-account" { Invoke-SwitchAccount }
     "hub" { Invoke-Hub -Restart:$Restart }
