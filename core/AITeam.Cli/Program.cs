@@ -4,6 +4,7 @@ using AITeam.Core.Review;
 using AITeam.Core.Routing;
 using AITeam.Core.Process;
 using AITeam.Core.Providers;
+using AITeam.Core.Queue;
 using AITeam.Core.Tasks;
 
 Console.OutputEncoding = Encoding.UTF8;
@@ -19,6 +20,9 @@ try
         "review-findings" => ReviewFindings(),
         "lint-task" => await LintTask(),
         "route-developer" => await RouteDeveloper(),
+        "queue-ready" => QueueReady(),
+        "lock-acquire" => LockAcquire(),
+        "lock-release" => LockRelease(),
         "check-harness-change" => CheckHarnessChange(),
         "review" => await Review(),
         "workflow-role" => WorkflowRole(),
@@ -63,6 +67,60 @@ int CheckHarnessChange()
     var allowed = AcceptanceHarnessPolicy.Allows(File.ReadAllText(file), args.Contains("--allow"));
     Console.WriteLine(allowed ? "Chấp nhận thay harness đã khai báo; Claude vẫn cần review phạm vi dựng môi trường." : "Chặn: chưa khai báo hoặc sửa assert/điều kiện chọn test.");
     return allowed ? 0 : 2;
+}
+
+int QueueReady()
+{
+    var boardFile = Arg("--board") ?? throw new InvalidDataException("Thiếu --board");
+    var tasksDir = Arg("--tasks") ?? throw new InvalidDataException("Thiếu --tasks");
+    if (!File.Exists(boardFile)) throw new FileNotFoundException("Không thấy bảng việc.", boardFile);
+    if (!Directory.Exists(tasksDir)) throw new DirectoryNotFoundException("Không thấy thư mục task: " + tasksDir);
+    var tasksRoot = Path.GetFullPath(tasksDir);
+    var prefix = tasksRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+    var board = TaskQueue.ParseBoard(File.ReadAllText(boardFile, Encoding.UTF8));
+    var items = TaskQueue.Evaluate(board, name =>
+    {
+        if (string.IsNullOrWhiteSpace(name) || Path.IsPathRooted(name) || name.Contains(':')) return null;
+        var full = Path.GetFullPath(Path.Combine(tasksRoot, name.Replace('/', Path.DirectorySeparatorChar)));
+        if (!full.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(full)) return null;
+        return File.ReadAllText(full, Encoding.UTF8);
+    });
+    Console.WriteLine(JsonSerializer.Serialize(items, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return 0;
+}
+
+int LockAcquire()
+{
+    var task = Arg("--task") ?? throw new InvalidDataException("Thiếu --task");
+    var provider = Arg("--provider") ?? throw new InvalidDataException("Thiếu --provider");
+    var taskFile = Arg("--task-file") ?? throw new InvalidDataException("Thiếu --task-file");
+    if (new FileInfo(taskFile).Length > 1024 * 1024) throw new InvalidDataException("File task quá lớn để khóa phạm vi.");
+    var boardFile = Arg("--board");
+    var project = Arg("--project");
+    var store = new ScopeLockStore(root, project);
+    var scope = TaskQueue.ScopePaths(File.ReadAllText(taskFile, Encoding.UTF8));
+    Func<string, bool> finished = name =>
+    {
+        if (string.IsNullOrWhiteSpace(boardFile) || !File.Exists(boardFile)) return false;
+        var board = TaskQueue.ParseBoard(File.ReadAllText(boardFile, Encoding.UTF8));
+        return board.Any(row => row.Id.Equals(name, StringComparison.OrdinalIgnoreCase) && TaskQueue.IsFinished(row.Status));
+    };
+    if (store.TryAcquire(task, provider, scope, DateTime.Now, finished, out var holder))
+    {
+        Console.WriteLine("OK");
+        return 0;
+    }
+    Console.WriteLine("HELD " + (holder ?? ""));
+    return 3;
+}
+
+int LockRelease()
+{
+    var task = Arg("--task") ?? throw new InvalidDataException("Thiếu --task");
+    // Cùng scopeRoot với lock-acquire (--project) để nhả đúng vùng dự án đã khóa.
+    var store = new ScopeLockStore(root, Arg("--project"));
+    Console.WriteLine(store.Release(task) ? "OK" : "KHÔNG CÓ");
+    return 0;
 }
 
 int DiagnoseRun()
