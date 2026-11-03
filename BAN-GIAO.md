@@ -3,6 +3,8 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
+> **Mới nhất (04/11 ~03:00, máy nhà HIEUDV):** R-014 lõi XONG đủ 7 task (V10-01..05, W2-01, W2-02), clone sạch Hub 866 / Core 1009 xanh. Giao diện UI-01..03 xong; **UI-04..09 chưa làm — chờ chủ dự án cho làm** (đêm 03–04/11 chủ dự án dặn: AI khác chỉ làm chức năng, KHÔNG sửa giao diện). Antigravity dùng **Gemini 3.8** (`team.json` agy.requiredModel); OpenCode free hết lượt từ 23:36 03/11; Codex hết tới 12:09 04/11. Hàng chờ sửa cổng KT (4 mục [CK]) trong `tasks/README.md` → giao Codex. Nhật ký chi tiết: `requests/R-014-*.md`.
+
 Cập nhật lần cuối: **03/11/2026 ~01:15 · máy công ty (hieudvdmin)** · **quy trình v5: đọc mục đầu `QUY-TRINH.md`**
 
 ## 1. Cách quản lý đang áp dụng (chủ dự án yêu cầu 21/10)
