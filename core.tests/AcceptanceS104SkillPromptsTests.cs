@@ -165,7 +165,7 @@ $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
-$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry')
+$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Assert-PrepPlanApproval','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun','Get-ReviewRoundLimit','Get-ReviewRoundCount','Stop-ReviewReassignment') # W1-03 + H7-02 + V6-02
 foreach ($f in $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$true)) {
     if ($f.Name -in $names) { . ([scriptblock]::Create($f.Extent.Text)) }
 }
@@ -179,14 +179,14 @@ foreach($d in @($repo,$logs,$workRoot,$planDir,(Join-Path $Root 'templates'),(Jo
 foreach($d in @((Join-Path $workRoot 'a-s1-04'),(Join-Path $workRoot 'prep-s1-04'))) { New-Item -ItemType Directory -Force $d | Out-Null }
 [IO.File]::WriteAllText((Join-Path $repo 'tasks/S1-04.md'), "- **Agent:** A`n- **Nhánh:** ``agent-a/S1-04``")
 [IO.File]::WriteAllText((Join-Path $planDir 'brief.md'),'brief giả')
-[IO.File]::WriteAllText((Join-Path $planDir 'plan.md'),"### S1-04 · Kết nối`n- **Agent:** A`n- **Ngân sách:** ~280 dòng")
+[IO.File]::WriteAllText((Join-Path $planDir 'plan.md'),"### S1-04 · Kết nối`n- **Agent:** A`n- **Ngân sách:** ~280 dòng`n`n## Quyết định của quản lý (giả)`n- ĐÃ DUYỆT.")
 foreach($f in @('codex-plan.md','codex-prep.md')) { [IO.File]::WriteAllText((Join-Path $Root "templates/$f"),'CHỈ đọc old.cs {REQUEST} {TASK}') }
 $info=[pscustomobject]@{name='demo';build='build giả';test='test giả'}
 if ($null -ne $x.stack) { $info | Add-Member NoteProperty stack $x.stack }
 $r=[pscustomobject]@{Info=$info;Path=$repo;Logs=$logs;Work=$workRoot}
 $cfg=[pscustomobject]@{developers=@();agy=[pscustomobject]@{exe='fake-agy';model=''};github=[pscustomobject]@{owner='giả'}}
 function Get-Config { $cfg }; function Resolve-Project { $r }; function Get-PlanDir { $planDir }
-function Get-AITeamExe { 'FakeProvider' }; function Say { }; function git { '' }
+function Get-AITeamExe { 'FakeProvider' }; function Say { }; function git { $global:LASTEXITCODE=0; '' } # V9-06: assign kiểm mã thoát git fetch/merge
 function Find-TaskFile { Get-Item (Join-Path $repo 'tasks/S1-04.md') }
 function Select-FreeAgent { 'A' }; function ConvertTo-AsciiSlug { 'ket-noi' }
 function Copy-Template { param($template,$path,$vars) [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path)) | Out-Null; [IO.File]::WriteAllText($path,'- **Yêu cầu:** R-xxx') }
@@ -194,9 +194,20 @@ function Assert-NotClaimedElsewhere { }; function Get-ScopeOverlaps { }; functio
 function Get-ClaimText { 'giả' }; function Set-ManagerIdentity { $false }; function Set-AgentIdentity { }
 function Set-McpConfig { $false }; function Get-StaffName { 'giả' }; function Get-EmptyInput { '' }
 function Test-AgentTouchedMain { }; function Get-RunRecord { }; function Save-RunMetrics { }
+# V9-16 (R-012): lint task có test riêng (V916TaskLintTests); harness skill-prompt giả lập lint đạt.
+function Invoke-LintTask { }
 function Test-QuotaExhausted { $x.mode -eq 'fallback' }
 $script:captured=$null; $script:calls=0; $script:ro=$false; $script:cwd=$repo
+# Khóa giả chỉ chạy action trong sandbox, không dùng khóa Codex trên máy.
+function Invoke-WorkflowCodexLock { param([scriptblock]$Action) & $Action }
 function FakeProvider {
+    if ($args[0] -eq 'workflow-role') {
+        $role=$args[[Array]::IndexOf($args,'--role')+1]
+        $global:LASTEXITCODE=0
+        return ([pscustomobject]@{role=$role;actor='codex';providerId='codex';isExplicit=$false;readOnly=($role -eq 'plan');manual=$false} | ConvertTo-Json -Compress)
+    }
+    # V6-02: Invoke-Assign đếm vòng review qua CLI; task mẫu chưa có vòng nào.
+    if ($args[0] -eq 'review-rounds') { $global:LASTEXITCODE=0; return '0' }
     $script:calls++; $a=@($args); $pf=$a[[Array]::IndexOf($a,'--prompt-file')+1]
     $script:captured=[IO.File]::ReadAllText($pf); $script:ro=$a -contains '--read-only'
     $script:cwd=$a[[Array]::IndexOf($a,'--workdir')+1]

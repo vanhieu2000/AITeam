@@ -36,7 +36,7 @@ public interface ICommandService
     /// <summary>Validate rồi chạy; không hợp lệ ⇒ ghi audit "rejected" + InvalidOperationException(lỗi). Hợp lệ ⇒ audit "started", trả job.</summary>
     CommandJob Start(CommandRequest req);
 
-    /// <summary>Các job từ lúc Hub chạy, mới nhất trước (StartedAt giảm dần, cùng giờ ⇒ thêm sau đứng trước), tối đa 20.</summary>
+    /// <summary>Các job từ lúc Hub chạy, mới nhất trước (StartedAt giảm dần, cùng giờ ⇒ thêm sau đứng trước), tối đa 200.</summary>
     IReadOnlyList<CommandJob> Jobs();
 
     /// <summary>Nhật ký thao tác, mới nhất trước (dòng cuối file đứng đầu), tối đa <paramref name="max"/>; dòng hỏng bỏ qua; chưa có file ⇒ rỗng.</summary>
@@ -53,6 +53,7 @@ public sealed class CommandService : ICommandService
 {
     public const int MaxFeedback = 2000;
     public const int MaxRunning = 3;
+    public const int MaxRetainedJobs = 200;
     public static string PowerShellExe => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe");
 
     private static readonly Regex TaskIdRegex = new(@"^[A-Za-z0-9][A-Za-z0-9-]{0,63}$", RegexOptions.Compiled);
@@ -203,6 +204,13 @@ public sealed class CommandService : ICommandService
             Directory.CreateDirectory(JobsDir);
             var logFile = Path.Combine(JobsDir, id + ".log");
             _jobs.Add(new CommandJob(id, req, now, logFile, null, null));
+            while (_jobs.Count > MaxRetainedJobs)
+            {
+                // Không bỏ job đang chạy: callback/giới hạn đồng thời vẫn cần theo dõi chúng.
+                var oldestCompleted = _jobs.FindIndex(j => !j.Running);
+                if (oldestCompleted < 0) throw new InvalidOperationException("Không thể thu gọn job đang chạy.");
+                _jobs.RemoveAt(oldestCompleted);
+            }
             WriteAudit(new AuditEntry(now, req.Command.ToString(), req.Project, req.Task, "started", req.Command == HubCommand.Resume ? CleanFeedback(req.Feedback) : null));
 
             var finished = false;
@@ -240,7 +248,7 @@ public sealed class CommandService : ICommandService
 
     public IReadOnlyList<CommandJob> Jobs()
     {
-        lock (_lock) return _jobs.AsEnumerable().Reverse().OrderByDescending(j => j.StartedAt).Take(20).ToList();
+        lock (_lock) return _jobs.AsEnumerable().Reverse().OrderByDescending(j => j.StartedAt).Take(MaxRetainedJobs).ToList();
     }
 
     public IReadOnlyList<AuditEntry> Audit(int max = 50)

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using AITeam.Core.Metrics;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AITeam.Hub.Models;
@@ -75,16 +76,9 @@ public static class InsightParsers
     /// </summary>
     public static IReadOnlyList<ReviewIssue> ParseReviewIssues(string taskMarkdown, string project, string task)
     {
-        var result = new List<ReviewIssue>();
-        foreach (var line in GetSectionLines(taskMarkdown, "Review (Claude)"))
-        {
-            var m = ReviewIssueRx.Match(line);
-            if (!m.Success) continue;
-            var kind = m.Groups[2].Success ? m.Groups[2].Value.Trim() : "";
-            var text = m.Groups[3].Value.Trim().TrimEnd(';', '.').TrimEnd();
-            result.Add(new ReviewIssue(project ?? "", task ?? "", m.Groups[1].Value, kind, text));
-        }
-        return result;
+        return FindingParser.Parse(string.Join("\n", GetSectionLines(taskMarkdown, "Review (Claude)")))
+            .Select(f => new ReviewIssue(project ?? "", task ?? "", f.Cause, f.Kind,
+                f.Text.TrimEnd(';', '.').TrimEnd())).ToList();
     }
 
     /// <summary>

@@ -117,6 +117,7 @@ public sealed class ProviderStateStore
     public static readonly TimeSpan DefaultQuotaRest = TimeSpan.FromMinutes(60);
     public static readonly TimeSpan LoginRest = TimeSpan.FromHours(24);
     public const int MaxDetail = 300;
+    public static readonly TimeSpan FailureRest = TimeSpan.FromMinutes(15);
 
     private static readonly UTF8Encoding Utf8NoBom = new(false);
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -134,13 +135,26 @@ public sealed class ProviderStateStore
     /// <summary>Mọi bản ghi trong file (kể cả đã hết hạn).</summary>
     public IReadOnlyList<ProviderRest> All()
     {
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
+        foreach (var path in new[] { root, Path.GetDirectoryName(FilePath)!, FilePath })
+            if ((File.Exists(path) || Directory.Exists(path)) && (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("Không đọc/di chuyển state provider qua symlink hoặc reparse point.");
+        if (!File.Exists(FilePath)) return [];
         try
         {
-            return File.Exists(FilePath)
-                ? JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath, Encoding.UTF8), JsonOpts) ?? []
-                : [];
+            var records = JsonSerializer.Deserialize<List<ProviderRest>>(File.ReadAllText(FilePath, Encoding.UTF8), JsonOpts);
+            if (records == null || records.Any(p => p == null || string.IsNullOrWhiteSpace(p.ProviderId)))
+                throw new JsonException("State provider không phải danh sách hợp lệ.");
+            return records;
         }
-        catch { return []; }
+        catch (JsonException)
+        {
+            // Đổi tên nguyên file, không serialize lại: giữ cả byte không hợp lệ và chỉ sao lưu một lần.
+            var backup = FilePath + ".hong-" + DateTime.UtcNow.ToString("yyyyMMddTHHmmssfffffff", CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N");
+            File.Move(FilePath, backup, overwrite: false);
+            return [];
+        }
     }
 
     /// <summary>Bản ghi của provider (so khớp không phân biệt hoa thường) nếu Until &gt; now; ngược lại null.</summary>
@@ -157,8 +171,21 @@ public sealed class ProviderStateStore
     /// </summary>
     public void Record(AgentRunResult r, DateTime now)
     {
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
+        if (r.Status == RunStatus.Succeeded) FailureStreakStore.Update(root, r.ProviderId, false);
         if (r.Status is not (RunStatus.Succeeded or RunStatus.QuotaExhausted or RunStatus.NotLoggedIn))
+        {
+            var count = FailureStreakStore.Update(root, r.ProviderId, true);
+            if (count < 3) return;
+            var rests = All().ToList();
+            var prior = rests.FirstOrDefault(p => p.ProviderId.Equals(r.ProviderId, StringComparison.OrdinalIgnoreCase));
+            if (prior != null && prior.Until > now + FailureRest) return;
+            rests.RemoveAll(p => p.ProviderId.Equals(r.ProviderId, StringComparison.OrdinalIgnoreCase));
+            rests.Add(new ProviderRest(r.ProviderId, now + FailureRest, r.Status, $"{count} lỗi liên tiếp; tạm nghỉ 15 phút để quản lý kiểm tra.", now));
+            Save(rests);
             return;
+        }
 
         var list = All().Where(x => !x.ProviderId.Equals(r.ProviderId, StringComparison.OrdinalIgnoreCase)).ToList();
         if (r.Status != RunStatus.Succeeded)
@@ -168,7 +195,9 @@ public sealed class ProviderStateStore
                 : now + LoginRest;
             var detail = r.Detail ?? "";
             if (detail.Length > MaxDetail) detail = detail[..MaxDetail];
-            list.Add(new ProviderRest(r.ProviderId, until, r.Status, detail, now));
+            var reset = r.Status == RunStatus.QuotaExhausted ? QuotaResetParser.Parse($"{r.Detail}\n{r.Text}", now) : null;
+            list.Add(new ProviderRest(r.ProviderId, until, r.Status, detail, now)
+            { ResetsAt = reset, Source = reset.HasValue ? "provider" : "unknown" });
         }
 
         Save(list);
@@ -177,6 +206,9 @@ public sealed class ProviderStateStore
     /// <summary>Xóa trạng thái nghỉ của provider (chủ dự án biết hạn mức đã có lại / vừa đổi tài khoản). Trả false nếu không có bản ghi.</summary>
     public bool Clear(string providerId)
     {
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
+        FailureStreakStore.Update(root, providerId, false);
         var all = All();
         var list = all.Where(x => !x.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase)).ToList();
         if (list.Count == all.Count) return false;
@@ -184,8 +216,25 @@ public sealed class ProviderStateStore
         return true;
     }
 
+    public void RecordQuota(string providerId, QuotaObservation quota, DateTime now)
+    {
+        if (string.IsNullOrWhiteSpace(providerId)) throw new ArgumentException("Provider không hợp lệ.");
+        quota.Validate();
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(FilePath))!;
+        using var gate = FailureStreakStore.Lock(root);
+        var all = All();
+        var old = all.FirstOrDefault(p => p.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase));
+        var exhausted = quota.UsedPercent >= 100 && quota.ResetsAt > now;
+        var record = new ProviderRest(providerId,
+            exhausted ? quota.ResetsAt!.Value : old?.Until ?? DateTime.MinValue,
+            exhausted ? RunStatus.QuotaExhausted : old?.Reason ?? RunStatus.Succeeded, old?.Detail ?? "", now)
+        { UsedPercent = quota.UsedPercent, WindowMinutes = quota.WindowMinutes, ResetsAt = quota.ResetsAt, Source = quota.Source, ExhaustsAt = quota.ExhaustsAt };
+        Save(all.Where(p => !p.ProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase)).Append(record).ToList());
+    }
+
     private void Save(List<ProviderRest> list)
     {
+        _ = All(); // Sao lưu nếu nguồn hỏng trước khi ghi state mới.
         var dir = Path.GetDirectoryName(FilePath)!;
         Directory.CreateDirectory(dir);
         var tmp = Path.Combine(dir, $"providers.{Guid.NewGuid():N}.tmp");

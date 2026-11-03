@@ -1,0 +1,19 @@
+﻿@page "/Run"
+@model AITeam.Hub.Pages.RunModel
+@using AITeam.Hub.Services
+@{ViewData["Title"]="Chi tiết lượt";var d=Model.Data;var metric=d?.Metric;var seconds=metric?.Seconds??d?.Agent?.DurationSeconds;var tokens=metric!=null?metric.Tokens:(d?.Agent?.TotalTokens>0?d.Agent.TotalTokens:null);}
+<link rel="stylesheet" href="~/css/work-details.css" />
+<div class="work-details">
+@if(Model.Error!=null){<p class="panel detail-section">@Model.Error</p>}
+@if(d!=null){
+<nav><a href="/p/@d.Project/t/@d.Task">@d.Project · @d.Task</a> → Lượt @d.Number</nav><h2>Lượt @d.Number · @d.Task</h2>
+@foreach(var warning in d.Warnings){<p class="panel detail-section">@warning</p>}
+<div class="detail-cards">
+<section class="panel detail-section"><h3>Người làm và model</h3><p>@(metric?.Provider??"Chưa ghi provider")</p><p>@(metric?.Model??"Chưa ghi model")</p><p>@(metric?.At.ToLocalTime().ToString("dd/MM/yyyy HH:mm")??"Chưa ghi thời điểm")</p></section>
+<section class="panel detail-section"><h3>Đo đạc</h3><p>@(seconds.HasValue?(seconds.Value/60).ToString("0.#")+" phút":"Chưa đo phút")</p><p>@(tokens.HasValue?tokens.Value.ToString("N0")+" token":"Chưa đo token")</p><p>+@(metric?.Added?.ToString()??"chưa đo") / −@(metric?.Removed?.ToString()??"chưa đo") dòng</p></section>
+<section class="panel detail-section"><h3>Kết quả và cờ</h3><p>@(metric?.Status??d.Agent?.Status??"Chưa ghi kết quả")</p><p>Cổng kiểm tra: @if(metric?.VerifyOk==true){<span class="pill ok">Đạt</span>}else if(metric?.VerifyOk==false){<span class="pill fix">Không đạt</span>}else{<span class="pill n">Chưa có dữ liệu</span>}</p>@if(metric?.Flags.Count>0){@foreach(var flag in metric.Flags){<span class="pill fix">@flag</span>}}else{<span class="muted">Chưa có cờ được ghi.</span>}</section>
+</div>
+<section class="panel detail-section"><h3>50 dòng cuối log</h3>@if(string.IsNullOrEmpty(d.LogTail)){<p class="muted">Chưa có log trên máy này.</p>}else{<pre>@d.LogTail</pre>}</section>
+<section class="panel detail-section"><h3>Báo cáo AI</h3>@if(string.IsNullOrWhiteSpace(d.Report)){<p class="muted">Chưa có báo cáo AI trên máy này.</p>}else{<div class="markdown-body">@MarkdownRenderer.Render(d.Report)</div>}</section>
+}
+</div>

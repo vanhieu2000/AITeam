@@ -250,13 +250,15 @@ public sealed class AcceptanceV505CommandTests : IDisposable
     }
 
     [Fact]
-    public void Jobs_keeps_at_most_twenty()
+    public void Jobs_keeps_at_most_two_hundred()
     {
+        // H8-05 (R-012): giữ 200 job gần nhất, bỏ job cũ khỏi bộ nhớ (không chỉ cắt khi hiển thị).
         _starter.ExitImmediately = true;
         var s = Service();
-        for (int i = 0; i < 25; i++) { _now = _now.AddSeconds(1); s.Start(new CommandRequest(HubCommand.Verify, "AITeam", "H3-06")); }
+        for (int i = 0; i < 205; i++) { _now = _now.AddSeconds(1); s.Start(new CommandRequest(HubCommand.Verify, "AITeam", "H3-06")); }
         var jobs = s.Jobs();
-        Assert.Equal(20, jobs.Count);
+        Assert.Equal(200, jobs.Count);
+        Assert.Equal(_now.AddSeconds(-199), jobs[^1].StartedAt);
         Assert.Equal(_now, jobs[0].StartedAt);
     }
 

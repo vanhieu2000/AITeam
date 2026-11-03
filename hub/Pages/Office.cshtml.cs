@@ -16,17 +16,27 @@ public class OfficeModel : PageModel
     private readonly IRequestService? _requests;
     private readonly IOfficeChatService? _chat;
     private readonly ITeamConfigService? _config;
+    private readonly LocalChatStore? _localChat;
+    public ChatConversation? LatestAiConversation { get; private set; }
+    public string? AiConversationNotice { get; private set; }
+    private readonly IResearchService? _research;
+    public ResearchModel? ResearchPane { get; private set; }
 
-    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null)
+    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null, LocalChatStore? localChat = null, IResearchService? research = null)
     {
         _office = office;
         _commands = commands;
         _requests = requests;
         _chat = chat;
         _config = config;
+        _localChat = localChat;
+        _research = research;
     }
 
     [BindProperty(SupportsGet = true)] public string? RequestId { get; set; }
+
+    /// <summary>Mã câu hỏi vừa gửi (q) để bản nhúng hiện lại lời nhắn + form lưu thủ công sau redirect.</summary>
+    [BindProperty(SupportsGet = true, Name = "q")] public string? ResearchQuestionQuery { get; set; }
     public IReadOnlyList<RequestThread> Threads { get; private set; } = Array.Empty<RequestThread>();
     public RequestThread? SelectedThread { get; private set; }
     public IReadOnlyList<ProjectInfo> ChatProjects { get; private set; } = Array.Empty<ProjectInfo>();
@@ -123,6 +133,8 @@ public class OfficeModel : PageModel
     /// <summary>Nạp View (bắt lỗi ⇒ Error) rồi LoadControl().</summary>
     public void OnGet()
     {
+        try { LatestAiConversation = _localChat?.Conversations().FirstOrDefault(); }
+        catch (Exception) { AiConversationNotice = "Chưa đọc được hội thoại. Mở Trò chuyện AI để kiểm tra."; }
         try
         {
             View = _office.Get();
@@ -134,6 +146,42 @@ public class OfficeModel : PageModel
         }
         LoadControl();
         LoadChat();
+        LoadResearch();
+    }
+
+    private void LoadResearch()
+    {
+        if (_research == null || _requests == null) return;
+        ResearchPane = new ResearchModel(_research, _requests) { Embedded = true, PageContext = this.PageContext };
+        ResearchPane.OnGet(SelectedThread?.Id, ResearchQuestionQuery);
+    }
+
+    public IActionResult OnGetResearch()
+    {
+        LoadChat(); LoadResearch();
+        return Self("_OfficeResearch");
+    }
+
+    /// <summary>
+    /// POST ?handler=ResearchAsk (antiforgery): hỏi như OnPostAsk của trang Phòng nghiên cứu.
+    /// Thành công ⇒ 302 về "/?RequestId={r}&amp;q={QuestionId}" (đường dẫn tương đối) để F5 không gửi lại;
+    /// lỗi (kể cả phiếu không hợp lệ) ⇒ trả trang như cũ để hiện thông báo.
+    /// </summary>
+    public IActionResult OnPostResearchAsk(string? r, string? question, string[]? ai, bool includeRequestText)
+    {
+        RequestId = r; OnGet();
+        if (ResearchPane?.Current == null) return Page();
+        var result = ResearchPane.OnPostAsk(r, question, ai, includeRequestText);
+        if (result is RedirectToPageResult && ResearchPane.Asked != null)
+            return Redirect("/?RequestId=" + Uri.EscapeDataString(r ?? ResearchPane.Current.Id) + "&q=" + Uri.EscapeDataString(ResearchPane.Asked.QuestionId));
+        return Page();
+    }
+
+    public IActionResult OnPostResearchSaveManual(string? r, string? questionId, string? ai, string? question, string? answer, string? sources)
+    {
+        RequestId = r; OnGet();
+        if (ResearchPane?.Current != null) ResearchPane.OnPostSaveManual(r, questionId, ai, question, answer, sources);
+        return Page();
     }
 
     /// <summary>
