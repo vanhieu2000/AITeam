@@ -87,11 +87,11 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V9-16 Kiểm chất lượng task](V9-16-kiem-chat-luong-task.md) | C | `agent-c/V9-16-kiem-chat-luong-task` | ✅ Đã merge 03/11 đợt 2 |
 | [H8-10 Tổng quan và Kanban](H8-10-tong-quan-kanban.md) | C | `agent-c/H8-10-tong-quan-kanban` | ✅ Đã merge 03/11 (mockup đã duyệt) |
 | [H8-11 Chi tiết yêu cầu, task, lượt](H8-11-chi-tiet-yeu-cau-task-luot.md) | C | `agent-c/H8-11-chi-tiet-yeu-cau-task-luot` | ✅ Đã merge 03/11 (mockup đã duyệt) |
-| [H8-01 Phòng nghiên cứu PRG](H8-01-research-prg.md) | C | `agent-c/H8-01-research-prg` | ✅ Đã merge 03/11 (OpenCode) · còn khóa provider nghỉ |
-| [H8-12 Hiệu suất và bảng điểm](H8-12-hieu-suat-bang-diem.md) | C | `agent-c/H8-12-hieu-suat-bang-diem` | 🟡 Giao OpenCode |
-| [H8-13 Tài khoản và hạn mức](H8-13-tai-khoan-han-muc.md) | C | `agent-c/H8-13-tai-khoan-han-muc` | 🟡 Giao OpenCode |
+| [H8-01 Phòng nghiên cứu PRG](H8-01-research-prg.md) | C | `agent-c/H8-01-research-prg` | ✅ Đã merge 03/11 (OpenCode: PRG + khóa AI đang nghỉ) |
+| [H8-12 Hiệu suất và bảng điểm](H8-12-hieu-suat-bang-diem.md) | C | `agent-c/H8-12-hieu-suat-bang-diem` | ✅ Đã merge 03/11 (OpenCode, vòng 2) · còn H8-15 sửa nhỏ giao diện |
+| [H8-13 Tài khoản và hạn mức](H8-13-tai-khoan-han-muc.md) | C | `agent-c/H8-13-tai-khoan-han-muc` | ✅ Đã merge 03/11 (OpenCode) · còn H8-15 sửa nhỏ giao diện |
 | [V9-15 Hàng đợi và khóa file](V9-15-hang-doi-khoa-file.md) | C | `agent-c/V9-15-hang-doi-khoa-file` | 🟡 Giao OpenCode |
-| [W1-04 Cổng kiểm tra QC](W1-04-cong-kiem-tra-qc.md) | C | `agent-c/W1-04-cong-kiem-tra-qc` | 🟡 Giao OpenCode |
+| [W1-04 Cổng kiểm tra QC](W1-04-cong-kiem-tra-qc.md) | C | `agent-c/W1-04-cong-kiem-tra-qc` | ✅ Đã merge 03/11 (OpenCode, Claude review) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
