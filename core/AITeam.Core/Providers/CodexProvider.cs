@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using AITeam.Core.Process;
 
 namespace AITeam.Core.Providers;
@@ -20,8 +20,9 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
     internal (string Exe, List<string> Prefix) ResolveLaunch()
     {
         var exe = config.Exe;
-        if (string.IsNullOrWhiteSpace(exe) || exe.Equals("codex", StringComparison.OrdinalIgnoreCase))
+        if (OperatingSystem.IsWindows() && (string.IsNullOrWhiteSpace(exe) || exe.Equals("codex", StringComparison.OrdinalIgnoreCase)))
             exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm", "node_modules", "@openai", "codex", "bin", "codex.js");
+        if (string.IsNullOrWhiteSpace(exe)) exe = "codex";
         if (exe.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
             return (string.IsNullOrWhiteSpace(config.NodeExe) ? "node" : config.NodeExe!, [exe]);
         return (exe, []);
@@ -34,6 +35,13 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
             "-C", r.WorkDir,
             "--sandbox", r.Mode == RunMode.ReadOnly ? "read-only" : "workspace-write",
             "-c", "notify=[]", "-c", "mcp_servers={}"]);
+        args.AddRange(["-c", "windows.sandbox=\"unelevated\""]);
+        if (!string.IsNullOrWhiteSpace(config.BaseUrl))
+        {
+            if (!Uri.TryCreate(config.BaseUrl, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http") || !string.IsNullOrEmpty(uri.UserInfo))
+                throw new InvalidDataException("codex.baseUrl phải là URL HTTP(S) không chứa thông tin đăng nhập.");
+            args.AddRange(["-c", "openai_base_url=" + JsonSerializer.Serialize(config.BaseUrl)]);
+        }
         var model = r.Model ?? config.Model;
         if (!string.IsNullOrWhiteSpace(model)) args.AddRange(["-m", model]);
         if (r.OutputSchemaFile != null) args.AddRange(["--output-schema", r.OutputSchemaFile]);
