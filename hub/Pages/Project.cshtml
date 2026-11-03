@@ -26,6 +26,7 @@
 else
 {
     @section Actions {
+        <a class="btn sm" href="@Url.Page("/Work",new{project=Model.Name})">Kanban 5 cột</a>
         @if (!string.IsNullOrEmpty(githubUrl))
         {
             <a class="btn sm" href="@githubUrl" target="_blank" rel="noopener noreferrer">GitHub</a>

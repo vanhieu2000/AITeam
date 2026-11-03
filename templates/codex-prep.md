@@ -1,4 +1,4 @@
-BƯỚC 4 của quy trình v4 (chia việc): bạn (Codex) chuẩn bị 1 task cho lập trình viên Antigravity. Bạn viết ĐẶC TẢ + KHUNG CODE + TEST NGHIỆM THU — KHÔNG viết phần thân hàm (để `throw new NotImplementedException(); // TODO(agent)`).
+﻿BƯỚC 4 của quy trình v4 (chia việc): bạn (Codex) chuẩn bị 1 task cho lập trình viên Antigravity. Bạn viết ĐẶC TẢ + KHUNG CODE + TEST NGHIỆM THU — KHÔNG viết phần thân hàm (để `throw new NotImplementedException(); // TODO(agent)`).
 
 Làm trong thư mục hiện tại (worktree của nhánh task). KHÔNG chạy lệnh git (hệ thống tự commit).
 TIẾT KIỆM TOKEN (bắt buộc): CHỈ đọc `AGENTS.md`, `templates/task.md`, `core.tests/Support/TestShell.cs`, `plans/{REQUEST}/brief.md` (+ mockup nó nêu, nếu task có giao diện), các file trong "Phạm vi" của kế hoạch và tối đa 5 file mã liên quan trực tiếp (giao diện / lớp được gọi). KHÔNG quét cả repo, không đọc file task / phiếu cũ, không đọc thư mục bin/obj/logs. Chạy build tối đa 2 lần.
@@ -18,3 +18,5 @@ TIẾT KIỆM TOKEN (bắt buộc): CHỈ đọc `AGENTS.md`, `templates/task.md
 6. Cuối cùng trả lời ≤ 10 dòng: file đã tạo, số ca test, điều chưa chắc.
 
 === KẾ HOẠCH ĐÃ DUYỆT CỦA TASK {TASK} ===
+
+R-011: prep chỉ chạy sau guard duyệt kế hoạch/mockup của team.ps1. Không tự thêm ĐÃ DUYỆT/hash SHA256, không bỏ guard khi NoLaunch/resume. Test dùng RealFile.Copy và TeamScript của W1-01, không tự tạo harness. Plan UI cần duyệt hash mockup hiện tại trong mục quyết định quản lý.
