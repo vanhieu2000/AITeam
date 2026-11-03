@@ -199,14 +199,15 @@ public sealed class AcceptanceV507ResearchPageTests : IDisposable
     public void Page_ask_and_errors()
     {
         var p = new ResearchModel(Service(), new Requests());
-        Assert.IsType<PageResult>(p.OnPostAsk("R-005", "Hỏi?", new[] { "chatgpt", "manual" }, false));
+        // H8-01 (R-012): thành công ⇒ Post-Redirect-Get để F5 không gửi lại câu hỏi.
+        var ok = Assert.IsType<RedirectToPageResult>(p.OnPostAsk("R-005", "Hỏi?", new[] { "chatgpt", "manual" }, false));
+        Assert.Equal("R-005", ok.RouteValues!["r"]);
+        Assert.Equal("Q20261025-030000", ok.RouteValues!["q"]);
         Assert.Equal("Q20261025-030000", p.Asked!.QuestionId);
-        Assert.Equal("Hỏi?", p.AskedQuestion);
-        Assert.Equal("R-005", p.Current!.Id);
-        Assert.Single(p.Jobs);
 
+        // Lỗi ⇒ vẫn trả trang để hiện thông báo, không redirect.
         var bad = new ResearchModel(Service(), new Requests());
-        bad.OnPostAsk("R-005", "Hỏi?", null, false);
+        Assert.IsType<PageResult>(bad.OnPostAsk("R-005", "Hỏi?", null, false));
         Assert.Equal("Chọn ít nhất 1 AI.", bad.Error);
         Assert.Null(bad.Asked);
     }
