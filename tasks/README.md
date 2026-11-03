@@ -99,7 +99,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W2-01 Cấu hình loại việc](W2-01-cau-hinh-loai-viec.md) | O | `agent-o/W2-01-cau-hinh-loai-viec` | ✅ Đã merge 03/11 (OpenCode) |
 | [V10-04 Dịch vụ báo cáo](V10-04-dich-vu-bao-cao.md) | O | `agent-o/V10-04-dich-vu-bao-cao` | ✅ Đã merge 04/11 (OpenCode) |
 | [V10-02 Chạy AI theo danh bạ](V10-02-adapter-ai-tu-danh-ba.md) | B | `agent-o/V10-02-adapter-ai-tu-danh-ba` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8) |
-| [W2-02 Luật chuẩn + bài học](W2-02-luat-chuan-va-bai-hoc.md) | B | `agent-o/W2-02-luat-chuan-va-bai-hoc` | 🔴 Cần sửa · tự giao lại |
+| [W2-02 Luật chuẩn + bài học](W2-02-luat-chuan-va-bai-hoc.md) | B | `agent-o/W2-02-luat-chuan-va-bai-hoc` | 🟡 Đang chạy · máy HIEUDV · 01:48 04/11/2026 |
 | [V10-05 Trợ lý chat](V10-05-tro-ly-chat.md) | B | `agent-o/V10-05-tro-ly-chat` | 🟡 Đang chạy · máy HIEUDV · 01:44 04/11/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
