@@ -89,9 +89,42 @@ public interface IClaudeDecisionLog
 - `core.tests/V1003SensitiveGateTests.cs` (harness PowerShell theo mẫu test hiện có, thư mục tạm, không push thật): `Get-SensitiveChanges` bắt `hub/Services/VaultService.cs`, `.env.local`, `Migrations/001.sql`, bỏ qua `hub/Pages/Tasks.cshtml`; `Assert-MergeApproval` chặn khi có `security` pending, chặn khi `rejected`, cho qua khi chỉ có `merge` pending cũ; `approval-request -Kind secret` thiếu `-Name` ⇒ lỗi; `Add-ClaudeDecision` ghi đúng một dòng JSON hợp lệ.
 
 ## Tiêu chí hoàn thành
-- Build 0 warning; toàn bộ test xanh; giữ BOM.
-- Commit: `V10-03: duyệt chỉ việc nhạy cảm, nhật ký Claude tự quyết, cổng KT bắt file nhạy cảm (Codex)`.
+- [x] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
+- [x] Đủ 3 mục Required của review vòng 1, có test xác nhận.
+- [x] Không sửa `hub/Pages/**`, `hub/wwwroot/**`.
+- [x] Commit: `V10-03: sửa sau review vòng 1 (Antigravity)`.
 
 ## Báo cáo của agent
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
+|---|---|
+| Build 0 warning, BOM đầy đủ | `dotnet build AITeam.sln -warnaserror`: 0 Warning, 0 Error. BOM UTF-8 = True trên 4/4 file |
+| Test xanh 100% | `dotnet test AITeam.sln`: Hub.Tests (858 passed), Core.Tests (983 passed) |
+| 3 mục Required vòng 1 | Sửa Assert-MergeApproval (chỉ xét commit rỗng/HEAD), Add-ClaudeDecision (git add/commit/push), BOM 3 file |
+| Không sửa giao diện | Không chạm `hub/Pages/**` và `hub/wwwroot/**` |
+
+- **File đã đổi**: `team.ps1`, `core.tests/V1003SensitiveGateTests.cs`, `hub.tests/V1003ApprovalPolicyTests.cs`, `hub/Services/ClaudeDecisionLog.cs`, `tasks/V10-03-duyet-nhay-cam.md`.
+- **Điều chưa chắc**: Không có.
 
 ## Review (Claude)
+
+## Review (Claude)
+### Vòng 1 — CẦN SỬA
+- Phiên OpenCode bị ngắt sau khi chạy test (hết lượt miễn phí lúc 23:36) ⇒ báo cáo agent để trống; Claude commit hộ code của OpenCode (4f570eb), không sửa code.
+- Đã kiểm: build 0 warning; Hub 843/843; Core đạt (S106 chỉ hỏng khi chạy song song, chạy riêng đạt); ApprovalKind / ApprovalRisk / OwnerPending / ClaudeDecisionLog đúng hợp đồng, đọc phòng thủ, chặn reparse point, append-only, không chứa giá trị khóa; không chạm giao diện.
+- **Required 1 — mục duyệt của commit cũ chặn merge mãi** (	eam.ps1 Assert-MergeApproval):
+  - Vấn đề: cổng KT tạo mục security theo (task, commit HEAD). Agent sửa lại ⇒ commit mới ⇒ mục mới. Mục cũ (pending hoặc approved cho commit cũ) vẫn nằm trong $sensitive: pending ⇒ "đang chờ chủ dự án duyệt"; approved ⇒ "duyệt commit X nhưng nhánh giờ là Y ⇒ xin duyệt lại" — kể cả khi mục cho HEAD đã được duyệt.
+  - Mong muốn: chỉ xét mục nhạy cảm có commit rỗng HOẶC bằng HEAD. Mục của commit khác coi là cũ (bỏ qua). Còn mục pending / rejected trong tập đó ⇒ chặn như hiện tại.
+  - Test xác nhận (thêm vào core.tests/V1003SensitiveGateTests.cs): A-001 security pending commit X, A-002 security approved commit Y, HEAD = Y ⇒ merge KHÔNG bị chặn; A-003 security pending commit Y ⇒ bị chặn.
+- **Required 2 — nhật ký Claude tự quyết không lên git**: Add-ClaudeDecision chỉ ghi file, không git add/commit/push ⇒ máy kia không thấy tab "Claude đã tự quyết". Mong muốn: sau khi ghi, git -C $Root add approvals/claude-decisions.jsonl + commit "Claude tự quyết: <title>" + push (lỗi git chỉ cảnh báo, như Save-ApprovalFile).
+- **Required 3 — mất BOM**: core.tests/V1003SensitiveGateTests.cs, hub.tests/V1003ApprovalPolicyTests.cs, hub/Services/ClaudeDecisionLog.cs không có BOM UTF-8.
+- Optional: -Kind secret bắt -Name chữ HOA trong khi két nhận cả chữ thường; mẫu 	oken bắt nhầm file kiểu TokenSummary.cs (chỉ thêm 1 mục duyệt thừa).
+- Lỗi: [AG] (BOM) 3 file mới thiếu BOM · [AG] (chất lượng) mục duyệt theo commit cũ chặn merge · [TK] (chất lượng) task chưa nói rõ xử lý mục của commit cũ.
+### Vòng 2 — ĐẠT
+- Antigravity (Gemini 3.8, Agent A) sửa đủ 3 mục Required: chỉ xét mục nhạy cảm có commit rỗng hoặc = HEAD; Add-ClaudeDecision git add/commit/push nhật ký; 3 file có BOM. Test xác nhận kiểm cả 2 ca (commit cũ không chặn, pending của HEAD chặn).
+- Kiểm: build 0 warning; Hub 858/858; Core 983/983; không chạm `hub/Pages/**`, `hub/wwwroot/**`.
+- Lượt 1 agent dừng xin duyệt kế hoạch (4′) ⇒ Claude duyệt, lượt 2 làm 10′.
+- Optional: `git commit` trong Add-ClaudeDecision commit cả các file khác đang stage ở repo chính (giống Save-ApprovalFile có sẵn) — nên dùng `git commit -- approvals/claude-decisions.jsonl`.
+
+## Kết quả
+- Màn "Cần anh duyệt" chỉ còn việc nhạy cảm (bí mật, bảo mật, dữ liệu nhạy cảm, ra ngoài, quyết định sản phẩm); merge / QC do Claude tự quyết và ghi nhật ký `approvals/claude-decisions.jsonl`. Cổng KT tự tạo mục duyệt bảo mật khi diff chạm file nhạy cảm, merge bị chặn tới khi chủ dự án duyệt đúng commit đó.
+- Chưa có màn hình (UI-04 của Claude).
