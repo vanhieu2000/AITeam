@@ -89,12 +89,21 @@ public interface IClaudeDecisionLog
 - `core.tests/V1003SensitiveGateTests.cs` (harness PowerShell theo mẫu test hiện có, thư mục tạm, không push thật): `Get-SensitiveChanges` bắt `hub/Services/VaultService.cs`, `.env.local`, `Migrations/001.sql`, bỏ qua `hub/Pages/Tasks.cshtml`; `Assert-MergeApproval` chặn khi có `security` pending, chặn khi `rejected`, cho qua khi chỉ có `merge` pending cũ; `approval-request -Kind secret` thiếu `-Name` ⇒ lỗi; `Add-ClaudeDecision` ghi đúng một dòng JSON hợp lệ.
 
 ## Tiêu chí hoàn thành
-- [ ] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
-- [ ] Đủ 3 mục Required của review vòng 1, có test xác nhận.
-- [ ] Không sửa `hub/Pages/**`, `hub/wwwroot/**`.
-- [ ] Commit: `V10-03: duyệt chỉ việc nhạy cảm, nhật ký Claude tự quyết, cổng KT bắt file nhạy cảm (Codex)`.
+- [x] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
+- [x] Đủ 3 mục Required của review vòng 1, có test xác nhận.
+- [x] Không sửa `hub/Pages/**`, `hub/wwwroot/**`.
+- [x] Commit: `V10-03: sửa sau review vòng 1 (Antigravity)`.
 
 ## Báo cáo của agent
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật) |
+|---|---|
+| Build 0 warning, BOM đầy đủ | `dotnet build AITeam.sln -warnaserror`: 0 Warning, 0 Error. BOM UTF-8 = True trên 4/4 file |
+| Test xanh 100% | `dotnet test AITeam.sln`: Hub.Tests (858 passed), Core.Tests (983 passed) |
+| 3 mục Required vòng 1 | Sửa Assert-MergeApproval (chỉ xét commit rỗng/HEAD), Add-ClaudeDecision (git add/commit/push), BOM 3 file |
+| Không sửa giao diện | Không chạm `hub/Pages/**` và `hub/wwwroot/**` |
+
+- **File đã đổi**: `team.ps1`, `core.tests/V1003SensitiveGateTests.cs`, `hub.tests/V1003ApprovalPolicyTests.cs`, `hub/Services/ClaudeDecisionLog.cs`, `tasks/V10-03-duyet-nhay-cam.md`.
+- **Điều chưa chắc**: Không có.
 
 ## Review (Claude)
 

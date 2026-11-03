@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Nodes;
 using AITeam.Hub.Models;
 using AITeam.Hub.Services;

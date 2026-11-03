@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AITeam.Core.Tests.Support;
@@ -122,5 +122,36 @@ public sealed class V1003SensitiveGateTests
         Assert.Equal("QC đạt vòng 1", doc.RootElement.GetProperty("title").GetString());
         Assert.Equal("V10-03", doc.RootElement.GetProperty("task").GetString());
         Assert.Equal("R-014", doc.RootElement.GetProperty("request").GetString());
+    }
+
+    [Fact]
+    public async Task Assert_MergeApproval_ignores_sensitive_items_from_older_commits()
+    {
+        using var box = new TeamScript();
+        PutApproval(box, "A-001", "security", "pending", task: "V10-03", commit: "commitX");
+        PutApproval(box, "A-002", "security", "approved", task: "V10-03", commit: "commitY");
+
+        var r1 = await box.RunAsync("team.ps1", ["Read-Json", "Get-Approvals", "Assert-MergeApproval"], SayStub + """
+            try {
+                $x = Assert-MergeApproval @{} 'V10-03' 'commitY'
+                Write-Output 'PASS'
+            } catch { Write-Output ('BLOCK: ' + $_.Exception.Message) }
+            """);
+
+        Assert.Equal(0, r1.Process.Code);
+        Assert.Contains("PASS", r1.Process.Output);
+        Assert.DoesNotContain("BLOCK", r1.Process.Output);
+
+        PutApproval(box, "A-003", "security", "pending", task: "V10-03", commit: "commitY");
+
+        var r2 = await box.RunAsync("team.ps1", ["Read-Json", "Get-Approvals", "Assert-MergeApproval"], SayStub + """
+            try {
+                $x = Assert-MergeApproval @{} 'V10-03' 'commitY'
+                Write-Output 'PASS'
+            } catch { Write-Output ('BLOCK: ' + $_.Exception.Message) }
+            """);
+
+        Assert.Equal(0, r2.Process.Code);
+        Assert.Contains("BLOCK", r2.Process.Output);
     }
 }

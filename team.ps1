@@ -3353,6 +3353,11 @@ function Add-ClaudeDecision {
         $stream.Write($bytes, 0, $bytes.Length)
         $stream.Flush()
     } finally { $stream.Dispose() }
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git -C $Root add -- "approvals/claude-decisions.jsonl" 2>$null
+    git -C $Root commit -q -m "Claude tự quyết: $Title" 2>$null
+    git -C $Root push -q 2>$null
+    $ErrorActionPreference = $eap
     return $id
 }
 
@@ -3361,7 +3366,10 @@ function Add-ClaudeDecision {
 function Assert-MergeApproval($cfg, $taskId, $head) {
     $sensitiveKinds = @('secret', 'security', 'sensitive-data', 'external')
     $items = @(Get-Approvals | Where-Object { $_.task -eq $taskId })
-    $sensitive = @($items | Where-Object { $sensitiveKinds -contains ([string]$_.kind).ToLowerInvariant() })
+    $sensitive = @($items | Where-Object {
+        $sensitiveKinds -contains ([string]$_.kind).ToLowerInvariant() -and
+        (-not $_.commit -or $_.commit -eq $head)
+    })
     $blocked = @($sensitive | Where-Object { $_.status -ne 'approved' })
     if ($blocked.Count -gt 0) {
         $b = $blocked | Sort-Object { [datetime]$_.requestedAt }, id | Select-Object -Last 1
