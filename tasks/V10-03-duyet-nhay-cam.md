@@ -94,3 +94,16 @@ public interface IClaudeDecisionLog
 ## Báo cáo của agent
 
 ## Review (Claude)
+
+## Review (Claude)
+### Vòng 1 — CẦN SỬA
+- Phiên OpenCode bị ngắt sau khi chạy test (hết lượt miễn phí lúc 23:36) ⇒ báo cáo agent để trống; Claude commit hộ code của OpenCode (4f570eb), không sửa code.
+- Đã kiểm: build 0 warning; Hub 843/843; Core đạt (S106 chỉ hỏng khi chạy song song, chạy riêng đạt); ApprovalKind / ApprovalRisk / OwnerPending / ClaudeDecisionLog đúng hợp đồng, đọc phòng thủ, chặn reparse point, append-only, không chứa giá trị khóa; không chạm giao diện.
+- **Required 1 — mục duyệt của commit cũ chặn merge mãi** (	eam.ps1 Assert-MergeApproval):
+  - Vấn đề: cổng KT tạo mục security theo (task, commit HEAD). Agent sửa lại ⇒ commit mới ⇒ mục mới. Mục cũ (pending hoặc approved cho commit cũ) vẫn nằm trong $sensitive: pending ⇒ "đang chờ chủ dự án duyệt"; approved ⇒ "duyệt commit X nhưng nhánh giờ là Y ⇒ xin duyệt lại" — kể cả khi mục cho HEAD đã được duyệt.
+  - Mong muốn: chỉ xét mục nhạy cảm có commit rỗng HOẶC bằng HEAD. Mục của commit khác coi là cũ (bỏ qua). Còn mục pending / rejected trong tập đó ⇒ chặn như hiện tại.
+  - Test xác nhận (thêm vào core.tests/V1003SensitiveGateTests.cs): A-001 security pending commit X, A-002 security approved commit Y, HEAD = Y ⇒ merge KHÔNG bị chặn; A-003 security pending commit Y ⇒ bị chặn.
+- **Required 2 — nhật ký Claude tự quyết không lên git**: Add-ClaudeDecision chỉ ghi file, không git add/commit/push ⇒ máy kia không thấy tab "Claude đã tự quyết". Mong muốn: sau khi ghi, git -C $Root add approvals/claude-decisions.jsonl + commit "Claude tự quyết: <title>" + push (lỗi git chỉ cảnh báo, như Save-ApprovalFile).
+- **Required 3 — mất BOM**: core.tests/V1003SensitiveGateTests.cs, hub.tests/V1003ApprovalPolicyTests.cs, hub/Services/ClaudeDecisionLog.cs không có BOM UTF-8.
+- Optional: -Kind secret bắt -Name chữ HOA trong khi két nhận cả chữ thường; mẫu 	oken bắt nhầm file kiểu TokenSummary.cs (chỉ thêm 1 mục duyệt thừa).
+- Lỗi: [AG] (BOM) 3 file mới thiếu BOM · [AG] (chất lượng) mục duyệt theo commit cũ chặn merge · [TK] (chất lượng) task chưa nói rõ xử lý mục của commit cũ.
