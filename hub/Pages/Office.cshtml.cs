@@ -16,14 +16,18 @@ public class OfficeModel : PageModel
     private readonly IRequestService? _requests;
     private readonly IOfficeChatService? _chat;
     private readonly ITeamConfigService? _config;
+    private readonly LocalChatStore? _localChat;
+    public ChatConversation? LatestAiConversation { get; private set; }
+    public string? AiConversationNotice { get; private set; }
 
-    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null)
+    public OfficeModel(IOfficeService office, ICommandService? commands = null, IRequestService? requests = null, IOfficeChatService? chat = null, ITeamConfigService? config = null, LocalChatStore? localChat = null)
     {
         _office = office;
         _commands = commands;
         _requests = requests;
         _chat = chat;
         _config = config;
+        _localChat = localChat;
     }
 
     [BindProperty(SupportsGet = true)] public string? RequestId { get; set; }
@@ -123,6 +127,8 @@ public class OfficeModel : PageModel
     /// <summary>Nạp View (bắt lỗi ⇒ Error) rồi LoadControl().</summary>
     public void OnGet()
     {
+        try { LatestAiConversation = _localChat?.Conversations().FirstOrDefault(); }
+        catch (Exception) { AiConversationNotice = "Chưa đọc được hội thoại. Mở Trò chuyện AI để kiểm tra."; }
         try
         {
             View = _office.Get();

@@ -70,3 +70,10 @@ Dán kết quả `.\team.ps1 request-report -Request R-012`, rồi điền:
 - **Cải tiến quy trình áp dụng cho yêu cầu sau** (tối đa 2, cụ thể, sửa file nào):
   1.
 - Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có / chưa
+
+
+## Bổ sung trực tiếp — chat trong Hub và lưu cục bộ
+- Chủ dự án yêu cầu triển khai/push nhánh một lượt để kiểm tra sau, không hỏi/chờ duyệt mockup; bổ sung giao diện chatbot phản hồi ngay trong Hub và database để ghi nhớ.
+- 00:29 03/11/2026 IST: H8-14 trên `agent-c/H8-14-chatgpt-local`: chat qua đăng nhập ChatGPT của Codex CLI; SQLite lưu lịch sử/model/ghi nhớ; export, hủy, chống gửi trùng, demo tách dữ liệu thật.
+- Build 0 warning/error; test mới đạt. Full run: Hub 792/806 đạt (14 lỗi Windows), Core 402/691 đạt (289 lỗi Windows); 0 skip. V9-04 có test mới; 4 tham chiếu AGENTS sai từ upstream đã sửa, không đổi test.
+- Gọi ChatGPT thật bị proxy cloud 403 tới chatgpt.com, đã dừng retry; chưa nghiệm thu máy Windows/công ty. Nhánh không đồng nghĩa đã hoàn thành A–D; danh sách còn lại ở `docs/CHAT-LOCAL.md`.

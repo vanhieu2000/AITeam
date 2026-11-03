@@ -69,6 +69,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 
 | [V9-10 Token mỗi lượt](V9-10-token-moi-luot.md) | C | `agent-c/V9-10-token-moi-luot` | ⏸ Codex đã sửa · chờ OpenCode/mẫu thật/Windows |
 | [V9-13 Tự gắn cờ lượt](V9-13-tu-gan-co-moi-luot.md) | C | `agent-c/V9-13-tu-gan-co-luot` | 🔵 Đã viết/test luật · chờ log H7-06 thật và Windows |
+| [H8-14 ChatGPT tại Hub, model và ghi nhớ SQLite](H8-14-chatgpt-local-va-ghi-nho-sqlite.md) | C | `agent-c/H8-14-chatgpt-local` | ✅ Đã merge (vòng 2) · gọi ChatGPT thật OK trên Windows |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 

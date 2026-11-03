@@ -84,3 +84,4 @@ Chủ dự án: HieuDV.
 - Dùng `Assert.Single(x, f => …)`, KHÔNG `Assert.Single(x.Where(…))` — cảnh báo xUnit2031 làm build `-warnaserror` hỏng (H7-04 kẹt 3 lượt).
 
 - [TN] Khi yêu cầu mới đổi hợp đồng (POST-Redirect-GET, trích partial, giới hạn danh sách), đối chiếu assert nghiệm thu trước; xung đột phải ghi đúng file/dòng và dừng mã đó, không nhân bản markup hay đổi assert để qua.
+- [HT] (R-012/H8-14) Chat qua Codex CLI: trạng thái đăng nhập không chứng minh kết nối; proxy có thể chặn chatgpt.com bằng 403. Kiểm phản hồi thật và tách demo, không ghi 0 token khi chưa đo được.
