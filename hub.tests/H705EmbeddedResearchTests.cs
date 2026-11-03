@@ -33,8 +33,13 @@ public sealed class H705EmbeddedResearchTests
         Assert.NotEmpty(token); host.Client.DefaultRequestHeaders.Add("RequestVerificationToken", token);
         var asked = await host.Client.PostAsync("/?handler=ResearchAsk", new FormUrlEncodedContent(new Dictionary<string, string>
         { ["r"] = "R-001", ["question"] = "Câu hỏi <script>bad</script>", ["ai"] = "manual" }));
-        Assert.Equal(HttpStatusCode.OK, asked.StatusCode);
-        html = await asked.Content.ReadAsStringAsync();
+        // H8-01 (R-012, Claude): hỏi thành công ⇒ Post-Redirect-Get về Văn phòng, giữ phiếu đang chọn;
+        // trang GET sau redirect hiện lại câu hỏi vừa gửi và form lưu thủ công.
+        Assert.Equal(HttpStatusCode.Redirect, asked.StatusCode);
+        var location = asked.Headers.Location!;
+        Assert.False(location.IsAbsoluteUri && location.Host != host.Client.BaseAddress!.Host);
+        Assert.Contains("R-001", location.OriginalString);
+        html = await host.Client.GetStringAsync(location);
         Assert.Equal("R-001", research.LastRequest);
         Assert.Contains("handler=ResearchSaveManual", html);
         Assert.DoesNotContain("<script>bad</script>", html);
