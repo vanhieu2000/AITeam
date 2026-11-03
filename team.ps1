@@ -2805,10 +2805,10 @@ function Invoke-LogRun {
         status = [string]$parsed.status
         durationSec = [int]$parsed.durationSec
         tokensKnown = [bool]$parsed.tokensKnown
-        inputTokens = $(if ($parsed.tokensKnown) { [long]$parsed.inputTokens } else { $null })
-        outputTokens = $(if ($parsed.tokensKnown) { [long]$parsed.outputTokens } else { $null })
+        inputTokens = $(if ($null -eq $parsed.inputTokens) { $null } else { [long]$parsed.inputTokens })
+        outputTokens = $(if ($null -eq $parsed.outputTokens) { $null } else { [long]$parsed.outputTokens })
         thinkingTokens = $null
-        totalTokens = $(if ($parsed.tokensKnown) { [long]$parsed.totalTokens } else { $null })
+        totalTokens = $(if ($null -eq $parsed.totalTokens) { $null } else { [long]$parsed.totalTokens })
         maxMinutes = $(if ($maxText -and [int]$maxText -gt 0) { [int]$maxText } else { 30 })
         difficulty = [regex]::Match($taskText, '\*\*Độ khó:\*\*\s*([SML])\b').Groups[1].Value
         hasOutput = [bool]$parsed.hasOutput

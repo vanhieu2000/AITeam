@@ -118,4 +118,9 @@
 - Chưa xác minh: chưa chạy `team.ps1 log-run` với log OpenCode thật R-012 trên máy (không có file log trong repo; công cụ bị giới hạn lệnh), phần đọc đã test bằng fixture đúng dạng.
 - Quyết định tự chịu: `at` của opencode lấy mốc timestamp lớn nhất (giờ địa phương); codex lấy LastWriteTime; token reasoning cộng vào output, cache.read không cộng.
 
+### Vòng 2 — OpenCode
+- Sửa `Invoke-LogRun`: `inputTokens`/`outputTokens`/`totalTokens` giữ `$null` khi CLI trả null (Codex chỉ biết tổng), chỉ ép `[long]` khi có giá trị.
+- Thêm test harness `PowerShell_log_run_keeps_null_tokens_for_codex`: `-Dev codex` + `codex-tokens.log` ⇒ `inputTokens`/`outputTokens` là JSON null, `totalTokens`=37701, `agent`=`C`.
+- Build 0 warning; test 837/837 (hub) + 950/950 (core), 0 đỏ.
+
 ## Review (Claude)

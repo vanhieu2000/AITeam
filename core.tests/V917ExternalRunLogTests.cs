@@ -176,4 +176,49 @@ public sealed class V917ExternalRunLogTests
         Assert.Equal("R-012", row.GetProperty("request").GetString());
         Assert.Equal(78000L, row.GetProperty("inputTokens").GetInt64());
     }
+
+    [Fact]
+    public async Task PowerShell_log_run_keeps_null_tokens_for_codex()
+    {
+        using var sandbox = new TeamScript();
+        var root = sandbox.Root;
+        Directory.CreateDirectory(Path.Combine(root, "metrics", "runs"));
+        Directory.CreateDirectory(Path.Combine(root, "tasks"));
+        File.WriteAllText(Path.Combine(root, "tasks", "H8-12.md"),
+            "**Yêu cầu:** R-012\r\n**Thời gian tối đa:** 30\r\n**Độ khó:** M\r\n", new UTF8Encoding(false));
+        File.WriteAllText(Path.Combine(root, "cli.cmd"), """
+            @echo off
+            echo {"durationSec":5,"tokensKnown":true,"inputTokens":null,"outputTokens":null,"totalTokens":37701,"status":"SUCCESS","at":"2026-11-03T04:25:00","hasOutput":true}
+            exit /b 0
+            """.ReplaceLineEndings("\r\n"), new UTF8Encoding(false));
+
+        var logPath = Fixture("codex-tokens.log");
+        var script = $$"""
+            $Project = 'AITeam'
+            $Task = 'H8-12'
+            $Dev = 'codex'
+            $Log = '{{logPath}}'
+            function Resolve-Project($name) { [pscustomobject]@{ Path = $Root; Info = [pscustomobject]@{ name = $name }; Logs = $Root } }
+            function Get-AITeamExe { Join-Path $Root 'cli.cmd' }
+            function Find-TaskFile($r, $id) { Get-Item (Join-Path $Root "tasks/$id.md") }
+            function Get-Section($text, $name) { '' }
+            function Get-ReviewFindings($review) { @() }
+            function Say($text, $color) { $script:said += [string]$text }
+            function Save-RunMetrics($record) {
+                [IO.File]::WriteAllText((Join-Path $Root ('metrics/runs/' + $record.log)), ($record | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding $false))
+            }
+            $script:said = @()
+            Invoke-LogRun
+            """;
+
+        var result = await sandbox.RunAsync("team.ps1", ["Invoke-LogRun"], script);
+        Assert.Equal(0, result.Process.Code);
+        var files = Directory.GetFiles(Path.Combine(root, "metrics", "runs"), "H8-12-*.json");
+        using var saved = JsonDocument.Parse(File.ReadAllText(Assert.Single(files)));
+        var row = saved.RootElement;
+        Assert.Equal(JsonValueKind.Null, row.GetProperty("inputTokens").ValueKind);
+        Assert.Equal(JsonValueKind.Null, row.GetProperty("outputTokens").ValueKind);
+        Assert.Equal(37701L, row.GetProperty("totalTokens").GetInt64());
+        Assert.Equal("C", row.GetProperty("agent").GetString());
+    }
 }
