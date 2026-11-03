@@ -1,0 +1,86 @@
+﻿# V10-02 · Chạy AI theo danh bạ: 3 adapter chung + factory đọc registry
+
+- **Agent:** O
+- **Nhánh:** `agent-o/V10-02-adapter-ai-tu-danh-ba`
+- **Yêu cầu:** R-014
+- **Loại việc:** Tính năng lõi / CLI
+- **Ngân sách:** ~550 dòng
+- **Thời gian tối đa:** 40 phút
+- **Độ khó:** L
+
+## Tóm tắt
+- Không có chức năng mới trên màn hình (màn "Tài khoản AI" do Claude làm sau, UI-08).
+- Thêm AI mới (vd. một CLI khác hoặc một API kiểu OpenAI) chỉ bằng cách thêm dòng trong danh bạ `office.db`, không phải sửa code C#.
+- Codex / OpenCode / Antigravity vẫn chạy bằng lớp riêng như cũ (an toàn), nhưng được chọn qua danh bạ.
+
+## Đọc (CHỈ những file này)
+- `docs/design/R-014-van-phong-ai.md` mục 4.6, 5 ("Bỏ viết cứng danh sách AI"), 8.
+- `core/AITeam.Core/AiServices/AiServiceModels.cs` (hợp đồng V10-01, KHÔNG đổi).
+- `core/AITeam.Core/Providers/ProviderModels.cs`, `ProviderConfig.cs`, `OpenCodeProvider.cs` (cách dựng ProcessSpec, phân loại lỗi hạn mức).
+- `core/AITeam.Core/Process/` (IProcessRunner, ProcessSpec).
+- `core/AITeam.Core/Research/Research.cs` chỉ lớp `SecretRedactor`.
+
+## Mục tiêu
+Thư mục mới `core/AITeam.Core/AiServices/Adapters/`. Hợp đồng (Claude chốt — KHÔNG đổi chữ ký):
+```csharp
+namespace AITeam.Core.AiServices.Adapters;
+
+/// Tra giá trị khóa trong két theo TÊN. Core không biết két nằm đâu; Hub cắm vào sau.
+public interface ISecretLookup { string? Get(string name); }
+
+public interface IAiProviderFactory
+{
+    /// Dịch vụ có Id "codex" / "opencode" / "agy" ⇒ lớp riêng có sẵn (CodexProvider / OpenCodeProvider / AgyProvider),
+    /// dựng ProviderConfig từ AiService (Command → Exe, Models[0] → Model, MaxJobs → MaxConcurrent, Paid).
+    /// Còn lại theo Adapter: CliJson ⇒ CliJsonProvider, CliText ⇒ CliTextProvider, OpenAiCompatibleHttp ⇒ OpenAiHttpProvider.
+    /// Dịch vụ tắt (Enabled=false) ⇒ InvalidOperationException("Dịch vụ AI <id> đang tắt.").
+    IAgentProvider Create(AiService service);
+
+    /// List(includeDisabled:false) của registry, lọc theo vai trò, giữ thứ tự registry.
+    IReadOnlyList<AiService> ForRole(AiRole role);
+}
+
+public sealed class AiProviderFactory(IAiServiceRegistry registry, IProcessRunner runner, ISecretLookup secrets, HttpMessageHandler? http = null) : IAiProviderFactory { … }
+```
+- `ProviderKind` thêm giá trị **`Generic`** (cuối enum, không đổi số của giá trị cũ). Ba provider chung có `Kind = Generic`, `Id = service.Id`.
+- **`CliTextProvider`**: chạy `service.Command` với `service.Args` (mảng). Mỗi phần tử được thay chỗ giữ `{prompt_file}`, `{workdir}`, `{model}` bằng giá trị thật — thay TRONG phần tử, không ghép thành chuỗi lệnh, không qua shell. Prompt đưa qua file (StdinFile = prompt file nếu không có `{prompt_file}` trong Args). Kết quả = stdout. `HasReadOnlySandbox = false`.
+- **`CliJsonProvider`**: như CliText, nhưng stdout là JSON lines; Text = nối các trường `text` của dòng có `"type":"text"` (hoặc `part.text`), token lấy từ `tokens.input/output` nếu có; dòng không phải JSON bỏ qua.
+- **`OpenAiHttpProvider`**: POST `{BaseUrl}/chat/completions`, body `{model, messages:[{role:"user",content:<nội dung prompt file>}]}`; header `Authorization: Bearer <secrets.Get(SecretKeyName)>` khi có tên khóa. Text = `choices[0].message.content`, token từ `usage.prompt_tokens / completion_tokens`. Chỉ hỗ trợ `RunMode.ReadOnly`; `Develop` ⇒ `Status=ConfigError`, Detail "Adapter HTTP không viết code được.". `HasReadOnlySandbox = true` (không chạm file).
+- **Phân loại lỗi** (cả 3): mã thoát / HTTP 429, hoặc chữ `rate limit`, `quota`, `usage limit`, `insufficient balance`, `Free usage limit` ⇒ `QuotaExhausted`; HTTP 401/403 ⇒ `NotLoggedIn`; không tìm thấy exe ⇒ `Unavailable`; quá `request.Timeout` ⇒ `TimedOut` (dừng tiến trình / hủy request).
+- `CheckAsync`: CLI ⇒ chạy `Command --version` (timeout 15 s); HTTP ⇒ `GET {BaseUrl}/models` (timeout 15 s). Không in giá trị khóa.
+- DI trong `hub/Services/HubV3Registration.cs`: `ISecretLookup` = lớp nhỏ mới `hub/Services/VaultSecretLookup.cs`. `IVaultService` cố ý KHÔNG có hàm trả giá trị (giao diện không được đọc khóa) ⇒ thêm vào lớp `VaultService` hàm `internal string? ReadValue(string name)` (dùng `ReadVault()` có sẵn, tên sai mẫu ⇒ null) — KHÔNG thêm vào `IVaultService`. `VaultSecretLookup(VaultService vault)` gọi hàm này. `IAiProviderFactory` singleton.
+
+## Phạm vi (được sửa những gì)
+- `core/AITeam.Core/AiServices/Adapters/` (mới)
+- `core/AITeam.Core/Providers/ProviderModels.cs` (chỉ thêm `Generic`)
+- `hub/Services/VaultSecretLookup.cs` (mới)
+- `hub/Services/VaultService.cs` (chỉ thêm `ReadValue`)
+- `hub/Services/HubV3Registration.cs`
+- `core.tests/V1002AiAdapterTests.cs` (mới)
+- `tasks/V10-02-adapter-ai-tu-danh-ba.md`
+
+## Không làm
+- **KHÔNG sửa giao diện**: `hub/Pages/**`, `hub/wwwroot/**`.
+- Không xóa / đổi `ProviderSettings.Create`, `AiCatalog`, `team.ps1` (đợt sau mới chuyển hết).
+- Không gọi mạng thật trong test (dùng `HttpMessageHandler` giả và `IProcessRunner` giả).
+
+## Ràng buộc (bảo mật)
+- Giá trị khóa KHÔNG được xuất hiện trong: `AgentRunResult.Text`, `Detail`, log, ngoại lệ, file tạm. Mọi chuỗi trả ra đi qua `SecretRedactor.Redact` và thay thêm chính giá trị khóa bằng `***`.
+- `BaseUrl` chỉ nhận `https://…` hoặc `http://127.0.0.1…` / `http://localhost…`; khác ⇒ `ConfigError`. Không tự theo chuyển hướng (`AllowAutoRedirect=false`).
+- `Command` phải là tên / đường dẫn file không chứa `& | ; < > ^ " \n`; sai ⇒ `ConfigError`.
+- Phản hồi HTTP đọc tối đa 2 MB; stdout CLI giữ tối đa 2 MB (cắt phần thừa, ghi Detail "đã cắt").
+
+## Test nghiệm thu
+`core.tests/V1002AiAdapterTests.cs` (runner giả, handler HTTP giả, registry SQLite thư mục tạm):
+- Factory: id `codex` ⇒ `CodexProvider`; `opencode` ⇒ `OpenCodeProvider`; dịch vụ `mycli` adapter cli-text ⇒ `CliTextProvider` với `Id="mycli"`, `Kind=Generic`; dịch vụ tắt ⇒ InvalidOperationException; `ForRole(Chat)` chỉ trả dịch vụ bật có vai trò Chat.
+- CliText: Args `["run","{prompt_file}","--m","{model}"]` ⇒ ProcessSpec nhận đúng mảng đã thay, không có shell; stdout ⇒ Text.
+- CliJson: 3 dòng JSON (1 text, 1 rác, 1 tokens) ⇒ Text đúng, Tokens đúng.
+- HTTP: 200 ⇒ Text + Tokens; header Bearer có giá trị khóa giả nhưng Text / Detail khi server trả lại chính khóa ⇒ đã thành `***`; 429 ⇒ QuotaExhausted; 401 ⇒ NotLoggedIn; 302 sang host khác ⇒ không theo; BaseUrl `http://evil.com` ⇒ ConfigError; Mode Develop ⇒ ConfigError.
+- Chuỗi `Free usage limit reached` trong stderr CLI ⇒ QuotaExhausted.
+- Command `codex & del x` ⇒ ConfigError.
+
+## Tiêu chí hoàn thành
+- Build 0 warning; toàn bộ test xanh; giữ BOM.
+- Commit: `V10-02: chạy AI theo danh bạ — 3 adapter chung + factory (OpenCode)`.
+
+## Báo cáo của agent
