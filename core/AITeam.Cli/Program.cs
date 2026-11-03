@@ -20,6 +20,7 @@ try
         "review" => await Review(),
         "review-rounds" => ReviewRounds(),
         "run" => await Run(),
+        "diagnose-run" => DiagnoseRun(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         _ => Help(),
     };
@@ -47,6 +48,27 @@ int CheckHarnessChange()
     var allowed = AcceptanceHarnessPolicy.Allows(File.ReadAllText(file), args.Contains("--allow"));
     Console.WriteLine(allowed ? "Chấp nhận thay harness đã khai báo; Claude vẫn cần review phạm vi dựng môi trường." : "Chặn: chưa khai báo hoặc sửa assert/điều kiện chọn test.");
     return allowed ? 0 : 2;
+}
+
+int DiagnoseRun()
+{
+    var file = Arg("--input") ?? throw new FileNotFoundException("Thiếu --input.");
+    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString };
+    var current = JsonSerializer.Deserialize<AITeam.Core.Metrics.RunDiagnosticInput>(File.ReadAllText(file), options)
+        ?? throw new InvalidDataException("Số đo lượt không hợp lệ.");
+    var history = new List<AITeam.Core.Metrics.RunDiagnosticInput>();
+    var directory = Arg("--history");
+    if (directory != null && Directory.Exists(directory))
+        foreach (var item in Directory.EnumerateFiles(directory, "*.json"))
+        {
+            try { var row = JsonSerializer.Deserialize<AITeam.Core.Metrics.RunDiagnosticInput>(File.ReadAllText(item), options); if (row != null) history.Add(row); }
+            catch (JsonException) { /* Không coi file số đo hỏng là lượt đo 0. */ }
+        }
+    var previous = history.Where(r => r.Project == current.Project && r.Task == current.Task && r.Run == current.Run - 1).LastOrDefault();
+    var peers = history.Where(r => current.Difficulty is "S" or "M" or "L" && r.Difficulty == current.Difficulty && r.KnownTokens).ToList();
+    double? average = peers.Count == 0 ? null : peers.Average(r => (double)r.TotalTokens!.Value);
+    Console.WriteLine(JsonSerializer.Serialize(AITeam.Core.Metrics.RunDiagnostics.Evaluate(current, previous, average), new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return 0;
 }
 
 async Task<int> Providers()

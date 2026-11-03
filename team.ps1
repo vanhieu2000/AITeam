@@ -648,7 +648,12 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     if (-not $v.Ok -and -not $script:VerifyRetried -and $script:AssignRuns -lt 3) {
         $script:VerifyRetried = $true
         # Lỗi cơ học (chưa commit / build / test / BOM...) → trả agent sửa luôn 1 lần, không tốn lượt review của Claude.
-        Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $true)
+        $runMetrics = Get-RunRecord $r $Task $log $agentId $model $work $v $true
+        Save-RunMetrics $runMetrics
+        if ($runMetrics.pause) {
+            Set-BoardStatus $r $Task '⏸ Tạm dừng · có thể test nghiệm thu sai (TN)'
+            return
+        }
         Say "Cổng kiểm tra KHÔNG ĐẠT → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi." Yellow
         Set-BoardStatus $r $Task '🔴 Cần sửa · tự giao lại' -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'KHÔNG ĐẠT' }
         $script:Resume = $true
@@ -656,7 +661,12 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         Invoke-Assign
         return
     }
-    Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $v $false)
+    $runMetrics = Get-RunRecord $r $Task $log $agentId $model $work $v $false
+    Save-RunMetrics $runMetrics
+    if ($runMetrics.pause) {
+        Set-BoardStatus $r $Task '⏸ Tạm dừng · có thể test nghiệm thu sai (TN)'
+        return
+    }
     # Bảng việc theo kết quả cổng KT (dòng này từng bị mất ⇒ task xong vẫn hiện 🟡 trên bảng / Văn phòng — R-005). Review AI bên dưới có thể ghi đè.
     $boardText = $(if ($v.Ok) { "🔵 Chờ review · cổng KT ĐẠT" } else { "🔴 Cần sửa · cổng KT KHÔNG ĐẠT" })
     if ($v.Ok -and $rv) {
@@ -2037,6 +2047,9 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
     }
     $u = if ($j) { $j.usage } else { $null }
     $tokensKnown = $u -and $null -ne $u.input_tokens -and $null -ne $u.output_tokens -and $u.input_tokens -ge 0 -and $u.output_tokens -ge 0 -and $j.tokensKnown -ne $false
+    $taskText = try { Get-Content (Find-TaskFile $r $TaskName).FullName -Raw -Encoding UTF8 } catch { "" }
+    $maxText = [regex]::Match($taskText, '\*\*Thời gian tối đa:\*\*\s*(\d+)').Groups[1].Value
+    $failureLog = if ($verify -and $verify.Report -and (Test-Path -LiteralPath $verify.Report) -and (Get-Item -LiteralPath $verify.Report).Length -le 4194304) { [IO.File]::ReadAllText($verify.Report) } else { "" }
     [ordered]@{
         at = (Get-Item $logFile).LastWriteTime.ToString("s")
         head = $(if ($work -and (Test-Path $work)) { git -C $work rev-parse HEAD 2>$null } else { $null })
@@ -2053,6 +2066,11 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         outputTokens = $(if ($tokensKnown) { [long]$u.output_tokens } else { $null })
         thinkingTokens = $(if ($tokensKnown -and $null -ne $u.thinking_tokens) { [long]$u.thinking_tokens } else { $null })
         totalTokens = $(if ($tokensKnown) { if ($null -ne $u.total_tokens -and $u.total_tokens -ge 0) { [long]$u.total_tokens } else { [long]$u.input_tokens + [long]$u.output_tokens } } else { $null })
+        maxMinutes = $(if ($maxText -and [int]$maxText -gt 0) { [int]$maxText } else { 30 })
+        difficulty = [regex]::Match($taskText, '\*\*Độ khó:\*\*\s*([SML])\b').Groups[1].Value
+        hasOutput = [bool]($j -and -not [string]::IsNullOrWhiteSpace([string]$j.response))
+        diagnosticError = $(if ($j) { [string]$j.error + " " + [string]$j.status } else { "" })
+        failureLog = $failureLog
         linesAdded = $added; linesRemoved = $removed; filesChanged = $files
         verifyOk = $(if ($verify) { [bool]$verify.Ok } else { $null })
         verifyFails = $(if ($verify) { @($verify.Fails).Count } else { $null })
@@ -2064,13 +2082,59 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
     }
 }
 
+# V9-13: phân tích bằng máy, không gọi AI; dữ liệu lỗi thô chỉ tồn tại trong file tạm.
+function Add-RunFlags($record, [string]$history) {
+    $temp = [IO.Path]::GetTempFileName()
+    $savedExit = $global:LASTEXITCODE
+    try {
+        [IO.File]::WriteAllText($temp, ($record | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding $false))
+        $exe = Get-AITeamExe
+        if (-not $exe) { throw 'Chưa có CLI phân tích lượt.' }
+        $text = & $exe diagnose-run --input $temp --history $history
+        if ($LASTEXITCODE -ne 0) { throw 'Phân tích lượt thất bại.' }
+        $result = ($text -join "`n") | ConvertFrom-Json
+        $record.flags = @($result.flags)
+        $record.pause = [bool]$result.pause
+        $record.failureFingerprint = $result.failureFingerprint
+        $record.failureFingerprints = @($result.failureFingerprints)
+    } finally {
+        $record.Remove('diagnosticError'); $record.Remove('failureLog')
+        Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
+        $global:LASTEXITCODE = $savedExit
+    }
+}
+
+function Add-RunFlagsJournal($record) {
+    if (-not $record.flags -or $record.request -notmatch '\AR-[0-9]{3,4}\z') { return }
+    $folder = Join-Path $Root 'requests'
+    $files = @(Get-ChildItem -LiteralPath $folder -Filter "$($record.request)*.md" -ErrorAction SilentlyContinue | Where-Object { $_.BaseName -eq $record.request -or $_.BaseName.StartsWith("$($record.request)-",[StringComparison]::Ordinal) })
+    if ($files.Count -ne 1) { return }
+    $file = $files[0].FullName
+    for ($node=$file; $node; $node=[IO.Path]::GetDirectoryName($node)) {
+        if ((Test-Path -LiteralPath $node) -and ([IO.File]::GetAttributes($node) -band [IO.FileAttributes]::ReparsePoint)) { throw 'Nguồn nhật ký không an toàn.' }
+    }
+    $body = [IO.File]::ReadAllText($file)
+    $stamp = "Cờ tự động $($record.project)/$($record.task) lượt $($record.run)"
+    if ($body.Contains($stamp)) { return }
+    $heading = [regex]::Match($body, '(?m)^##\s+3[.)]?\s+Nhật ký[^\r\n]*\r?\n')
+    if (-not $heading.Success) { return }
+    $start = $heading.Index + $heading.Length
+    $next = [regex]::Match($body.Substring($start), '(?m)^##\s+')
+    $at = if ($next.Success) { $start + $next.Index } else { $body.Length }
+    $nl = if ($body.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $line = "| $(Get-Date -Format 'HH:mm dd/MM/yyyy') | $stamp | $(@($record.flags) -join ', ')$(if ($record.pause) { ' — có thể test nghiệm thu sai; Tạm dừng' }) |$nl"
+    [IO.File]::WriteAllText($file, $body.Insert($at,$line), (New-Object Text.UTF8Encoding (Test-HasBom ([IO.File]::ReadAllBytes($file)))))
+}
+
 function Save-RunMetrics($record) {
     Invoke-RepoTransaction -RepoPath $Root -Action {
         $dir = Join-Path $Root "metrics\runs"
         New-Item -ItemType Directory -Force $dir | Out-Null
         $name = "{0}-{1}-{2}-{3}.json" -f ($record.at -replace '[^0-9]', ''), $record.machine, $record.project, ($record.log -replace '\.json$', '')
         $file = Join-Path $dir $name
-        [IO.File]::WriteAllText($file, ($record | ConvertTo-Json), $Utf8)
+        Add-RunFlags $record $dir
+        Add-RunFlagsJournal $record
+        [IO.File]::WriteAllText($file, ($record | ConvertTo-Json -Depth 8), $Utf8)
         if ($script:AcceptVerify -and $record.task -ceq $script:AcceptVerify.task -and $record.head -ceq $script:AcceptVerify.head -and [string]$record.run -eq [string]$script:AcceptVerify.run) {
             $metricRepo=Resolve-Project $record.project
             Invoke-RepoTransaction -RepoPath $metricRepo.Path -Action {

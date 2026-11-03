@@ -68,6 +68,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-03 Sinh mockup và khóa prep trước duyệt](W1-03-sinh-mockup-va-khoa-prep-truoc-duyet.md) | A | `agent-a/W1-03-sinh-mockup-va-khoa-prep-truoc-duyet` | 🔵 Chờ review · OpenCode 02/11 xanh hết (2423462: Hub 721, Core 737)
 
 | [V9-10 Token mỗi lượt](V9-10-token-moi-luot.md) | C | `agent-c/V9-10-token-moi-luot` | ⏸ Codex đã sửa · chờ OpenCode/mẫu thật/Windows |
+| [V9-13 Tự gắn cờ lượt](V9-13-tu-gan-co-moi-luot.md) | C | `agent-c/V9-13-tu-gan-co-luot` | 🔵 Đã viết/test luật · chờ log H7-06 thật và Windows |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
