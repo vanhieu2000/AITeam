@@ -1,4 +1,4 @@
-namespace AITeam.Core.Providers;
+﻿namespace AITeam.Core.Providers;
 
 /// <summary>Vai trò trong team — tách khỏi provider: một provider làm được nhiều vai trò.</summary>
 public enum AgentRole { Planner, Architect, Developer, Reviewer, QA, Manager }
@@ -27,8 +27,9 @@ public enum RunStatus
 
 public sealed record TokenUsage(long Input, long CachedInput, long Output)
 {
+    public long? Thinking { get; init; }
     public static readonly TokenUsage Unknown = new(-1, -1, -1);
-    public bool IsKnown => Input >= 0;
+    public bool IsKnown => Input >= 0 && Output >= 0;
     public long Total => IsKnown ? Input + Output : -1;
 }
 
