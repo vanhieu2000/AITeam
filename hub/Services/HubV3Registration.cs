@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+﻿using AITeam.Core.Workflow;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AITeam.Hub.Services;
 
@@ -17,6 +18,9 @@ public static class HubV3Registration
         services.TryAddSingleton<IRequestService, RequestService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();
         services.TryAddSingleton<IOfficeService, OfficeService>();
+        // W2-01 / R-014: cấu hình loại việc → bước → người phụ trách (config/workflow.json).
+        services.TryAddSingleton<IWorkflowConfigService>(sp => new WorkflowConfigService(
+            sp.GetRequiredService<HubPaths>().AITeamRoot));
         // V5-06: tài khoản AI (chỉ metadata, %LOCALAPPDATA%\AITeam\config\accounts.json).
         // V5-07b: phòng nghiên cứu (connector thật: Codex CLI, Gemini CLI).
         services.TryAddSingleton<IResearchService>(sp => new ResearchService(

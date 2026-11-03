@@ -97,4 +97,16 @@ public interface IWorkflowConfigService
 
 ## Báo cáo của agent
 
+## Báo cáo của agent — OpenCode
+- Đã làm: thêm `AITeam.Core.Workflow` (WorkflowStep/TaskType/WorkflowConfig/WorkflowValidation/IWorkflowConfigService + `WorkflowConfigService` đọc/ghi/validate/resolve, khóa + ghi tạm + đổi tên + chặn reparse point); 6 loại việc mặc định đúng R-014 4.5.
+- File đã đổi: `core/AITeam.Core/Workflow/WorkflowConfig.cs`, `core/AITeam.Core/Workflow/WorkflowConfigService.cs`, `config/workflow.json` (UTF-8 BOM, camelCase, thụt 2), `hub/Services/HubV3Registration.cs`, `core.tests/W201WorkflowConfigTests.cs`, file task này.
+- Kiểm tra: `dotnet build AITeam.sln -warnaserror -nodeReuse:false` → 0 warning, 0 error. `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` → Hub 837/837, Core 964/964 (tổng 1801 đạt, 0 hỏng, 0 bỏ qua).
+- Quyết định tự đưa: Resolve ưu tiên dòng "**Loại việc:**" (khớp id hoặc tên), rồi tiền tố chữ cái đầu mã task, cuối cùng là `chua-phan-loai` (bước của `tinh-nang-loi`); `Load` chỉ kiểm cấu trúc JSON, kiểm nghiệp vụ do `Validate` trả.
+- Chưa xác minh: chưa nối giao diện (ngoài phạm vi, UI-07 của Claude); `team.ps1` chưa dùng cấu hình (W2-02).
+
 ## Review (Claude)
+### Vòng 1 — ĐẠT
+- Đã kiểm: hợp đồng đúng chữ ký; Save kiểm revision hai lần + ghi tạm rồi File.Replace, khóa theo đường dẫn, chặn reparse point cả thư mục cha; Resolve theo dòng Loại việc → tiền tố → chua-phan-loai; 15 test khớp danh sách nghiệm thu, không return sớm; workflow.json có BOM, 6 loại.
+- OpenCode: 10,6 phút, ~95k token, build 0 warning, 1801/1801 test.
+- Optional: code 672 dòng / ngân sách 350 (1,9×, phần lớn là đọc JSON phòng thủ) — lần sau ghi ngân sách ~600 cho task có parser JSON tay; tiền tố `W` (quy trình / công cụ) chưa gán loại việc ⇒ thêm vào `tinh-nang-loi` khi làm UI-07.
+

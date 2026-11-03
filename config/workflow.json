@@ -1,0 +1,519 @@
+﻿{
+  "version": 1,
+  "taskTypes": [
+    {
+      "id": "giao-dien",
+      "name": "Tính năng có giao diện",
+      "codePrefixes": [
+        "H"
+      ],
+      "steps": [
+        {
+          "code": "tiep_nhan",
+          "name": "Tiếp nhận",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "01-tiep-nhan"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "thiet_ke",
+          "name": "Thiết kế",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "mockup_duyet",
+          "name": "Duyệt mockup",
+          "owner": "owner",
+          "fallback": null,
+          "skills": [],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": true
+        },
+        {
+          "code": "chuan_bi",
+          "name": "Chuẩn bị",
+          "owner": "codex",
+          "fallback": null,
+          "skills": [
+            "06-chuan-bi-task"
+          ],
+          "rules": [],
+          "maxMinutes": 25,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "code_loi",
+          "name": "Code lõi",
+          "owner": "codex",
+          "fallback": "opencode",
+          "skills": [
+            "07-code",
+            "code-test"
+          ],
+          "rules": [],
+          "maxMinutes": 30,
+          "maxRounds": 3,
+          "ownerApproval": false
+        },
+        {
+          "code": "giao_dien",
+          "name": "Giao diện",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "code-web"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "cong_kt",
+          "name": "Cổng kiểm tra",
+          "owner": "gate",
+          "fallback": null,
+          "skills": [
+            "08-kiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "qc",
+          "name": "QC",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "09-qc"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "nghiem_thu",
+          "name": "Nghiệm thu",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "10-nghiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        }
+      ]
+    },
+    {
+      "id": "tinh-nang-loi",
+      "name": "Tính năng lõi / CLI",
+      "codePrefixes": [
+        "V",
+        "O"
+      ],
+      "steps": [
+        {
+          "code": "tiep_nhan",
+          "name": "Tiếp nhận",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "01-tiep-nhan"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "ke_hoach",
+          "name": "Kế hoạch",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "04-ke-hoach"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "chuan_bi",
+          "name": "Chuẩn bị",
+          "owner": "codex",
+          "fallback": null,
+          "skills": [
+            "06-chuan-bi-task"
+          ],
+          "rules": [],
+          "maxMinutes": 25,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "code",
+          "name": "Code",
+          "owner": "codex",
+          "fallback": "opencode",
+          "skills": [
+            "07-code",
+            "code-test"
+          ],
+          "rules": [],
+          "maxMinutes": 30,
+          "maxRounds": 3,
+          "ownerApproval": false
+        },
+        {
+          "code": "cong_kt",
+          "name": "Cổng kiểm tra",
+          "owner": "gate",
+          "fallback": null,
+          "skills": [
+            "08-kiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "qc",
+          "name": "QC",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "09-qc"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "nghiem_thu",
+          "name": "Nghiệm thu",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "10-nghiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        }
+      ]
+    },
+    {
+      "id": "sua-loi",
+      "name": "Sửa lỗi",
+      "codePrefixes": [],
+      "steps": [
+        {
+          "code": "tiep_nhan",
+          "name": "Tiếp nhận",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "01-tiep-nhan"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "chan_doan",
+          "name": "Chẩn đoán",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "code",
+          "name": "Code",
+          "owner": "opencode",
+          "fallback": "codex",
+          "skills": [
+            "07-code",
+            "code-test"
+          ],
+          "rules": [],
+          "maxMinutes": 30,
+          "maxRounds": 3,
+          "ownerApproval": false
+        },
+        {
+          "code": "cong_kt",
+          "name": "Cổng kiểm tra",
+          "owner": "gate",
+          "fallback": null,
+          "skills": [
+            "08-kiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "qc",
+          "name": "QC",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "09-qc"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "nghiem_thu",
+          "name": "Nghiệm thu",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "10-nghiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        }
+      ]
+    },
+    {
+      "id": "tai-lieu",
+      "name": "Tài liệu / dữ liệu",
+      "codePrefixes": [
+        "D"
+      ],
+      "steps": [
+        {
+          "code": "tiep_nhan",
+          "name": "Tiếp nhận",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "01-tiep-nhan"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "code",
+          "name": "Code",
+          "owner": "opencode",
+          "fallback": null,
+          "skills": [
+            "07-code",
+            "code-test"
+          ],
+          "rules": [],
+          "maxMinutes": 30,
+          "maxRounds": 3,
+          "ownerApproval": false
+        },
+        {
+          "code": "qc",
+          "name": "QC",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "09-qc"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        }
+      ]
+    },
+    {
+      "id": "nghien-cuu",
+      "name": "Nghiên cứu (chỉ đọc)",
+      "codePrefixes": [
+        "R"
+      ],
+      "steps": [
+        {
+          "code": "tiep_nhan",
+          "name": "Tiếp nhận",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "01-tiep-nhan"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "nghien_cuu",
+          "name": "Nghiên cứu",
+          "owner": "codex",
+          "fallback": "opencode",
+          "skills": [
+            "03-research"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "tong_hop",
+          "name": "Tổng hợp",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        }
+      ]
+    },
+    {
+      "id": "bao-mat",
+      "name": "Bảo mật",
+      "codePrefixes": [],
+      "steps": [
+        {
+          "code": "tiep_nhan",
+          "name": "Tiếp nhận",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "01-tiep-nhan"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "ke_hoach",
+          "name": "Kế hoạch",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "04-ke-hoach"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "chuan_bi",
+          "name": "Chuẩn bị",
+          "owner": "codex",
+          "fallback": null,
+          "skills": [
+            "06-chuan-bi-task"
+          ],
+          "rules": [],
+          "maxMinutes": 25,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "code",
+          "name": "Code",
+          "owner": "codex",
+          "fallback": "opencode",
+          "skills": [
+            "07-code",
+            "code-test"
+          ],
+          "rules": [],
+          "maxMinutes": 30,
+          "maxRounds": 3,
+          "ownerApproval": false
+        },
+        {
+          "code": "cong_kt",
+          "name": "Cổng kiểm tra",
+          "owner": "gate",
+          "fallback": null,
+          "skills": [
+            "08-kiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "qc",
+          "name": "QC",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "09-qc"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        },
+        {
+          "code": "duyet_bao_mat",
+          "name": "Duyệt bảo mật",
+          "owner": "owner",
+          "fallback": null,
+          "skills": [],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": true
+        },
+        {
+          "code": "nghiem_thu",
+          "name": "Nghiệm thu",
+          "owner": "claude",
+          "fallback": null,
+          "skills": [
+            "10-nghiem-thu"
+          ],
+          "rules": [],
+          "maxMinutes": null,
+          "maxRounds": null,
+          "ownerApproval": false
+        }
+      ]
+    }
+  ]
+}
