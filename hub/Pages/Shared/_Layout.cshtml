@@ -36,6 +36,13 @@
             try { theme = theme || localStorage.getItem('hub-theme'); } catch (e) { }
             if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
             else document.documentElement.removeAttribute('data-theme');
+            // Trang mở trong khung trợ lý: sau khi gửi form / chuyển hướng vẫn giữ chế độ nhúng (không hiện thanh bên lồng nhau).
+            try {
+                if (window.self !== window.top && urlParams.get('embed') !== '1') {
+                    urlParams.set('embed', '1');
+                    window.location.replace(window.location.pathname + '?' + urlParams.toString() + window.location.hash);
+                }
+            } catch (e) { }
         })();
     </script>
     <link rel="stylesheet" href="~/css/hub.css" asp-append-version="true" />
@@ -136,7 +143,7 @@
         </div>
         <div class="chatp-modes" role="tablist">
             <button class="btn sm" type="button" role="tab" data-mode="ask" data-src="/Chat?embed=1" aria-selected="true">Hỏi đáp</button>
-            <button class="btn sm" type="button" role="tab" data-mode="task" data-src="/Requests?embed=1" aria-selected="false">Giao việc</button>
+            <button class="btn sm" type="button" role="tab" data-mode="task" data-src="/?embed=1" aria-selected="false">Giao việc</button>
             <button class="btn sm" type="button" role="tab" data-mode="research" data-src="/Research?embed=1" aria-selected="false">Nghiên cứu</button>
         </div>
         <iframe id="chatp-frame" title="Nội dung trợ lý" loading="lazy"></iframe>

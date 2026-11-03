@@ -1,66 +1,170 @@
 ﻿@page "/"
 @model AITeam.Hub.Pages.OfficeModel
-@{ ViewData["Title"] = "Văn phòng"; }
-<p><a class="btn" href="/Work">Công việc toàn hệ thống</a> <a class="btn" href="/Performance">Hiệu suất và bảng điểm AI</a></p>
-@if (!string.IsNullOrEmpty(Model.Error))
-{
-    <div class="panel" style="border-color:#dc2626;background:#fef2f2;color:#b91c1c">@Model.Error</div>
+@using AITeam.Hub.Services
+@using AITeam.Hub.Models
+@inject WorkOverviewService WorkOverview
+@inject IApprovalService Approvals
+@{
+    ViewData["Title"] = "Văn phòng";
+    // R-014 (Claude): trang chủ là bảng điều khiển. Khung giao việc + nghiên cứu theo phiếu chỉ hiện khi mở từ nút chat nổi (?embed=1).
+    // Mọi POST trả trang đầy đủ (Chat / nghiên cứu khi lỗi) đều xuất phát từ khung trợ lý ⇒ hiện lại khung đó.
+    var embed = Request.Query["embed"] == "1" || HttpMethods.IsPost(Request.Method);
 }
 
-@if (Model.View is { } v)
+@if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-        <span class="muted">Cập nhật @v.At.ToString("HH:mm:ss") · tự làm mới 10 giây</span>
-        <div class="row" style="gap:6px;flex-wrap:wrap">
-            <span class="pill run">@v.Working đang làm</span>
-            <span class="pill rev">@v.Review chờ review</span>
-            <span class="pill ok">@v.Idle rảnh</span>
-            <span class="pill err">@v.Resting nghỉ</span>
-        </div>
+    <div class="panel" role="alert" style="border-color:var(--err);background:var(--err-soft);color:var(--err)">@Model.Error</div>
+}
+
+@if (embed)
+{
+    @if (Model.SelectedThread != null)
+    {
+        <p><a class="btn sm" href="@Url.Page("/Request", new { id = Model.SelectedThread.Id })" target="_top">Chi tiết @Model.SelectedThread.Id</a></p>
+    }
+    <div class="office-workspace">
+        <section class="office-chat panel">
+            <h3>Giao việc cho Claude</h3>
+            <partial name="_OfficeChat" model="Model" />
+            <form method="post" asp-page-handler="Chat" hx-post="/?handler=Chat" hx-target="#office-chat-thread" hx-swap="outerHTML"
+                  hx-on::after-request="if(event.detail.xhr.getResponseHeader('HX-Trigger') === 'office-chat-sent') this.elements.text.value = ''">
+                <label for="office-request-select">Phiếu</label>
+                <select id="office-request-select" class="inp" name="requestId" hx-get="/?handler=Chat" hx-trigger="change" hx-target="#office-chat-thread" hx-swap="outerHTML">
+                    <option value="">Tạo yêu cầu mới</option>
+                    @if (!string.IsNullOrEmpty(Model.RequestId) && Model.SelectedThread == null)
+                    {
+                        <option value="@Model.RequestId" selected>Phiếu không hợp lệ</option>
+                    }
+                    @foreach (var thread in Model.Threads)
+                    {
+                        <option value="@thread.Id" selected="@(thread.Id == Model.RequestId)">@thread.Id · @thread.Title</option>
+                    }
+                </select>
+                <label for="office-project">Dự án</label>
+                <select id="office-project" class="inp" name="project">
+                    @foreach (var project in Model.ChatProjects)
+                    {
+                        <option value="@project.Name">@project.Name</option>
+                    }
+                </select>
+                <label for="office-text">Nội dung gửi Claude</label>
+                <textarea id="office-text" class="inp" name="text" rows="5" maxlength="4000"></textarea>
+                <button type="submit" class="btn cta" disabled="@(Model.ChatProjects.Count == 0)">Gửi yêu cầu</button>
+            </form>
+        </section>
+    </div>
+    <partial name="_OfficeResearch" model="Model" />
+    return;
+}
+
+@{
+    var work = WorkOverview.Read();
+    var today = DateTime.Today;
+    var running = work.Tasks.Count(t => t.Status is OfficeTaskStatus.Running or OfficeTaskStatus.Gate);
+    var review = work.Tasks.Count(t => t.Status == OfficeTaskStatus.Review);
+    var doneToday = work.Tasks.Count(t => t.Status == OfficeTaskStatus.Merged && t.MergedAt?.Date == today);
+    var stuck = work.Tasks.Count(t => t.Status is OfficeTaskStatus.NeedsFix or OfficeTaskStatus.Blocked);
+    var ownerPending = Approvals.GetAll().Where(a => a.Status == ApprovalStatus.Pending && a.Kind != ApprovalKind.Merge && a.Kind != ApprovalKind.Improvement).ToList();
+    var openRequests = Model.Threads.Where(t => t.Status.Contains("🟡") || t.Status.Contains("Đang", StringComparison.OrdinalIgnoreCase)).Take(6).ToList();
+    var events = work.Tasks
+        .Select(t => new { Card = t, At = t.MergedAt.HasValue ? new DateTimeOffset(t.MergedAt.Value) : t.UpdatedAt })
+        .Where(x => x.At.HasValue && x.Card.Status != OfficeTaskStatus.Cancelled)
+        .OrderByDescending(x => x.At).Take(8).ToList();
+    string Pill(OfficeTaskStatus s) => s switch
+    {
+        OfficeTaskStatus.Running or OfficeTaskStatus.Gate => "run",
+        OfficeTaskStatus.Review => "rev",
+        OfficeTaskStatus.NeedsFix or OfficeTaskStatus.Blocked => "fix",
+        OfficeTaskStatus.Merged => "ok",
+        _ => "n"
+    };
+    string TaskUrl(TaskCard t) => $"/p/{Uri.EscapeDataString(t.Project)}/t/{Uri.EscapeDataString(t.Id)}";
+}
+
+@section Actions {
+    <span class="muted num" style="font-size:12.5px">Cập nhật @DateTime.Now.ToString("HH:mm:ss")</span>
+    <button class="btn cta" type="button" data-chat="task">+ Giao việc mới</button>
+}
+
+@if (ownerPending.Count > 0)
+{
+    <div class="dash-alert" role="status">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><b class="num">@ownerPending.Count việc cần anh duyệt</b> · @string.Join(" · ", ownerPending.Take(2).Select(a => a.Title))</div>
+        <span class="sp" style="flex:1"></span>
+        <a class="btn" href="/Approvals">Xem ngay</a>
     </div>
 }
 
-@if(Model.SelectedThread!=null){<p><a class="btn" href="@Url.Page("/Request",new{id=Model.SelectedThread.Id})">Chi tiết @Model.SelectedThread.Id</a></p>}
-<div class="office-workspace">
-    <section class="office-agents" hx-get="?handler=Desks" hx-trigger="every 10s" hx-target="#office-desks" hx-swap="outerHTML">
-        <partial name="_OfficeDesks" model="Model" />
-        @if (Model.ControlsEnabled)
+<div class="kpis">
+    <a class="kpi" href="/Tracking?state=running"><span class="l">Đang chạy</span><span class="v num">@running</span><span class="d muted">AI đang code / cổng KT</span></a>
+    <a class="kpi" href="/Tracking?state=review"><span class="l">Chờ Claude review</span><span class="v num">@review</span><span class="d muted">sau cổng kiểm tra</span></a>
+    <a class="kpi" href="/Tracking?state=done"><span class="l">Xong hôm nay</span><span class="v num">@doneToday</span><span class="d muted">đã merge vào main</span></a>
+    <a class="kpi @(stuck > 0 ? "warn" : "")" href="/Tracking?state=fix"><span class="l">Cần sửa / bị chặn</span><span class="v num">@stuck</span><span class="d muted">@(stuck > 0 ? "cần xử lý" : "không có")</span></a>
+</div>
+
+<div class="dash-grid">
+    <div class="dash-col">
+        <section class="panel office-agents" aria-labelledby="desks-h">
+            <h3 id="desks-h">Bàn làm việc</h3>
+            <div hx-get="?handler=Desks" hx-trigger="every 10s" hx-target="#office-desks" hx-swap="outerHTML">
+                <partial name="_OfficeDesks" model="Model" />
+            </div>
+            @if (Model.ControlsEnabled)
+            {
+                <partial name="_OfficeControl" model="Model" />
+            }
+        </section>
+
+        <section class="panel" aria-labelledby="req-h">
+            <div class="row" style="justify-content:space-between"><h3 id="req-h">Yêu cầu đang mở</h3><a class="btn sm ghost" href="/Tracking?view=list">Tất cả</a></div>
+            @if (openRequests.Count == 0)
+            {
+                <p class="muted">Không có yêu cầu nào đang làm. Bấm “+ Giao việc mới” để bắt đầu.</p>
+            }
+            else
+            {
+                <table class="dash-table">
+                    <thead><tr><th>Yêu cầu</th><th>Tiến độ task</th><th class="num">Task</th></tr></thead>
+                    <tbody>
+                    @foreach (var r in openRequests)
+                    {
+                        var codes = r.Tasks.Select(t => t.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                        var cards = work.Tasks.Where(c => codes.Contains(HubMetricReader.TaskCode(c.Task.Id))).ToList();
+                        var total = Math.Max(codes.Count, cards.Count);
+                        var merged = cards.Count(c => c.Status == OfficeTaskStatus.Merged);
+                        var pct = total == 0 ? 0 : (int)Math.Round(100.0 * merged / total);
+                        <tr>
+                            <td><a href="@Url.Page("/Request", new { id = r.Id })"><b>@r.Id</b></a> @r.Title</td>
+                            <td style="min-width:140px"><div class="meter" role="img" aria-label="@merged trên @total task đã xong"><i style="width:@(pct)%"></i></div></td>
+                            <td class="num">@merged / @total</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </section>
+    </div>
+
+    <section class="panel" aria-labelledby="ev-h">
+        <div class="row" style="justify-content:space-between"><h3 id="ev-h">Sự kiện gần đây</h3><a class="btn sm ghost" href="/Tracking">Theo dõi việc</a></div>
+        @if (events.Count == 0)
         {
-            <partial name="_OfficeControl" model="Model" />
+            <p class="muted">Chưa có sự kiện.</p>
         }
-        <partial name="_OfficeResearch" model="Model" />
-    </section>
-    <section class="office-chat panel">
-        <h3>Chat giao việc</h3>
-        <partial name="_OfficeChat" model="Model" />
-        <form method="post" asp-page-handler="Chat" hx-post="/?handler=Chat" hx-target="#office-chat-thread" hx-swap="outerHTML"
-              hx-on::after-request="if(event.detail.xhr.getResponseHeader('HX-Trigger') === 'office-chat-sent') this.elements.text.value = ''">
-            <label for="office-request-select">Phiếu</label>
-            <select id="office-request-select" class="inp" name="requestId" hx-get="/?handler=Chat" hx-trigger="change" hx-target="#office-chat-thread" hx-swap="outerHTML">
-                <option value="">Tạo yêu cầu mới</option>
-                @if (!string.IsNullOrEmpty(Model.RequestId) && Model.SelectedThread == null)
-                {
-                    <option value="@Model.RequestId" selected>Phiếu không hợp lệ</option>
-                }
-                @foreach (var thread in Model.Threads)
-                {
-                    <option value="@thread.Id" selected="@(thread.Id == Model.RequestId)">@thread.Id · @thread.Title</option>
-                }
-            </select>
-            <label for="office-project">Dự án</label>
-            <select id="office-project" class="inp" name="project">
-                @foreach (var project in Model.ChatProjects)
-                {
-                    <option value="@project.Name">@project.Name</option>
-                }
-            </select>
-            <label for="office-text">Nội dung gửi Claude</label>
-            <textarea id="office-text" class="inp" name="text" rows="5" maxlength="4000"></textarea>
-            <button type="submit" class="btn pri" disabled="@(Model.ChatProjects.Count == 0)">Gửi yêu cầu</button>
-        </form>
+        <ul class="feed">
+            @foreach (var e in events)
+            {
+                <li>
+                    <time class="num" datetime="@e.At!.Value.ToString("o")">@e.At.Value.ToLocalTime().ToString("dd/MM HH:mm")</time>
+                    <span><span class="pill @Pill(e.Card.Status)">@WorkOverviewService.Label(e.Card.Status)</span>
+                        <a href="@TaskUrl(e.Card.Task)">@HubMetricReader.TaskCode(e.Card.Task.Id)</a> @e.Card.Task.Title</span>
+                </li>
+            }
+        </ul>
+        @foreach (var w in work.Warnings.Take(1))
+        {
+            <p class="faint" style="font-size:12px">@w</p>
+        }
     </section>
 </div>
-<section id="office-chat-shortcut" class="panel" style="margin-top:16px;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-width:0">
-    <div style="flex:1;min-width:0;overflow-wrap:anywhere"><strong>Trò chuyện AI</strong><p class="muted">@(Model.LatestAiConversation?.Title ?? Model.AiConversationNotice ?? "Chưa có hội thoại. Bắt đầu trò chuyện với AI.")</p></div>
-    <a class="btn pri" href="/Chat">Mở trò chuyện</a>
-</section>

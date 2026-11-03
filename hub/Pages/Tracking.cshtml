@@ -1,0 +1,167 @@
+@page "/Tracking"
+@model AITeam.Hub.Pages.TrackingModel
+@using AITeam.Hub.Pages
+@using AITeam.Hub.Services
+@{
+    ViewData["Title"] = "Theo dõi việc";
+    var viewLabels = new Dictionary<string, string> { ["person"] = "Theo người", ["list"] = "Theo danh sách", ["kanban"] = "Kanban" };
+    var stateLabels = new Dictionary<string, string> { ["all"] = "Mọi trạng thái", ["open"] = "Chưa xong", ["running"] = "Đang làm", ["review"] = "Chờ review", ["fix"] = "Cần sửa / chặn", ["done"] = "Đã xong" };
+}
+
+@section Actions {
+    <span class="muted num" style="font-size:12.5px">@Model.Items.Count / @Model.TotalBeforeFilter task</span>
+}
+
+<nav class="tabs" aria-label="Cách xem">
+    @foreach (var v in TrackingModel.Views)
+    {
+        <a class="tab @(Model.View == v ? "on" : "")" href="@Model.With("view", v)" aria-current="@(Model.View == v ? "page" : null)">@viewLabels[v]</a>
+    }
+</nav>
+
+<form class="filters" method="get" action="/Tracking" role="search">
+    <input type="hidden" name="view" value="@Model.View" />
+    <label class="sr-only" for="f-project">Dự án</label>
+    <select id="f-project" name="project" class="inp" onchange="this.form.submit()">
+        <option value="">Tất cả dự án</option>
+        @foreach (var p in Model.Projects)
+        {
+            <option value="@p" selected="@(string.Equals(p, Model.Project, StringComparison.OrdinalIgnoreCase))">@p</option>
+        }
+    </select>
+    <label class="sr-only" for="f-person">Người / AI</label>
+    <select id="f-person" name="person" class="inp" onchange="this.form.submit()">
+        <option value="">Mọi người / AI</option>
+        @foreach (var p in Model.People)
+        {
+            <option value="@p.Code" selected="@(string.Equals(p.Code, Model.Person, StringComparison.OrdinalIgnoreCase))">@p.Name</option>
+        }
+    </select>
+    <label class="sr-only" for="f-state">Trạng thái</label>
+    <select id="f-state" name="state" class="inp" onchange="this.form.submit()">
+        @foreach (var s in TrackingModel.States)
+        {
+            <option value="@s" selected="@(Model.State == s)">@stateLabels[s]</option>
+        }
+    </select>
+    <label class="sr-only" for="f-diff">Độ khó</label>
+    <select id="f-diff" name="difficulty" class="inp" onchange="this.form.submit()">
+        <option value="">Mọi độ khó</option>
+        @foreach (var d in new[] { "S", "M", "L" })
+        {
+            <option value="@d" selected="@(Model.Difficulty == d)">Độ khó @d</option>
+        }
+    </select>
+    <label class="sr-only" for="f-q">Tìm</label>
+    <input id="f-q" class="inp" type="search" name="q" value="@Model.Query" placeholder="Tìm mã / tên task" maxlength="60" />
+    <button class="btn" type="submit">Lọc</button>
+    @if (Model.Project != null || Model.Person != null || Model.State != "all" || Model.Difficulty != null || Model.Query != null)
+    {
+        <a class="btn ghost" href="/Tracking?view=@Model.View">Bỏ lọc</a>
+    }
+</form>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="panel empty-state">
+        <p><b>Không có task nào khớp bộ lọc.</b></p>
+        <p class="muted">Đổi bộ lọc, hoặc bấm nút chat ở góc phải để giao việc mới.</p>
+    </div>
+}
+else if (Model.View == "person")
+{
+    var lanes = new[] { ("running", "Đang làm"), ("review", "Chờ review"), ("fix", "Cần sửa / chặn"), ("done", "Xong " + (Model.State == "done" ? "30" : "7") + " ngày") };
+    <div class="lanes">
+        @foreach (var person in Model.Items.GroupBy(i => i.Person).OrderBy(g => g.First().PersonName, StringComparer.OrdinalIgnoreCase))
+        {
+            var open = person.Count(i => i.Card.Status != OfficeTaskStatus.Merged);
+            var todo = person.Count(i => TrackingModel.Column(i.Card.Status) == "todo");
+            <section class="lane" aria-label="@person.First().PersonName">
+                <div class="lane-who">
+                    <span class="av" style="background:@AvatarColor(person.Key)">@Initials(person.Key)</span>
+                    <div><b>@person.First().PersonName</b><div class="muted num" style="font-size:12px">@open chưa xong@(todo > 0 ? $" · {todo} chờ làm" : "")</div>
+                        <a class="faint" style="font-size:12px" href="@Model.With("person", person.Key)">Chỉ xem người này</a></div>
+                </div>
+                @foreach (var (key, label) in lanes)
+                {
+                    var cards = person.Where(i => TrackingModel.Column(i.Card.Status) == key).ToList();
+                    <div class="lane-col">
+                        <h4>@label <span class="num">(@cards.Count)</span></h4>
+                        @foreach (var i in cards.Take(6))
+                        {
+                            <partial name="_TrackCard" model="i" />
+                        }
+                        @if (cards.Count > 6)
+                        {
+                            <a class="faint" style="font-size:12px" href="@Model.With("person", person.Key)&amp;state=@key">+@(cards.Count - 6) task</a>
+                        }
+                    </div>
+                }
+            </section>
+        }
+    </div>
+}
+else if (Model.View == "list")
+{
+    @foreach (var g in Model.Groups())
+    {
+        var done = g.Items.Count(i => i.Card.Status == OfficeTaskStatus.Merged);
+        var pct = g.Items.Count == 0 ? 0 : (int)Math.Round(100.0 * done / g.Items.Count);
+        <section class="panel track-group">
+            <div class="row" style="gap:12px;flex-wrap:wrap">
+                <h3 style="margin:0;font-size:15px">@if (g.Url != null) { <a href="@g.Url">@g.Title</a> } else { @g.Title }</h3>
+                <div class="meter" style="flex:1;min-width:120px;max-width:260px" role="img" aria-label="@done trên @g.Items.Count task đã xong"><i style="width:@(pct)%"></i></div>
+                <span class="muted num">@done / @g.Items.Count xong</span>
+            </div>
+            <table class="dash-table">
+                <thead><tr><th>Task</th><th>Người</th><th>Độ khó</th><th>Trạng thái</th><th class="num">Phút</th><th class="num">Lượt</th></tr></thead>
+                <tbody>
+                @foreach (var i in g.Items)
+                {
+                    <tr>
+                        <td><a href="@i.Url"><b>@i.Code</b></a> @i.Card.Task.Title</td>
+                        <td>@i.PersonName</td>
+                        <td>@i.Difficulty</td>
+                        <td><span class="pill @TrackingModel.PillClass(i.Card.Status)">@WorkOverviewService.Label(i.Card.Status)</span></td>
+                        <td class="num">@(i.Card.Minutes is { } m ? Math.Round(m).ToString() : "–")</td>
+                        <td class="num">@i.Card.Runs</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </section>
+    }
+}
+else
+{
+    <div class="kanban">
+        @foreach (var (key, label) in TrackingModel.Columns)
+        {
+            var cards = Model.Items.Where(i => TrackingModel.Column(i.Card.Status) == key).ToList();
+            <section class="kcol" aria-label="@label">
+                <h4>@label <span class="num">(@cards.Count)</span></h4>
+                @foreach (var i in cards.Take(40))
+                {
+                    <partial name="_TrackCard" model="i" />
+                }
+                @if (cards.Count > 40)
+                {
+                    <p class="faint" style="font-size:12px">+@(cards.Count - 40) task — lọc thêm để xem.</p>
+                }
+            </section>
+        }
+    </div>
+}
+
+@foreach (var w in Model.Warnings.Take(2))
+{
+    <p class="faint" style="font-size:12px">@w</p>
+}
+
+@functions {
+    static string Initials(string code) => code.Equals("C", StringComparison.OrdinalIgnoreCase) ? "CX" : code.Length > 2 ? code[..2].ToUpperInvariant() : code.ToUpperInvariant();
+    static string AvatarColor(string code) => code.ToUpperInvariant() switch
+    {
+        "C" => "#0f766e", "O" => "#1d4ed8", "A" => "#7c3aed", "B" => "#be185d", _ => "#64748b"
+    };
+}
