@@ -61,7 +61,10 @@ public static class TaskLinter
         var filter = string.Join('|', AcceptanceFilters(Regex.Replace(text, @"<!--[\s\S]*?-->", "")).Select(n => "FullyQualifiedName~" + n));
         var test = await runner.RunAsync(new("dotnet", ["test", solutions[0], "--no-build", "--filter", filter, "--blame-hang-timeout", "2m"], root, null, TimeSpan.FromMinutes(3)), ct);
         var output = test.StdOut + test.StdErr;
-        if (test.TimedOut || output.Contains("NullReferenceException", StringComparison.OrdinalIgnoreCase) || output.Contains("No test matches", StringComparison.OrdinalIgnoreCase) || output.Contains("No test is available", StringComparison.OrdinalIgnoreCase))
+        // Solution nhiều dự án test: dự án không chứa test nghiệm thu in "No test matches" — chỉ là lỗi khi KHÔNG dự án nào chạy test.
+        var ranTests = Regex.IsMatch(output, @"Total:\s*[1-9]");
+        var noTests = output.Contains("No test matches", StringComparison.OrdinalIgnoreCase) || output.Contains("No test is available", StringComparison.OrdinalIgnoreCase);
+        if (test.TimedOut || output.Contains("NullReferenceException", StringComparison.OrdinalIgnoreCase) || (noTests && !ranTests))
             return new(false, ["TN: harness lỗi, không tìm thấy test hoặc treo: " + Clip(output)]);
         if (test.ExitCode == 0) return new(false, ["TN: test nghiệm thu chưa đỏ trước khi giao; cần quản lý xác nhận test bắt được thiếu code"]);
         if (!Regex.IsMatch(output, @"Failed:\s*[1-9]|\[FAIL\]|Failed\s+\S", RegexOptions.IgnoreCase)) return new(false, ["TN: lệnh test lỗi nhưng chưa chứng minh test đã chạy và đỏ: " + Clip(output)]);

@@ -35,6 +35,13 @@ public sealed class V916TaskLintTests : IDisposable
         var result = await TaskLinter.RunAsync(root, Valid, fake, CancellationToken.None);
         Assert.False(result.Ok); Assert.Single(fake.Calls); Assert.Contains("TN:", Assert.Single(result.Errors));
     }
+    [Fact] public async Task Red_acceptance_in_one_project_is_accepted_when_other_test_project_has_no_match()
+    {
+        var output = "Failed!  - Failed:    12, Passed:     0, Skipped:     0, Total:    12 - AITeam.Core.Tests.dll\n"
+            + "No test matches the given testcase filter `FullyQualifiedName~V1002AiAdapterTests` in D:\\x\\AITeam.Hub.Tests.dll";
+        var fake = new Fake(Result(0, ""), Result(1, output));
+        Assert.True((await TaskLinter.RunAsync(root, Valid, fake, CancellationToken.None)).Ok);
+    }
     [Theory] [InlineData(0, "Passed: 1")] [InlineData(1, "Failed: 1 NullReferenceException")] [InlineData(1, "No test matches")] [InlineData(1, "process crashed")]
     public async Task Green_harness_errors_and_missing_tests_are_not_accepted_as_red(int code, string output)
     {
