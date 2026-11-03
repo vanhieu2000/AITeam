@@ -1,7 +1,7 @@
 ﻿# V6-02 · Chặn giao lại và xin quyết định
 
-- **Agent:** A
-- **Nhánh:** `agent-a/V6-02-chan-giao-lai-va-xin-quyet-dinh`
+- **Agent:** C
+- **Nhánh:** `agent-c/V6-02-chan-giao-lai`
 - **Ưu tiên:** trung bình
 - **Ngân sách:** ~330 dòng
 - **Yêu cầu:** R-006
