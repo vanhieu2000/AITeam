@@ -468,6 +468,7 @@ function Invoke-Assign {
     New-Item -ItemType Directory -Force $r.Logs | Out-Null
     $work = Join-Path $r.Work ("$agentId-$Task".ToLower())
     git -C $r.Path fetch origin --quiet
+    if ($LASTEXITCODE -ne 0) { throw "Không fetch được origin trước khi giao task." }
     # Nhánh đã có worktree (vd. lần trước gõ -Task ngắn hơn) ⇒ dùng lại đúng thư mục đó thay vì báo lỗi "already used by worktree".
     $existing = (git -C $r.Path worktree list --porcelain) -join "`n"
     $m = [regex]::Match($existing, "worktree ([^\n]+)\nHEAD [0-9a-f]+\nbranch refs/heads/$([regex]::Escape($branch))(\n|$)")
@@ -479,12 +480,15 @@ function Invoke-Assign {
         $remoteHas = git -C $r.Path ls-remote --heads origin $branch
         if ($remoteHas) { git -C $r.Path worktree add $work -B $branch "origin/$branch" --quiet }
         else { git -C $r.Path worktree add $work -B $branch origin/main --quiet }
-    } else {
-        # git in cảnh báo (vd. LF→CRLF) ra stderr; PowerShell 5.1 + Stop coi là lỗi và dừng assign.
-        $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-        git -C $work merge origin/main --no-edit --quiet 2>$null
-        $ErrorActionPreference = $eap
     }
+    $eap = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        git -C $work fetch origin --quiet 2>$null
+        if ($LASTEXITCODE -ne 0) { throw "Không fetch được origin trong worktree; chưa giao task." }
+        git -C $work merge origin/main --no-edit --quiet 2>$null
+        if ($LASTEXITCODE -ne 0) { throw "Không cập nhật được origin/main (có thể xung đột); chưa giao task." }
+    } finally { $ErrorActionPreference = $eap }
 
     $devInfo = $cfg.developers | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
     # Mã agent chưa khai báo trong team.json (vd. C = Codex lần đầu, R-004) ⇒ mặc định, không để null làm sập assign.
@@ -764,8 +768,16 @@ function Invoke-CodexRetry($exe, [string[]]$arguments, [string]$out) {
     $current = $arguments
     for ($attempt = 0; $attempt -lt 3; $attempt++) {
         if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out }
-        $lines = @(& $exe @current 2>&1)
-        $code = $LASTEXITCODE
+        try {
+            $lines = @(& $exe @current 2>&1)
+            $code = $LASTEXITCODE
+        } finally {
+            # Chạy cả khi Codex lỗi, bị hủy hoặc -NoVerify; không che kết quả lượt gọi.
+            $savedExit = $LASTEXITCODE
+            try { dotnet build-server shutdown 2>&1 | Out-Null }
+            catch { Say "Không dừng được build server: $($_.Exception.Message)" Yellow }
+            $global:LASTEXITCODE = $savedExit
+        }
         $lines | ForEach-Object { Say "  $_" }
         $text = ($lines -join "`n")
         if (Test-Path -LiteralPath $out) { $text += "`n" + [IO.File]::ReadAllText($out) }
