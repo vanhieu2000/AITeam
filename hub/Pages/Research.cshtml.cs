@@ -1,4 +1,6 @@
-﻿using AITeam.Core.Research;
+﻿using System.Text.RegularExpressions;
+using AITeam.Core.Accounts;
+using AITeam.Core.Research;
 using AITeam.Hub.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -39,8 +41,12 @@ public class ResearchModel : PageModel
     /// <summary>Lỗi đọc dữ liệu ⇒ "Không đọc được dữ liệu phòng nghiên cứu: " + ex.Message; lỗi dữ liệu nhập (ArgumentException) ⇒ ex.Message.</summary>
     public string? Error { get; private set; }
 
-    /// <summary>Nạp Requests (GetAll), Current theo r, Options, Jobs / Entries của Current. Lỗi ⇒ Error (danh sách rỗng).</summary>
-    public void OnGet(string? r)
+    /// <summary>
+    /// Nạp Requests (GetAll), Current theo r, Options, Jobs / Entries của Current. Lỗi ⇒ Error (danh sách rỗng).
+    /// Có q hợp lệ (chỉ chữ, số, "-") khớp câu hỏi vừa gửi của Current ⇒ hiện lại Asked + form lưu thủ công;
+    /// q lạ / không khớp ⇒ bỏ qua, không lỗi, không lộ đường dẫn.
+    /// </summary>
+    public void OnGet(string? r, string? q = null)
     {
         try
         {
@@ -65,11 +71,53 @@ public class ResearchModel : PageModel
             Entries = Array.Empty<ResearchEntry>();
             Error ??= "Không đọc được dữ liệu phòng nghiên cứu: " + ex.Message;
         }
+        RestoreAsked(r, q);
+    }
+
+    private static readonly Regex QuestionIdRegex = new(@"\A[A-Za-z0-9-]{1,64}\z");
+
+    private static string PendingKey(string requestId, string questionId) => "research.pending." + requestId + "." + questionId;
+
+    /// <summary>Ghi câu hỏi vừa gửi vào TempData để trang GET sau redirect hiện lại được (không ghi khi chạy test dựng model tay).</summary>
+    private void RememberPending(string? requestId, string? questionId, string? question)
+    {
+        if (string.IsNullOrEmpty(requestId) || string.IsNullOrEmpty(questionId) || PageContext?.HttpContext == null) return;
+        try { TempData[PendingKey(requestId, questionId)] = question ?? ""; } catch { }
+    }
+
+    private string? PeekPending(string? requestId, string? questionId)
+    {
+        if (string.IsNullOrEmpty(requestId) || string.IsNullOrEmpty(questionId) || PageContext?.HttpContext == null) return null;
+        try { return TempData.Peek(PendingKey(requestId, questionId)) as string; } catch { return null; }
+    }
+
+    private void RestoreAsked(string? requestId, string? questionId)
+    {
+        if (Current == null || string.IsNullOrEmpty(questionId) || !QuestionIdRegex.IsMatch(questionId)) return;
+
+        var entry = Entries.FirstOrDefault(e => string.Equals(e.QuestionId, questionId, StringComparison.OrdinalIgnoreCase));
+        var job = Jobs.FirstOrDefault(j => string.Equals(j.QuestionId, questionId, StringComparison.OrdinalIgnoreCase));
+        var pending = PeekPending(requestId, questionId) ?? PeekPending(Current.Id, questionId);
+        if (entry == null && job == null && pending == null) return;
+
+        AskedQuestion = entry?.Question ?? pending;
+        var outcomes = new List<ResearchAiOutcome>(Options.Count);
+        foreach (var opt in Options)
+        {
+            if (opt.Mode == AiMode.Disabled)
+                outcomes.Add(new ResearchAiOutcome(opt.Ai, "skipped", "Đang tắt — bật ở trang Tài khoản AI"));
+            else if (opt.CanAsk)
+                outcomes.Add(new ResearchAiOutcome(opt.Ai, "started", "Đang hỏi…"));
+            else
+                outcomes.Add(new ResearchAiOutcome(opt.Ai, "manual", "Copy lời nhắn, dán câu trả lời"));
+        }
+        Asked = new ResearchAskResult(questionId, pending ?? entry?.Question ?? "", 0, outcomes);
     }
 
     /// <summary>
     /// POST ?handler=Ask (antiforgery): _research.Ask(r, question, ai, includeRequestText) ⇒ Asked, AskedQuestion = question;
-    /// ArgumentException ⇒ Error = ex.Message. Luôn nạp lại như OnGet(r) (KHÔNG ghi đè Error đã có) rồi trả Page().
+    /// thành công ⇒ Post-Redirect-Get về chính trang kèm r và q (F5 không gửi lại câu hỏi).
+    /// ArgumentException ⇒ Error = ex.Message; lỗi khác ⇒ Error chung. Lỗi ⇒ nạp lại như OnGet(r) (KHÔNG ghi đè Error đã có) rồi trả Page().
     /// </summary>
     public IActionResult OnPostAsk(string? r, string? question, string[]? ai, bool includeRequestText)
     {
@@ -77,6 +125,8 @@ public class ResearchModel : PageModel
         {
             Asked = _research.Ask(r, question, ai, includeRequestText);
             AskedQuestion = question;
+            RememberPending(r, Asked.QuestionId, question);
+            return RedirectToPage(new { r, q = Asked.QuestionId });
         }
         catch (ArgumentException ex)
         {

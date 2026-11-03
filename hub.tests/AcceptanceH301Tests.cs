@@ -204,7 +204,8 @@ public sealed class AcceptanceH301Tests : IDisposable
     {
         var md = "## Review (Claude)\n- [NV] Lan dừng giữa chừng\n";
         var i = Assert.Single(InsightParsers.ParseReviewIssues(md, "P", "T"));
-        Assert.Equal(("NV", "", "Lan dừng giữa chừng"), (i.Cause, i.Kind, i.Text));
+        // V9-12 (R-012): mã nguyên nhân ngoài 9 mã chuẩn (NV cũ) ⇒ "khác"; nội dung giữ nguyên.
+        Assert.Equal(("khác", "", "Lan dừng giữa chừng"), (i.Cause, i.Kind, i.Text));
     }
 
     [Theory]

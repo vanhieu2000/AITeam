@@ -65,7 +65,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V8-10 · `team.ps1 hub -Restart` + giới hạn 45 phút cho `deputy`](V8-10-hub-restart-va-deputy-timeout.md) | B | `agent-a/V8-10-hub-restart-va-deputy-timeout` | ✅ Đã merge (vòng 1) |
 | [H7-02 Điều phối plan/prep/QC theo Map](H7-02-dieu-phoi-plan-prep-qc-theo-map.md) | C | `agent-c/H7-02-map-plan-prep-qc` | ✅ Đã merge 03/11 · Windows xanh |
 | [H7-04 Thẻ tác nhân và chat giao việc](H7-04-the-tac-nhan-va-chat-giao-viec.md) | B | `agent-b/H7-04-the-tac-nhan-va-chat-giao-viec` | ✅ Đã merge (vòng 1) |
-| [W1-03 Sinh mockup và khóa prep trước duyệt](W1-03-sinh-mockup-va-khoa-prep-truoc-duyet.md) | A | `agent-a/W1-03-sinh-mockup-va-khoa-prep-truoc-duyet` | 🔵 Chờ review · OpenCode 02/11 xanh hết (2423462: Hub 721, Core 737)
+| [W1-03 Sinh mockup và khóa prep trước duyệt](W1-03-sinh-mockup-va-khoa-prep-truoc-duyet.md) | A | `agent-a/W1-03-sinh-mockup-va-khoa-prep-truoc-duyet` | ✅ Đã merge 03/11 (OpenCode gộp main, Claude review) |
 
 | [V9-10 Token mỗi lượt](V9-10-token-moi-luot.md) | C | `agent-c/V9-10-token-moi-luot` | ✅ Đã merge 03/11 · còn mẫu OpenCode thành công |
 | [V9-13 Tự gắn cờ lượt](V9-13-tu-gan-co-moi-luot.md) | C | `agent-c/V9-13-tu-gan-co-luot` | ✅ Đã merge 03/11 (gồm V9-03) · còn log thật H7-06 |
@@ -73,7 +73,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [H7-05 Nhúng Phòng nghiên cứu](H7-05-nhung-phong-nghien-cuu.md) | C | `agent-c/H7-05-nhung-phong-nghien-cuu` | ✅ Đã merge 03/11 (Claude cập nhật test V5-07) |
 | [O-02 OpenCode DeepSeek](O-02-opencode-deepseek.md) | C | `agent-c/O-02-opencode-deepseek` | ✅ Đã merge 03/11 · chưa chạy model thật (proxy 403) |
 | [V9-06 Codex ổn định](V9-06-codex-on-dinh.md) | C | `agent-c/V9-06-codex-on-dinh` | ✅ Đã merge 03/11 |
-| [V9-14 Định tuyến theo luật](V9-14-dinh-tuyen-theo-luat.md) | C | `agent-c/V9-14-dinh-tuyen-theo-luat` | ✅ Đã merge 03/11 (phần lõi) · còn nối assign |
+| [V9-14 Định tuyến theo luật](V9-14-dinh-tuyen-theo-luat.md) | C | `agent-c/V9-14-dinh-tuyen-theo-luat` | ✅ Đã merge 03/11 (phần 2: OpenCode sửa Resume giữ người làm) |
 | [H8-03 Review không lặp](H8-03-review-khong-lap.md) | C | `agent-c/H8-03-review-khong-lap` | ✅ Đã merge 03/11 |
 | [H8-04 Hiệu suất màn hình hẹp](H8-04-hieu-suat-man-hinh-hep.md) | C | `agent-c/H8-04-hieu-suat-man-hinh-hep` | ✅ Đã merge 03/11 |
 | [H8-06 Đơn duyệt mẫu](H8-06-don-duyet-mau.md) | C | `agent-c/H8-06-don-duyet-mau` | ✅ Đã merge 03/11 |
@@ -81,6 +81,17 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V9-02 Đồng bộ test pipeline](V9-02-dong-bo-test-pipeline.md) | C | `agent-c/V9-02-dong-bo-test-pipeline` | ✅ Đã merge 03/11 |
 | [V9-05 Dispose khi Build lỗi](V9-05-dispose-khi-build-loi.md) | C | `agent-c/V9-05-dispose-khi-build-loi` | ✅ Đã merge 03/11 |
 | [V9-07 Cổng kiểm tra harness/khóa build](V9-07-cong-kiem-tra-build-harness.md) | C | `agent-c/V9-07-cong-kiem-tra-build-harness` | ✅ Đã merge 03/11 |
+| [V9-11 Hạn mức và giờ hồi](V9-11-han-muc-va-gio-hoi.md) | C | `agent-c/V9-11-han-muc-va-gio-hoi` | ✅ Đã merge 03/11 đợt 2 (sao lưu state hỏng) |
+| [V9-12 Lỗi có cấu trúc](V9-12-loi-co-cau-truc.md) | C | `agent-c/V9-12-loi-co-cau-truc` | ✅ Đã merge 03/11 đợt 2 |
+| [H8-05 Log tiếng Việt và giới hạn job](H8-05-log-viet-va-gioi-han-job.md) | C | `agent-c/H8-05-log-viet-va-gioi-han-job` | ✅ Đã merge 03/11 đợt 2 |
+| [V9-16 Kiểm chất lượng task](V9-16-kiem-chat-luong-task.md) | C | `agent-c/V9-16-kiem-chat-luong-task` | ✅ Đã merge 03/11 đợt 2 |
+| [H8-10 Tổng quan và Kanban](H8-10-tong-quan-kanban.md) | C | `agent-c/H8-10-tong-quan-kanban` | ✅ Đã merge 03/11 (mockup đã duyệt) |
+| [H8-11 Chi tiết yêu cầu, task, lượt](H8-11-chi-tiet-yeu-cau-task-luot.md) | C | `agent-c/H8-11-chi-tiet-yeu-cau-task-luot` | ✅ Đã merge 03/11 (mockup đã duyệt) |
+| [H8-01 Phòng nghiên cứu PRG](H8-01-research-prg.md) | C | `agent-c/H8-01-research-prg` | ✅ Đã merge 03/11 (OpenCode) · còn khóa provider nghỉ |
+| [H8-12 Hiệu suất và bảng điểm](H8-12-hieu-suat-bang-diem.md) | C | `agent-c/H8-12-hieu-suat-bang-diem` | 🟡 Giao OpenCode |
+| [H8-13 Tài khoản và hạn mức](H8-13-tai-khoan-han-muc.md) | C | `agent-c/H8-13-tai-khoan-han-muc` | 🟡 Giao OpenCode |
+| [V9-15 Hàng đợi và khóa file](V9-15-hang-doi-khoa-file.md) | C | `agent-c/V9-15-hang-doi-khoa-file` | 🟡 Giao OpenCode |
+| [W1-04 Cổng kiểm tra QC](W1-04-cong-kiem-tra-qc.md) | C | `agent-c/W1-04-cong-kiem-tra-qc` | 🟡 Giao OpenCode |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
