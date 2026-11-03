@@ -1,0 +1,203 @@
+﻿@page "/Performance"
+@model AITeam.Hub.Pages.PerformanceModel
+@using System.Globalization
+@using AITeam.Hub.Services
+@{
+    ViewData["Title"] = "Hiệu suất";
+    string Num(double? value) => value.HasValue ? value.Value.ToString("0.#", CultureInfo.InvariantCulture) : "chưa đo";
+    string TokenAvg(double? value) => value.HasValue ? PerformanceMetric.FormatTokens(value.Value) : "chưa đo";
+    string TokenCount(long? value) => value.HasValue ? PerformanceMetric.FormatTokens(value.Value) : "chưa đo";
+    string CauseClass(string cause) => cause == "khác" ? "khac" : cause;
+    string Width(int value, int total) => total == 0 ? "0" : (value * 100.0 / total).ToString("0.##", CultureInfo.InvariantCulture);
+    string AgText(IReadOnlyDictionary<string, int> groups) => groups.Count == 0
+        ? "—"
+        : string.Join(" · ", groups.OrderByDescending(g => g.Value).ThenBy(g => g.Key).Select(g => g.Key + " " + g.Value));
+    string PassText(bool? passed) => passed switch { true => "ĐẠT", false => "Cần sửa", null => "chưa đo" };
+}
+<link rel="stylesheet" href="~/css/performance.css" />
+<div class="perf">
+    <header class="perf-head">
+        <div>
+            <h2>Hiệu suất và bảng điểm AI</h2>
+            <p class="muted">Số liệu từ metrics/runs, bảng việc và mục Review · tuần bắt đầu thứ Hai · cập nhật @DateTime.Now.ToString("HH:mm")</p>
+        </div>
+        @if (Model.Data != null)
+        {
+            <span class="pill">Tuần này từ @Model.Data.WeekStart.ToString("dd/MM") · tuần trước từ @Model.Data.PreviousWeekStart.ToString("dd/MM")</span>
+        }
+    </header>
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="panel perf-error">@Model.Error</div>
+    }
+
+    @if (Model.Data is { } data)
+    {
+        foreach (var warning in data.Warnings)
+        {
+            <p class="panel perf-warning">@warning</p>
+        }
+
+        <section class="panel perf-section">
+            <h3>Tuần này so với tuần trước</h3>
+            <div class="perf-metrics">
+                @foreach (var metric in data.Metrics)
+                {
+                    <article class="perf-metric">
+                        <h4>@metric.Label</h4>
+                        <p class="perf-value">@metric.Display(true)</p>
+                        <p class="small">Tuần trước: @metric.Display(false) · Đích: @metric.Target</p>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <section class="panel perf-section">
+            <h3>Nguyên nhân lỗi theo tuần</h3>
+            <p class="muted">Mã chuẩn: TK · TN · AG · CK · HT · HM · CH · TO · DP; mã lạ gom vào “khác”.</p>
+            @{
+                var currentTotal = data.Causes.Sum(c => c.Current);
+                var previousTotal = data.Causes.Sum(c => c.Previous);
+            }
+            <div class="perf-bars">
+                <div class="perf-bar-row">
+                    <span>Tuần trước</span>
+                    <div class="perf-bar" role="img" aria-label="Lỗi theo nguyên nhân tuần trước">
+                        @if (previousTotal == 0)
+                        {
+                            <span class="perf-bar-empty">Chưa có lỗi có cấu trúc</span>
+                        }
+                        else
+                        {
+                            @foreach (var cause in data.Causes.Where(c => c.Previous > 0))
+                            {
+                                <span class="cause-@CauseClass(cause.Cause)" style="width:@Width(cause.Previous, previousTotal)%">@cause.Cause @cause.Previous</span>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="perf-bar-row">
+                    <span>Tuần này</span>
+                    <div class="perf-bar" role="img" aria-label="Lỗi theo nguyên nhân tuần này">
+                        @if (currentTotal == 0)
+                        {
+                            <span class="perf-bar-empty">Chưa có lỗi có cấu trúc</span>
+                        }
+                        else
+                        {
+                            @foreach (var cause in data.Causes.Where(c => c.Current > 0))
+                            {
+                                <span class="cause-@CauseClass(cause.Cause)" style="width:@Width(cause.Current, currentTotal)%">@cause.Cause @cause.Current</span>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="perf-legend">
+                @foreach (var cause in data.Causes)
+                {
+                    <span><i class="cause-@CauseClass(cause.Cause)"></i>@cause.Cause</span>
+                }
+            </div>
+        </section>
+
+        <section class="panel perf-section">
+            <h3>Bảng điểm AI</h3>
+            @if (data.Scores.Count == 0)
+            {
+                <p class="muted">Chưa có lượt chạy nào để chấm điểm.</p>
+            }
+            else
+            {
+                <div class="perf-table-wrap">
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Provider / model</th>
+                                <th class="num">Task</th>
+                                <th class="num">Đạt vòng 1</th>
+                                <th class="num">Vòng TB</th>
+                                <th>Phút TB S/M/L</th>
+                                <th class="num">Token TB</th>
+                                <th>Lỗi AG / nhóm</th>
+                                <th class="num">Hết hạn mức</th>
+                                <th>Nên giao</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var score in data.Scores)
+                            {
+                                <tr>
+                                    <td><strong>@score.DisplayName</strong></td>
+                                    <td class="num">@score.TaskCount</td>
+                                    @if (!score.EnoughData)
+                                    {
+                                        <td colspan="7" class="muted">Chưa đủ dữ liệu (&lt; 3 task), chưa kết luận loại việc nên giao</td>
+                                    }
+                                    else
+                                    {
+                                        <td class="num">@(score.Round1Rate.HasValue ? score.Round1Rate.Value.ToString("0.#", CultureInfo.InvariantCulture) + " %" : "chưa đo")</td>
+                                        <td class="num">@Num(score.AverageRounds)</td>
+                                        <td>S @Num(score.MinutesS) · M @Num(score.MinutesM) · L @Num(score.MinutesL)</td>
+                                        <td class="num">@TokenAvg(score.AverageTokens)</td>
+                                        <td>@AgText(score.AgByGroup)</td>
+                                        <td class="num">@score.QuotaExhausted</td>
+                                        <td>@(score.Suggested.Length > 0 ? score.Suggested : "chưa rõ")</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small">Nhóm công việc suy từ Phạm vi: giao diện · PowerShell · C# lõi · test. Chỉ tính lượt đã đo; lỗi dùng mã chuẩn mục 7.2.</p>
+            }
+        </section>
+
+        <section class="panel perf-section">
+            <details class="perf-tasks">
+                <summary>Task đã tính (@data.Tasks.Count)</summary>
+                @if (data.Tasks.Count == 0)
+                {
+                    <p class="muted">Chưa có task nào trên máy này.</p>
+                }
+                else
+                {
+                    <div class="perf-table-wrap">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã</th>
+                                    <th>Tiêu đề</th>
+                                    <th>Provider / model</th>
+                                    <th>Độ khó</th>
+                                    <th class="num">Vòng</th>
+                                    <th>Đạt vòng 1</th>
+                                    <th class="num">Phút</th>
+                                    <th class="num">Token</th>
+                                    <th>Lỗi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var task in data.Tasks)
+                                {
+                                    <tr>
+                                        <td>@task.Code</td>
+                                        <td>@task.Title</td>
+                                        <td>@task.ProviderDisplay</td>
+                                        <td>@task.Difficulty</td>
+                                        <td class="num">@task.Rounds</td>
+                                        <td>@PassText(task.PassedFirstRound)</td>
+                                        <td class="num">@Num(task.Minutes)</td>
+                                        <td class="num">@TokenCount(task.Tokens)</td>
+                                        <td>@(task.Causes.Count == 0 ? "—" : string.Join(", ", task.Causes))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </details>
+        </section>
+    }
+</div>
