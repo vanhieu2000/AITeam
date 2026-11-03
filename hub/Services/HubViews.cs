@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using AITeam.Hub.Models;
 
 namespace AITeam.Hub.Services;
@@ -84,7 +84,10 @@ public static class ActivityFeed
 
 public enum RunFilter { All, Errors, Success }
 
-public sealed record RunPage(IReadOnlyList<AgentRun> Items, int Total, int Page, int PageCount);
+public sealed record RunPage(IReadOnlyList<AgentRun> Items, int Total, int Page, int PageCount)
+{
+    public int PageSize { get; init; } = 8;
+}
 
 public static class RunHistory
 {
@@ -122,14 +125,14 @@ public static class RunHistory
 
         if (total == 0)
         {
-            return new RunPage(Array.Empty<AgentRun>(), 0, 1, 1);
+            return new RunPage(Array.Empty<AgentRun>(), 0, 1, 1) { PageSize = pageSize };
         }
 
         int pageCount = (total + pageSize - 1) / pageSize;
         int clampedPage = Math.Clamp(page, 1, pageCount);
         var items = filtered.Skip((clampedPage - 1) * pageSize).Take(pageSize).ToList();
 
-        return new RunPage(items, total, clampedPage, pageCount);
+        return new RunPage(items, total, clampedPage, pageCount) { PageSize = pageSize };
     }
 }
 
@@ -154,7 +157,7 @@ public static partial class ReviewParser
         }
 
         var lines = markdown.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-        var hasH3 = lines.Any(l => l.TrimStart().StartsWith("### ", StringComparison.Ordinal));
+        var hasH3 = lines.Any(l => IsRoundHeading(l));
 
         if (!hasH3)
         {
@@ -169,14 +172,14 @@ public static partial class ReviewParser
         foreach (var line in lines)
         {
             var trimmedStart = line.TrimStart();
-            if (trimmedStart.StartsWith("### ", StringComparison.Ordinal))
+            if (IsRoundHeading(trimmedStart))
             {
                 if (currentTitle != null)
                 {
                     rounds.Add(CreateRound(currentTitle, currentLines));
                     currentLines.Clear();
                 }
-                currentTitle = trimmedStart[4..].Trim();
+                currentTitle = trimmedStart.StartsWith("### ", StringComparison.Ordinal) ? trimmedStart[4..].Trim() : trimmedStart.Trim().Trim('*');
             }
             else
             {
@@ -193,6 +196,13 @@ public static partial class ReviewParser
         }
 
         return rounds;
+    }
+
+    private static bool IsRoundHeading(string line)
+    {
+        var text = line.Trim();
+        return text.StartsWith("### ", StringComparison.Ordinal) ||
+            Regex.IsMatch(text, @"^(?:\*\*)?Vòng\s+\d+\s*(?:[—–:-]|$)", RegexOptions.IgnoreCase);
     }
 
     private static ReviewRound CreateRound(string title, List<string> lines)
