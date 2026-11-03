@@ -65,12 +65,17 @@ public sealed class V911QuotaTests
     }
 
     [Fact]
-    public void Corrupt_state_is_never_overwritten_by_new_quota_observation()
+    public void Corrupt_state_is_backed_up_before_new_quota_observation()
     {
+        // R-012 (Claude): cùng hợp đồng Broken_state_file_is_backed_up_then_rebuilt —
+        // file hỏng giữ nguyên byte ở providers.json.hong-*, rồi ghi tiếp từ rỗng, không ném lỗi.
         using var repo = new TempRepo(false);
         var store = new ProviderStateStore(repo.Root);
         repo.Write(".state/providers.json", "broken-json");
-        Assert.Throws<System.Text.Json.JsonException>(() => store.RecordQuota("codex", QuotaObservation.Unknown, Now));
-        Assert.Equal("broken-json", File.ReadAllText(store.FilePath));
+        store.RecordQuota("codex", QuotaObservation.Unknown, Now);
+        var dir = Path.GetDirectoryName(store.FilePath)!;
+        var backup = Assert.Single(Directory.GetFiles(dir), f => Path.GetFileName(f).StartsWith("providers.json.hong-"));
+        Assert.Equal("broken-json", File.ReadAllText(backup));
+        Assert.False(File.Exists(store.FilePath) && File.ReadAllText(store.FilePath) == "broken-json");
     }
 }
