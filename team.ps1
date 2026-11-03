@@ -417,11 +417,82 @@ function Select-FreeAgent($r, [string]$suggested) {
     }
 }
 
+# /// Trả ngưỡng từ cấu hình hợp nhất cfg.review.maxRounds; thiếu/không nguyên dương => 3.
+function Get-ReviewRoundLimit($cfg) {
+    $raw = $null
+    try { $raw = $cfg.review.maxRounds } catch { }
+    if ($null -eq $raw) { return 3 }
+    $n = 0
+    if ($raw -is [int] -and $raw -gt 0) { return $raw }
+    if ($raw -is [string] -and [int]::TryParse($raw, [ref]$n) -and $n -gt 0) { return $n }
+    return 3
+}
+
+# /// Chỉ gọi CLI V6-01 review-rounds --task-file <taskFile> --logs <r.Logs> --task <taskId>.
+# /// Dùng Get-AITeamExe, truyền đối số rời, không đếm lại bằng PowerShell.
+# /// Chỉ nhận mã 0 + đúng một số nguyên không âm; thiếu CLI/lỗi/output sai =>
+# /// ném lỗi "Không xác định được số vòng review; dừng giao lại."; không coi là 0.
+function Get-ReviewRoundCount($r, [string]$taskFile, [string]$taskId) {
+    try {
+        $exe = Get-AITeamExe
+        if (-not $exe) { throw 'Thiếu CLI' }
+        $arguments = @('review-rounds', '--task-file', $taskFile, '--logs', $r.Logs, '--task', $taskId)
+        $stdout = @(& $exe @arguments 2>$null)
+        $code = $LASTEXITCODE
+        $value = 0
+        $output = ($stdout -join "`n").Trim()
+        if ($code -ne 0 -or $output -notmatch '\A[0-9]+\z' -or
+            -not [int]::TryParse($output, [ref]$value)) { throw 'Kết quả CLI không hợp lệ' }
+        return $value
+    } catch {
+        throw 'Không xác định được số vòng review; dừng giao lại.'
+    }
+}
+
+# /// Trả false dưới ngưỡng. Đạt ngưỡng => tái dùng decision pending cùng project/task
+# /// (đối chiếu title theo tiền tố task vì decision cũ có task=null), hoặc gọi
+# /// Invoke-ApprovalRequest -Kind decision qua biến script hiện có, khôi phục biến sau gọi.
+# /// Title: "Cần anh duyệt · <Task> · quá N vòng review".
+# /// Detail: dự án, task, "Tổng/ngưỡng: N/M", "giao tiếp", "Claude tự sửa", "bỏ task".
+# /// Ghi đúng "⏸ Chờ anh quyết · quá N vòng review", trả true; lỗi CLI cũng dừng,
+# /// báo đúng câu lỗi ở Get-ReviewRoundCount, không tạo decision sai, không chạy agent.
+# /// Không tự thực hiện lựa chọn. Lỗi ghi approval/bảng phải báo ra, không nuốt.
+function Stop-ReviewReassignment($r, [string]$taskFile, [string]$taskId, $cfg) {
+    $ErrorActionPreference = 'Stop'
+    $count = Get-ReviewRoundCount $r $taskFile $taskId
+    $limit = Get-ReviewRoundLimit $cfg
+    if ($count -lt $limit) { return $false }
+    # Tái dùng decision pending cùng project/task
+    $prefix = "Cần anh duyệt · $taskId $([char]0x00B7) "
+    $existing = @(Get-Approvals | Where-Object {
+        $_.kind -eq 'decision' -and $_.status -eq 'pending' -and
+        $_.project -eq $r.Info.name -and ($_.task -eq $taskId -or
+            (-not $_.task -and $_.title -and $_.title.StartsWith($prefix, [StringComparison]::Ordinal)))
+    })
+    if (-not $existing.Count) {
+        # Gọi Invoke-ApprovalRequest qua biến script
+        $savedKind = $script:Kind; $savedTitle = $script:Title; $savedPrompt = $script:Prompt; $savedProject = $script:Project
+        try {
+            $script:Kind = 'decision'
+            $script:Title = "Cần anh duyệt · $taskId · quá $count vòng review"
+            $script:Prompt = "Dự án: $($r.Info.name)`nTask: $taskId`nTổng/ngưỡng: $count/$limit`n`nLựa chọn:`n- giao tiếp`n- Claude tự sửa`n- bỏ task"
+            $script:Project = $r.Info.name
+            $null = Invoke-ApprovalRequest
+        } finally {
+            $script:Kind = $savedKind; $script:Title = $savedTitle; $script:Prompt = $savedPrompt; $script:Project = $savedProject
+        }
+    }
+    $null = Set-BoardStatus $r $taskId "⏸ Chờ anh quyết · quá $count vòng review"
+    return $true
+}
+
 function Invoke-Assign {
+    if ($Task -cnotmatch '\A[A-Za-z0-9][A-Za-z0-9-]{0,63}\z') { throw 'LỖI: mã task không hợp lệ.' }
     $cfg = Get-Config
     $r = Resolve-Project $Project
     if (-not $Task) { throw "Thiếu -Task" }
     $taskFile = Find-TaskFile $r $Task
+    if ($Resume -and (Stop-ReviewReassignment $r $taskFile.FullName $Task $cfg)) { return }
     $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
     $branch = [regex]::Match($text, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
@@ -658,6 +729,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         switch ($rv.Code) {
             0 { $boardText = "🔵 Chờ review · cổng KT ĐẠT · AI review PASS" }
             1 {
+                if (Stop-ReviewReassignment $r (Join-Path $work "tasks/$($taskFile.Name)") $Task $cfg) { return }
                 if (-not $script:ReviewRetried -and $rv.Json -and $rv.Json.feedback) {
                     $script:ReviewRetried = $true; $script:VerifyRetried = $false
                     Say "AI review CẦN SỬA → tự giao lại cho $(Get-StaffName $agentId) 1 lần kèm danh sách lỗi của reviewer." Yellow
