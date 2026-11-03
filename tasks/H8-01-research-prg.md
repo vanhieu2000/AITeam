@@ -23,3 +23,15 @@
 | Quota | V9-11 chưa vào main và còn xung đột V911QuotaTests; khóa provider nghỉ/giờ hồi tiếp tục chờ theo chỉ dẫn đợt 2. |
 | Bước cần quản lý | Cập nhật hợp đồng HTTP thành công của H705 theo PRG, đồng thời giữ kiểm XSS/manual save sau GET redirect. |
 | Đo đạc | Phút: chưa đo; token: chưa đo. Chưa chạy Windows. |
+
+## Báo cáo của agent — OpenCode
+| Tiêu chí | Bằng chứng |
+|---|---|
+| PRG trang nghiên cứu | `Research.OnPostAsk` thành công trả `RedirectToPage(new { r, q })`; lỗi vẫn `Page()` + `Error`. |
+| GET hiện lại câu hỏi | `OnGet(r, q)` chỉ nhận `q` khớp `[A-Za-z0-9-]{1,64}` và câu hỏi đã gửi (TempData/entry/job) của đúng phiếu; hiện `Asked` + form lưu thủ công. |
+| Bản nhúng Văn phòng | `OnPostResearchAsk` thành công trả 302 tương đối `/?RequestId=…&q=…`; lỗi giữ 200; GET bind `q` và truyền vào `_ResearchPanel`. |
+| Nội dung người dùng | Razor encode sẵn; test XSS của H705 xanh, không lộ `<script>`. |
+| File đổi | `hub/Pages/Research.cshtml.cs`, `hub/Pages/Office.cshtml.cs`, file task. |
+| Build | `dotnet build AITeam.sln -warnaserror -nodeReuse:false` ⇒ 0 warning, 0 error. |
+| Test | `dotnet test AITeam.sln --no-build --blame-hang-timeout 3m` ⇒ Hub 817/817, Core 829/829 đạt. |
+| Chưa làm | Khóa nhà cung cấp hết hạn mức/giờ hồi (chờ V9-11 vào main). |

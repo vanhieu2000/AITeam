@@ -34,6 +34,9 @@ public class OfficeModel : PageModel
     }
 
     [BindProperty(SupportsGet = true)] public string? RequestId { get; set; }
+
+    /// <summary>Mã câu hỏi vừa gửi (q) để bản nhúng hiện lại lời nhắn + form lưu thủ công sau redirect.</summary>
+    [BindProperty(SupportsGet = true, Name = "q")] public string? ResearchQuestionQuery { get; set; }
     public IReadOnlyList<RequestThread> Threads { get; private set; } = Array.Empty<RequestThread>();
     public RequestThread? SelectedThread { get; private set; }
     public IReadOnlyList<ProjectInfo> ChatProjects { get; private set; } = Array.Empty<ProjectInfo>();
@@ -149,8 +152,8 @@ public class OfficeModel : PageModel
     private void LoadResearch()
     {
         if (_research == null || _requests == null) return;
-        ResearchPane = new ResearchModel(_research, _requests) { Embedded = true };
-        ResearchPane.OnGet(SelectedThread?.Id);
+        ResearchPane = new ResearchModel(_research, _requests) { Embedded = true, PageContext = this.PageContext };
+        ResearchPane.OnGet(SelectedThread?.Id, ResearchQuestionQuery);
     }
 
     public IActionResult OnGetResearch()
@@ -159,10 +162,18 @@ public class OfficeModel : PageModel
         return Self("_OfficeResearch");
     }
 
+    /// <summary>
+    /// POST ?handler=ResearchAsk (antiforgery): hỏi như OnPostAsk của trang Phòng nghiên cứu.
+    /// Thành công ⇒ 302 về "/?RequestId={r}&amp;q={QuestionId}" (đường dẫn tương đối) để F5 không gửi lại;
+    /// lỗi (kể cả phiếu không hợp lệ) ⇒ trả trang như cũ để hiện thông báo.
+    /// </summary>
     public IActionResult OnPostResearchAsk(string? r, string? question, string[]? ai, bool includeRequestText)
     {
         RequestId = r; OnGet();
-        if (ResearchPane?.Current != null) ResearchPane.OnPostAsk(r, question, ai, includeRequestText);
+        if (ResearchPane?.Current == null) return Page();
+        var result = ResearchPane.OnPostAsk(r, question, ai, includeRequestText);
+        if (result is RedirectToPageResult && ResearchPane.Asked != null)
+            return Redirect("/?RequestId=" + Uri.EscapeDataString(r ?? ResearchPane.Current.Id) + "&q=" + Uri.EscapeDataString(ResearchPane.Asked.QuestionId));
         return Page();
     }
 
