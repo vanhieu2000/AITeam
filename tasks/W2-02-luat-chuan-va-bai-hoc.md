@@ -1,6 +1,6 @@
 ﻿# W2-02 · Luật chuẩn (rules/L-xxx.md) + bài học (lessons/LS-xxx.md) + tự chèn luật khi giao việc
 
-- **Agent:** B
+- **Agent:** A
 - **Model:** `gemini-3.8-flash-high`
 - **Nhánh:** `agent-o/W2-02-luat-chuan-va-bai-hoc`
 - **Yêu cầu:** R-014
@@ -77,7 +77,7 @@ public interface ILessonService
 - **CLI** (`core/AITeam.Cli`): `aiteam rules-for-task --root <AITeam> --task-file <đường dẫn file task> --step <mã bước> [--ai <id>]` ⇒ in `PromptSection` ra stdout (UTF-8), loại việc lấy bằng `WorkflowConfigService.Resolve(mã task từ tên file, nội dung file)`. Lỗi ⇒ stderr + mã thoát 2, stdout rỗng.
 - **team.ps1** (`assign`): sau dòng `$prompt = Add-SkillPrompt …` gọi CLI trên với `--step code --ai <$Dev>`; có chữ thì nối vào `$prompt`. CLI lỗi / không có exe ⇒ ghi 1 dòng cảnh báo `Write-Warning` và giao tiếp bình thường (KHÔNG chặn giao việc).
 - **`skill-note` dùng chung**: `team.ps1 skill-note` sau khi ghi vào skill như cũ thì gọi thêm `aiteam lesson-add --root … --title <80 ký tự đầu của Text> --body <Text> --kind meo --task <Source>` (CLI mới, in Id ra stdout). Lỗi CLI chỉ cảnh báo.
-- DI trong `hub/Services/HubV3Registration.cs`: `ILessonService` với `HubPaths.AITeamRoot`.
+- KHÔNG đăng ký DI trong Hub (Claude nối khi làm màn hình UI-06).
 - Tạo thư mục `rules/` và `lessons/` trong repo, mỗi thư mục có `README.md` 3–5 dòng giải thích định dạng.
 
 ## Phạm vi (được sửa những gì)
@@ -87,7 +87,6 @@ public interface ILessonService
 - `team.ps1` (chỉ 2 chỗ nêu trên + hàm trợ giúp nhỏ)
 - `rules/README.md` (tạo mới)
 - `lessons/README.md` (tạo mới)
-- `hub/Services/HubV3Registration.cs`
 - `core.tests/W202CliTests.cs` (tạo mới — test lệnh CLI rules-for-task / lesson-add do agent viết)
 - `tasks/W2-02-luat-chuan-va-bai-hoc.md`
 
