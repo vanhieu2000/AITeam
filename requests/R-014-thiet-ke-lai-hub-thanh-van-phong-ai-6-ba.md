@@ -65,6 +65,10 @@ Sự kiện cần ghi:
 - 2026-11-04 01:48:19 +05:30 | W2-02 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:W2-02:Verify:1 -->
 | 01:48 04/11/2026 | Cờ tự động AITeam/W2-02 lượt 1 | TO |
 - 2026-11-04 01:48:25 +05:30 | W2-02 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:W2-02:Assign:1 -->
+- 2026-11-04 02:15:40 +05:30 | W2-02 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:W2-02:Verify:2 -->
+| 02:15 04/11/2026 | Cờ tự động AITeam/W2-02 lượt 2 | TO, TN — có thể test nghiệm thu sai; Tạm dừng |
+- 2026-11-04 02:16:49 +05:30 | V10-05 | Verify | lượt 1 | ĐẠT <!-- workflow:V10-05:Verify:1 -->
+- 2026-11-04 02:16:58 +05:30 | V10-05 | Assign | lượt 1 | ĐẠT <!-- workflow:V10-05:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
 

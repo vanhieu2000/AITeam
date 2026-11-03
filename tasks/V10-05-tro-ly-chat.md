@@ -69,17 +69,36 @@ public interface IChatAssistant
 ## Test nghiệm thu
 `hub.tests/V1005ChatAssistantTests.cs` — Claude đã viết sẵn, đang đỏ 8/8 (registry SQLite thư mục tạm, factory / codexChat / office giả). Gồm:
 - Settings mặc định; Save rồi đọc lại; ResearchAis 5 mục hoặc id lạ ⇒ ArgumentException.
-- Ask với `codex` ⇒ gọi codexChat, không gọi factory; với `mycli` ⇒ gọi provider giả ReadOnly, thư mục tạm bị xóa.
+- Ask với codex ⇒ gọi codexChat, không gọi factory; với mycli ⇒ gọi provider giả ReadOnly, thư mục tạm bị xóa.
 - Ask lần 2 cùng ConversationId ⇒ prompt chứa câu hỏi lần 1; KeepHistory=false ⇒ ConversationId null, store không có hội thoại mới.
 - Task ⇒ office.Send đúng project + text, không gọi AI; project null ⇒ ArgumentException.
 - Research 2 AI (1 ok, 1 lỗi) ⇒ Text có 2 khối, Error null; cả 2 lỗi ⇒ Error khác null.
 - QuotaExhausted ⇒ Error đúng mẫu + RecordQuota được gọi.
-- `ai` = id đang tắt ⇒ Error "AI không hợp lệ hoặc đang tắt.".
+- ai = id đang tắt ⇒ Error "AI không hợp lệ hoặc đang tắt.".
 
 ## Tiêu chí hoàn thành
-- [ ] 8 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
-- [ ] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
-- [ ] Không chạm `hub/Pages/**`, `hub/wwwroot/**`; không gọi AI thật trong test.
-- [ ] Commit: "V10-05: trợ lý chat — hỏi đáp chọn AI, giao việc, nghiên cứu nhiều AI (Antigravity)".
+- [x] 8 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
+- [x] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
+- [x] Không chạm `hub/Pages/**`, `hub/wwwroot/**`; không gọi AI thật trong test.
+- [x] Commit: "V10-05: trợ lý chat — hỏi đáp chọn AI, giao việc, nghiên cứu nhiều AI (Antigravity)".
 
 ## Báo cáo của agent
+| Tiêu chí | Lệnh / Bằng chứng | Kết quả |
+|---|---|---|
+| 8 test nghiệm thu xanh | `dotnet test hub.tests --filter V1005ChatAssistantTests` | 8/8 pass |
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror` | 0 warning, 0 error |
+| Toàn bộ test xanh | `dotnet test AITeam.sln --blame-hang-timeout 2m` | 1862/1862 pass |
+| Giữ BOM UTF-8 | python script kiểm tra `0xEF 0xBB 0xBF` | Cả 3 file .cs đều giữ BOM |
+| Đúng phạm vi | `git status --short` | Chỉ đổi 3 file .cs và file task |
+
+- File đã đổi: `hub/Services/ChatAssistant.cs`, `hub/Services/LocalChatStore.cs`, `hub/Services/HubV3Registration.cs`, `tasks/V10-05-tro-ly-chat.md`.
+- Điều chưa chắc: Không có.
+
+## Review (Claude)
+### Vòng 1 — ĐẠT
+- Antigravity Gemini 3.8 (Agent B), 1 lượt. Cổng KT ĐẠT: build 0 warning, Hub 866/866, Core 996/996, 359 / 450 dòng, quét bí mật sạch; 8/8 test nghiệm thu (Claude) xanh, file nghiệm thu nguyên vẹn.
+- Đã kiểm: không chạm `hub/Pages/**`, `hub/wwwroot/**`; prompt + câu trả lời qua SecretRedactor trước khi ghi file tạm / SQLite; thư mục tạm xóa trong finally; lịch sử 20 tin × 2000 ký tự; AppendExchange 1 transaction; hết hạn mức ⇒ RecordQuota 0 % nguồn "chat"; nghiên cứu chạy song song Task.WhenAll; Hủy ⇒ không nuốt OperationCanceledException.
+- Optional: `catch { }` khi xóa thư mục tạm nuốt lỗi im lặng (chấp nhận được, nên ghi log).
+
+## Kết quả
+- Lõi cho nút chat nổi: hỏi đáp chọn AI (Codex qua đường cũ, AI khác qua danh bạ), giao việc vào hộp thư Claude, nghiên cứu hỏi nhiều AI cùng lúc; cài đặt trợ lý lưu trong office.db. Chưa nối giao diện (UI-08 / UI-09 của Claude).
