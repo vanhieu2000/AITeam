@@ -1,13 +1,14 @@
 ﻿# V10-05 · Trợ lý chat (IChatAssistant): hỏi đáp chọn AI, giao việc, nghiên cứu nhiều AI
 
-- **Agent:** O
+- **Agent:** B
+- **Model:** `gemini-3.8-flash-high`
 - **Nhánh:** `agent-o/V10-05-tro-ly-chat`
 - **Yêu cầu:** R-014
 - **Loại việc:** Tính năng lõi / CLI
 - **Ngân sách:** ~450 dòng
 - **Thời gian tối đa:** 40 phút
 - **Độ khó:** M
-- **Phụ thuộc:** V10-02 đã merge (`IAiProviderFactory`).
+- **Phụ thuộc:** V10-02 đã merge (IAiProviderFactory) — có trên main.
 
 ## Tóm tắt
 - Không có màn hình mới (khung chat nổi đã có; Claude nối vào sau, UI-08 / UI-09).
@@ -21,7 +22,7 @@
 - `hub/Services/OfficeChatService.cs` (gửi vào hộp thư cho Claude).
 
 ## Mục tiêu
-File mới `hub/Services/ChatAssistant.cs`. Hợp đồng (Claude chốt — KHÔNG đổi chữ ký):
+**Khung code đã có trên nhánh** (commit "Test nghiệm thu V10-05 (Claude)"): `hub/Services/ChatAssistant.cs` (chữ ký chốt, thân `NotImplementedException`). Agent điền thân, KHÔNG đổi chữ ký. Hợp đồng:
 ```csharp
 namespace AITeam.Hub.Services;
 
@@ -48,10 +49,9 @@ public interface IChatAssistant
 - DI trong `hub/Services/HubV3Registration.cs`: `IChatAssistant` singleton.
 
 ## Phạm vi (được sửa những gì)
-- `hub/Services/ChatAssistant.cs` (mới)
-- `hub/Services/LocalChatStore.cs` (chỉ thêm `AppendExchange`)
+- `hub/Services/ChatAssistant.cs` (khung có sẵn — điền thân)
+- `hub/Services/LocalChatStore.cs` (chỉ thêm hàm AppendExchange)
 - `hub/Services/HubV3Registration.cs`
-- `hub.tests/V1005ChatAssistantTests.cs` (mới)
 - `tasks/V10-05-tro-ly-chat.md`
 
 ## Không làm
@@ -67,7 +67,7 @@ public interface IChatAssistant
 - Hủy `ct` ⇒ dừng mọi lời gọi đang chạy, không ghi lịch sử nửa chừng.
 
 ## Test nghiệm thu
-`hub.tests/V1005ChatAssistantTests.cs` (registry SQLite thư mục tạm, factory / codexChat / office giả):
+`hub.tests/V1005ChatAssistantTests.cs` — Claude đã viết sẵn, đang đỏ 8/8 (registry SQLite thư mục tạm, factory / codexChat / office giả). Gồm:
 - Settings mặc định; Save rồi đọc lại; ResearchAis 5 mục hoặc id lạ ⇒ ArgumentException.
 - Ask với `codex` ⇒ gọi codexChat, không gọi factory; với `mycli` ⇒ gọi provider giả ReadOnly, thư mục tạm bị xóa.
 - Ask lần 2 cùng ConversationId ⇒ prompt chứa câu hỏi lần 1; KeepHistory=false ⇒ ConversationId null, store không có hội thoại mới.
@@ -77,7 +77,9 @@ public interface IChatAssistant
 - `ai` = id đang tắt ⇒ Error "AI không hợp lệ hoặc đang tắt.".
 
 ## Tiêu chí hoàn thành
-- Build 0 warning; toàn bộ test xanh; giữ BOM.
-- Commit: `V10-05: trợ lý chat — hỏi đáp chọn AI, giao việc, nghiên cứu nhiều AI (OpenCode)`.
+- [ ] 8 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
+- [ ] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
+- [ ] Không chạm `hub/Pages/**`, `hub/wwwroot/**`; không gọi AI thật trong test.
+- [ ] Commit: "V10-05: trợ lý chat — hỏi đáp chọn AI, giao việc, nghiên cứu nhiều AI (Antigravity)".
 
 ## Báo cáo của agent
