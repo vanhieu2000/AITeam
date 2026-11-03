@@ -22,7 +22,7 @@
 - `core/AITeam.Core/Research/Research.cs` chỉ lớp `SecretRedactor`.
 
 ## Mục tiêu
-Thư mục mới `core/AITeam.Core/AiServices/Adapters/`. Hợp đồng (Claude chốt — KHÔNG đổi chữ ký):
+**Khung code đã có trên nhánh** (commit "Test nghiệm thu V10-02 (Claude)"): `core/AITeam.Core/AiServices/Adapters/AiAdapters.cs` (chữ ký chốt, thân `NotImplementedException`) + `ProviderKind.Generic`. Agent điền thân, KHÔNG đổi chữ ký. Hợp đồng:
 ```csharp
 namespace AITeam.Core.AiServices.Adapters;
 
@@ -31,7 +31,7 @@ public interface ISecretLookup { string? Get(string name); }
 
 public interface IAiProviderFactory
 {
-    /// Dịch vụ có Id "codex" / "opencode" / "agy" ⇒ lớp riêng có sẵn (CodexProvider / OpenCodeProvider / AgyProvider),
+    /// Dịch vụ có Id "codex" / "opencode" / "agy" hoặc "antigravity" (mã trong danh bạ) ⇒ lớp riêng có sẵn (CodexProvider / OpenCodeProvider / AgyProvider),
     /// dựng ProviderConfig từ AiService (Command → Exe, Models[0] → Model, MaxJobs → MaxConcurrent, Paid).
     /// Còn lại theo Adapter: CliJson ⇒ CliJsonProvider, CliText ⇒ CliTextProvider, OpenAiCompatibleHttp ⇒ OpenAiHttpProvider.
     /// Dịch vụ tắt (Enabled=false) ⇒ InvalidOperationException("Dịch vụ AI <id> đang tắt.").
@@ -43,7 +43,8 @@ public interface IAiProviderFactory
 
 public sealed class AiProviderFactory(IAiServiceRegistry registry, IProcessRunner runner, ISecretLookup secrets, HttpMessageHandler? http = null) : IAiProviderFactory { … }
 ```
-- `ProviderKind` thêm giá trị **`Generic`** (cuối enum, không đổi số của giá trị cũ). Ba provider chung có `Kind = Generic`, `Id = service.Id`.
+- `Create` KHÔNG kiểm lệnh / URL (chỉ kiểm Enabled); lỗi cấu hình trả ra lúc `RunAsync` với `Status=ConfigError`, không gọi tiến trình / mạng.
+- `ProviderKind` thêm giá trị **Generic** (cuối enum, không đổi số của giá trị cũ). Ba provider chung có `Kind = Generic`, `Id = service.Id`.
 - **`CliTextProvider`**: chạy `service.Command` với `service.Args` (mảng). Mỗi phần tử được thay chỗ giữ `{prompt_file}`, `{workdir}`, `{model}` bằng giá trị thật — thay TRONG phần tử, không ghép thành chuỗi lệnh, không qua shell. Prompt đưa qua file (StdinFile = prompt file nếu không có `{prompt_file}` trong Args). Kết quả = stdout. `HasReadOnlySandbox = false`.
 - **`CliJsonProvider`**: như CliText, nhưng stdout là JSON lines; Text = nối các trường `text` của dòng có `"type":"text"` (hoặc `part.text`), token lấy từ `tokens.input/output` nếu có; dòng không phải JSON bỏ qua.
 - **`OpenAiHttpProvider`**: POST `{BaseUrl}/chat/completions`, body `{model, messages:[{role:"user",content:<nội dung prompt file>}]}`; header `Authorization: Bearer <secrets.Get(SecretKeyName)>` khi có tên khóa. Text = `choices[0].message.content`, token từ `usage.prompt_tokens / completion_tokens`. Chỉ hỗ trợ `RunMode.ReadOnly`; `Develop` ⇒ `Status=ConfigError`, Detail "Adapter HTTP không viết code được.". `HasReadOnlySandbox = true` (không chạm file).
@@ -52,12 +53,12 @@ public sealed class AiProviderFactory(IAiServiceRegistry registry, IProcessRunne
 - DI trong `hub/Services/HubV3Registration.cs`: `ISecretLookup` = lớp nhỏ mới `hub/Services/VaultSecretLookup.cs`. `IVaultService` cố ý KHÔNG có hàm trả giá trị (giao diện không được đọc khóa) ⇒ thêm vào lớp `VaultService` hàm `internal string? ReadValue(string name)` (dùng `ReadVault()` có sẵn, tên sai mẫu ⇒ null) — KHÔNG thêm vào `IVaultService`. `VaultSecretLookup(VaultService vault)` gọi hàm này. `IAiProviderFactory` singleton.
 
 ## Phạm vi (được sửa những gì)
-- `core/AITeam.Core/AiServices/Adapters/` (mới)
-- `core/AITeam.Core/Providers/ProviderModels.cs` (chỉ thêm `Generic`)
-- `hub/Services/VaultSecretLookup.cs` (mới)
-- `hub/Services/VaultService.cs` (chỉ thêm `ReadValue`)
+- `core/AITeam.Core/AiServices/Adapters/AiAdapters.cs` (khung có sẵn — điền thân; được tách thêm file trong thư mục này)
+- `core/AITeam.Core/AiServices/Adapters/` (thư mục)
+- `core/AITeam.Core/Providers/ProviderModels.cs` (đã thêm Generic — không sửa thêm)
+- `hub/Services/VaultSecretLookup.cs` (tạo mới)
+- `hub/Services/VaultService.cs` (chỉ thêm hàm ReadValue)
 - `hub/Services/HubV3Registration.cs`
-- `core.tests/V1002AiAdapterTests.cs` (mới)
 - `tasks/V10-02-adapter-ai-tu-danh-ba.md`
 
 ## Không làm
@@ -72,7 +73,7 @@ public sealed class AiProviderFactory(IAiServiceRegistry registry, IProcessRunne
 - Phản hồi HTTP đọc tối đa 2 MB; stdout CLI giữ tối đa 2 MB (cắt phần thừa, ghi Detail "đã cắt").
 
 ## Test nghiệm thu
-`core.tests/V1002AiAdapterTests.cs` (runner giả, handler HTTP giả, registry SQLite thư mục tạm):
+`core.tests/V1002AiAdapterTests.cs` — Claude đã viết sẵn, đang đỏ 12/12 (runner giả, handler HTTP giả, registry SQLite thư mục tạm). Gồm:
 - Factory: id `codex` ⇒ `CodexProvider`; `opencode` ⇒ `OpenCodeProvider`; dịch vụ `mycli` adapter cli-text ⇒ `CliTextProvider` với `Id="mycli"`, `Kind=Generic`; dịch vụ tắt ⇒ InvalidOperationException; `ForRole(Chat)` chỉ trả dịch vụ bật có vai trò Chat.
 - CliText: Args `["run","{prompt_file}","--m","{model}"]` ⇒ ProcessSpec nhận đúng mảng đã thay, không có shell; stdout ⇒ Text.
 - CliJson: 3 dòng JSON (1 text, 1 rác, 1 tokens) ⇒ Text đúng, Tokens đúng.
@@ -81,7 +82,9 @@ public sealed class AiProviderFactory(IAiServiceRegistry registry, IProcessRunne
 - Command `codex & del x` ⇒ ConfigError.
 
 ## Tiêu chí hoàn thành
-- Build 0 warning; toàn bộ test xanh; giữ BOM.
-- Commit: `V10-02: chạy AI theo danh bạ — 3 adapter chung + factory (OpenCode)`.
+- [ ] 12 test trong file nghiệm thu xanh; không sửa file nghiệm thu.
+- [ ] Build 0 warning; toàn bộ test xanh; giữ BOM (cả file mới).
+- [ ] Không chạm `hub/Pages/**`, `hub/wwwroot/**`; không gọi mạng / AI thật trong test.
+- [ ] Commit: "V10-02: chạy AI theo danh bạ — 3 adapter chung + factory (Antigravity)".
 
 ## Báo cáo của agent
