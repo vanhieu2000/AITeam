@@ -54,12 +54,25 @@
 - `hub.tests/AcceptanceF101ProjectAdminTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Build `AITeam.sln` với `-warnaserror` 0 warning
+- [x] Build `AITeam.sln` với `-warnaserror` 0 warning
 - [ ] `dotnet test AITeam.sln` xanh hết, gồm toàn bộ test nghiệm thu F1-01 (không sửa)
-- [ ] `.cs` giữ BOM UTF-8
+- [x] `.cs` giữ BOM UTF-8
 - [ ] Commit: `F1-01: dịch vụ quản lý dự án (thêm / sửa / trạng thái)`
 
 ## Báo cáo của agent
+| Tiêu chí | Bằng chứng thật |
+|---|---|
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror --no-restore -m:1 -p:UseSharedCompilation=false -v:minimal`: thành công, 0 warning, 0 lỗi. |
+| Test nghiệm thu nguyên vẹn | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~F101ProjectAdmin" --blame-hang-timeout 2m`: 37 pass, 0 fail, 0 skip (33 nghiệm thu + 4 bổ sung). |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 839 pass/8 fail/0 skip; dừng khoảng 3 phút, Core chưa có tổng kết. |
+| Nguyên nhân chưa xanh toàn bộ | Ngoài F1-01: Settings/WorkflowRoles/Lessons bị `UnauthorizedAccessException` tại `File.Replace`; test Git của Core lỗi signal pipe/CreateFileMapping, Win32 error 5. |
+| BOM UTF-8 | Kiểm bằng Python `read_bytes().startswith(b'\xef\xbb\xbf')`: cả 3 file C# đã đổi đều True. |
+| Commit/push | Không chạy lệnh git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa có commit được kiểm chứng. |
+Đã đổi: `ProjectAdminService.cs` điền 5 hàm, kiểm dữ liệu, khóa chung, giữ trường lạ, runner ArgumentList/stdin đóng/đọc đồng thời/kill cây và mã 124.
+Đã đổi: `TeamConfigService.cs` chỉ mở `WriteWithBackup` thành internal và dùng file tạm + đổi tên nguyên tử, giữ BOM/.bak; không sửa SaveSettings/SaveProject.
+Đã thêm: `F101ProjectAdminExtraTests.cs` kiểm cấu hình hỏng không ghi, BOM/.bak và runner thật (stdin/output/timeout); test chỉ dùng dữ liệu tạm.
+Tự quyết: dùng `File.Move(..., overwrite: true)` cùng thư mục vì sandbox chặn `File.Replace`; tắt compiler server sau lỗi named pipe, dùng `-m:1` vì build mặc định thoát mã 1 không chẩn đoán.
+Chưa xác minh: toàn bộ Core, môi trường ngoài sandbox và commit/push; không chạy app/chụp ảnh, không sửa test nghiệm thu/giao diện.
 
 ## Review (Claude)
 
