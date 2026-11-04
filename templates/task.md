@@ -44,6 +44,7 @@ KIỂM TRA "HỢP ĐỒNG NGOÀI & KHUNG" (IMP-001 — lỗi TK lặp 3/3 task c
 - [ ] (IMP-005) Đọc file theo đường dẫn ⇒ chặn symlink / reparse point; dịch vụ singleton / gọi đồng thời (MCP, Hub) ⇒ khóa + 1 ca test đồng thời (V5-01: Codex bắt cả hai).
 - [ ] Test có chuỗi GIỐNG bí mật (sk-…, ghp_…, password=…) ⇒ ghép lúc chạy (`string.Concat("sk-", …)`), không ghi thẳng — hook quét bí mật chặn commit (V5-07a).
 - [ ] (IMP-005) Hiển thị ghép chữ / giờ ⇒ dựng thử đặc tả bằng dữ liệu đang có (phiếu, log) trước khi giao (V5-04: bàn Claude hiện 2 giờ). -->
+- [ ] (IMP-006, R-015) Đổi định dạng / bộ đọc dùng chung (bảng việc, phiếu, JSON cấu hình) ⇒ grep test cũ tự dựng dữ liệu giả cùng định dạng, sửa dữ liệu giả cho giống thật TRƯỚC khi giao (F1-06: test R014 dùng bảng không tiêu đề ⇒ Codex mất 1 lượt).
 -
 
 ## Dữ liệu mẫu thật

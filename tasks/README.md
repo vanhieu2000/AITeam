@@ -114,6 +114,14 @@ Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đ
 
 ## Kế hoạch / hàng chờ
 
+- **Hàng chờ R-015 (04/11 22:20, chưa giao):**
+  1. [CK] Cổng KT: commit "(Claude)" sau commit đầu (khung DI, sửa dữ liệu giả) bị tính "sửa ngoài phạm vi" (F1-01); chuỗi `Assert.True(true)` trong DỮ LIỆU test bị báo "test luôn pass" (F1-05) ⇒ task nhỏ Codex.
+  2. [CK] `team.ps1 new-task` đặt tên file / nhánh từ tiêu đề tiếng Việt thành "b-c-b-ng-vi-c" ⇒ bỏ dấu đúng (đ→d, ư→u…).
+  3. Đội AI: thêm OpenCode vào danh bạ AI (office.db chưa có); gộp trang `/AiAccounts` (đổi tài khoản Antigravity) vào Đội AI rồi bỏ trang cũ.
+  4. Thay trang `/Research` bằng chế độ "Hỏi cùng lúc" của trợ lý chat (đề xuất R-015 mục 3) — cần thiết kế riêng.
+  5. Optional review: F1-01 nhả khóa cấu hình trước khi chạy `add-project`; F1-02 bộ đệm theo thời điểm sửa file; F1-05 bỏ qua bài học tiêu đề rỗng thay vì dừng.
+  6. Trang Dự án: nút Chạy thử / Lấy bản mới / Mở thư mục (mockup có) cần lệnh nền an toàn từ Hub ⇒ thiết kế + task lõi.
+
 - **Sửa cổng / công cụ (R-014, phát hiện đêm 03–04/11, giao Codex sau 12:09 04/11):**
   1. [CK] `team.ps1` báo "HẾT HẠN MỨC" khi lượt agy kết thúc bằng lỗi mạng "no such host" (V10-02) ⇒ phân biệt lỗi mạng / hạn mức thật.
   2. [CK] Cổng KT chỉ coi commit ĐẦU của nhánh là test nghiệm thu của Claude; bản sửa test sau đó bị coi là agent sửa (W2-02) ⇒ nhận commit "(Claude)" của danh tính quản lý; Claude commit trong worktree agent phải ghi đè danh tính.

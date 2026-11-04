@@ -1,7 +1,7 @@
 ﻿# R-015 · Rà soát toàn bộ Hub thành văn phòng AI đúng nghĩa
 
 - **Nhận lúc:** 16:15 04/11/2026 · máy HIEUDV
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong 22:20 04/11/2026 (còn hàng chờ: xem tasks/README.md mục R-015)
 - **Lời chủ dự án:**
   > tôi nhớ mock up hôm qua trông không như này . thiết kế giao diên jgif mà chỗ thừa trống chỗ thiếu . tôi muốn giao diện phẳng không cuộn cả trang . có cuộn thì mỗi nội dung trình bày gọn đủ thông tin , mỗi nội dung 1 thẻ ,.. hãy dùng skill UX UI để sửa lại giao diện cho tôi . bạn làm trực tiếp
   > tất cả các trang hãy check lại. xem kĩ nội dung tôi cần quản lí là gì . tôi cần 1 quản lí theo keieur 1 văn phòng ai thì có nhưunxg chức năng gì chứ không phải cái tab dự án bấm vào có 3 dự án ko thêm sửa xoá cũng chả có tác dụng gì . nếu có quản lí dự án thì cần quản lí thông tin dự án như thế nào ,.. nếu ko cần thì bỏ . check lại toàn bộ giao diện và chức năng . giao diện thì b làm trực tiếp chức năng thì giao codex opencode hay gg anti làm
@@ -77,30 +77,38 @@ Sự kiện cần ghi:
 - 2026-11-04 21:36:51 +05:30 | F1-01 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:F1-01:Verify:2 -->
 - 2026-11-04 22:00:53 +05:30 | F1-03 | Verify | lượt 2 | ĐẠT <!-- workflow:F1-03:Verify:2 -->
 ## 4. Đánh giá sau khi xong (Claude)
-Dán kết quả `.\team.ps1 request-report -Request R-015`, rồi điền:
+```
+Tổng: 5 task · 9 lượt agent · 118.8 phút agent · 11996k token · vòng TB 1.00 · đạt vòng 1: 5/5
+F1-01 Codex 2 lượt 16 phút · F1-02 Codex 1 lượt 8 phút · F1-03 Antigravity 2 lượt 52 phút · F1-05 Antigravity 2 lượt 26 phút · F1-06 Codex 2 lượt 16 phút
+(cột "Dòng" của request-report tính cả merge main vào nhánh ⇒ không dùng; dòng thật theo cổng KT bên dưới)
+```
 
 | Chỉ số | Giá trị |
 |---|---|
-| Tổng thời gian (nhận → báo xong) | |
-| Thời gian Claude (phân tích + thiết kế + review + tự sửa) | |
-| Thời gian agent (cộng mọi lượt) | |
-| Thời gian chờ không ai làm (vd. chờ hạn mức, chờ chủ dự án) | |
-| Số lượt agent / số vòng review | |
-| Dòng code / ngân sách | |
-| Claude tự sửa: số lần / tổng dòng | |
-| Lỗi theo nguyên nhân: TK / AG / CK | |
+| Tổng thời gian (nhận → báo xong) | ~6 giờ (16:15 → 22:20), gồm UI-10 và rà soát; sau khi duyệt (19:05) ~3 giờ 15 phút |
+| Thời gian Claude (phân tích + thiết kế + review + tự sửa) | ~300 phút (rà soát + đề xuất 30, thiết kế + 6 bộ test nghiệm thu 90, mockup 25, review 5 task 40, giao diện 7 trang 110) |
+| Thời gian agent (cộng mọi lượt) | ~119 phút (Codex 40, Antigravity 79) |
+| Thời gian chờ không ai làm | ~15 phút (F1-03 chờ khóa phạm vi F1-05) |
+| Số lượt agent / số vòng review | 9 / 1,00 (5/5 đạt vòng 1) |
+| Dòng code / ngân sách | 980 / 1170 (F1-06 132, F1-05 153, F1-02 172, F1-01 273, F1-03 250) |
+| Claude tự sửa: số lần / tổng dòng | 4 lần / ~30 dòng (_Layout IsPath, Get-AgyModelsCached, Set-BoardStatus chèn sai bảng + test, dữ liệu giả test R014) |
+| Lỗi theo nguyên nhân: TK / AG / CK | 3 / 1 / 4 (+1 HT: agy treo chờ tác vụ nền F1-05 lượt 1) |
 
-**Đánh giá nhân viên** (chi tiết ghi thêm vào `staff/<mã>-<tên>.md`):
+**Đánh giá nhân viên**
 
 | Nhân viên | Task | Lượt · phút | Vòng | Dòng / ngân sách | Làm tốt | Lỗi AG | Hướng cải thiện |
 |---|---|---|---|---|---|---|---|
+| Codex (C) | F1-06, F1-02, F1-01 | 5 · 40 | 1 | 577 / 800 | Đúng thiết kế, kiểm tra đầu vào kỹ, F1-02 đạt ngay lượt 1 | 0 | — |
+| Antigravity (A) | F1-05 | 2 · 26 | 1 | 153 / 150 | Đúng thiết kế khi chạy được | 0 (lượt 1 treo = HT) | — |
+| Antigravity (B) | F1-03 | 2 · 52 | 1 | 250 / 220 | Lượt 2 đúng thiết kế | 1 (lượt 1 bỏ trống phần chính) | Task 2 phần (Hub + CLI) ⇒ ghi rõ thứ tự làm |
 
-**Team đang bất ổn ở đâu** (mỗi mục ghi bằng chứng từ nhật ký):
-- Kỹ thuật (công cụ, build, cổng kiểm tra, môi trường, model):
-- Quy trình (thiết kế, chia task, giao việc, review, phối hợp 2 máy):
-- Quản lý (Claude: lỗi TK, quyết định sai, chậm review):
-- **Tốn thời gian nhất ở đâu:**
-- **Cái gì làm tốt (giữ lại):**
-- **Cải tiến quy trình áp dụng cho yêu cầu sau** (tối đa 2, cụ thể, sửa file nào):
-  1.
-- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có / chưa
+**Team đang bất ổn ở đâu**
+- Kỹ thuật: cổng KT báo nhầm 2 kiểu (commit khung "(Claude)" tính là ngoài phạm vi; chuỗi `Assert.True(true)` trong DỮ LIỆU test bị coi là test luôn pass). `team.ps1` có 2 lỗi chặn: hàm `Get-AgyModelsCached` không tồn tại, `Set-BoardStatus` chèn task mới sau bảng cuối file (5 task F1 mất khỏi Hub). Hook Bash chặn mọi lệnh có cờ "-n" đi cùng lệnh commit.
+- Quy trình: bộ đọc dùng chung (F1-06) đổi quy tắc nhưng không rà test cũ dựng dữ liệu giả ⇒ Codex mất 1 lượt.
+- Quản lý: [TK] để sót hàm thừa làm build -warnaserror hỏng; ghi tên hàm trong backtick ở mục Phạm vi (cổng coi là đường dẫn).
+- **Tốn thời gian nhất ở đâu:** Claude làm giao diện 7 trang (~110 phút) và 2 lỗi công cụ `team.ps1` (~25 phút).
+- **Cái gì làm tốt (giữ lại):** test nghiệm thu viết trước dùng dữ liệu THẬT ⇒ 5/5 đạt vòng 1; đặt DI sẵn trong khung để Codex và Antigravity chạy song song không tranh khóa.
+- **Cải tiến quy trình áp dụng cho yêu cầu sau:**
+  1. `templates/task.md` (IMP-006): đổi định dạng / bộ đọc dùng chung ⇒ grep test cũ dựng dữ liệu giả cùng định dạng, sửa trước khi giao.
+  2. `CLAUDE.md` bài học: lệnh Bash có lệnh commit thì không được chứa chuỗi "-n" ở bất cứ đâu (grep/sed "-n", "-nodeReuse") — hook chặn nhầm ⇒ tách lệnh.
+- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có
