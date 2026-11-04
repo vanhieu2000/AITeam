@@ -60,20 +60,19 @@
 - [ ] Commit: `F1-01: dịch vụ quản lý dự án (thêm / sửa / trạng thái)`
 
 ## Báo cáo của agent
-| Tiêu chí | Bằng chứng thật |
+| Tiêu chí | Bằng chứng thật (lượt sửa cổng kiểm tra) |
 |---|---|
-| Build 0 warning | `dotnet build AITeam.sln -warnaserror --no-restore -m:1 -p:UseSharedCompilation=false -v:minimal`: thành công, 0 warning, 0 lỗi. |
-| Test nghiệm thu nguyên vẹn | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~F101ProjectAdmin" --blame-hang-timeout 2m`: 37 pass, 0 fail, 0 skip (33 nghiệm thu + 4 bổ sung). |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 839 pass/8 fail/0 skip; dừng khoảng 3 phút, Core chưa có tổng kết. |
-| Nguyên nhân chưa xanh toàn bộ | Ngoài F1-01: Settings/WorkflowRoles/Lessons bị `UnauthorizedAccessException` tại `File.Replace`; test Git của Core lỗi signal pipe/CreateFileMapping, Win32 error 5. |
-| BOM UTF-8 | Kiểm bằng Python `read_bytes().startswith(b'\xef\xbb\xbf')`: cả 3 file C# đã đổi đều True. |
-| Commit/push | Không chạy lệnh git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa có commit được kiểm chứng. |
-Đã đổi: `ProjectAdminService.cs` điền 5 hàm, kiểm dữ liệu, khóa chung, giữ trường lạ, runner ArgumentList/stdin đóng/đọc đồng thời/kill cây và mã 124.
-Đã đổi: `TeamConfigService.cs` chỉ mở `WriteWithBackup` thành internal và dùng file tạm + đổi tên nguyên tử, giữ BOM/.bak; không sửa SaveSettings/SaveProject.
-Đã thêm: `F101ProjectAdminExtraTests.cs` kiểm cấu hình hỏng không ghi, BOM/.bak và runner thật (stdin/output/timeout); test chỉ dùng dữ liệu tạm.
-Tự quyết: dùng `File.Move(..., overwrite: true)` cùng thư mục vì sandbox chặn `File.Replace`; tắt compiler server sau lỗi named pipe, dùng `-m:1` vì build mặc định thoát mã 1 không chẩn đoán.
-Chưa xác minh: toàn bộ Core, môi trường ngoài sandbox và commit/push; không chạy app/chụp ảnh, không sửa test nghiệm thu/giao diện.
-
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror -m:1 -p:UseSharedCompilation=false -v:minimal`: thành công, 0 warning, 0 lỗi (1m50s). |
+| Nghiệm thu F1-01 | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~F101ProjectAdmin" --blame-hang-timeout 2m`: 37 pass, 0 fail, 0 skip; không sửa test nghiệm thu. |
+| Test toàn solution chưa đạt | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 839 pass/8 fail/0 skip; dừng bằng Ctrl+C khoảng 3 phút, Core chưa có tổng kết, mã thoát 1. |
+| Lỗi ngoài F1-01 | Settings/WorkflowRoles/Lessons: `UnauthorizedAccessException` tại `File.Replace`; test Git Core: signal pipe/CreateFileMapping, Win32 error 5. Không mở rộng sửa. |
+| BOM UTF-8 | PowerShell đọc 3 byte đầu: ProjectAdminService.cs, TeamConfigService.cs, F101ProjectAdminExtraTests.cs đều EF BB BF. |
+| Ngoại lệ phạm vi cần Claude quyết | Giữ `hub/Services/HubV3Registration.cs`: hai đăng ký `IProjectAdminService`/`IProjectScriptRunner` cần để DI dùng dịch vụ thật và test `Services_registered_in_di_and_real_runner_uses_argument_list` pass; xóa sẽ trái nghiệm thu. |
+| Giới hạn kiểm chứng phạm vi | Không chạy git nên chưa đối chiếu được bản gốc để hoàn tác chính xác; lượt này không sửa HubV3Registration.cs, đề nghị Claude xét ngoại lệ như yêu cầu cổng cho phép. |
+| Commit/push | Không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa có commit được kiểm chứng. |
+File đổi lượt này: chỉ tasks/F1-01-quan-ly-du-an.md, bổ sung lý do ngoại lệ và kết quả chạy lại; giữ nguyên logic và test.
+Phần triển khai trước: ProjectAdminService.cs (dịch vụ/runner), TeamConfigService.cs (mở hàm ghi nguyên tử), F101ProjectAdminExtraTests.cs (4 test bổ sung).
+Chưa xác minh: tổng kết Core, toàn solution xanh, chênh lệch DI với bản gốc và quyết định ngoại lệ của Claude; không chạy app/chụp ảnh.
 ## Review (Claude)
 
 ## Kết quả
