@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using AITeam.Hub.Models;
 
 namespace AITeam.Hub.Services;
@@ -9,8 +9,6 @@ public sealed class TaskBoardService : ITaskBoardService
     private readonly ITeamConfigService _configService;
     private readonly IAgentRunService _runService;
 
-    private static readonly Regex MarkdownLinkRegex = new(@"\[(?<text>[^\]]+)\]\((?<link>[^\)]+)\)", RegexOptions.Compiled);
-    private static readonly Regex TaskIdTitleRegex = new(@"^(?<id>[A-Za-z0-9\-]+)(?:[\s:\-–—]+(?<title>.*))?$", RegexOptions.Compiled);
     private static readonly Regex CheckboxRegex = new(@"^\s*-\s*\[(?<check>[ xX])\]\s*(?<text>.*)$", RegexOptions.Compiled);
 
     public TaskBoardService(HubPaths paths, ITeamConfigService configService, IAgentRunService runService)
@@ -35,110 +33,16 @@ public sealed class TaskBoardService : ITaskBoardService
         var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
         var tasks = new List<TaskCard>();
-        int tableStartIndex = -1;
-        int taskCol = 0, agentCol = 1, branchCol = 2, statusCol = 3;
-
-        // Tìm bảng markdown đầu tiên có cột "Task"
-        for (int i = 0; i < lines.Length; i++)
+        foreach (var row in BoardTable.Parse(content))
         {
-            string line = lines[i].Trim();
-            if (line.StartsWith('|') && line.EndsWith('|'))
-            {
-                var headers = line.Split('|', StringSplitOptions.RemoveEmptyEntries).Select(h => h.Trim()).ToArray();
-                int idx = Array.FindIndex(headers, h => string.Equals(h, "Task", StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0 && i + 1 < lines.Length && lines[i + 1].Trim().Contains("---"))
-                {
-                    tableStartIndex = i + 2;
-                    taskCol = idx;
-                    int aIdx = Array.FindIndex(headers, h => string.Equals(h, "Agent", StringComparison.OrdinalIgnoreCase));
-                    if (aIdx >= 0) agentCol = aIdx;
-                    int bIdx = Array.FindIndex(headers, h => h.Contains("Nhánh", StringComparison.OrdinalIgnoreCase) || h.Contains("Branch", StringComparison.OrdinalIgnoreCase));
-                    if (bIdx >= 0) branchCol = bIdx;
-                    int sIdx = Array.FindIndex(headers, h => h.Contains("Trạng thái", StringComparison.OrdinalIgnoreCase) || h.Contains("Status", StringComparison.OrdinalIgnoreCase));
-                    if (sIdx >= 0) statusCol = sIdx;
-                    break;
-                }
-            }
-        }
-
-        if (tableStartIndex >= 0)
-        {
-            for (int i = tableStartIndex; i < lines.Length; i++)
-            {
-                string line = lines[i].Trim();
-                if (!line.StartsWith('|')) break;
-
-                var cells = line.Split('|').Select(c => c.Trim()).ToList();
-                // Bỏ phần tử rỗng ở đầu và cuối do dòng bắt đầu và kết thúc bằng '|'
-                if (cells.Count > 0 && string.IsNullOrEmpty(cells[0])) cells.RemoveAt(0);
-                if (cells.Count > 0 && string.IsNullOrEmpty(cells[^1])) cells.RemoveAt(cells.Count - 1);
-
-                if (cells.Count <= taskCol) continue;
-
-                string rawTask = cells[taskCol];
-                string taskId = "";
-                string taskTitle = "";
-                string fileName = "";
-
-                var linkMatch = MarkdownLinkRegex.Match(rawTask);
-                if (linkMatch.Success)
-                {
-                    string text = linkMatch.Groups["text"].Value.Trim();
-                    fileName = Path.GetFileName(linkMatch.Groups["link"].Value.Trim());
-
-                    var idMatch = TaskIdTitleRegex.Match(text);
-                    if (idMatch.Success)
-                    {
-                        taskId = idMatch.Groups["id"].Value.Trim();
-                        taskTitle = idMatch.Groups["title"].Value.Trim();
-                    }
-                    else
-                    {
-                        taskId = text;
-                        taskTitle = text;
-                    }
-                }
-                else
-                {
-                    var idMatch = TaskIdTitleRegex.Match(rawTask);
-                    if (idMatch.Success)
-                    {
-                        taskId = idMatch.Groups["id"].Value.Trim();
-                        taskTitle = idMatch.Groups["title"].Value.Trim();
-                    }
-                    else
-                    {
-                        taskId = rawTask;
-                        taskTitle = rawTask;
-                    }
-                }
-
-                string agent = cells.Count > agentCol ? cells[agentCol].Trim('`', ' ') : "";
-                string branch = cells.Count > branchCol ? cells[branchCol].Trim('`', ' ') : "";
-                string rawStatus = cells.Count > statusCol ? cells[statusCol] : "";
-
-                TaskState state = TaskState.Unknown;
-                if (rawStatus.Contains("🟡")) state = TaskState.Assigned;
-                else if (rawStatus.Contains("🔵")) state = TaskState.Review;
-                else if (rawStatus.Contains("🔴")) state = TaskState.NeedsFix;
-                else if (rawStatus.Contains("✅")) state = TaskState.Merged;
-
-                var runs = _runService.GetRuns(project, taskId);
-                int runsCount = runs.Count;
-                AgentRun? lastRun = runs.FirstOrDefault();
-
-                tasks.Add(new TaskCard(
-                    projectInfo.Name,
-                    taskId,
-                    taskTitle,
-                    agent,
-                    branch,
-                    state,
-                    fileName,
-                    runsCount,
-                    lastRun
-                ));
-            }
+            TaskState state = TaskState.Unknown;
+            if (row.Status.Contains("🟡")) state = TaskState.Assigned;
+            else if (row.Status.Contains("🔵")) state = TaskState.Review;
+            else if (row.Status.Contains("🔴")) state = TaskState.NeedsFix;
+            else if (row.Status.Contains("✅")) state = TaskState.Merged;
+            var runs = _runService.GetRuns(project, row.Id);
+            tasks.Add(new TaskCard(projectInfo.Name, row.Id, row.Title, row.Agent, row.Branch,
+                state, row.File, runs.Count, runs.FirstOrDefault()));
         }
 
         // PlanMarkdown = nội dung từ heading ## Kế hoạch hoặc ## Hàng chờ (tìm theo tiền tố) tới hết
