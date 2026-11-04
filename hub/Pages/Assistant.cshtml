@@ -1,0 +1,13 @@
+﻿@page "/Assistant"
+@model AITeam.Hub.Pages.AssistantModel
+@{
+    // R-014 UI-09 (Claude): bản mở rộng của khung chat nổi. Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.5b.
+    ViewData["Title"] = "Trợ lý chat";
+    ViewData["HideFab"] = true;
+}
+@section Actions {
+    <a class="btn sm ghost" href="/AiServices#tro-ly">Cài đặt trợ lý</a>
+}
+<div class="chat-full-wrap">
+    <partial name="_ChatPanel" model="true" />
+</div>

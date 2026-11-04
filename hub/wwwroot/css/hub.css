@@ -1,4 +1,4 @@
-/* ===== AITeam Hub v2 - Token & Giao diện phẳng ===== */
+﻿/* ===== AITeam Hub v2 - Token & Giao diện phẳng ===== */
 :root {
   /* R-014: bảng màu Swiss + Data-Dense (ui-ux-pro-max: Analytics / Productivity). Màu theo vai trò, không theo trang. */
   --bg: #f8fafc;
@@ -1492,7 +1492,27 @@ textarea.inp, textarea.form-control {
 .chatp-modes { display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .chatp-modes .btn { flex: 1; justify-content: center; }
 .chatp-modes .btn[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); font-weight: 600; }
-.chatp iframe { flex: 1; width: 100%; border: 0; background: var(--bg); }
+/* R-014 UI-09: khung chat nối thật (không còn iframe) */
+.chatp-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+.chatp-opts label { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.chatp-opts .inp { flex: 1; min-width: 0; height: 30px; }
+.chatp-log { flex: 1; overflow-y: auto; margin: 0; padding: 12px; list-style: none; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+.chatp-hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.chatp-msg { max-width: 88%; display: flex; flex-direction: column; gap: 2px; }
+.chatp-msg.user { align-self: flex-end; }
+.chatp-who { font-size: 11px; color: var(--faint); }
+.chatp-msg.user .chatp-who { text-align: right; }
+.chatp-text { padding: 8px 10px; border-radius: 10px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface); border: 1px solid var(--line); }
+.chatp-msg.user .chatp-text { background: var(--accent); color: #fff; border-color: var(--accent); }
+:root[data-theme="dark"] .chatp-msg.user .chatp-text { color: #0b1220; }
+.chatp-msg.pending .chatp-text { color: var(--muted); font-style: italic; }
+.chatp-msg.err .chatp-text { background: var(--err-soft); color: var(--err); border-color: var(--err-soft); }
+.chatp-msg.err .btn { align-self: flex-start; margin-top: 4px; }
+.chatp-send { border-top: 1px solid var(--line); padding: 8px 12px; display: grid; gap: 6px; }
+.chatp-send textarea { height: auto; min-height: 44px; max-height: 160px; padding: 6px 10px; resize: vertical; width: 100%; }
+.chatp-send-bar { display: flex; align-items: center; gap: 6px; font-size: 11.5px; }
+.chatp.full { position: static; width: 100%; max-width: 860px; height: calc(100dvh - 140px); max-height: none; box-shadow: none; margin: 0 auto; }
+.chat-full-wrap { display: flex; justify-content: center; }
 .chatp-foot { padding: 6px 12px; font-size: 12px; color: var(--faint); border-top: 1px solid var(--line); display: flex; gap: 8px; }
 
 /* Trang mở trong khung chat (?embed=1): không có thanh bên */

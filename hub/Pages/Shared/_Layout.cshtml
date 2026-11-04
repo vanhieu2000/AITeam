@@ -10,10 +10,10 @@
     var isApprovals = IsPage("/Approvals");
     var isTracking = IsPage("/Tracking", "/Task", "/Requests", "/Request", "/Run");
     var isProjects = IsPage("/Projects", "/Project");
-    var isReports = IsPage("/Performance", "/Team") || IsPath("/Performance", "/Reports");
-    var isLessons = IsPage("/Process");
+    var isReports = IsPage("/Performance", "/Team", "/Reports") || IsPath("/Performance");
+    var isLessons = IsPage("/Process", "/Lessons", "/RequestReview");
     var isWorkflow = IsPage("/Map", "/Workflow");
-    var isAi = IsPage("/AI", "/AiAccounts", "/Providers", "/Accounts");
+    var isAi = IsPage("/AI", "/AiAccounts", "/Providers", "/Accounts", "/AiServices");
     var isSettings = IsPage("/Settings", "/Secrets", "/Vault");
 
     // Chỉ đếm việc chủ dự án phải quyết (bí mật, bảo mật, dữ liệu nhạy cảm, ra ngoài, quyết định sản phẩm).
@@ -78,21 +78,21 @@
             </a>
 
             <div class="grp">Đánh giá</div>
-            <a href="/Performance" class="nav @(isReports ? "on" : "")">
+            <a href="/Reports" class="nav @(isReports ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13.5h12M4 11V7M8 11V3.5M12 11V8.5"/></svg>
                 <span>Báo cáo &amp; thống kê</span>
             </a>
-            <a href="/Process" class="nav @(isLessons ? "on" : "")">
+            <a href="/Reports/Lessons" class="nav @(isLessons ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 13h4M6.5 15h3M8 1.5a4.5 4.5 0 00-2.6 8.2V11.5h5.2V9.7A4.5 4.5 0 008 1.5z"/></svg>
                 <span>Xem lại &amp; bài học</span>
             </a>
 
             <div class="grp">Cấu hình</div>
-            <a href="/Map" class="nav @(isWorkflow ? "on" : "")">
+            <a href="/Workflow" class="nav @(isWorkflow ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="3.5" cy="8" r="1.5"/><circle cx="12.5" cy="3.5" r="1.5"/><circle cx="12.5" cy="12.5" r="1.5"/><path d="M5 8h3l3-4M8 8l3 4"/></svg>
                 <span>Quy trình &amp; vai trò</span>
             </a>
-            <a href="/AI" class="nav @(isAi ? "on" : "")">
+            <a href="/AiServices" class="nav @(isAi ? "on" : "")">
                 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M6 6h4v4H6zM6 1v2M10 1v2M6 13v2M10 13v2M13 6h2M13 10h2M1 6h2M1 10h2"/></svg>
                 <span>Tài khoản AI</span>
             </a>
@@ -128,28 +128,15 @@
         </div>
     </div>
 
-    @if (!embed)
+    @if (!embed && ViewData["HideFab"] is not true)
     {
     <button class="fab" id="fab" type="button" aria-label="Mở trợ lý chat" aria-expanded="false" aria-controls="chatp">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
     </button>
-    <section class="chatp" id="chatp" role="dialog" aria-label="Trợ lý chat">
-        <div class="chatp-h">
-            <span class="av sm" style="background:#6d28d9">AI</span>
-            <b>Trợ lý</b>
-            <span class="sp" style="flex:1"></span>
-            <a class="btn sm ghost" id="chatp-full" href="/Chat" target="_top">Mở rộng</a>
-            <button class="btn sm ghost" id="chatp-x" type="button" aria-label="Đóng trợ lý">✕</button>
-        </div>
-        <div class="chatp-modes" role="tablist">
-            <button class="btn sm" type="button" role="tab" data-mode="ask" data-src="/Chat?embed=1" aria-selected="true">Hỏi đáp</button>
-            <button class="btn sm" type="button" role="tab" data-mode="task" data-src="/?embed=1" aria-selected="false">Giao việc</button>
-            <button class="btn sm" type="button" role="tab" data-mode="research" data-src="/Research?embed=1" aria-selected="false">Nghiên cứu</button>
-        </div>
-        <iframe id="chatp-frame" title="Nội dung trợ lý" loading="lazy"></iframe>
-        <div class="chatp-foot">Chọn AI trả lời mặc định trong <a href="/Settings" target="_top">Cài đặt</a>.</div>
-    </section>
+    @* Khung chat tải khi bấm mở lần đầu (/Assistant?handler=Panel) — trang không mang thêm form / ô chọn. *@
+    <section class="chatp" id="chatp" role="dialog" aria-label="Trợ lý chat" data-lazy="1"></section>
     }
+    <script src="~/js/chat-panel.js" asp-append-version="true"></script>
 
     <script>
         function updateThemeUI() {
@@ -164,36 +151,6 @@
             try { localStorage.setItem('hub-theme', next); } catch (e) { }
             updateThemeUI();
         }
-        (function () {
-            var fab = document.getElementById('fab'), panel = document.getElementById('chatp');
-            if (!fab || !panel) return;
-            var frame = document.getElementById('chatp-frame'), full = document.getElementById('chatp-full');
-            var tabs = panel.querySelectorAll('[data-mode]');
-            function select(mode) {
-                tabs.forEach(function (t) {
-                    var on = t.dataset.mode === mode;
-                    t.setAttribute('aria-selected', on ? 'true' : 'false');
-                    if (on) {
-                        if (frame.getAttribute('src') !== t.dataset.src) frame.setAttribute('src', t.dataset.src);
-                        full.setAttribute('href', t.dataset.src.replace(/[?&]embed=1/, ''));
-                    }
-                });
-                try { localStorage.setItem('hub-chat-mode', mode); } catch (e) { }
-            }
-            function open(mode) {
-                panel.classList.add('on'); fab.setAttribute('aria-expanded', 'true');
-                var saved = null; try { saved = localStorage.getItem('hub-chat-mode'); } catch (e) { }
-                select(mode || saved || 'ask');
-            }
-            function close() { panel.classList.remove('on'); fab.setAttribute('aria-expanded', 'false'); fab.focus(); }
-            fab.addEventListener('click', function () { panel.classList.contains('on') ? close() : open(); });
-            document.getElementById('chatp-x').addEventListener('click', close);
-            tabs.forEach(function (t) { t.addEventListener('click', function () { select(t.dataset.mode); }); });
-            document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && panel.classList.contains('on')) close(); });
-            document.querySelectorAll('[data-chat]').forEach(function (b) {
-                b.addEventListener('click', function (e) { e.preventDefault(); open(b.dataset.chat); });
-            });
-        })();
         document.addEventListener('DOMContentLoaded', updateThemeUI);
     </script>
 </body>

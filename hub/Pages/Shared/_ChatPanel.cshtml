@@ -1,0 +1,54 @@
+﻿@model bool
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@{
+    // R-014 UI-09 (Claude): khung chat nổi nối thật với IChatAssistant. Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.5b.
+    // Model = true: bản mở rộng toàn trang (/Assistant); false: khung nổi góc phải dưới.
+    // Không gọi dịch vụ khi dựng layout: danh sách AI / dự án tải bằng /Assistant?handler=Options khi mở khung lần đầu.
+    var full = Model;
+    var pid = full ? "chatfull" : "chatp";
+    // Token đặt ở thuộc tính (không thêm ô input ẩn thứ hai vào trang có form riêng).
+    var csrf = Xsrf.GetAndStoreTokens(Context).RequestToken;
+}
+<section class="chatp @(full ? "full on" : "")" id="@pid" role="@(full ? "region" : "dialog")" aria-label="Trợ lý chat" data-csrf="@csrf">
+    <div class="chatp-h">
+        <span class="av sm" style="background:#6d28d9" aria-hidden="true">AI</span>
+        <b>Trợ lý</b>
+        <span class="sp" style="flex:1"></span>
+        <button class="btn sm ghost" type="button" data-chat-new>Cuộc mới</button>
+        @if (!full)
+        {
+            <a class="btn sm ghost" href="/Assistant">Mở rộng</a>
+            <button class="btn sm ghost" type="button" data-chat-close aria-label="Đóng trợ lý">✕</button>
+        }
+    </div>
+    <div class="chatp-modes" role="tablist" aria-label="Chế độ">
+        <button class="btn sm" type="button" role="tab" data-m="ask">Hỏi đáp</button>
+        <button class="btn sm" type="button" role="tab" data-m="task">Giao việc</button>
+        <button class="btn sm" type="button" role="tab" data-m="research">Nghiên cứu</button>
+    </div>
+    <div class="chatp-opts">
+        <label data-for="ask">Hỏi
+            <select class="inp" name="ai" aria-label="AI trả lời"><option value="">Đang tải…</option></select>
+        </label>
+        <label data-for="task">Dự án
+            <select class="inp" name="project" aria-label="Dự án nhận việc"><option value="">Đang tải…</option></select>
+        </label>
+        <span class="muted" data-for="research" data-research>Hỏi cùng lúc nhiều AI</span>
+    </div>
+    <ol class="chatp-log" aria-live="polite" aria-label="Tin nhắn">
+        <li class="chatp-hint" data-hint>
+            <b>Hỏi đáp</b>: hỏi một AI. <b>Giao việc</b>: gửi Claude để tạo phiếu và theo dõi ở <a href="/Tracking">Theo dõi việc</a>.
+            <b>Nghiên cứu</b>: hỏi nhiều AI cùng lúc, gộp câu trả lời. Đổi AI mặc định ở <a href="/AiServices#tro-ly">Tài khoản AI › Trợ lý chat</a>.
+        </li>
+    </ol>
+    <form class="chatp-send" data-chat-form autocomplete="off">
+        <label class="sr-only" for="@pid-text">Nội dung</label>
+        <textarea class="inp" id="@pid-text" name="text" rows="2" maxlength="4000" required placeholder="Nhập câu hỏi… (Enter gửi, Shift+Enter xuống dòng)"></textarea>
+        <div class="chatp-send-bar">
+            <span class="muted num" data-chat-count>0/4000</span>
+            <span class="sp" style="flex:1"></span>
+            <button class="btn sm ghost" type="button" data-chat-stop hidden>Dừng</button>
+            <button class="btn sm pri" type="submit" data-chat-send>Gửi</button>
+        </div>
+    </form>
+</section>

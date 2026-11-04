@@ -239,11 +239,12 @@ public sealed class AcceptanceH706NavigationTests
     [InlineData("/Approvals", "/Approvals")]
     [InlineData("/Projects", "/Projects")]
     [InlineData("/Project", "/Projects")]
-    [InlineData("/Performance", "/Performance")]
-    [InlineData("/Process", "/Process")]
+    // R-014 UI-04..09: menu trỏ trang mới; trang cũ vẫn sáng đúng nhóm.
+    [InlineData("/Performance", "/Reports")]
+    [InlineData("/Process", "/Reports/Lessons")]
     [InlineData("/Settings", "/Settings")]
-    [InlineData("/AI", "/AI")]
-    [InlineData("/Map", "/Map")]
+    [InlineData("/AI", "/AiServices")]
+    [InlineData("/Map", "/Workflow")]
     public async Task Menu_chinh_xac_va_chi_mot_muc_active(string page, string active)
     {
         await using var f = new Fixture();
@@ -251,7 +252,7 @@ public sealed class AcceptanceH706NavigationTests
         var side = Regex.Match(html, @"<aside\b[\s\S]*?</aside>").Value;
         var links = Elements(side, "a");
         // R-014 (Claude, chủ dự án duyệt 03/11): menu 3 nhóm; Trò chuyện / Giao việc chuyển sang nút chat nổi.
-        Assert.Equal(new[] { "/", "/Approvals", "/Tracking", "/Projects", "/Performance", "/Process", "/Map", "/AI", "/Settings" },
+        Assert.Equal(new[] { "/", "/Approvals", "/Tracking", "/Projects", "/Reports", "/Reports/Lessons", "/Workflow", "/AiServices", "/Settings" },
             links.Select(a => Regex.Match(a, "href=\"([^\"]+)\"").Groups[1].Value));
         var selected = Assert.Single(links, a => Regex.IsMatch(a, "class=\"[^\"]*\\bon\\b"));
         Assert.Contains($"href=\"{active}\"", selected);

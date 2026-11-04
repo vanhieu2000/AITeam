@@ -25,7 +25,9 @@ public sealed class LocalChatRevisionTests
         // R-014 (Claude, chủ dự án duyệt 03/11): Trò chuyện không còn trong menu, mở bằng nút chat nổi trên mọi trang.
         Assert.DoesNotContain("<span>Trò chuyện AI</span>", chat);
         Assert.Contains("id=\"fab\"", chat);
-        Assert.Contains("data-src=\"/Chat?embed=1\"", chat);
+        // R-014 UI-09: khung chat nối thật (không còn iframe nhúng /Chat).
+        Assert.Contains("id=\"chatp\"", chat);
+        Assert.Contains("chat-panel.js", chat);
     }
 
     [Fact]
