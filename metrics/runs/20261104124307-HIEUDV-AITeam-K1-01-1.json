@@ -1,0 +1,41 @@
+{
+    "at":  "2026-11-04T12:43:07",
+    "head":  "bdf64a95ae6bed00a8591cb83752930c43d652e3",
+    "machine":  "HIEUDV",
+    "project":  "AITeam",
+    "task":  "K1-01",
+    "run":  "1",
+    "agent":  "C",
+    "model":  "codex",
+    "findings":  [
+
+                 ],
+    "status":  "ERROR",
+    "durationSec":  0,
+    "tokensKnown":  false,
+    "inputTokens":  null,
+    "outputTokens":  null,
+    "thinkingTokens":  null,
+    "totalTokens":  null,
+    "maxMinutes":  30,
+    "difficulty":  "M",
+    "hasOutput":  false,
+    "linesAdded":  1,
+    "linesRemoved":  0,
+    "filesChanged":  1,
+    "verifyOk":  null,
+    "verifyFails":  null,
+    "autoRetry":  false,
+    "hungBackgroundTask":  false,
+    "log":  "K1-01-1.json",
+    "conversationId":  "",
+    "request":  "R-014",
+    "flags":  [
+                  "HT"
+              ],
+    "pause":  false,
+    "failureFingerprint":  null,
+    "failureFingerprints":  [
+
+                            ]
+}
