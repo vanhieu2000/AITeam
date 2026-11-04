@@ -1,7 +1,7 @@
 # R-011 · Bộ test/QC chuẩn + Codex trả kế hoạch/mockup trước khi làm + trang Việc theo dự án hiện bước đang chạy
 
 - **Nhận lúc:** 21:11 25/10/2026 · máy DESKTOP-PP14EFS
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong (đóng khi rà soát R-015, 04/11/2026: mọi task của phiếu đã merge)
 - **Lời chủ dự án:**
   > (chép nguyên văn yêu cầu)
 

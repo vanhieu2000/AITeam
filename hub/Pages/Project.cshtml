@@ -20,13 +20,13 @@
     <div class="panel" style="max-width: 600px; margin: 40px auto; text-align: center; padding: 30px;">
         <h2>Không tìm thấy dự án "@Model.Name"</h2>
         <p class="muted" style="margin: 14px 0 20px;">Dự án không có trong cấu hình team hoặc đường dẫn không tồn tại.</p>
-        <a href="/Overview" class="btn pri">Quay lại Tổng quan</a>
+        <a href="/" class="btn pri">Quay lại Văn phòng</a>
     </div>
 }
 else
 {
     @section Actions {
-        <a class="btn sm" href="@Url.Page("/Work",new{project=Model.Name})">Kanban 5 cột</a>
+        <a class="btn sm" href="/Tracking?project=@Uri.EscapeDataString(Model.Name)">Theo dõi việc</a>
         @if (!string.IsNullOrEmpty(githubUrl))
         {
             <a class="btn sm" href="@githubUrl" target="_blank" rel="noopener noreferrer">GitHub</a>

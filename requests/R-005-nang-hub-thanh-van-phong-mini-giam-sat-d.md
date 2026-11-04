@@ -1,7 +1,7 @@
 ﻿# R-005 · Nâng Hub thành văn phòng mini: giám sát + điều khiển, MCP, Accounts, Chat Bridge (AITeam V2 hybrid)
 
 - **Nhận lúc:** 01:12 25/10/2026 · máy DESKTOP-PP14EFS
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong (đóng khi rà soát R-015, 04/11/2026: mọi task của phiếu đã merge)
 - **Lời chủ dự án:**
   > nghiên cứu và cải tiến web ai team thành như 1 văn phòng mini . tô icaanf giám sát và tích hợp điều khiển trên đó
   > (kèm bản dán "PROMPT TRIỂN KHAI AITEAM V2 — HYBRID WEB / DESKTOP / MCP" 10 mục: audit As-Is/Gap/To-Be, MCP Gateway, AI Accounts, Chat Bridge + manual handoff, QA, Research Pool, không bypass đăng nhập / điều khoản, trả audit + kiến trúc + danh sách file + rủi ro connector + kế hoạch PR TRƯỚC khi code)

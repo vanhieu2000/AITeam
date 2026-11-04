@@ -1,7 +1,7 @@
 # R-007 · Hub v6: nhóm chức năng theo quy trình v4 (menu 9 mục, Văn phòng theo vai trò, Yêu cầu có dây chuyền 7 bước, gộp trang AI)
 
 - **Nhận lúc:** 10:32 25/10/2026 · máy DESKTOP-PP14EFS
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong (đóng khi rà soát R-015, 04/11/2026: mọi task của phiếu đã merge)
 - **Lời chủ dự án:**
   > Team : Theo mô hình như này thiết kế lại nhóm chức năng để cải tiến giao diện đi nhé . tôi thấy có nhưungx cái cần mà cũng có cái thừa . claude chỉ quản lí chung + nghiệm thu còn research lên kế haochj , qc,.. giao cho codex
 

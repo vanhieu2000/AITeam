@@ -1,7 +1,7 @@
 # R-008 · Đẩy việc khỏi Claude: dây chuyền tự chạy, gói nghiệm thu gọn, nhật ký tự ghi
 
 - **Nhận lúc:** 11:43 25/10/2026 · máy DESKTOP-PP14EFS
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong (đóng khi rà soát R-015, 04/11/2026: mọi task của phiếu đã merge)
 - **Lời chủ dự án:**
   > viêucj đẩy bớt qua cho codex tiết kiện token claude
 

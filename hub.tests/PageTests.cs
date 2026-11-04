@@ -1,4 +1,4 @@
-using AITeam.Hub.DevData;
+﻿using AITeam.Hub.DevData;
 using AITeam.Hub.Models;
 using AITeam.Hub.Pages;
 using Microsoft.AspNetCore.Mvc;
@@ -15,31 +15,6 @@ public sealed class PageTests
     private readonly FakeTaskBoardService _board = new();
     private readonly FakeAgentRunService _run = new();
     private readonly FakeHealthService _health = new();
-
-    [Fact]
-    public void Index_page_loads_all_data()
-    {
-        var page = new IndexModel(_config, _board, _run, _health);
-        page.OnGet();
-
-        Assert.Equal(3, page.TotalProjects);
-        Assert.True(page.TotalAssigned >= 1);
-        Assert.True(page.TotalReview >= 1);
-        Assert.Equal(1, page.TotalRunningAgents);
-        Assert.NotEmpty(page.HealthItems);
-    }
-
-    [Fact]
-    public void Index_running_agents_handler_returns_partial()
-    {
-        var page = new IndexModel(_config, _board, _run, _health);
-        var result = page.OnGetRunningAgents();
-
-        var partial = Assert.IsType<PartialViewResult>(result);
-        Assert.Equal("_RunningAgentsPartial", partial.ViewName);
-        var model = Assert.IsAssignableFrom<IReadOnlyList<RunningAgent>>(partial.Model);
-        Assert.Single(model);
-    }
 
     [Fact]
     public void Project_page_loads_board_and_groups_tasks()
@@ -78,11 +53,4 @@ public sealed class PageTests
         Assert.Contains("agent-b/H-002-hub-ui", page.BranchGitHubUrl);
     }
 
-    [Fact]
-    public void FormatElapsed_formats_seconds_minutes_and_hours()
-    {
-        Assert.Equal("45 giây", IndexModel.FormatElapsed(TimeSpan.FromSeconds(45)));
-        Assert.Equal("12 phút", IndexModel.FormatElapsed(TimeSpan.FromMinutes(12)));
-        Assert.Equal("2 giờ 15 phút", IndexModel.FormatElapsed(TimeSpan.FromMinutes(135)));
-    }
 }

@@ -1,7 +1,7 @@
 # R-013 · Tich hop OpenCode (chi DeepSeek) lam developer du phong
 
 - **Nhận lúc:** 22:47 02/11/2026 · máy HIEUDV
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong (đóng khi rà soát R-015, 04/11/2026: OpenCode đã làm developer thật trong R-012 / R-014)
 - **Lời chủ dự án:**
   > Bạn clone về máy rồi giao trực tiếp cho codex sửa đi . b chỉ nghiệm thu . ưu tiên giao cho opencode làm thử codex qc, bạn chỉ nghiệm thu  , còn opencode limit thì codex trực tiếp làm b qc và nghiệm thu. (02/11: opencode chỉ dùng deepseek, khoá các model khác)
 

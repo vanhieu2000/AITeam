@@ -235,28 +235,29 @@ public sealed class AcceptanceH706NavigationTests
 
     [Theory]
     [InlineData("/Office", "/")]
-    [InlineData("/Work", "/")]
+    [InlineData("/Requests", "/Requests")]
+    [InlineData("/Request", "/Requests")]
     [InlineData("/Approvals", "/Approvals")]
+    [InlineData("/Task", "/Tracking")]
     [InlineData("/Projects", "/Projects")]
     [InlineData("/Project", "/Projects")]
-    // R-014 UI-04..09: menu trỏ trang mới; trang cũ vẫn sáng đúng nhóm.
-    [InlineData("/Performance", "/Reports")]
-    [InlineData("/Process", "/Reports/Lessons")]
+    [InlineData("/AiAccounts", "/AiServices")]
+    [InlineData("/Reports", "/Reports")]
+    [InlineData("/Lessons", "/Reports")]
+    [InlineData("/Workflow", "/Workflow")]
     [InlineData("/Settings", "/Settings")]
-    [InlineData("/AI", "/AiServices")]
-    [InlineData("/Map", "/Workflow")]
     public async Task Menu_chinh_xac_va_chi_mot_muc_active(string page, string active)
     {
         await using var f = new Fixture();
         var html = await f.RenderProjects(page);
         var side = Regex.Match(html, @"<aside\b[\s\S]*?</aside>").Value;
         var links = Elements(side, "a");
-        // R-014 (Claude, chủ dự án duyệt 03/11): menu 3 nhóm; Trò chuyện / Giao việc chuyển sang nút chat nổi.
-        Assert.Equal(new[] { "/", "/Approvals", "/Tracking", "/Projects", "/Reports", "/Reports/Lessons", "/Workflow", "/AiServices", "/Settings" },
+        // R-015 (Claude, chủ dự án duyệt 04/11): menu 9 mục, 3 nhóm. Thiết kế: docs/design/R-015-ra-soat-van-phong-ai.md mục 3.
+        Assert.Equal(new[] { "/", "/Requests", "/Approvals", "/Tracking", "/Projects", "/AiServices", "/Reports", "/Workflow", "/Settings" },
             links.Select(a => Regex.Match(a, "href=\"([^\"]+)\"").Groups[1].Value));
         var selected = Assert.Single(links, a => Regex.IsMatch(a, "class=\"[^\"]*\\bon\\b"));
         Assert.Contains($"href=\"{active}\"", selected);
-        foreach (var label in new[] { "Làm việc", "Văn phòng", "Cần anh duyệt", "Theo dõi việc", "Dự án", "Đánh giá", "Báo cáo & thống kê", "Xem lại & bài học", "Cấu hình", "Quy trình & vai trò", "Tài khoản AI", "Cài đặt" })
+        foreach (var label in new[] { "Làm việc", "Văn phòng", "Yêu cầu", "Cần anh duyệt", "Theo dõi việc", "Quản lý", "Dự án", "Đội AI", "Đánh giá & cấu hình", "Báo cáo & bài học", "Quy trình", "Cài đặt" })
             Assert.Contains(label, Text(side));
         Assert.DoesNotContain("Antigravity", Text(side));
         Assert.Equal(0, f.BoardReads);

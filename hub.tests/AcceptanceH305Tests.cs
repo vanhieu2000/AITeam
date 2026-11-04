@@ -238,7 +238,7 @@ public sealed class AcceptanceH305Tests : IDisposable
         Assert.Contains("switchTaskTab('timeline')", task);
         Assert.Contains("switchTaskTab('process')", task);
         Assert.Contains("Model.Insight", task);
-        Assert.Contains("TeamModel.HeatCss(", task);
+        Assert.Contains("UiFormat.HeatCss(", task);
         Assert.Contains("Chưa có số đo thời gian cho task này", task);
         Assert.Contains("Chưa đánh giá quy trình", task);
         // 2 chỗ Html.Raw cũ đã an toàn (JSON lần chạy; tham số drawer chỉ là số / "first"). Không được thêm chỗ mới.

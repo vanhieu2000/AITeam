@@ -46,6 +46,7 @@ var app = builder.Build();
 app.UseStaticFiles();
 app.UseAntiforgery();
 app.UseMiddleware<OfficeChatRedirectMiddleware>();
+app.UseMiddleware<LegacyPageRedirectMiddleware>();
 app.MapRazorPages();
 app.Run();
 

@@ -221,13 +221,13 @@ else
                                     <tr>
                                         <td>@s.Stage</td>
                                         <td>@(string.IsNullOrEmpty(s.Who) ? "—" : s.Who)</td>
-                                        <td class="@TeamModel.HeatCss(s.Score)">@(s.Score?.ToString() ?? "—")</td>
+                                        <td class="@AITeam.Hub.Pages.Shared.UiFormat.HeatCss(s.Score)">@(s.Score?.ToString() ?? "—")</td>
                                         <td>@(string.IsNullOrEmpty(s.Time) ? "—" : s.Time)</td>
                                         <td>@(string.IsNullOrEmpty(s.Issue) ? "—" : s.Issue)</td>
                                         <td>
                                             @if (!string.IsNullOrEmpty(s.Cause))
                                             {
-                                                <span class="pill n" title="@TeamModel.CauseLabel(s.Cause)">@s.Cause</span>
+                                                <span class="pill n" title="@AITeam.Hub.Pages.Shared.UiFormat.CauseLabel(s.Cause)">@s.Cause</span>
                                             }
                                             else
                                             {

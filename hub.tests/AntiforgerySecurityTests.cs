@@ -18,9 +18,6 @@ public sealed class AntiforgerySecurityTests : IDisposable
     [Theory]
     [InlineData("/Settings?handler=SaveSettings")]
     [InlineData("/Settings?handler=SaveProject")]
-    [InlineData("/Accounts?handler=CheckAgyLogin")]
-    [InlineData("/Accounts?handler=SwitchAccount")]
-    [InlineData("/Accounts?handler=InstallClaude")]
     [InlineData("/Secrets?handler=Add")]
     [InlineData("/Secrets?handler=Delete")]
     [InlineData("/Secrets?handler=ExportEnv")]
@@ -69,18 +66,18 @@ public sealed class AntiforgerySecurityTests : IDisposable
 
     [Theory]
     [InlineData("/Settings")]
-    [InlineData("/Accounts")]
     [InlineData("/Secrets")]
     // Hub v3 (R-003): dựng trang thật để bắt lỗi thiếu đăng ký dịch vụ (H3-05: /Requests trắng trang).
     [InlineData("/")]
     [InlineData("/Approvals")]
-    [InlineData("/Team")]
-    [InlineData("/Process")]
     [InlineData("/Requests")]
-    [InlineData("/Providers")]
-    [InlineData("/Overview")]
     [InlineData("/AiAccounts")]
     [InlineData("/Research")]
+    [InlineData("/Tracking")]
+    [InlineData("/Projects")]
+    [InlineData("/Reports")]
+    [InlineData("/Reports/Lessons")]
+    [InlineData("/Workflow")]
     public async Task Pages_render_successfully_with_fake_services(string path)
     {
         var options = new WebApplicationOptions
