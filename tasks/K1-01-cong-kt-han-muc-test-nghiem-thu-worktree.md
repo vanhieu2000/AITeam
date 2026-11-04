@@ -4,7 +4,8 @@
 - **Nhánh:** `agent-c/K1-01-cong-kt-han-muc-test-nghiem-thu-worktree`
 - **Ưu tiên:** cao
 - **Ngân sách:** ~150 dòng
-- **Yêu cầu:** R-014 (3 lỗi [CK] ghi trong nhật ký)
+- **Yêu cầu:** R-014
+- **Nguồn:** 3 lỗi [CK] ghi trong nhật ký
 - **Thời gian tối đa:** 30 phút
 - **Độ khó:** M
 - **Review AI:** không (Claude review)

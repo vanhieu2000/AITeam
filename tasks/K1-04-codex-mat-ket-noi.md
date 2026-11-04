@@ -82,5 +82,11 @@
 - Chưa chắc: toàn bộ test solution và nguyên nhân restore thất bại; không khẳng định đã hoàn thành mọi tiêu chí.
 
 ## Review (Claude)
-
+### Vòng 1 — ĐẠT (04/11 16:00)
+- Codex lượt 1 bị ngắt giữa chừng (phiên quản lý khởi động lại), code còn nguyên trong worktree; lượt 2 (185 s) chỉ chạy test + báo cáo. 70 dòng / ngân sách 70.
+- Cổng: build 0 warning, Hub 924 + Core 1052 xanh, test nghiệm thu còn nguyên, quét bí mật sạch.
+- Đã kiểm tra diff theo 5 mục tiêu: lọc dòng `error` / `item.type=error` / log ` ERROR codex_` bằng JsonDocument (không dò chuỗi cả dòng); bộ lọc ném ⇒ vẫn tính hoạt động; RunAsync truyền IdleTimeout 15′ + bộ lọc, CheckAsync không; Parse Stalled phân biệt "mất kết nối" / "đứng im", giữ thread; Test-NetworkError nhận câu mới. Test thêm của Codex kiểm hành vi thật (dòng JSON lạ, bộ lọc ném vẫn đọc đủ 14 dòng).
+- [TK] (dữ liệu) dòng `Yêu cầu` của 4 phiếu K1 có chú thích `R-014 (…)` ⇒ `Update-WorkflowJournal` từ chối ⇒ cổng báo "Không ghi được nhật ký phiếu" (không phải lỗi git như K1-03 đoán). Claude sửa 4 phiếu.
 ## Kết quả
+- Codex mất kết nối (chỉ in "Reconnecting…") hoặc đứng im 15 phút thì tự dừng, báo rõ "mất kết nối tới máy chủ AI … kiểm tra openai_base_url"; `assign` báo LỖI MẠNG.
+- Kiểm chứng: 22 test K104 (mẫu stdout THẬT 04/11) + 7 test K102 đã nới khoảng chờ, toàn bộ test trên clone sạch.

@@ -4,7 +4,8 @@
 - **Nhánh:** `agent-c/K1-02-canh-opencode-dung-im`
 - **Ưu tiên:** cao
 - **Ngân sách:** ~90 dòng
-- **Yêu cầu:** R-014 (lỗi [CK] số 4)
+- **Yêu cầu:** R-014
+- **Nguồn:** lỗi [CK] số 4
 - **Thời gian tối đa:** 25 phút
 - **Độ khó:** S
 - **Review AI:** không (Claude review)

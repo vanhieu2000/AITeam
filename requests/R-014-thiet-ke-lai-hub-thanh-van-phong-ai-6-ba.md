@@ -96,6 +96,8 @@ Sự kiện cần ghi:
 | 13:40 04/11/2026 | K1-01 (354 s) và K1-02 (702 s) Codex xong. Review vòng 1 ĐẠT; Claude sửa harness S104 [TK]. Merge cả hai. Lỗi [CK] mới: git add thiếu 2>$null trong Set-BoardStatus ⇒ phiếu K1-03 + test nghiệm thu. |
 | 14:15 04/11/2026 | K1-03 merge (Codex 2 vòng: vòng 1 làm đúng phiếu nhưng phiếu sai [TK] — 2>$null dưới Stop vẫn ném trên PS 5.1, Claude thử thật rồi sửa test). Ghi 2 bài học vào CLAUDE.md (pull --rebase làm phẳng merge; hành vi stderr PS 5.1). Hàng chờ K1-04. |
 | 14:25 04/11/2026 | Clone sạch Hub 924 + Core 1025 xanh, push main. Đánh giá R-014. | Claude |
+| 15:43 04/11/2026 | K1-04 giao Codex (lượt 1 bị ngắt khi phiên Claude khởi động lại; code còn nguyên) ⇒ lượt 2 chỉ test + báo cáo 185 s. | |
+| 16:00 04/11/2026 | K1-04 review ĐẠT vòng 1, merge. Tìm ra gốc thật của "Không ghi được nhật ký phiếu": dòng Yêu cầu có chú thích [TK] ⇒ sửa 4 phiếu K1 + bài học CLAUDE.md. | Claude |
 
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:

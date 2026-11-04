@@ -179,3 +179,4 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).
 - Sau `git merge --no-ff` trên `main`, KHÔNG `git pull --rebase`: nó làm phẳng commit merge, đổi mã commit ⇒ nhánh task tạo từ main cũ xung đột khi assign (K1-03, 04/11). Dùng `git pull --no-rebase` (hoặc `--rebase=merges`).
 - PowerShell 5.1 dưới `ErrorActionPreference = Stop`: thêm `2>$null` vào lệnh native vẫn ném lỗi khi lệnh in ra stderr (vd. cảnh báo CRLF của git). Phải tạm đặt `'Continue'` rồi trả lại; luôn THỬ THẬT hành vi PowerShell trước khi ghi vào thiết kế (K1-03 vòng 1).
+- Dòng `- **Yêu cầu:**` trong file task CHỈ ghi mã `R-xxx` (ghi chú để dòng `- **Nguồn:**` riêng). Có chữ thêm ⇒ `Update-WorkflowJournal` từ chối ⇒ cổng KT báo "Không ghi được nhật ký phiếu" (K1-01..04, 04/11).

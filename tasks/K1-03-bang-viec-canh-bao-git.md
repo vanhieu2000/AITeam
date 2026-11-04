@@ -4,7 +4,8 @@
 - **Nhánh:** `agent-c/K1-03-bang-viec-canh-bao-git`
 - **Ưu tiên:** cao
 - **Ngân sách:** ~10 dòng
-- **Yêu cầu:** R-014 (lỗi [CK] phát hiện khi giao K1-01, K1-02)
+- **Yêu cầu:** R-014
+- **Nguồn:** lỗi [CK] phát hiện khi giao K1-01, K1-02
 - **Thời gian tối đa:** 15 phút
 - **Độ khó:** S
 - **Review AI:** không (Claude review)
