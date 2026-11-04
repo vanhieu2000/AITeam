@@ -54,13 +54,25 @@
 - `hub.tests/AcceptanceF101ProjectAdminTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] Build `AITeam.sln` với `-warnaserror` 0 warning
+- [x] Build `AITeam.sln` với `-warnaserror` 0 warning
 - [ ] `dotnet test AITeam.sln` xanh hết, gồm toàn bộ test nghiệm thu F1-01 (không sửa)
-- [ ] `.cs` giữ BOM UTF-8
+- [x] `.cs` giữ BOM UTF-8
 - [ ] Commit: `F1-01: dịch vụ quản lý dự án (thêm / sửa / trạng thái)`
 
 ## Báo cáo của agent
-
+| Tiêu chí | Bằng chứng thật (lượt sửa cổng kiểm tra) |
+|---|---|
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror -m:1 -p:UseSharedCompilation=false -v:minimal`: thành công, 0 warning, 0 lỗi (1m50s). |
+| Nghiệm thu F1-01 | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~F101ProjectAdmin" --blame-hang-timeout 2m`: 37 pass, 0 fail, 0 skip; không sửa test nghiệm thu. |
+| Test toàn solution chưa đạt | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 839 pass/8 fail/0 skip; dừng bằng Ctrl+C khoảng 3 phút, Core chưa có tổng kết, mã thoát 1. |
+| Lỗi ngoài F1-01 | Settings/WorkflowRoles/Lessons: `UnauthorizedAccessException` tại `File.Replace`; test Git Core: signal pipe/CreateFileMapping, Win32 error 5. Không mở rộng sửa. |
+| BOM UTF-8 | PowerShell đọc 3 byte đầu: ProjectAdminService.cs, TeamConfigService.cs, F101ProjectAdminExtraTests.cs đều EF BB BF. |
+| Ngoại lệ phạm vi cần Claude quyết | Giữ `hub/Services/HubV3Registration.cs`: hai đăng ký `IProjectAdminService`/`IProjectScriptRunner` cần để DI dùng dịch vụ thật và test `Services_registered_in_di_and_real_runner_uses_argument_list` pass; xóa sẽ trái nghiệm thu. |
+| Giới hạn kiểm chứng phạm vi | Không chạy git nên chưa đối chiếu được bản gốc để hoàn tác chính xác; lượt này không sửa HubV3Registration.cs, đề nghị Claude xét ngoại lệ như yêu cầu cổng cho phép. |
+| Commit/push | Không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa có commit được kiểm chứng. |
+File đổi lượt này: chỉ tasks/F1-01-quan-ly-du-an.md, bổ sung lý do ngoại lệ và kết quả chạy lại; giữ nguyên logic và test.
+Phần triển khai trước: ProjectAdminService.cs (dịch vụ/runner), TeamConfigService.cs (mở hàm ghi nguyên tử), F101ProjectAdminExtraTests.cs (4 test bổ sung).
+Chưa xác minh: tổng kết Core, toàn solution xanh, chênh lệch DI với bản gốc và quyết định ngoại lệ của Claude; không chạy app/chụp ảnh.
 ## Review (Claude)
 
 ## Kết quả

@@ -444,7 +444,7 @@ public sealed class TeamConfigService : ITeamConfigService
         WriteWithBackup(_paths.ProjectsJson, array);
     }
 
-    private static void WriteWithBackup(string path, JsonNode node)
+    internal static void WriteWithBackup(string path, JsonNode node)
     {
         if (TeamFileLock.HasReparsePoint(path))
             throw new IOException("Không lưu được cấu hình.");
@@ -464,6 +464,16 @@ public sealed class TeamConfigService : ITeamConfigService
         }
 
         string json = node.ToJsonString(JsonOptions);
-        File.WriteAllText(path, json, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        string temporary = path + ".tmp." + Guid.NewGuid().ToString("N");
+        try
+        {
+            bool hasBom = File.Exists(path) && File.ReadAllBytes(path).Take(3).SequenceEqual(new byte[] { 0xEF, 0xBB, 0xBF });
+            File.WriteAllText(temporary, json, new UTF8Encoding(hasBom));
+            File.Move(temporary, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
     }
 }
