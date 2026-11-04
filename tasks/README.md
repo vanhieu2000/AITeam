@@ -103,7 +103,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V10-05 Trợ lý chat](V10-05-tro-ly-chat.md) | B | `agent-o/V10-05-tro-ly-chat` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8) |
 | [K1-01 Cổng KT: lỗi mạng, bản sửa test, worktree](K1-01-cong-kt-han-muc-test-nghiem-thu-worktree.md) | C | `agent-c/K1-01-cong-kt-han-muc-test-nghiem-thu-worktree` | ✅ Đã merge 04/11 (Codex, vòng 1) |
 | [K1-02 Canh OpenCode đứng im](K1-02-canh-opencode-dung-im.md) | C | `agent-c/K1-02-canh-opencode-dung-im` | ✅ Đã merge 04/11 (Codex, vòng 1) |
-| [K1-03 Bảng việc: cảnh báo git không làm hỏng](K1-03-bang-viec-canh-bao-git.md) | C | `agent-c/K1-03-bang-viec-canh-bao-git` | ⏳ Chờ giao (Codex) |
+| [K1-03 Bảng việc: cảnh báo git không làm hỏng](K1-03-bang-viec-canh-bao-git.md) | C | `agent-c/K1-03-bang-viec-canh-bao-git` | 🟡 Đang chạy · máy HIEUDV · 13:42 04/11/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
