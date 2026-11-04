@@ -8,6 +8,8 @@ namespace AITeam.Core.Providers;
 public sealed class OpenCodeProvider(ProviderConfig config, IProcessRunner runner) : IAgentProvider
 {
     public const string DefaultModel = "opencode/deepseek-v4.1-flash-free";
+    /// <summary>K1-02 (khung Claude): OpenCode không in dòng nào quá khoảng này ⇒ dừng (hết lượt free hay đứng im). TODO(agent): truyền vào ProcessSpec + xử lý Stalled trong Parse.</summary>
+    public static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(20);
     public string Id => config.Id;
     public ProviderKind Kind => ProviderKind.OpenCode;
     public bool HasReadOnlySandbox => false;

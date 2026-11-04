@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 
 namespace AITeam.Core.Process;
@@ -10,9 +10,12 @@ public sealed record ProcessSpec(
     string WorkingDirectory,
     string? StdinFile,
     TimeSpan Timeout,
-    IReadOnlyDictionary<string, string>? Environment = null);
+    IReadOnlyDictionary<string, string>? Environment = null,
+    // K1-02 (khung Claude): không có dòng stdout/stderr nào quá khoảng này ⇒ dừng cả cây tiến trình, Stalled = true. null = tắt.
+    TimeSpan? IdleTimeout = null);
 
-public sealed record ProcessResult(int ExitCode, string StdOut, string StdErr, TimeSpan Duration, bool TimedOut);
+/// <param name="Stalled">K1-02: bị dừng vì đứng im quá ProcessSpec.IdleTimeout (khác TimedOut = quá giờ cứng).</param>
+public sealed record ProcessResult(int ExitCode, string StdOut, string StdErr, TimeSpan Duration, bool TimedOut, bool Stalled = false);
 
 public interface IProcessRunner
 {
