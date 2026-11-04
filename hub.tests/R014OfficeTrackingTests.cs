@@ -81,7 +81,8 @@ public sealed class R014OfficeTrackingTests
         var html = await host.Client.GetStringAsync("/Tracking?view=" + view);
         Assert.DoesNotContain("<script>bad</script>", html);
         foreach (var code in new[] { "V10-01", "H9-03", "V9-18", "W2-01" }) Assert.Contains(code, html);
-        Assert.Single(Regex.Matches(html, "class=\"tab on\"").Cast<Match>());
+        // R-015 (Claude): thanh chọn cách xem đổi từ .tabs sang .seg — đúng 1 mục đang chọn.
+        Assert.Single(Regex.Matches(html, "<a class=\"on\" href=\"[^\"]*view=").Cast<Match>());
         if (view == "person")
         {
             Assert.Equal(2, Regex.Matches(html, "class=\"lane\"").Count);   // Codex + OpenCode

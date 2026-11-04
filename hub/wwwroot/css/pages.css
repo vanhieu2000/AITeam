@@ -90,6 +90,13 @@
 .pg-msg.ok { color: var(--ok); background: var(--ok-soft); border-color: var(--ok); }
 .pg-msg.err { color: var(--err); background: var(--err-soft); border-color: var(--err); }
 
+/* Theo dõi việc */
+.trk-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; }
+.trk-bar .filters { margin: 0; flex: 1; min-width: 0; }
+.trk-bar .filters .inp { min-width: 120px; height: 32px; }
+.trk-body { min-width: 0; }
+.trk-body .track-group { margin: 0 0 12px; }
+
 @media (min-width: 1100px) {
   .pg-split { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
   .pg-cards { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
@@ -105,6 +112,11 @@
   .pg-cards > .panel, .pg-cards > .pg-stack { align-self: stretch; }
   .pg-stack { grid-template-rows: auto minmax(0, 1fr); }
   .pg-scroll { flex: 1; overflow: auto; }
+  .trk-body { flex: 1; min-height: 0; overflow: auto; }
+  .trk-body.is-kanban { overflow: hidden; display: flex; }
+  .trk-body.is-kanban .kanban { flex: 1; min-height: 0; align-items: stretch; }
+  .trk-body.is-kanban .kcol { overflow: auto; min-height: 0; }
+  .trk-body.is-kanban .kcol h4 { position: sticky; top: -8px; background: var(--surface-2); padding: 4px 0; z-index: 1; }
 }
 
 @media (max-width: 760px) {

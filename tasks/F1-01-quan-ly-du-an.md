@@ -74,5 +74,10 @@ File đổi lượt này: chỉ tasks/F1-01-quan-ly-du-an.md, bổ sung lý do n
 Phần triển khai trước: ProjectAdminService.cs (dịch vụ/runner), TeamConfigService.cs (mở hàm ghi nguyên tử), F101ProjectAdminExtraTests.cs (4 test bổ sung).
 Chưa xác minh: tổng kết Core, toàn solution xanh, chênh lệch DI với bản gốc và quyết định ngoại lệ của Claude; không chạy app/chụp ảnh.
 ## Review (Claude)
+### Vòng 1 — ĐẠT (04/11 21:45)
+- Cổng KT lượt 1: build + test xanh (Hub 847, Core 1063), 273/320 dòng. Dòng "ngoài phạm vi HubV3Registration.cs" là báo nhầm: 2 dòng DI do Claude thêm vào khung.
+- Đọc diff: kiểm tra đầu vào trước khi ghi / chạy, ArgumentList, đường dẫn máy chỉ vào team.local.json, ghi nguyên tử + .bak + giữ BOM, chặn reparse point.
+- [CK] cổng KT tính commit khung "(Claude)" sau commit đầu là sửa ngoài phạm vi.
+- **Optional:** `Add` giữ khóa cấu hình suốt lúc chạy team.ps1 (tối đa 10 phút) ⇒ trang Dự án có thể chờ; nên nhả khóa trước khi chạy script.
 
 ## Kết quả

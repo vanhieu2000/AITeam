@@ -8,14 +8,19 @@
     var stateLabels = new Dictionary<string, string> { ["all"] = "Mọi trạng thái", ["open"] = "Chưa xong", ["running"] = "Đang làm", ["review"] = "Chờ review", ["fix"] = "Cần sửa / chặn", ["done"] = "Đã xong" };
 }
 
+<link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+
 @section Actions {
     <span class="muted num" style="font-size:12.5px">@Model.Items.Count / @Model.TotalBeforeFilter task</span>
 }
 
-<nav class="tabs" aria-label="Cách xem">
+@* R-015 (Claude): vừa khít màn hình — 1 dòng chọn cách xem + lọc; nội dung trong khung tự cuộn, kanban mỗi cột tự cuộn. *@
+<div class="pg-fit trk">
+<div class="trk-bar">
+<nav class="seg" aria-label="Cách xem">
     @foreach (var v in TrackingModel.Views)
     {
-        <a class="tab @(Model.View == v ? "on" : "")" href="@Model.With("view", v)" aria-current="@(Model.View == v ? "page" : null)">@viewLabels[v]</a>
+        <a class="@(Model.View == v ? "on" : "")" href="@Model.With("view", v)" aria-current="@(Model.View == v ? "page" : null)">@viewLabels[v]</a>
     }
 </nav>
 
@@ -60,6 +65,8 @@
         <a class="btn ghost" href="/Tracking?view=@Model.View">Bỏ lọc</a>
     }
 </form>
+</div>
+<div class="trk-body @(Model.View == "kanban" ? "is-kanban" : "")">
 
 @if (Model.Items.Count == 0)
 {
@@ -153,10 +160,12 @@ else
     </div>
 }
 
-@foreach (var w in Model.Warnings.Take(2))
+</div>
+@foreach (var w in Model.Warnings.Take(1))
 {
-    <p class="faint" style="font-size:12px">@w</p>
+    <p class="pg-note">@w</p>
 }
+</div>
 
 @functions {
     static string Initials(string code) => code.Equals("C", StringComparison.OrdinalIgnoreCase) ? "CX" : code.Length > 2 ? code[..2].ToUpperInvariant() : code.ToUpperInvariant();
