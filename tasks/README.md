@@ -61,12 +61,11 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [W1-07 Trang Việc và thanh bước](W1-07-trang-viec-va-thanh-buoc.md) | B | `agent-b/W1-07-trang-viec-va-thanh-buoc` | ✅ Đã merge (vòng 4) |
 | [W1-01 Helper nguồn thật và sandbox PowerShell](W1-01-helper-nguon-that-va-sandbox-powershell.md) | A | `agent-a/W1-01-helper-nguon-that-va-sandbox-powershell` | ✅ Đã merge (vòng 2) |
 | [V8-09 · Sửa đọc mã thoát `agy models` + Codex quá tải tự thử lại](V8-09-agy-models-va-codex-qua-tai.md) | A | `agent-a/V8-09-agy-models-va-codex-qua-tai` | ✅ Đã merge (vòng 2) |
-| [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | ✅ Đã merge 02/11 (OpenCode code, Claude review; fb83f06)
+| [H7-06 Menu, danh sách dự án và bảng duyệt](H7-06-menu-danh-sach-du-an-va-bang-duyet.md) | A | `agent-a/H7-06-menu-danh-sach-du-an-va-bang-duyet` | ✅ Đã merge 02/11 (OpenCode code, Claude review; fb83f06) |
 | [V8-10 · `team.ps1 hub -Restart` + giới hạn 45 phút cho `deputy`](V8-10-hub-restart-va-deputy-timeout.md) | B | `agent-a/V8-10-hub-restart-va-deputy-timeout` | ✅ Đã merge (vòng 1) |
 | [H7-02 Điều phối plan/prep/QC theo Map](H7-02-dieu-phoi-plan-prep-qc-theo-map.md) | C | `agent-c/H7-02-map-plan-prep-qc` | ✅ Đã merge 03/11 · Windows xanh |
 | [H7-04 Thẻ tác nhân và chat giao việc](H7-04-the-tac-nhan-va-chat-giao-viec.md) | B | `agent-b/H7-04-the-tac-nhan-va-chat-giao-viec` | ✅ Đã merge (vòng 1) |
 | [W1-03 Sinh mockup và khóa prep trước duyệt](W1-03-sinh-mockup-va-khoa-prep-truoc-duyet.md) | A | `agent-a/W1-03-sinh-mockup-va-khoa-prep-truoc-duyet` | ✅ Đã merge 03/11 (OpenCode gộp main, Claude review) |
-
 | [V9-10 Token mỗi lượt](V9-10-token-moi-luot.md) | C | `agent-c/V9-10-token-moi-luot` | ✅ Đã merge 03/11 · còn mẫu OpenCode thành công |
 | [V9-13 Tự gắn cờ lượt](V9-13-tu-gan-co-moi-luot.md) | C | `agent-c/V9-13-tu-gan-co-luot` | ✅ Đã merge 03/11 (gồm V9-03) · còn log thật H7-06 |
 | [H8-14 ChatGPT tại Hub, model và ghi nhớ SQLite](H8-14-chatgpt-local-va-ghi-nho-sqlite.md) | C | `agent-c/H8-14-chatgpt-local` | ✅ Đã merge (vòng 2) · gọi ChatGPT thật OK trên Windows |
