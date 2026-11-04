@@ -639,6 +639,29 @@ function Invoke-ScopeLock {
 }
 
 function Invoke-Assign {
+    function Record-QuotaExhausted([string]$service, [string]$logText = "", [string]$errText = "") {
+        try {
+            $exe = Get-AITeamExe
+            if (-not $exe -or $exe -eq 'FakeProvider' -or -not (Test-Path -LiteralPath $exe -PathType Leaf)) { return }
+            $serviceId = switch ($service.ToLowerInvariant()) {
+                'codex' { 'codex' }
+                'opencode' { 'opencode' }
+                default { 'agy' }
+            }
+            $dbPath = Join-Path $env:USERPROFILE ".aiteam\hub\office.db"
+            $cliArgs = @("quota-record", "--db", $dbPath, "--service", $serviceId, "--remaining", "0", "--source", "assign")
+            $combined = "$logText`n$errText"
+            if ($combined -match '(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)') {
+                $cliArgs += @("--rest-until", $Matches[1])
+            }
+            $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+            $output = & $exe @cliArgs 2>&1
+            $code = $LASTEXITCODE; $global:LASTEXITCODE = 0; $ErrorActionPreference = $eap
+            if ($code -ne 0) { Write-Warning "Không thể ghi nhận hạn mức ($serviceId): $($output -join ' ')" }
+        } catch {
+            Write-Warning "Lỗi khi ghi hạn mức: $($_.Exception.Message)"
+        }
+    }
     if ($Task -cnotmatch '\A[A-Za-z0-9][A-Za-z0-9-]{0,63}\z') { throw 'LỖI: mã task không hợp lệ.' }
     $cfg = Get-Config
     $r = Resolve-Project $Project
@@ -890,6 +913,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     }
     if (Test-QuotaExhausted $logText $errText) {
         Say "HẾT HẠN MỨC tài khoản Antigravity hiện tại → chạy .\team.ps1 switch-account rồi giao lại với -Resume" Yellow
+        Record-QuotaExhausted "agy" $logText $errText
     }
     if (Test-NetworkError $logText $errText) {
         Say "LỖI MẠNG khi agent chạy (mất kết nối tới máy chủ AI) — kiểm tra mạng rồi giao lại với -Resume; KHÔNG phải hết hạn mức." Yellow
@@ -914,6 +938,11 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
         $cx = Invoke-CodexDevelop $r $Task $work $branch $prompt $log $maxMin $devProvider $(if ($devProvider -eq 'opencode') { $ocModel } else { $null }) $(if ($devProvider -eq 'opencode') { $knownPublic } else { $false })
         if (-not $cx.Ok) {
             Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
+            $cxLog = if (Test-Path $log) { Get-Content $log -Raw -ErrorAction SilentlyContinue } else { "" }
+            $cxErr = if (Test-Path ($log -replace '\.json$', '.codex.json')) { Get-Content ($log -replace '\.json$', '.codex.json') -Raw -ErrorAction SilentlyContinue } else { "" }
+            if (Test-QuotaExhausted $cxLog $cxErr) {
+                Record-QuotaExhausted $devProvider $cxLog $cxErr
+            }
             Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
             return
         }

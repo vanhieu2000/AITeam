@@ -28,6 +28,7 @@ public static class HubV3Registration
         services.TryAddSingleton<ITeamInsightsService, TeamInsightsService>();
         services.TryAddSingleton<IRequestService, RequestService>();
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddSingleton<IAiTeamStatusService, AiTeamStatusService>();
         services.TryAddSingleton<IRequestProgressService, RequestProgressService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();
         services.TryAddSingleton<IOfficeService, OfficeService>();
