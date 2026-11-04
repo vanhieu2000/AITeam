@@ -40,6 +40,13 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-015` để `team.ps1 reque
 | 20:00 | Giao F1-05 lỗi: team.ps1 gọi Get-AgyModelsCached không tồn tại (V9-14) ⇒ Claude sửa 1 dòng (chặn dây chuyền), giao lại -Dev agy | [CK] |
 | 20:30 | Viết task + test nghiệm thu F1-01, F1-02, F1-03; F4 bỏ (sửa quy trình CLAUDE.md) | Claude |
 | 20:35 | F1-06 lượt 1 KHÔNG ĐẠT (3 test Theo dõi việc đỏ) ⇒ cổng tự giao lại; F1-05 lượt 1 agy treo hết giờ; F1-03 chờ khóa phạm vi F1-05 | |
+| 20:55 | F1-06 ĐẠT vòng 1, merge (Codex). [TK] test cũ R014 dùng bảng không tiêu đề ⇒ Claude sửa dữ liệu giả | Claude |
+| 21:05 | F1-05 ĐẠT vòng 1, merge (Antigravity); chạy lessons-import: thêm 41 bài học | Claude |
+| 21:15 | F1-02 ĐẠT vòng 1, merge (Codex) | Claude |
+| 21:20 | UI-11 trang Yêu cầu mới; Văn phòng hết 0/0. [CK] Set-BoardStatus chèn task mới sau bảng O-02 cuối file ⇒ Claude sửa (chặn dây chuyền) + test | Claude |
+| 21:30 | UI-12 Bài học, UI-13 Theo dõi việc vừa khít màn hình | Claude |
+| 21:45 | F1-01 ĐẠT vòng 1, merge (Codex); UI-14 trang Dự án mới, Cài đặt bỏ tab dự án | Claude |
+| 21:50 | UI-15 Báo cáo vừa khít; mọi trang menu hết cuộn cả trang. F1-03 lượt 2 đang chạy (lượt 1 không làm dịch vụ Hub) | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
