@@ -72,6 +72,19 @@
 
 ## Báo cáo của agent
 
+| Tiêu chí | Bằng chứng thật |
+|---|---|
+| Build 0 warning | Bản cuối: dotnet build AITeam.sln -warnaserror -nodeReuse:false --no-restore -m:1 → thành công, 0 warning, 0 error. |
+| K102 và hồi quy | Bản cuối: dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceK102IdleWatchdogTests|FullyQualifiedName~K102IdleWatchdogExtraTests|FullyQualifiedName~O02OpenCodeTests|FullyQualifiedName~AcceptanceV409DevRunnerTests" --blame-hang-timeout 2m -m:1 -nodeReuse:false → 28 pass, 0 fail, 0 skip; gồm 7/7 nghiệm thu K102 nguyên vẹn. |
+| Toàn solution | dotnet test AITeam.sln --no-build --blame-hang-timeout 2m -m:1 -nodeReuse:false → Hub 914 pass/10 fail; Core có lỗi File.Replace bị từ chối quyền, Git signal pipe và PowerShell timeout; dừng khi vượt 3 phút. Lượt này trước chỉnh mốc khởi động, chưa xác minh toàn bộ bản cuối. |
+| BOM UTF-8 | Đọc byte đầu bằng PowerShell: cả 3 file C# đã sửa/tạo có EF BB BF; mọi lần ghi tiếp đều dùng UTF8Encoding(true). |
+| Commit/push | Không chạy lệnh git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa có commit được kiểm. Thông điệp đề nghị: K1-02: OpenCode đứng im 20 phút thì tự dừng, báo rõ lý do. |
+- Đổi ProcessRunner.cs: canh stdout/stderr bằng TickCount64 + Interlocked, hủy/dọn bộ canh, giết cây tiến trình, ưu tiên hủy rồi timeout cứng.
+- Đổi OpenCodeProvider.cs: bật 20 phút khi run, báo đúng câu đứng im và giữ session; không bật cho provider khác.
+- Thêm core.tests/K102IdleWatchdogExtraTests.cs: 2 ca timeout trùng mốc và giữ session/lý do chính xác; cập nhật báo cáo trong task này.
+- Tự quyết: tính mốc đứng im sau Start thành công để không tính thời gian khởi động; dùng một worker vì build mặc định lỗi không có chẩn đoán.
+- Chưa xác minh: chạy OpenCode thật 20 phút; toàn bộ solution xanh trong môi trường không bị chặn quyền. Không sửa lỗi ngoài phạm vi.
+
 ## Review (Claude)
 
 ## Kết quả
