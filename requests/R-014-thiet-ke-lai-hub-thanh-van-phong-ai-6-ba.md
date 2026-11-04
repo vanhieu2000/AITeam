@@ -78,6 +78,13 @@ Sự kiện cần ghi:
 | 02:31 04/11/2026 | Cờ tự động AITeam/W2-02 lượt 3 | CH, TO |
 - 2026-11-04 02:49:34 +05:30 | W2-02 | Verify | lượt 4 | KHÔNG ĐẠT <!-- workflow:W2-02:Verify:4 -->
 | 02:49 04/11/2026 | Cờ tự động AITeam/W2-02 lượt 4 | CH, TO |
+| 06:30 04/11/2026 | Chủ dự án: "Làm giao diện" ⇒ Claude làm UI-04..09 | |
+| ~07:10 04/11/2026 | UI-04 Cần anh duyệt (thẻ rủi ro, tab Claude tự quyết + mở lại, mở két) — d3a70fc | Claude |
+| ~07:40 04/11/2026 | UI-05 Báo cáo & thống kê + 5 biểu đồ SVG phía server, CSV — 8d922b0 | Claude |
+| ~08:20 04/11/2026 | UI-06 Xem lại từng bước + Mẹo & bài học (nháp → luật chuẩn), đăng ký ILessonService — 9d1a3c8 | Claude |
+| ~08:50 04/11/2026 | UI-07 Quy trình & vai trò (sơ đồ luồng, sửa bước, chống ghi đè) — 973f8da | Claude |
+| ~09:20 04/11/2026 | UI-08 Tài khoản AI (danh bạ, kiểm tra kết nối, .ini) + Cài đặt trợ lý — bf28b4f | Claude |
+| ~10:00 04/11/2026 | UI-09 Khung chat nối thật (bỏ iframe) + menu trỏ trang mới — 7af1983. Clone sạch: Hub 924/924, Core 1009/1009, 0 warning | Claude |
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
 
