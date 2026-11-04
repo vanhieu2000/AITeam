@@ -128,12 +128,8 @@ public sealed class WorkProgressService(HubPaths paths, ITeamConfigService confi
             if (boardPath != null)
             {
                 source = Path.GetFileName(boardPath);
-                foreach (var line in Lines(Read(boardPath)))
-                {
-                    var match = Regex.Match(line, @"^\|\s*\[([A-Za-z][A-Za-z0-9]*-\d+[A-Za-z0-9-]*)(?:\s|\])");
-                    if (match.Success)
-                        board[match.Groups[1].Value] = line.Trim().Trim('|').Split('|').Last().Trim();
-                }
+                foreach (var row in BoardTable.Parse(Read(boardPath)))
+                    board[row.Id] = row.Status;
             }
             source = "logs";
             var logFiles = Files(Path.Combine(Path.GetFullPath(selected.WorkDir), "logs"));
