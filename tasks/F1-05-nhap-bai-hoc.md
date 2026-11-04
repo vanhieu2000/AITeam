@@ -73,5 +73,10 @@
 - Điều chưa chắc: Không có, các test nghiệm thu và test solution đều xanh hoàn toàn.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (04/11 21:05)
+- Cổng KT lượt 2 ĐẠT (lượt 1 agy treo hết giờ, không làm gì). Cảnh báo "test luôn pass" là báo nhầm: dữ liệu mẫu AGENTS.md chứa chữ `Assert.True(true)`.
+- Đọc diff: Extract / Import / CLI / team.ps1 đúng thiết kế; 153/150 dòng.
+- **Optional:** tiêu đề rỗng (gạch đầu dòng chỉ có dấu phân cách) ⇒ `AddDraft` ném lỗi, cả lệnh dừng; nên bỏ qua + cảnh báo.
+- [CK] cổng KT dò chuỗi `Assert.True(true)` cả trong dữ liệu chuỗi của test ⇒ báo nhầm.
 
 ## Kết quả
