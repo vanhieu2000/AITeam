@@ -37,6 +37,9 @@ Sự kiện cần ghi:
 - merge;
 - báo chủ dự án.
 
+- 2026-11-04 20:14:39 +05:30 | F1-06 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-06:Verify:1 -->
+| 20:15 04/11/2026 | Cờ tự động AITeam/F1-06 lượt 1 | TO |
+- 2026-11-04 20:15:23 +05:30 | F1-06 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-06:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-015`, rồi điền:
 

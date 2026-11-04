@@ -122,4 +122,5 @@ Theo `docs/HUB-DESIGN.md` mục 7:
 - **H-005 (B):** module "AITeam Hub" trong HDV Tool (WebView2), làm ở dự án HDVTool.
 
 | O-02 | OpenCode/DeepSeek | agent-c/O-02-opencode-deepseek | Chờ kiểm mạng/Windows; 8 test mới đạt |
-| [F1-06 · Bộ đọc bảng việc dùng chung](F1-06-bo-doc-bang-viec.md) | C | `agent-c/F1-06-bo-doc-bang-viec` | 🟡 Đang chạy · máy HIEUDV · 19:57 04/11/2026 |
+| [F1-06 · Bộ đọc bảng việc dùng chung](F1-06-bo-doc-bang-viec.md) | C | `agent-c/F1-06-bo-doc-bang-viec` | 🟡 Đang chạy · máy HIEUDV · 20:15 04/11/2026 |
+| [F1-05 · Nhập bài học có sẵn vào kho bài học](F1-05-nhap-bai-hoc.md) | A | `agent-a/F1-05-nhap-bai-hoc` | 🟡 Đang chạy · máy HIEUDV · 20:01 04/11/2026 |

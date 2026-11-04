@@ -537,7 +537,7 @@ function Select-TaskDeveloper($r, $taskFile, [string]$text, $cfg) {
     $required=if($cfg.agy.requiredModel){[string]$cfg.agy.requiredModel}else{'argon-4'}
     $agyInstalled=($cfg.agy.exe -and (Test-Path -LiteralPath $cfg.agy.exe))
     $models=@()
-    if($agyInstalled){$modelState=Get-AgyModelsCached; if($modelState){$models=@($modelState.models)}}
+    if($agyInstalled){try{$modelState=Get-AgyModels $cfg}catch{$modelState=$null; Write-Warning "Không đọc được danh sách model agy: $_"}; if($modelState){$models=@($modelState.models)}}
     $pinned=[regex]::Match($text,'(?im)^\s*-\s*\*\*Dev:\*\*\s*`?(codex|opencode|agy)`?\s*$').Groups[1].Value.ToLowerInvariant()
     $difficulty=[regex]::Match($text,'\*\*Độ khó:\*\*\s*([SML])\b').Groups[1].Value
     if(-not $difficulty){$difficulty='L'}
