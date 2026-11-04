@@ -109,6 +109,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [F1-02 · Tiến độ yêu cầu: đếm task đúng, đóng / hủy phiếu](F1-02-tien-do-yeu-cau.md) | C | `agent-c/F1-02-tien-do-yeu-cau` | ✅ Đã merge 04/11 (Codex, vòng 1) |
 | [F1-01 · Dịch vụ quản lý dự án: thêm / sửa / trạng thái](F1-01-quan-ly-du-an.md) | C | `agent-c/F1-01-quan-ly-du-an` | ✅ Đã merge 04/11 (Codex, vòng 1) |
 | [F1-03 · Đội AI: lưu kết quả kiểm đăng nhập, ghi hạn mức thật, bỏ dòng trùng](F1-03-doi-ai-dang-nhap-han-muc.md) | B | `agent-b/F1-03-doi-ai-dang-nhap-han-muc` | ✅ Đã merge 04/11 (Antigravity, vòng 1) |
+| [K1-05 · Cổng KT hết báo nhầm: commit "(Claude)" sau khung, chữ Assert.True(true) trong dữ liệu](K1-05-cong-kt-bao-nham.md) | C | `agent-c/K1-05-cong-kt-bao-nham` | 🟡 Đang chạy · máy HIEUDV · 22:43 04/11/2026 |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
