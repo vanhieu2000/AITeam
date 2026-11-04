@@ -59,20 +59,18 @@
 
 ## Báo cáo của agent
 
-| Tiêu chí | Bằng chứng / kết quả thật |
+| Tiêu chí | Bằng chứng / kết quả thật (kiểm lại 04/11/2026) |
 |---|---|
-| Build 0 warning | Đạt: dotnet build AITeam.sln -warnaserror --no-restore -m:1; 0 warning, 0 error. |
-| Test toàn solution | Chưa đạt: dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=quiet"; Hub 783 pass/11 fail, Core 1039 pass/13 fail, 0 skip. |
-| Parser và tương thích | Đạt 129 pass/0 fail: dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore -m:1 --filter "FullyQualifiedName~F106|FullyQualifiedName~TaskBoardServiceTests|FullyQualifiedName~WorkOverview|FullyQualifiedName~W105|FullyQualifiedName~W106|FullyQualifiedName~H812" --blame-hang-timeout 2m. |
-| BOM UTF-8 | Đạt: kiểm ReadAllBytes ba byte EF BB BF ở cả 6 file C# đã sửa/tạo; giữ CRLF. |
-| Commit/push | Hệ thống thực hiện theo chỉ dẫn Codex; không chạy git, chưa có commit được kiểm. |
-- File đổi: BoardTable.cs điền parser; TaskBoardService.cs, WorkOverviewService.cs, PerformanceService.cs, WorkProgressService.cs dùng parser chung; F106BoardTableExtraTests.cs thêm 4 ca; task này ghi báo cáo.
-- Giữ nguyên chữ ký, ParseStatus, test nghiệm thu và test cũ; không sửa giao diện, không chạy app/chụp ảnh.
-- Tự quyết: dùng MSBuild -m:1 vì chạy mặc định thoát mã 1 dù báo 0 error; không sửa lỗi ngoài phạm vi.
-- Đã sửa lỗi mã hóa PowerShell khi truyền mã sang Python; đã kiểm lại chuỗi tiếng Việt/emoji và chạy lại build/test.
-- Chưa xác minh nguyên nhân 3 lỗi R014OfficeTrackingTests.cs:66,83,107 (thiếu link/mã trong HTML); không được đọc thêm file ngoài danh sách task.
-- Các lỗi đã thấy gồm File.Replace và chạy git tiến trình con bị chặn quyền trong sandbox; Core còn lỗi AcceptanceS106SkillNotesTests (expected 1, actual 0). Không nhận toàn solution xanh.
-
+| Build 0 warning | Đạt: `dotnet build AITeam.sln -warnaserror --no-restore -m:1`; 0 warning, 0 error. |
+| Test toàn solution | Chưa đạt: `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m --logger "console;verbosity=quiet"`; Hub 783 pass/11 fail, Core 1040 pass/12 fail, 0 skip. |
+| Parser và tương thích | Đạt 129 pass/0 fail: `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore -m:1 --filter "FullyQualifiedName~F106|FullyQualifiedName~TaskBoardServiceTests|FullyQualifiedName~WorkOverview|FullyQualifiedName~W105|FullyQualifiedName~W106|FullyQualifiedName~H812" --blame-hang-timeout 2m`. |
+| Lỗi cổng R014 | Chưa sửa: `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-restore --filter "FullyQualifiedName~R014OfficeTrackingTests" --blame-hang-timeout 2m -m:1`; 3 pass/3 fail; thiếu V9-18 (dòng 107), V10-01 (83), liên kết bộ đếm (66). |
+| BOM UTF-8 | Đạt: ReadAllBytes kiểm EF BB BF ở 5 dịch vụ trong phạm vi và F106BoardTableExtraTests.cs; cả 6 có BOM. |
+| Commit/push | Hệ thống thực hiện; không chạy lệnh git theo chỉ dẫn Codex, chưa xác minh commit. |
+- Lượt này chỉ đổi file task để ghi kết quả mới; giữ nguyên mã sản phẩm và mọi test nghiệm thu/test cũ.
+- Bị chặn phạm vi: danh sách Đọc không cho đọc R014OfficeTrackingTests hay mã giao diện; Phạm vi không cho sửa giao diện. Chưa đủ bằng chứng quy lỗi cho parser; không tự đổi logic để né assert.
+- Tự quyết: giữ -m:1 như lượt trước; không chạy app/chụp ảnh; không sửa lỗi ngoài phạm vi. Review (Claude) đang trống.
+- Chưa xác minh nguyên nhân gốc 3 lỗi R014 và các lỗi toàn solution khác; cần Claude xử lý phần giao diện hoặc giao phạm vi chẩn đoán phù hợp.
 ## Review (Claude)
 
 ## Kết quả
