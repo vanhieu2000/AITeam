@@ -12,12 +12,15 @@
     string SortUrl(string key) => Model.Link(("sort", key), ("dir", Model.Sort == key && Model.Dir == "desc" ? "asc" : null));
     string Person(string key) => Model.Link(("person", key), ("tab", null));
 }
+<link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/reports.css" asp-append-version="true" />
 
 @section Actions {
     <a class="btn sm" href="/Reports/Lessons">Mẹo &amp; bài học</a>
 }
 
+@* R-015 (Claude): vừa khít màn hình — tổng quan là lưới biểu đồ co giãn, các tab bảng tự cuộn trong thẻ. *@
+<div class="pg-fit rp">
 <form method="get" class="rp-filter" aria-label="Bộ lọc báo cáo">
     <div class="seg" role="radiogroup" aria-label="Khoảng ngày">
         @foreach (var (val, text) in new[] { ("7", "7 ngày"), ("30", "30 ngày"), ("90", "90 ngày"), ("custom", "Tùy chọn") })
@@ -82,6 +85,7 @@ else if (d != null)
         <a class="tab @(tab == "errors" ? "on" : "")" href="@Model.Link(("tab", "errors"))" aria-current="@(tab == "errors" ? "page" : null)">Lỗi<span class="c num">@d.ErrorMatrix.Sum(c => c.Count)</span></a>
     </nav>
 
+    <div class="rp-body rp-@tab">
     @if (tab == "overview")
     {
         <section class="rp-kpis" aria-label="Chỉ số chính">
@@ -279,7 +283,9 @@ else if (d != null)
             }
         </section>
     }
+    </div>
 }
+</div>
 
 <script>
     (function () {

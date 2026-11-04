@@ -113,6 +113,18 @@
   .pg-stack { grid-template-rows: auto minmax(0, 1fr); }
   .pg-scroll { flex: 1; overflow: auto; }
   .trk-body { flex: 1; min-height: 0; overflow: auto; }
+  /* Báo cáo: tổng quan = KPI + lưới 3 cột 2 hàng co giãn; biểu đồ SVG tự thu nhỏ trong thẻ */
+  .rp .rp-filter, .rp .tabs { margin: 0; flex: none; }
+  .rp .rp-warn { flex: none; margin: 0; }
+  .rp-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+  .rp-body > .panel { flex: 1; min-height: 0; overflow: auto; }
+  .rp-body .rp-kpis { margin: 0; flex: none; }
+  .rp-body .rp-kpi { padding: 10px 14px; }
+  .rp-body .rp-grid { flex: 1; min-height: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .rp-body .rp-wide { grid-column: span 2; }
+  .rp-body .rp-chart { display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+  .rp-body .rp-chart > svg.chart { flex: 1; min-height: 80px; height: 100%; max-height: 100%; }
+  .rp-body .rp-foot { flex: none; margin: 0; }
   .trk-body.is-kanban { overflow: hidden; display: flex; }
   .trk-body.is-kanban .kanban { flex: 1; min-height: 0; align-items: stretch; }
   .trk-body.is-kanban .kcol { overflow: auto; min-height: 0; }
