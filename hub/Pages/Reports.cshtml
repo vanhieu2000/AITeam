@@ -1,0 +1,301 @@
+﻿@page "/Reports"
+@model AITeam.Hub.Pages.ReportsModel
+@using AITeam.Hub.Pages
+@using AITeam.Hub.Pages.Shared
+@using AITeam.Hub.Services
+@{
+    // R-014 UI-05 (Claude). Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.4 + 6 (biểu đồ), mockup #reports.
+    ViewData["Title"] = "Báo cáo & thống kê";
+    var d = Model.Data;
+    var tab = Model.Tab ?? "overview";
+    string AriaSort(string key) => Model.Sort == key ? (Model.Dir == "asc" ? "ascending" : "descending") : "none";
+    string SortUrl(string key) => Model.Url(("sort", key), ("dir", Model.Sort == key && Model.Dir == "desc" ? "asc" : null));
+    string Person(string key) => Model.Url(("person", key), ("tab", null));
+}
+<link rel="stylesheet" href="~/css/reports.css" asp-append-version="true" />
+
+@section Actions {
+    <a class="btn sm" href="/Reports/Lessons">Mẹo &amp; bài học</a>
+    <a class="btn sm" href="/Performance">Trang hiệu suất cũ</a>
+}
+
+<form method="get" class="rp-filter" aria-label="Bộ lọc báo cáo">
+    <div class="seg" role="radiogroup" aria-label="Khoảng ngày">
+        @foreach (var (val, text) in new[] { ("7", "7 ngày"), ("30", "30 ngày"), ("90", "90 ngày"), ("custom", "Tùy chọn") })
+        {
+            <label class="seg-opt @(Model.Range == val ? "on" : "")">
+                <input type="radio" name="range" value="@val" checked="@(Model.Range == val)" />@text
+            </label>
+        }
+    </div>
+    <label class="rp-f rp-dates">Từ <input class="inp" type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" /></label>
+    <label class="rp-f rp-dates">đến <input class="inp" type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" /></label>
+    <label class="rp-f">Dự án
+        <select class="inp" name="project">
+            <option value="">Tất cả</option>
+            @foreach (var p in d?.Projects ?? [])
+            {
+                <option value="@p" selected="@(string.Equals(p, Model.Project, StringComparison.OrdinalIgnoreCase))">@p</option>
+            }
+        </select>
+    </label>
+    <label class="rp-f">Người / AI
+        <select class="inp" name="person">
+            <option value="">Tất cả</option>
+            @foreach (var (key, display) in Model.PeopleOptions)
+            {
+                <option value="@key" selected="@(string.Equals(key, Model.Person, StringComparison.OrdinalIgnoreCase))">@display</option>
+            }
+        </select>
+    </label>
+    <label class="rp-f">Độ khó
+        <select class="inp" name="difficulty">
+            <option value="">Tất cả</option>
+            @foreach (var x in new[] { "S", "M", "L", "chưa rõ" })
+            {
+                <option value="@x" selected="@(Model.Difficulty == x)">@x</option>
+            }
+        </select>
+    </label>
+    @if (tab != "overview") { <input type="hidden" name="tab" value="@tab" /> }
+    <button class="btn cta" type="submit">Xem</button>
+    <span class="muted rp-range num">@Model.From?.ToString("dd/MM/yyyy") – @Model.To?.ToString("dd/MM/yyyy")</span>
+</form>
+
+@if (Model.Error != null)
+{
+    <div class="alert alert-danger" role="alert">@Model.Error <a href="@Model.Url()">Thử lại</a></div>
+}
+else if (d != null)
+{
+    @if (d.Warnings.Count > 0)
+    {
+        <details class="rp-warn">
+            <summary>@d.Warnings.Count cảnh báo khi đọc dữ liệu</summary>
+            <ul>@foreach (var w in d.Warnings.Take(20)) { <li>@w</li> }</ul>
+        </details>
+    }
+
+    <nav class="tabs" aria-label="Nhóm báo cáo">
+        <a class="tab @(tab == "overview" ? "on" : "")" href="@Model.Url(("tab", null))" aria-current="@(tab == "overview" ? "page" : null)">Tổng quan</a>
+        <a class="tab @(tab == "people" ? "on" : "")" href="@Model.Url(("tab", "people"))" aria-current="@(tab == "people" ? "page" : null)">Theo người / AI<span class="c num">@d.Scores.Count</span></a>
+        <a class="tab @(tab == "projects" ? "on" : "")" href="@Model.Url(("tab", "projects"))" aria-current="@(tab == "projects" ? "page" : null)">Theo dự án<span class="c num">@d.MinutesByProject.Count</span></a>
+        <a class="tab @(tab == "errors" ? "on" : "")" href="@Model.Url(("tab", "errors"))" aria-current="@(tab == "errors" ? "page" : null)">Lỗi<span class="c num">@d.ErrorMatrix.Sum(c => c.Count)</span></a>
+    </nav>
+
+    @if (tab == "overview")
+    {
+        <section class="rp-kpis" aria-label="Chỉ số chính">
+            @foreach (var k in d.Kpis)
+            {
+                var (deltaText, deltaCss) = ReportsModel.Delta(k);
+                <div class="rp-kpi">
+                    <div class="rp-kpi-l">@k.Label</div>
+                    <div class="rp-kpi-v num">@ReportsModel.Num(k.Value, k.Unit == "task" || k.Unit == "lỗi" ? "" : k.Unit)</div>
+                    <div class="rp-kpi-d @deltaCss">@deltaText</div>
+                </div>
+            }
+        </section>
+
+        var weekLabels = d.Weeks.Select(w => w.Week).ToList();
+        <div class="rp-grid">
+            <figure class="rp-chart rp-wide">
+                <figcaption>
+                    <b>Task xong theo tuần</b> và <span class="lg lg-line">% đạt vòng 1</span>
+                    <a class="btn sm ghost" href="@Model.CsvUrl("weeks")">CSV</a>
+                </figcaption>
+                <div class="rp-legend"><span class="lg lg-c1">Task xong (cột, trục trái)</span><span class="lg lg-line">% đạt vòng 1 (đường, trục phải)</span></div>
+                @SvgCharts.Columns("Task xong theo tuần và phần trăm đạt vòng 1", weekLabels,
+                    [new SvgCharts.Series("Task xong", "--c1", d.Weeks.Select(w => (double)w.Done).ToList())], "task",
+                    d.Weeks.Select(w => w.FirstPassPct).ToList(), "Đạt vòng 1")
+                <details class="rp-table"><summary>Xem bảng số</summary>
+                    <table class="dash-table"><thead><tr><th scope="col">Tuần</th><th scope="col">Bắt đầu</th><th scope="col">Task xong</th><th scope="col">Đạt vòng 1</th></tr></thead>
+                        <tbody>@foreach (var w in d.Weeks) { <tr><td>@w.Week</td><td class="num">@w.Start.ToString("dd/MM")</td><td class="num">@w.Done</td><td class="num">@ReportsModel.Num(w.FirstPassPct, "%")</td></tr> }</tbody></table>
+                </details>
+            </figure>
+
+            <figure class="rp-chart">
+                <figcaption><b>Phút AI theo dự án</b></figcaption>
+                @SvgCharts.HBars("Phút AI theo dự án", d.MinutesByProject.Select(v => new SvgCharts.Bar(v.Name, Math.Round(v.Value, 1), Model.Url(("project", v.Name), ("tab", "projects")))).ToList(), "phút", "--c2")
+                <details class="rp-table"><summary>Xem bảng số</summary>
+                    <table class="dash-table"><thead><tr><th scope="col">Dự án</th><th scope="col">Phút AI</th></tr></thead>
+                        <tbody>@foreach (var v in d.MinutesByProject) { <tr><td>@v.Name</td><td class="num">@ReportsModel.Num(v.Value)</td></tr> }</tbody></table>
+                </details>
+            </figure>
+
+            <figure class="rp-chart">
+                <figcaption><b>Task theo người / AI</b></figcaption>
+                @SvgCharts.HBars("Số task theo người hoặc AI", d.TasksByPerson.Select(v => new SvgCharts.Bar(v.Name, v.Value)).ToList(), "task", "--c1")
+                <details class="rp-table"><summary>Xem bảng số</summary>
+                    <table class="dash-table"><thead><tr><th scope="col">Người / AI</th><th scope="col">Task</th></tr></thead>
+                        <tbody>@foreach (var v in d.TasksByPerson) { <tr><td>@v.Name</td><td class="num">@v.Value</td></tr> }</tbody></table>
+                </details>
+            </figure>
+
+            <figure class="rp-chart">
+                <figcaption><b>Độ khó</b> (tỉ trọng task)</figcaption>
+                @SvgCharts.StackedShare("Tỉ trọng task theo độ khó", d.DifficultyCounts.Select((v, i) => (v.Name, v.Value, i switch { 0 => "--c3", 1 => "--c1", 2 => "--c4", _ => "--c0" })).ToList())
+                <div class="rp-legend">
+                    @foreach (var (v, i) in d.DifficultyCounts.Select((v, i) => (v, i)))
+                    {
+                        <a class="lg lg-@(i switch { 0 => "c3", 1 => "c1", 2 => "c4", _ => "c0" })" href="@Model.Url(("difficulty", v.Name))">@v.Name: <span class="num">@v.Value</span></a>
+                    }
+                </div>
+            </figure>
+
+            <figure class="rp-chart">
+                <figcaption><b>Lỗi theo tuần</b> theo nguyên nhân <a class="btn sm ghost" href="@Model.CsvUrl("errors")">CSV</a></figcaption>
+                <div class="rp-legend"><span class="lg lg-c5">TK · thiết kế / task</span><span class="lg lg-c4">AG · AI làm sai</span><span class="lg lg-c2">CK · cổng KT lọt</span></div>
+                @SvgCharts.Columns("Số lỗi theo tuần, chồng theo nguyên nhân TK, AG, CK", weekLabels,
+                    [new SvgCharts.Series("TK", "--c5", d.Weeks.Select(w => (double)w.ErrorsTk).ToList()),
+                     new SvgCharts.Series("AG", "--c4", d.Weeks.Select(w => (double)w.ErrorsAg).ToList()),
+                     new SvgCharts.Series("CK", "--c2", d.Weeks.Select(w => (double)w.ErrorsCk).ToList())], "lỗi")
+                <details class="rp-table"><summary>Xem bảng số</summary>
+                    <table class="dash-table"><thead><tr><th scope="col">Tuần</th><th scope="col">TK</th><th scope="col">AG</th><th scope="col">CK</th></tr></thead>
+                        <tbody>@foreach (var w in d.Weeks) { <tr><td>@w.Week</td><td class="num">@w.ErrorsTk</td><td class="num">@w.ErrorsAg</td><td class="num">@w.ErrorsCk</td></tr> }</tbody></table>
+                </details>
+            </figure>
+        </div>
+        <p class="muted rp-foot">Xuất toàn bộ task trong kỳ: <a href="@Model.CsvUrl("tasks")">tasks.csv</a></p>
+    }
+    else if (tab == "people")
+    {
+        <section class="panel">
+            <div class="hd">
+                Bảng xếp hạng người / AI
+                <span class="sp"></span>
+                <span class="muted">Điểm = 40% đạt vòng 1 + 25% trong ngân sách + 20% đúng giờ + 15% không lỗi AG (thiếu số đo thì chia lại trọng số)</span>
+                <a class="btn sm ghost" href="@Model.CsvUrl("scores")">CSV</a>
+            </div>
+            @if (Model.SortedScores.Count == 0)
+            {
+                <div class="empty">Chưa có task nào trong khoảng này.</div>
+            }
+            else
+            {
+                <div class="rp-scroll">
+                <table class="dash-table rp-scores">
+                    <thead>
+                        <tr>
+                            @foreach (var (key, text) in new[] { ("name", "Người / AI"), ("score", "Điểm"), ("tasks", "Task"), ("pass", "Đạt vòng 1"), ("budget", "Trong ngân sách"), ("ontime", "Đúng giờ"), ("ag", "Lỗi AG"), ("minutes", "Phút TB") })
+                            {
+                                <th scope="col" aria-sort="@AriaSort(key)"><a href="@SortUrl(key)">@text@(Model.Sort == key ? (Model.Dir == "asc" ? " ▲" : " ▼") : "")</a></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.SortedScores)
+                        {
+                            <tr>
+                                <th scope="row"><a href="@Person(r.Person)">@r.Display</a></th>
+                                <td><div class="rp-score"><span class="num">@r.Score</span><span class="meter" aria-hidden="true"><i style="width:@(Math.Clamp(r.Score, 0, 100))%"></i></span></div></td>
+                                <td class="num">@r.Tasks</td>
+                                <td class="num">@ReportsModel.Num(r.FirstPassPct, "%")</td>
+                                <td class="num">@ReportsModel.Num(r.InBudgetPct, "%")</td>
+                                <td class="num">@ReportsModel.Num(r.OnTimePct, "%")</td>
+                                <td class="num">@r.AgErrors</td>
+                                <td class="num">@ReportsModel.Num(r.AvgMinutes)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+            }
+        </section>
+    }
+    else if (tab == "projects")
+    {
+        <section class="panel">
+            <div class="hd">Phút AI theo dự án <span class="sp"></span><a class="btn sm ghost" href="@Model.CsvUrl("tasks")">CSV task</a></div>
+            @if (d.MinutesByProject.Count == 0)
+            {
+                <div class="empty">Chưa có lượt chạy nào có số phút trong khoảng này.</div>
+            }
+            else
+            {
+                var total = d.MinutesByProject.Sum(v => v.Value);
+                <table class="dash-table">
+                    <thead><tr><th scope="col">Dự án</th><th scope="col">Phút AI</th><th scope="col">Tỉ trọng</th><th scope="col"></th></tr></thead>
+                    <tbody>
+                        @foreach (var v in d.MinutesByProject)
+                        {
+                            var pct = total <= 0 ? 0 : v.Value / total * 100;
+                            <tr>
+                                <th scope="row">@v.Name</th>
+                                <td class="num">@ReportsModel.Num(v.Value)</td>
+                                <td><div class="rp-score"><span class="num">@ReportsModel.Num(pct, "%")</span><span class="meter" aria-hidden="true"><i style="width:@(pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></i></span></div></td>
+                                <td><a href="@Model.Url(("project", v.Name), ("tab", null))">Lọc dự án này</a> · <a href="/Tracking?project=@Uri.EscapeDataString(v.Name)">Theo dõi việc</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+    else
+    {
+        var causes = d.ErrorMatrix.Select(c => c.Cause).Distinct().ToList();
+        var cats = d.ErrorMatrix.Select(c => c.Category).Distinct().OrderBy(c => c, StringComparer.OrdinalIgnoreCase).ToList();
+        var maxCell = d.ErrorMatrix.Count == 0 ? 1 : Math.Max(1, d.ErrorMatrix.Max(c => c.Count));
+        <section class="panel">
+            <div class="hd">Ma trận lỗi: nguyên nhân × loại <span class="sp"></span><span class="muted">TK thiết kế / task · AG AI làm sai · CK cổng KT lọt · HT hệ thống</span><a class="btn sm ghost" href="@Model.CsvUrl("errors")">CSV</a></div>
+            @if (d.ErrorMatrix.Count == 0)
+            {
+                <div class="empty">Không có lỗi nào được ghi trong khoảng này.</div>
+            }
+            else
+            {
+                <div class="rp-scroll">
+                <table class="dash-table rp-matrix">
+                    <thead><tr><th scope="col">Nguyên nhân</th>@foreach (var c in cats) { <th scope="col">@c</th> }<th scope="col">Tổng</th></tr></thead>
+                    <tbody>
+                        @foreach (var cause in causes)
+                        {
+                            <tr>
+                                <th scope="row">@cause</th>
+                                @foreach (var cat in cats)
+                                {
+                                    var cell = d.ErrorMatrix.FirstOrDefault(c => c.Cause == cause && c.Category == cat);
+                                    if (cell == null || cell.Count == 0)
+                                    {
+                                        <td class="num rp-cell0">·</td>
+                                    }
+                                    else
+                                    {
+                                        var level = (int)Math.Ceiling(cell.Count * 4.0 / maxCell);
+                                        <td class="rp-cell l@(level)">
+                                            <details>
+                                                <summary class="num" aria-label="@cell.Count lỗi @cause, @cat — xem task">@cell.Count</summary>
+                                                <ul class="rp-cell-tasks">@foreach (var t in cell.Tasks.Take(30)) { <li>@t</li> }</ul>
+                                            </details>
+                                        </td>
+                                    }
+                                }
+                                <td class="num"><b>@d.ErrorMatrix.Where(c => c.Cause == cause).Sum(c => c.Count)</b></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+            }
+        </section>
+    }
+}
+
+<script>
+    (function () {
+        // Chọn khoảng ngày cố định ⇒ áp dụng ngay; "Tùy chọn" ⇒ hiện ô ngày.
+        var form = document.querySelector('.rp-filter');
+        if (!form) return;
+        function sync() {
+            var custom = form.querySelector('input[name=range]:checked')?.value === 'custom';
+            form.querySelectorAll('.rp-dates').forEach(function (el) { el.hidden = !custom; });
+            form.querySelectorAll('.seg-opt').forEach(function (el) { el.classList.toggle('on', el.querySelector('input').checked); });
+        }
+        form.querySelectorAll('input[name=range]').forEach(function (r) {
+            r.addEventListener('change', function () { sync(); if (r.value !== 'custom') form.requestSubmit(); });
+        });
+        form.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { form.requestSubmit(); }); });
+        sync();
+    })();
+</script>
