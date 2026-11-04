@@ -78,6 +78,19 @@
 
 ## Báo cáo của agent
 
+| Tiêu chí | Bằng chứng thật |
+| --- | --- |
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror -nodeReuse:false -m:1 --no-restore`: thành công, 0 warning, 0 error; lần đầu không `-m:1` thất bại không nêu lỗi. |
+| Toàn bộ test xanh | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m -m:1`: chưa đạt; Hub 914 pass, 10 fail, 0 skip (lỗi quyền ghi/ReplaceFile); Core chưa có tổng kết, đã ngắt Ctrl+C sau hơn 3 phút, gặp lỗi Git Win32 error 5. |
+| K101 5/5, giữ nguyên test | Lệnh test riêng `core.tests/AITeam.Core.Tests.csproj --no-build --filter FullyQualifiedName~AcceptanceK101GateFixesTests --blame-hang-timeout 2m`: 4 pass, 1 fail, 0 skip; ca worktree lỗi dựng repo tạm tại `git push`, trước khi gọi code cần kiểm. Không sửa test. |
+| Bỏ dò worktree trùng | Đã thay `$existing`/`$m` trong `Invoke-Assign` bằng `Resolve-TaskWork`; `Get-TaskContext` dùng chung; chặn chia lại agent khi nhánh đã chuẩn bị. |
+| BOM | Kiểm byte `team.ps1`: `EF-BB-BF`; PowerShell Parser: không lỗi cú pháp. |
+| Commit theo yêu cầu | Không chạy git theo chỉ dẫn Codex dự phòng; hệ thống tự commit/push, chưa có commit được kiểm. |
+- File đổi: `team.ps1` (phân loại lỗi, bản gốc nghiệm thu, worktree/chia đều) và file task này (báo cáo).
+- Quyết định: dùng `-m:1` sau build mặc định thất bại; không sửa lỗi ngoài phạm vi hoặc né test bị sandbox chặn.
+- Chưa xác minh: toàn bộ test xanh và ca worktree K101 trong môi trường cho phép Git tạo signal pipe.
+- Xung đột harness ngoài phạm vi: `AcceptanceS104SkillPromptsTests.cs:149` (các ca assign dòng 58) báo không nhận ra hàm mới `Resolve-TaskWork`; cần Claude cập nhật phần nạp hàm của harness theo hợp đồng K101, không sửa test hoặc thêm mã nhận diện test để né lỗi.
+
 ## Review (Claude)
 
 ## Kết quả
