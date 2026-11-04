@@ -16,6 +16,12 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
     public ProviderKind Kind => ProviderKind.Codex;
     public bool HasReadOnlySandbox => true;
 
+    /// <summary>K1-04 (khung Claude): không có hoạt động thật quá khoảng này ⇒ dừng (mất kết nối / treo). Lệnh build + test dài nhất ~8 phút.</summary>
+    public static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(15);
+
+    /// <summary>K1-04 (khung Claude): false = dòng thử lại / mất kết nối (sự kiện `error`, log `ERROR codex_…`), không tính là đang làm việc.</summary>
+    internal static bool IsActivityLine(string line) => throw new NotImplementedException(); // TODO(agent)
+
     /// <summary>(exe, tiền tố tham số): <c>codex.js</c> chạy bằng node; còn lại chạy thẳng.</summary>
     internal (string Exe, List<string> Prefix) ResolveLaunch()
     {

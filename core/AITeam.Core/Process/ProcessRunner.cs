@@ -12,7 +12,9 @@ public sealed record ProcessSpec(
     TimeSpan Timeout,
     IReadOnlyDictionary<string, string>? Environment = null,
     // K1-02 (khung Claude): không có dòng stdout/stderr nào quá khoảng này ⇒ dừng cả cây tiến trình, Stalled = true. null = tắt.
-    TimeSpan? IdleTimeout = null);
+    TimeSpan? IdleTimeout = null,
+    // K1-04 (khung Claude): dòng stdout/stderr nào được tính là hoạt động (làm mới đồng hồ IdleTimeout). null = mọi dòng.
+    Func<string, bool>? IsActivity = null);
 
 /// <param name="Stalled">K1-02: bị dừng vì đứng im quá ProcessSpec.IdleTimeout (khác TimedOut = quá giờ cứng).</param>
 public sealed record ProcessResult(int ExitCode, string StdOut, string StdErr, TimeSpan Duration, bool TimedOut, bool Stalled = false);
