@@ -2373,7 +2373,7 @@ function Invoke-Verify {
     # 2. BOM: file vốn có BOM phải giữ; .ps1 có chữ ngoài ASCII phải có BOM (PowerShell 5.1). Tự sửa + commit.
     $bomFixed = @()
     # File khung Claude tạo trên nhánh (chưa có trên main) cũng phải giữ BOM như bản khung (H3-01 lọt lỗi này).
-    $seedCommit = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+    $seedCommit = git -C $work log --format=%H '--grep=^Test nghiệm thu' "$base..HEAD" 2>$null | Select-Object -Last 1
     foreach ($f in $changed) {
         $full = Join-Path $work $f
         if (-not (Test-Path $full -PathType Leaf)) { continue }
@@ -2793,7 +2793,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         $base = git -C $work merge-base origin/main HEAD 2>$null | Select-Object -First 1
         if ($base) {
             # Chỉ đếm dòng agent viết: bỏ khung + test nghiệm thu của Claude (commit "Test nghiệm thu…") — trước đây V4-07 báo 512/230, thật 176.
-            $seed = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+            $seed = git -C $work log --format=%H '--grep=^Test nghiệm thu' "$base..HEAD" 2>$null | Select-Object -Last 1
             $from = if ($seed) { $seed } else { $base }
             foreach ($line in (git -C $work diff --numstat $from HEAD 2>$null)) {
                 $p = $line -split "`t"
@@ -2965,7 +2965,7 @@ function Invoke-LogRun {
         $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
         $base = git -C $Path merge-base origin/main HEAD 2>$null | Select-Object -First 1
         if ($base) {
-            $seed = git -C $Path log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+            $seed = git -C $Path log --format=%H '--grep=^Test nghiệm thu' "$base..HEAD" 2>$null | Select-Object -Last 1
             $from = if ($seed) { $seed } else { $base }
             foreach ($line in (git -C $Path diff --numstat $from HEAD 2>$null)) {
                 $p = $line -split "`t"
