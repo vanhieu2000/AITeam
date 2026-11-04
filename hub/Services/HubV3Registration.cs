@@ -29,6 +29,9 @@ public static class HubV3Registration
         services.TryAddSingleton<IRequestService, RequestService>();
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
         services.TryAddSingleton<IRequestProgressService, RequestProgressService>();
+        // F1-01 (R-015): đăng ký sẵn trong khung (Claude) để task không phải sửa file DI dùng chung.
+        services.TryAddSingleton<IProjectScriptRunner, PowerShellProjectScriptRunner>();
+        services.TryAddSingleton<IProjectAdminService, ProjectAdminService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();
         services.TryAddSingleton<IOfficeService, OfficeService>();
         // W2-01 / R-014: cấu hình loại việc → bước → người phụ trách (config/workflow.json).
