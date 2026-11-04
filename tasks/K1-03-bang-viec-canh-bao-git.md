@@ -49,6 +49,17 @@
 
 ## Báo cáo của agent
 
+| Tiêu chí | Bằng chứng / kết quả thật |
+|---|---|
+| Build 0 warning | `dotnet build AITeam.sln --no-restore -warnaserror -nodeReuse:false -m:1 -v:normal`: thành công, 0 warning, 0 error. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: quá 3 phút chưa có tổng kết; chưa xác minh xanh hết. Đã gửi Ctrl+C; CIM bị Access denied khi tìm PID để dừng. |
+| Test K103 bất biến | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceK103BoardGitWarningTests" --blame-hang-timeout 2m`: 2 pass, 0 fail, 0 skip; không sửa test. |
+| BOM | `[IO.File]::ReadAllBytes('team.ps1')`: ba byte đầu `EF-BB-BF`. |
+| Commit / push | Không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa xác minh commit. |
+- File đổi: `team.ps1` thêm `2>$null` đúng một lệnh add trong Set-BoardStatus; commit đã có chuyển hướng, giữ nguyên hai kiểm tra LASTEXITCODE và throw. File task này bổ sung báo cáo.
+- Quyết định: dùng build một node sau khi lệnh build ban đầu trả mã 1 nhưng chỉ in 0 warning/0 error, không có chẩn đoán.
+- Chưa xác minh: bộ test toàn solution và phiên test đã dừng hoàn toàn; không chạy app/chụp ảnh; không sửa ngoài phạm vi.
+
 ## Review (Claude)
 
 ## Kết quả
