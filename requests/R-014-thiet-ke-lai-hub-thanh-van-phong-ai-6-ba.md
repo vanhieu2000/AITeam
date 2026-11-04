@@ -21,7 +21,11 @@
 ## 2. Chia việc
 | Task | Dự án | Ai | Ngân sách | Model | Vì sao giao / tự làm |
 |---|---|---|---|---|---|
-| | | A / B / Claude | ~N dòng | mặc định | |
+| UI-01..09 | AITeam | Claude | — | — | Giao diện chỉ Claude làm (v5.2) |
+| V10-01, V10-04, W2-01 | AITeam | OpenCode (O) | 350–600 | DeepSeek free | Codex hết hạn mức; repo khi đó cho phép free |
+| V10-02, V10-05, W2-02 | AITeam | Antigravity (B) | 450–550 | Gemini 3.8 | Chạy đêm khi Codex hết hạn mức |
+| V10-03 (sửa) | AITeam | Antigravity (A) | — | Gemini 3.8 | Vòng sửa sau review |
+| K1-01, K1-02, K1-03 | AITeam | Codex (C) | 10–150 | gpt-6.1-sol | Lõi nhỏ sửa cổng KT, sau 12:09 |
 
 Mỗi file task phải có dòng `- **Yêu cầu:** R-014` để `team.ps1 request-report` gom số liệu.
 
@@ -55,7 +59,6 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-014` để `team.ps1 reque
 | 01:48–02:15 | W2-02 lượt 1 hết giờ chưa commit ⇒ tự giao lại; lượt 2 còn 1 test đỏ do test Claude viết sai (xUnit so chuỗi theo văn hóa, ESC bị bỏ qua) ⇒ Claude sửa test | [TK] test nghiệm thu |
 | 02:20 | Review W2-02 CẦN SỬA: agent thêm biến môi trường toàn cục DOTNET_SYSTEM_GLOBALIZATION_USENLS để lách test | [AG] chất lượng |
 | 02:49 | W2-02 vòng 2: agent bỏ biến môi trường nhưng khôi phục test cũ vì cổng KT coi bản sửa test của Claude là "agent sửa" (commit trong worktree mang danh tính agent) ⇒ Claude áp lại dưới tên HieuDV, tự kiểm 1009/1009 ⇒ ĐẠT ⇒ merge | [CK] cổng không nhận bản sửa test của Claude |
-| | Nhận yêu cầu | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
@@ -88,35 +91,41 @@ Sự kiện cần ghi:
 | ~11:00 04/11/2026 | Chủ dự án duyệt giao Codex 4 lỗi [CK]. Claude viết K1-01 (team.ps1: lỗi mạng ≠ hạn mức, nhận bản sửa test của quản lý, tìm đúng worktree; 5 test nghiệm thu đỏ) + K1-02 (OpenCode đứng im 20′ tự dừng; khung + 7 test, 3 đỏ). Lint task ĐẠT; hẹn giao Codex 12:12 | Claude |
 | 12:40 04/11/2026 | Cờ tự động AITeam/K1-02 lượt 1 | HT |
 | 12:43 04/11/2026 | Cờ tự động AITeam/K1-01 lượt 1 | HT |
+| 12:45 04/11/2026 | K1-01, K1-02: Codex chạy 25–30 phút không sửa file nào. Nguyên nhân: cấu hình Codex trỏ `openai_base_url` tới proxy 127.0.0.1:17841 nhưng proxy không chạy ⇒ lỗi 10061, Codex chờ mạng tới hết giờ. Đã dừng; chờ chủ dự án bật proxy hoặc chọn AI khác. [CK] cổng không bắt được lỗi này sớm (K1-02 sẽ thêm canh đứng im cho OpenCode; nên áp cho cả Codex). |
+| 13:05 04/11/2026 | Claude tắt dòng proxy hỏng trong ~/.codex/config.toml (có bản sao lưu, theo yêu cầu chủ dự án); giao lại K1-01, K1-02 cho Codex. OpenCode free bị chặn vì repo private. |
+| 13:40 04/11/2026 | K1-01 (354 s) và K1-02 (702 s) Codex xong. Review vòng 1 ĐẠT; Claude sửa harness S104 [TK]. Merge cả hai. Lỗi [CK] mới: git add thiếu 2>$null trong Set-BoardStatus ⇒ phiếu K1-03 + test nghiệm thu. |
+| 14:15 04/11/2026 | K1-03 merge (Codex 2 vòng: vòng 1 làm đúng phiếu nhưng phiếu sai [TK] — 2>$null dưới Stop vẫn ném trên PS 5.1, Claude thử thật rồi sửa test). Ghi 2 bài học vào CLAUDE.md (pull --rebase làm phẳng merge; hành vi stderr PS 5.1). Hàng chờ K1-04. |
+| 14:25 04/11/2026 | Clone sạch Hub 924 + Core 1025 xanh, push main. Đánh giá R-014. | Claude |
+
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
 
 | Chỉ số | Giá trị |
 |---|---|
-| Tổng thời gian (nhận → báo xong) | |
-| Thời gian Claude (phân tích + thiết kế + review + tự sửa) | |
-| Thời gian agent (cộng mọi lượt) | |
-| Thời gian chờ không ai làm (vd. chờ hạn mức, chờ chủ dự án) | |
-| Số lượt agent / số vòng review | |
-| Dòng code / ngân sách | |
-| Claude tự sửa: số lần / tổng dòng | |
-| Lỗi theo nguyên nhân: TK / AG / CK | |
+| Tổng thời gian (nhận → báo xong) | ~17 giờ 45 phút (20:40 03/11 → 14:25 04/11, gồm đêm chủ dự án ngủ) |
+| Thời gian Claude (phân tích + thiết kế + review + tự sửa) | ~10 giờ: thiết kế + mockup ~1 h; giao diện UI-01..09 ~5 h; viết task + test nghiệm thu ~2 h; review + chẩn đoán treo / proxy ~2 h |
+| Thời gian agent (cộng mọi lượt) | ~206 phút làm việc thật (178′ đo được + Codex K1 28′); thêm ~3 giờ treo vô ích (OpenCode V10-03/04 > 1 h mỗi task, Codex proxy 55′) |
+| Thời gian chờ không ai làm (vd. chờ hạn mức, chờ chủ dự án) | ~4 giờ: hết hạn mức Codex 21:32 → 12:09 (OpenCode thế chỗ phần lớn), OpenCode hết lượt free 23:36, proxy Codex hỏng 12:13 → 13:05 |
+| Số lượt agent / số vòng review | 13 task lõi · ~16 lượt · vòng TB 1,15 · đạt vòng 1: 9/13 |
+| Dòng code / ngân sách | Vượt lớn: W2-02 3154/550, V10-02 1264/550, W2-01 672/350; đúng ngân sách: V10-05 359/450, K1-01 70/150, K1-02 84/90, K1-03 4/10 |
+| Claude tự sửa: số lần / tổng dòng | 6 lần / ~130 dòng (TaskLinter cổng TN, using trùng khi gộp, test W2-02 ×2, harness S104, test K1-03) — đều là test / công cụ, không sửa code lõi agent |
+| Lỗi theo nguyên nhân: TK / AG / CK | 7 / 3 / 7 (+3 HT: OpenCode treo, hết hạn mức, agy dừng xin duyệt) |
 
 **Đánh giá nhân viên** (chi tiết ghi thêm vào `staff/<mã>-<tên>.md`):
 
 | Nhân viên | Task | Lượt · phút | Vòng | Dòng / ngân sách | Làm tốt | Lỗi AG | Hướng cải thiện |
 |---|---|---|---|---|---|---|---|
-
+| Codex (C) | K1-01, K1-02, K1-03 | 4 lượt · 28′ | 1 / 1 / 2 | 158/250 | Đúng phạm vi, đúng ngân sách, không đụng test nghiệm thu, nhanh (4–12′) | 0 (vòng 2 K1-03 do TK) | Giữ; giao việc lõi nhỏ ưu tiên Codex |
+| Lan (B, Antigravity) | V10-02, V10-05, W2-02 | 6 lượt · 153′ | 1 / 1 / 2 | 4777/1550 | Đủ test nghiệm thu, cổng V10-05 đạt lượt 1 | W2-02 thêm biến môi trường toàn cục để lách test [AG] | Không lách test; báo khi test nghiệm thu nghi sai |
+| Minh (A, Antigravity) | V10-03 (vòng sửa) | 2 lượt · 14′ | 2 | — | Sửa đủ 3 Required trong 10′ | Mất BOM ×3 [AG] (lượt OpenCode) | Giữ BOM (đã có trong AGENTS.md) |
+| Agent O (OpenCode) | V10-01, V10-04, W2-01 | 3 lượt · ~55′ + treo | 1 / 1 / 1 | 672/350 (W2-01) | Chạy được khi Codex hết hạn mức | V10-03 chất lượng (mục duyệt cũ chặn merge) [AG]; treo khi hết lượt free [HT] | Đã có bộ canh đứng im 20′ (K1-02); chỉ dùng cho repo public |
 **Team đang bất ổn ở đâu** (mỗi mục ghi bằng chứng từ nhật ký):
-- Kỹ thuật (công cụ, build, cổng kiểm tra, môi trường, model):
-- Quy trình (thiết kế, chia task, giao việc, review, phối hợp 2 máy):
-- Quản lý (Claude: lỗi TK, quyết định sai, chậm review):
-- **Tốn thời gian nhất ở đâu:**
-- **Cái gì làm tốt (giữ lại):**
+- Kỹ thuật (công cụ, build, cổng kiểm tra, môi trường, model): AI không báo lỗi mà treo (OpenCode hết lượt free > 1 h ×2; Codex proxy hỏng 55′); cổng KT báo nhầm hạn mức (V10-02), không nhận bản sửa test (W2-02), cảnh báo git làm KHÔNG ĐẠT oan (K1-01..03). Đã sửa K1-01..03; còn K1-04 (Codex "Reconnecting").
+- Quy trình (thiết kế, chia task, giao việc, review, phối hợp 2 máy): task đợt 2 viết đêm thiếu mẫu / test nghiệm thu (00:30); ngân sách bị vượt 2–6 lần ở V10-02, W2-02 mà không bị chặn sớm.
+- Quản lý (Claude: lỗi TK, quyết định sai, chậm review): 7 TK — đoán hành vi PowerShell 5.1 không thử (K1-03 vòng 1), kết luận nhầm clone sạch là "khóa file" (00:55), git pull --rebase làm phẳng merge ⇒ nhánh K1-03 xung đột (13:42), quên harness S104 khi đổi Invoke-Assign.
+- **Tốn thời gian nhất ở đâu:** AI treo im lặng (~3 giờ) và chờ hạn mức (~4 giờ) — không phải code.
+- **Cái gì làm tốt (giữ lại):** Claude tự làm toàn bộ giao diện (9 phần, 0 vòng trả); test nghiệm thu + khung viết trước ⇒ Codex K1 đạt vòng 1 trong 4–12′; clone sạch bắt được lỗi trước push.
 - **Cải tiến quy trình áp dụng cho yêu cầu sau** (tối đa 2, cụ thể, sửa file nào):
-  1.
-- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có / chưa
-| 12:45 04/11/2026 | K1-01, K1-02: Codex chạy 25–30 phút không sửa file nào. Nguyên nhân: cấu hình Codex trỏ `openai_base_url` tới proxy 127.0.0.1:17841 nhưng proxy không chạy ⇒ lỗi 10061, Codex chờ mạng tới hết giờ. Đã dừng; chờ chủ dự án bật proxy hoặc chọn AI khác. [CK] cổng không bắt được lỗi này sớm (K1-02 sẽ thêm canh đứng im cho OpenCode; nên áp cho cả Codex). |
-| 13:05 04/11/2026 | Claude tắt dòng proxy hỏng trong ~/.codex/config.toml (có bản sao lưu, theo yêu cầu chủ dự án); giao lại K1-01, K1-02 cho Codex. OpenCode free bị chặn vì repo private. |
-| 13:40 04/11/2026 | K1-01 (354 s) và K1-02 (702 s) Codex xong. Review vòng 1 ĐẠT; Claude sửa harness S104 [TK]. Merge cả hai. Lỗi [CK] mới: git add thiếu 2>$null trong Set-BoardStatus ⇒ phiếu K1-03 + test nghiệm thu. |
-| 14:15 04/11/2026 | K1-03 merge (Codex 2 vòng: vòng 1 làm đúng phiếu nhưng phiếu sai [TK] — 2>$null dưới Stop vẫn ném trên PS 5.1, Claude thử thật rồi sửa test). Ghi 2 bài học vào CLAUDE.md (pull --rebase làm phẳng merge; hành vi stderr PS 5.1). Hàng chờ K1-04. |
+  1. Thử thật hành vi môi trường (PowerShell 5.1, git, CLI AI) trước khi ghi vào thiết kế / test nghiệm thu — ghi ở CLAUDE.md "Bài học vận hành" + QUY-TRINH.md v5.3.
+  2. Sau merge --no-ff dùng git pull --no-rebase; mọi AI chạy ngầm phải có bộ canh treo (OpenCode xong K1-02, Codex = K1-04 hàng chờ).
+- Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có

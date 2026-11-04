@@ -1,4 +1,4 @@
-﻿# Quy trình v5.2 — ĐANG ÁP DỤNG (chủ dự án chốt 02/11/2026, R-012; v5.1 sau đánh giá R-012; v5.2 03/11 R-014: giao diện do Claude)
+﻿# Quy trình v5.3 — ĐANG ÁP DỤNG (chủ dự án chốt 02/11/2026, R-012; v5.1 sau đánh giá R-012; v5.2 03/11 R-014: giao diện do Claude; v5.3 04/11 sau đánh giá R-014)
 
 Mục v5 này THẮNG mọi mục cũ bên dưới (v3 / v4 chỉ còn để tra cứu).
 Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, chức năng F1–F14, phân loại nguyên nhân lỗi: **`docs/MO-TA-HE-THONG.md`** (đọc trước khi thiết kế / viết task).
@@ -13,6 +13,7 @@ Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, c
 | Claude | Chẩn đoán khi AI tắc, review, sửa nhỏ ≤ 50 dòng, **chốt + merge**, ghi phiếu. **Tự code toàn bộ giao diện + thao tác Hub** (`hub/Pages/**`, `hub/wwwroot/**`) theo thiết kế đã duyệt (v5.2, chủ dự án 03/11) | Không giao lại cùng một lỗi lần 3 mà chưa tự tìm gốc |
 
 - **v5.2 (R-014):** AI khác (Codex, OpenCode, Antigravity) chỉ làm lõi / chạy ngầm (Core, CLI, `team.ps1`, service, dữ liệu) và KHÔNG được sửa giao diện; Phạm vi task lõi luôn ghi cấm `hub/Pages/**`, `hub/wwwroot/**`. Chủ dự án chỉ duyệt: bí mật & dữ liệu nhạy cảm, thay đổi bảo mật, hành động ra ngoài, quyết định sản phẩm; còn lại Claude tự quyết, có nhật ký.
+- **v5.3 (đánh giá R-014):** (1) Hành vi môi trường (PowerShell 5.1, git, CLI AI) ghi vào thiết kế / test nghiệm thu phải THỬ THẬT trước (K1-03 vòng 1 sai vì đoán). (2) Sau `git merge --no-ff` dùng `git pull --no-rebase`; mọi AI chạy ngầm phải có bộ canh treo (OpenCode: K1-02; Codex: K1-04).
 
 - Chia task cho nhiều người cùng lúc, **khác file**; 2 task cùng sửa `team.ps1` hoặc cùng file test ⇒ tuần tự.
 - Cùng một lỗi đỏ sau 2 lượt AI ⇒ Claude tự đọc stack trace tìm gốc trước (02/11: H7-06 đỏ 10 lượt chỉ vì bộ test dựng trang sai, tìm ra trong 5 phút).
