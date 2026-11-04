@@ -55,7 +55,7 @@
 - Giết cả cây tiến trình (OpenCode sinh node/dotnet con).
 - [x] Gọi tiến trình ngoài: có giới hạn thời gian cứng + giới hạn đứng im; đọc output không chặn (đã bất đồng bộ).
 - [x] Giữ tương thích: ~39 chỗ gọi `new ProcessSpec(...)` / `new ProcessResult(...)` không phải sửa.
-- [x] Không có file khung; commit đầu của nhánh chỉ có test nghiệm thu.
+- [x] Khung đã có trong commit đầu "Test nghiệm thu K1-02 + khung (Claude)": tham số `IdleTimeout` của `ProcessSpec`, `Stalled` của `ProcessResult`, hằng `OpenCodeProvider.IdleTimeout` (cả 3 trong Phạm vi). Agent chỉ viết logic, KHÔNG đổi tên / kiểu / giá trị mặc định.
 
 ## Dữ liệu mẫu thật
 - Hiện tượng thật 03/11 (nhật ký R-014): V10-03, V10-04 chạy OpenCode xong test rồi đứng im hơn 1 giờ, không lỗi, không tiến trình con. `oc-run.ps1` bắt được bằng luật "log đứng 15 phút".
