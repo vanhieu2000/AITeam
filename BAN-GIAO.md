@@ -3,7 +3,7 @@
 Claude: ĐỌC FILE NÀY ĐẦU MỖI PHIÊN (sau `git pull`), làm tiếp từ mục "Việc đang dở".
 Cuối mỗi phiên: cập nhật file này, commit + push.
 
-> **Mới nhất (04/11 ~14:30, máy nhà HIEUDV):** **R-014 XONG + đã đánh giá** (mục 4 phiếu, `docs/HIEU-SUAT-LOG.md`, quy trình **v5.3**). Codex sửa 3 lỗi cổng KT: K1-01 (lỗi mạng ≠ hạn mức, nhận bản sửa test của quản lý, tìm đúng worktree), K1-02 (OpenCode đứng im 20′ tự dừng), K1-03 (cảnh báo git không làm KHÔNG ĐẠT oan). Clone sạch Hub 924 / Core 1025 xanh. **Codex:** đã tắt dòng `openai_base_url = http://127.0.0.1:17841/v1` trong `~/.codex/config.toml` (proxy không chạy ⇒ Codex treo); bản cũ `config.toml.bak-20261104-proxy`. **OpenCode free bị chặn với repo private** (team.ps1). Hàng chờ: K1-04 (Codex treo kiểu "Reconnecting…" + nới test K102). Bài học mới trong CLAUDE.md: dùng `git pull --no-rebase` sau merge --no-ff; PowerShell 5.1 `2>$null` dưới Stop vẫn ném.
+> **Mới nhất (04/11 ~16:15, máy nhà HIEUDV):** **R-014 XONG + đã đánh giá** (quy trình **v5.3**). Codex sửa 4 lỗi cổng KT: K1-01 (lỗi mạng ≠ hạn mức, nhận bản sửa test của quản lý, tìm đúng worktree), K1-02 (OpenCode đứng im 20′ tự dừng), K1-03 (cảnh báo git CRLF không làm hỏng ghi bảng việc), K1-04 (Codex mất kết nối "Reconnecting…" / đứng im 15′ tự dừng, báo LỖI MẠNG). Clone sạch Hub 924 / Core 1052 xanh. **Codex:** đã tắt dòng `openai_base_url = http://127.0.0.1:17841/v1` trong `~/.codex/config.toml` (proxy không chạy); bản cũ `config.toml.bak-20261104-proxy`. **OpenCode free bị chặn với repo private.** Dòng `- **Yêu cầu:**` trong task CHỈ ghi `R-xxx` (có chữ thêm ⇒ "Không ghi được nhật ký phiếu"). Không còn task dở; hàng chờ trống.
 
 Cập nhật lần cuối: **03/11/2026 ~01:15 · máy công ty (hieudvdmin)** · **quy trình v5: đọc mục đầu `QUY-TRINH.md`**
 
