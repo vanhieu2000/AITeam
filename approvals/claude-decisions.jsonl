@@ -2,3 +2,4 @@
 {"type":"decision","id":"D-20261104205333-dd76","at":"2026-11-04T20:53:33.1548367+05:30","kind":"merge","title":"Merge F1-05","project":null,"task":"F1-05","request":"R-015","detail":"Antigravity, vòng 1"}
 {"type":"decision","id":"D-20261104214130-1c7c","at":"2026-11-04T21:41:30.2700966+05:30","kind":"merge","title":"Merge F1-01","project":null,"task":"F1-01","request":"R-015","detail":"Codex, vòng 1"}
 {"type":"decision","id":"D-20261104214135-a5a4","at":"2026-11-04T21:41:35.7337744+05:30","kind":"merge","title":"Merge F1-02","project":null,"task":"F1-02","request":"R-015","detail":"Codex, vòng 1"}
+{"type":"decision","id":"D-20261104220901-7ef5","at":"2026-11-04T22:09:01.5275956+05:30","kind":"merge","title":"Merge F1-03","project":null,"task":"F1-03","request":"R-015","detail":"Antigravity, vòng 1 (lượt 2)"}
