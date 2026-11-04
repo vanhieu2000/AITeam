@@ -31,7 +31,7 @@
 ## Phạm vi (được sửa những gì)
 - `hub/Services/AiTeamStatusService.cs`
 - `hub/Services/HubV3Registration.cs`
-- `core/AITeam.Cli/Program.cs` (CHỈ hàm `QuotaRecord` và nhánh `quota-record`)
+- `core/AITeam.Cli/Program.cs` (CHỈ hàm QuotaRecord và nhánh quota-record)
 - `team.ps1`
 - `hub.tests/F103AiTeamStatusExtraTests.cs`, `core.tests/F103QuotaRecordExtraTests.cs` (tạo mới nếu cần)
 - `tasks/F1-03-doi-ai-dang-nhap-han-muc.md`
