@@ -262,25 +262,21 @@ public sealed class AcceptanceH706NavigationTests
         Assert.Equal(0, f.RunReads);
     }
 
+    // R-014 UI-04: bảng 6 cột cũ thay bằng thẻ (đơn chờ) + bảng "Đã quyết". Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.2.
     [Theory]
-    [InlineData(ApprovalStatus.Pending, "CHỜ DUYỆT")]
-    [InlineData(ApprovalStatus.Approved, "ĐÃ DUYỆT")]
-    [InlineData(ApprovalStatus.Rejected, "ĐÃ TỪ CHỐI")]
-    public async Task Bang_sau_cot_trang_thai_va_nut_trong_dong(ApprovalStatus status, string label)
+    [InlineData(ApprovalStatus.Pending, "Merge")]
+    [InlineData(ApprovalStatus.Approved, "Đã duyệt")]
+    [InlineData(ApprovalStatus.Rejected, "Đã từ chối")]
+    public async Task Don_cho_la_the_co_nut_don_da_quyet_vao_bang(ApprovalStatus status, string label)
     {
         await using var f = new Fixture();
         f.Approvals = [Item(status)];
         var html = await f.RenderApprovals();
-        var table = Assert.Single(Elements(html, "table"), t => t.Contains("A-001", StringComparison.Ordinal));
-        Assert.Equal(new[] { "Mã", "Loại", "Dự án/task", "Nội dung tóm tắt", "Lúc tạo", "Trạng thái" },
-            Elements(table, "th").Select(h => Text(h).Trim()));
-        var row = Assert.Single(Elements(table, "tr"), t => t.Contains("A-001", StringComparison.Ordinal));
-        Assert.Equal(6, Elements(row, "td").Length);
-        foreach (var value in new[] { "AITeam", "H7-06", "Duyệt thay đổi", "13:45 24/10", label }) Assert.Contains(value, Text(row));
-        var forms = Elements(row, "form");
         if (status == ApprovalStatus.Pending)
         {
-            var form = Assert.Single(forms);
+            var card = Assert.Single(Elements(html, "article"), t => t.Contains("A-001", StringComparison.Ordinal));
+            foreach (var value in new[] { "AITeam", "H7-06", "Duyệt thay đổi", "13:45 24/10", label }) Assert.Contains(value, Text(card));
+            var form = Assert.Single(Elements(card, "form"));
             Assert.Contains("handler=Decide", form);
             Assert.Contains("__RequestVerificationToken", form);
             Assert.Contains("name=\"note\"", form);
@@ -289,15 +285,19 @@ public sealed class AcceptanceH706NavigationTests
         }
         else
         {
-            Assert.Empty(forms);
-            Assert.Contains("Ghi chú cũ", Text(row));
+            var table = Assert.Single(Elements(html, "table"), t => t.Contains("A-001", StringComparison.Ordinal));
+            Assert.Equal(new[] { "Mã", "Loại", "Nội dung", "Kết quả", "Lúc quyết" }, Elements(table, "th").Select(h => Text(h).Trim()));
+            var row = Assert.Single(Elements(table, "tr"), t => t.Contains("A-001", StringComparison.Ordinal));
+            foreach (var value in new[] { "AITeam", "H7-06", "Duyệt thay đổi", "14:00 24/10", "Ghi chú cũ", label }) Assert.Contains(value, Text(row));
+            Assert.Empty(Elements(row, "form"));
+            Assert.DoesNotContain("value=\"approve\"", html);
         }
     }
 
     [Theory]
-    [InlineData(ApprovalKind.Merge, "MERGE")]
-    [InlineData(ApprovalKind.Decision, "QUYẾT ĐỊNH")]
-    [InlineData(ApprovalKind.Improvement, "CẢI TIẾN QUY TRÌNH")]
+    [InlineData(ApprovalKind.Merge, "Merge")]
+    [InlineData(ApprovalKind.Decision, "Quyết định sản phẩm")]
+    [InlineData(ApprovalKind.Improvement, "Cải tiến quy trình")]
     public async Task Du_lieu_cu_task_commit_null_van_hien(ApprovalKind kind, string label)
     {
         await using var f = new Fixture();
@@ -423,10 +423,10 @@ public sealed class AcceptanceH706NavigationTests
         f.Approvals = [Item(ApprovalStatus.Pending) with { Title = longText, Project = longText }];
         var html = await f.RenderApprovals();
         Assert.Contains(longText, Text(html));
-        Assert.Contains("approvals-table", html);
-        var css = File.ReadAllText(Path.Combine(Root(), "hub", "wwwroot", "css", "hub.css"));
-        Assert.Matches(@"(?s)\.approvals-table\s*\{[^}]*table-layout\s*:\s*fixed", css);
-        Assert.Matches(@"(?s)\.approvals-table\s+(?:th\s*,\s*\.approvals-table\s+)?td\s*\{[^}]*white-space\s*:\s*normal", css);
-        Assert.Matches(@"(?s)\.approvals-table\s+(?:th\s*,\s*\.approvals-table\s+)?td\s*\{[^}]*overflow-wrap\s*:\s*anywhere", css);
+        Assert.Contains("ap-card", html);
+        var css = File.ReadAllText(Path.Combine(Root(), "hub", "wwwroot", "css", "approvals.css"));
+        Assert.Matches(@"(?s)\.ap-card\s*\{[^}]*minmax\(0,\s*1fr\)", css);
+        Assert.Matches(@"(?s)\.ap-title b\s*\{[^}]*overflow-wrap\s*:\s*anywhere", css);
+        Assert.Matches(@"(?s)\.ap-kv dd\s*\{[^}]*overflow-wrap\s*:\s*anywhere", css);
     }
 }
