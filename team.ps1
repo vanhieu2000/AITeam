@@ -2673,9 +2673,12 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
 
             if ($commitFiles.Count -eq 0) { return }
 
-            git -C $r.Path add -- $commitFiles
+            $boardGitErrorActionPreference = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            git -C $r.Path add -- $commitFiles 2>$null
             if ($LASTEXITCODE -ne 0) { throw 'Không cập nhật được bảng việc.' }
             git -C $r.Path commit -q -m "Bảng việc và nhật ký: $taskId $status" -- $commitFiles 2>$null
+            $ErrorActionPreference = $boardGitErrorActionPreference
             if ($LASTEXITCODE -ne 0) { throw 'Không cập nhật được bảng việc.' }
             git -C $r.Path push -q origin main 2>$null
             if ($LASTEXITCODE -eq 0) { return }

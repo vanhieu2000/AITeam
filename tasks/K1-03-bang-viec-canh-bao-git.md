@@ -20,8 +20,10 @@
 - `team.ps1`: hàm `Set-BoardStatus` (~dòng 2617–2700).
 
 ## Mục tiêu
-1. Trong `Set-BoardStatus`, mọi lệnh `git -C … add` / `git -C … commit` có `2>$null` (giống các lệnh git khác trong cùng hàm).
-2. Giữ nguyên các dòng kiểm `$LASTEXITCODE -ne 0` ⇒ `throw 'Không cập nhật được bảng việc.'`.
+> Vòng 2 (Claude sửa 04/11 14:00): thiết kế vòng 1 SAI — đã thử thật trên PowerShell 5.1, chỉ thêm `2>$null` dưới Stop vẫn ném lỗi khi git in cảnh báo.
+1. Trong `Set-BoardStatus`, ngay trước `git -C … add -- $commitFiles`: lưu `ErrorActionPreference` cũ vào biến riêng rồi đặt `'Continue'`; ngay sau `git -C … commit …`: trả lại giá trị cũ. Giữ `2>$null` trên cả hai lệnh.
+2. Giữ nguyên các dòng kiểm `LASTEXITCODE -ne 0` ⇒ `throw 'Không cập nhật được bảng việc.'` (đặt trong vùng Continue vẫn đúng: `throw` luôn dừng).
+3. Không bọc thêm try/catch; không đổi các lệnh git khác.
 
 ## Phạm vi (được sửa những gì)
 - `team.ps1`
@@ -49,6 +51,16 @@
 
 ## Báo cáo của agent
 
+| Tiêu chí | Bằng chứng / kết quả thật vòng 2 |
+|---|---|
+| Build 0 warning — đạt | `dotnet build AITeam.sln -warnaserror -nodeReuse:false -m:1`: thành công, 0 warning, 0 error. |
+| K103 bất biến — đạt | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceK103BoardGitWarningTests" --blame-hang-timeout 2m -m:1 -nodeReuse:false`: 2 pass, 0 fail, 0 skip; không sửa test. |
+| Toàn solution — chưa đạt | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: không in kết quả, đã gửi Ctrl+C; chưa xác minh tiến trình dừng. Chạy lại thêm `-m:1 -nodeReuse:false`: Hub 914 pass, 10 fail, 0 skip; Core chưa tổng kết, có lỗi; đã dừng bằng Ctrl+C, mã thoát 1. |
+| BOM — đạt | `[BitConverter]::ToString([IO.File]::ReadAllBytes($path)[0..2])`: `EF-BB-BF`. |
+| Commit / push — hệ thống thực hiện | Không chạy lệnh Git theo chỉ dẫn Codex; chưa có commit được kiểm. |
+- File đổi: `team.ps1` thêm 3 dòng lưu ErrorActionPreference vào biến riêng, đặt Continue trước add, khôi phục ngay sau commit; giữ stderr và LASTEXITCODE. File task cập nhật báo cáo.
+- Quyết định: chạy lại test một node vì lệnh mặc định không in kết quả; không sửa lỗi ngoài phạm vi.
+- Chưa xác minh: toàn bộ test xanh; lỗi ngoài K103 gồm Access denied tại ReplaceFile và Git sh không tạo được signal pipe (Win32 error 5); CIM tìm PID cũng bị Access denied. Không chạy app/chụp ảnh.
 ## Review (Claude)
 
 ## Kết quả
