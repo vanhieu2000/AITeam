@@ -101,7 +101,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V10-02 Chạy AI theo danh bạ](V10-02-adapter-ai-tu-danh-ba.md) | B | `agent-o/V10-02-adapter-ai-tu-danh-ba` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8) |
 | [W2-02 Luật chuẩn + bài học](W2-02-luat-chuan-va-bai-hoc.md) | B | `agent-o/W2-02-luat-chuan-va-bai-hoc` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8, vòng 2) |
 | [V10-05 Trợ lý chat](V10-05-tro-ly-chat.md) | B | `agent-o/V10-05-tro-ly-chat` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8) |
-| [K1-01 Cổng KT: lỗi mạng, bản sửa test, worktree](K1-01-cong-kt-han-muc-test-nghiem-thu-worktree.md) | C | `agent-c/K1-01-cong-kt-han-muc-test-nghiem-thu-worktree` | ⏸ Chờ giao lại (Codex lỗi kết nối proxy 127.0.0.1:17841, 04/11 12:45) |
+| [K1-01 Cổng KT: lỗi mạng, bản sửa test, worktree](K1-01-cong-kt-han-muc-test-nghiem-thu-worktree.md) | C | `agent-c/K1-01-cong-kt-han-muc-test-nghiem-thu-worktree` | 🟡 Đang chạy · máy HIEUDV · 13:04 04/11/2026 |
 | [K1-02 Canh OpenCode đứng im](K1-02-canh-opencode-dung-im.md) | C | `agent-c/K1-02-canh-opencode-dung-im` | ⏸ Chờ giao lại (Codex lỗi kết nối proxy 127.0.0.1:17841, 04/11 12:45) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
