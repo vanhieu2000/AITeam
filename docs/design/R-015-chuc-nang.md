@@ -46,13 +46,13 @@ public interface IRequestProgressService
     RequestStateResult SetState(string id, RequestState state, string? note);
 }
 ```
-- **Task của phiếu** = hợp của (a) mọi `<dự án>/tasks/*.md` (trừ README.md) của mọi dự án có `ExistsLocally`, có dòng khớp `^- \*\*Yêu cầu:\*\*\s*(R-\d{3})\s*$` đúng id; Code = Id của file (cùng quy tắc Id F1-06, lấy từ tên file); Title = dòng `# …` đầu file bỏ `Code ·`; (b) các mã trong bảng "Chia việc" của phiếu (`RequestThread.Tasks`, mã rỗng bỏ qua) — dự án lấy từ ô Dự án, rỗng ⇒ "AITeam". Gộp theo (dự án, mã) không phân biệt hoa thường.
-- Trạng thái task: dòng bảng việc (`BoardTable.Parse` của dự án) ⇒ `WorkOverviewService.ParseStatus(row.Status, TaskState.Unknown)`; không có trên bảng ⇒ `Planned`.
+- **Task của phiếu** = mọi `<dự án>/tasks/*.md` (trừ README.md) của mọi dự án có `ExistsLocally`, có dòng khớp `^- \*\*Yêu cầu:\*\*\s*(R-\d{3})\s*$` đúng id (CLAUDE.md bắt buộc dòng này). Code = Id lấy từ tên file (cùng quy tắc Id F1-06); Title = dòng `# …` đầu file bỏ phần `Code ·`. KHÔNG dùng bảng "Chia việc" của phiếu (ô kiểu "UI-01..09", "V10-01, V10-04" không đếm được). Sắp theo dự án rồi Code.
+- Trạng thái task: dòng bảng việc (`BoardTable.Parse` của dự án) ⇒ `WorkOverviewService.ParseStatus(row.Status, fallback)` với fallback theo emoji của chữ trạng thái (🟡 Assigned · 🔵 Review · 🔴 NeedsFix · ✅ Merged · khác Unknown) — bảng ghi "🟡 Đang chạy · máy …" phải ra Running; không có trên bảng ⇒ `Planned`.
 - Đếm: Merged = Merged; Running = Running + Gate; Review = Review; NeedsFix = NeedsFix + Blocked; Cancelled không tính vào Total. AllMerged = Total > 0 && Merged == Total.
 - State từ dòng `- **Trạng thái:**`: chứa `✅` ⇒ Done; chứa `❌` hoặc "Hủy" (không phân biệt hoa thường) ⇒ Cancelled; còn lại Open.
 - **SetState** ghi đúng dòng `- **Trạng thái:** …` của file phiếu (dòng khác giữ nguyên từng byte, giữ BOM nếu có, giữ kiểu xuống dòng):
   - Done ⇒ `✅ Xong HH:mm dd/MM/yyyy`; Cancelled ⇒ `❌ Hủy HH:mm dd/MM/yyyy`; Open ⇒ `🟡 Đang làm`. Có note ⇒ thêm ` — <note>`.
-  - note: bỏ ký tự điều khiển / xuống dòng (thay bằng khoảng trắng), Trim, tối đa 200 ký tự; rỗng ⇒ không thêm.
+  - note: thay ký tự điều khiển / xuống dòng bằng khoảng trắng, gộp khoảng trắng liên tiếp thành 1, Trim, cắt tối đa 200 ký tự; rỗng ⇒ không thêm.
   - Thêm 1 dòng vào cuối bảng "## 3. Nhật ký" (nếu có bảng): `| HH:mm dd/MM | Đổi trạng thái phiếu: <Xong/Hủy/Mở lại> (Hub) | <note> |` — ký tự `|` trong note thay bằng `/`.
   - id sai dạng / không có phiếu / không có dòng Trạng thái ⇒ `Ok=false`, Error tiếng Việt cố định, KHÔNG ghi. Ghi nguyên tử (file tạm cùng thư mục rồi `File.Replace`/`Move`), chặn reparse point ở file và thư mục `requests`.
   - Giờ lấy từ `TimeProvider` (constructor), để test được.
@@ -83,6 +83,7 @@ public interface IProjectAdminService
     ProjectResult Add(ProjectAdd add);
 }
 ```
+- **List / Get:** theo thứ tự `projects.json`; Get không phân biệt hoa thường. `LocalPath` / `ExistsLocally` = đường dẫn đã giải của `TeamConfigService` (`ProjectInfo.Path`). `status` lạ / thiếu ⇒ Active; `branch` thiếu ⇒ "main".
 - **Kiểm tra (sai ⇒ `Ok=false` + lỗi tiếng Việt, không ghi gì):** tên `^[A-Za-z][A-Za-z0-9._-]{0,63}$`; repo `^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}$`; đường dẫn: tuyệt đối (`Path.IsPathFullyQualified`), không có đoạn `..`, ≤ 240 ký tự, không ký tự điều khiển; lệnh build/test/try, stack, nhánh: 1 dòng, ≤ 300 ký tự, không ký tự điều khiển; nhánh `^[A-Za-z0-9._/-]{1,100}$`; mô tả ≤ 200 ký tự 1 dòng; defaultAi trong danh sách; khóa vùng `^[A-Z]$`, giá trị ≤ 300 ký tự 1 dòng.
 - **Update:** dự án phải có. Ghi các trường vào phần tử của dự án trong `projects.json`, GIỮ nguyên trường lạ và các dự án khác, giữ `path`/`workDir` cũ y nguyên. `LocalPath` khác rỗng ⇒ ghi `team.local.json` → `paths.<Tên>` (giữ mọi khóa khác). Ghi nguyên tử + `.bak` (dùng lại cách ghi của `TeamConfigService`).
 - **SetStatus:** chỉ đổi `status`. Không có xóa dự án (Lưu trữ = ẩn khỏi giao việc, repo còn nguyên).
@@ -105,5 +106,18 @@ public static class LessonImporter
 - Import: bỏ qua bài đã có (so Title đã chuẩn hóa: bỏ khoảng trắng thừa, không phân biệt hoa thường với mọi bài học hiện có, mọi trạng thái); còn lại `AddDraft(title, body + "\n\nNguồn: " + source, "meo", null, null, null, null)`. Body > 4000 ⇒ cắt 4000. Chạy 2 lần ⇒ lần 2 Added = 0.
 - Lệnh `team.ps1 lessons-import` gọi `aiteam lessons-import` (hoặc tương đương trong CLI hiện có) cho `CLAUDE.md`, `AGENTS.md` của AITeam; in "Đã thêm N, bỏ qua M".
 
-## F1-03 · Đội AI
-Bổ sung sau khi Claude đọc xong `AiServices` / `AiAccounts` (thiết kế riêng mục này, giao Antigravity).
+## F1-03 · Đội AI: đăng nhập + hạn mức thật
+**Vấn đề (04/11, office.db thật):** mọi dòng "Đăng nhập chưa kiểm · Hạn mức chưa đo" vì nút Kiểm tra chỉ hiện thông báo, không lưu (`ai_account` trống); `ai_quota` trống vì `team.ps1` phát hiện hết hạn mức nhưng không ghi vào danh bạ; Antigravity hiện 2 lần (`agy` bật, `antigravity` tắt cùng tên).
+
+**Hợp đồng** — `hub/Services/AiTeamStatusService.cs` (khung) + CLI `quota-record`:
+```csharp
+public sealed record AiMemberStatus(string Id, string Name, bool Enabled, IReadOnlyList<AiRole> Roles, IReadOnlyList<string> Models,
+    string LoginState, DateTimeOffset? CheckedAt, string? Detail,
+    double? RemainingPct, DateTimeOffset? RestUntil, string? QuotaSource, DateTimeOffset? QuotaObservedAt);
+public interface IAiTeamStatusService { IReadOnlyList<AiMemberStatus> List(); Task<AiMemberStatus?> CheckAsync(string id, CancellationToken ct); }
+```
+- **List:** `registry.List(includeDisabled: true)`; BỎ dịch vụ tắt có Name trùng (không phân biệt hoa thường) một dịch vụ đang bật; sắp: bật trước, rồi Name, rồi Id. Đăng nhập = tài khoản `<id>:default` (hoặc tài khoản có CheckedAt mới nhất) của dịch vụ: LoginState / CheckedAt; chưa có ⇒ "unknown", null. Hạn mức = `LatestQuotas()` mới nhất của dịch vụ (theo ObservedAt); nếu RestUntil có và ≤ giờ hiện tại ⇒ coi như đã hồi: RemainingPct = null, RestUntil = null (giữ QuotaSource / QuotaObservedAt).
+- **CheckAsync:** id lạ / dịch vụ tắt ⇒ null, không tạo provider. Có ⇒ `factory.Create(service).CheckAsync(ct)`; ánh xạ: Installed=false ⇒ "not-installed"; LoggedIn true ⇒ "ok", false ⇒ "logged-out", null ⇒ "unknown"; ngoại lệ (trừ hủy bởi ct) ⇒ "error", Detail = message. LƯU bằng `registry.UpsertAccount(new AiAccount("<id>:default", id, "Mặc định", "local", state, now))`; Detail giữ trong bộ nhớ (không lưu). Trả `List()` dòng của id đó (Detail = kết quả vừa kiểm).
+- **CLI** `aiteam quota-record --db <office.db> --service <id> --remaining <0–100> [--rest-until <ISO 8601>] --source <chữ ≤100>`: mở `SqliteAiServiceRegistry(db, thư mục của db)`; dịch vụ không có ⇒ `LỖI: …`, mã 2; số / giờ sai ⇒ `LỖI: …`, mã 2; đúng ⇒ `RecordQuota(new AiQuota(service, null, remaining, restUntil, source, now))`, mã 0.
+- **team.ps1:** nơi `assign` báo hết hạn mức (`Test-QuotaExhausted` đúng) ⇒ gọi `aiteam quota-record --db "$env:USERPROFILE\.aiteam\hub\office.db" --service <codex|agy|opencode> --remaining 0 --source assign` (+ `--rest-until` nếu đọc được giờ hồi từ log). Lỗi khi ghi ⇒ chỉ `Write-Warning`, KHÔNG làm hỏng `assign`.
+- DI: `TryAddSingleton<IAiTeamStatusService, AiTeamStatusService>()`, `TimeProvider.System` nếu chưa có.
