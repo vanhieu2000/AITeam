@@ -1,0 +1,210 @@
+﻿@page "/AiServices"
+@model AITeam.Hub.Pages.AiServicesModel
+@using AITeam.Core.AiServices
+@using AITeam.Hub.Pages
+@using AITeam.Hub.Services
+@{
+    // R-014 UI-08 (Claude). Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.6 + 4.5b, mockup #ai + #settings.
+    ViewData["Title"] = "Tài khoản AI";
+    var f = Model.Form;
+    string? SafeHref(string? url) => url != null && (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase)) ? url : null;
+}
+<link rel="stylesheet" href="~/css/ai-services.css" asp-append-version="true" />
+
+@section Actions {
+    <a class="btn sm" href="?handler=Export">Xuất .ini</a>
+    <a class="btn sm ghost" href="/AiAccounts">Đăng nhập &amp; hạn mức (trang cũ)</a>
+}
+
+<p class="ai-sub">Danh bạ dịch vụ AI của máy này (SQLite <code>@Model.Location</code>). Thêm AI = thêm một dòng, không sửa code. Khóa API để trong <a href="/Secrets">két bí mật</a>; ở đây chỉ ghi <b>tên khóa</b>.</p>
+
+@if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert alert-success" role="status">@Model.Message</div> }
+@if (!string.IsNullOrEmpty(Model.ErrorMessage)) { <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div> }
+@if (Model.Error != null) { <div class="alert alert-danger" role="alert">@Model.Error <a href="/AiServices">Thử lại</a></div> }
+
+<section class="ai-grid" aria-label="Dịch vụ AI">
+    @if (Model.Services.Count == 0 && Model.Error == null)
+    {
+        <div class="empty">Chưa có dịch vụ AI nào. Thêm ở form bên dưới hoặc nhập tệp .ini từ máy kia.</div>
+    }
+    @foreach (var s in Model.Services)
+    {
+        Model.Quotas.TryGetValue(s.Id, out var q);
+        Model.AccountsByService.TryGetValue(s.Id, out var accounts);
+        var manage = SafeHref(s.ManageUrl);
+        <article class="ai-card @(s.Enabled ? "" : "off")" aria-labelledby="ai-@s.Id">
+            <header class="ai-h">
+                <span class="ai-av" aria-hidden="true">@(s.Name.Length > 0 ? s.Name[..1].ToUpperInvariant() : "?")</span>
+                <div class="ai-t">
+                    <b id="ai-@s.Id">@s.Name</b>
+                    <span class="mono muted">@s.Id · @AiServicesModel.AdapterText(s.Adapter)</span>
+                </div>
+                @if (s.Enabled) { <span class="pill ok">Đang bật</span> } else { <span class="pill n">Đã tắt</span> }
+            </header>
+            <dl class="kv ai-kv">
+                <dt>Vai trò</dt>
+                <dd>@if (s.Roles.Count == 0) { <span class="muted">chưa gán</span> } @foreach (var r in s.Roles) { <span class="tag">@AiServicesModel.RoleLabel(r)</span> }</dd>
+                <dt>Model</dt><dd>@(s.Models.Count == 0 ? "—" : string.Join(", ", s.Models))</dd>
+                <dt>Song song</dt><dd class="num">@s.MaxJobs việc</dd>
+                <dt>Chi phí</dt><dd>@(s.Paid ? "Trả phí" : "Miễn phí / gói có sẵn")</dd>
+                <dt>Đăng nhập</dt>
+                <dd>
+                    @if (accounts == null || accounts.Count == 0) { <span class="muted">chưa kiểm</span> }
+                    else
+                    {
+                        @foreach (var a in accounts)
+                        {
+                            <div>@a.Alias · @(a.LoginState ?? "chưa rõ") <span class="muted num">@a.CheckedAt?.ToLocalTime().ToString("HH:mm dd/MM")</span></div>
+                        }
+                    }
+                </dd>
+                <dt>Hạn mức</dt>
+                <dd>
+                    @if (q == null) { <span class="muted">chưa đo</span> }
+                    else
+                    {
+                        var pct = q.RemainingPct;
+                        <div class="ai-quota">
+                            <span class="num">@(pct is { } p ? p.ToString("0") + "% còn" : "không rõ %")</span>
+                            @if (pct is { } pp) { <span class="meter" aria-hidden="true"><i class="@(pp < 15 ? "low" : "")" style="width:@(Math.Clamp(pp, 0, 100).ToString("0"))%"></i></span> }
+                        </div>
+                        @if (q.RestUntil is { } rest && rest > DateTimeOffset.Now) { <div class="ai-rest">Hồi lúc <span class="num">@rest.ToLocalTime().ToString("HH:mm dd/MM")</span></div> }
+                    }
+                </dd>
+                @if (s.SecretKeyName != null) { <dt>Tên khóa</dt><dd><code>@s.SecretKeyName</code></dd> }
+            </dl>
+            <footer class="ai-act">
+                <form method="post" asp-page-handler="Check">
+                    <input type="hidden" name="id" value="@s.Id" />
+                    <button class="btn sm" type="submit">Kiểm tra kết nối</button>
+                </form>
+                <a class="btn sm ghost" href="?edit=@Uri.EscapeDataString(s.Id)#form">Sửa</a>
+                @if (manage != null) { <a class="btn sm ghost" href="@manage" target="_blank" rel="noopener noreferrer">Trang quản lý ↗</a> }
+                <form method="post" asp-page-handler="Toggle" onsubmit="return @(s.Enabled ? "confirm('Tắt dịch vụ này? Lịch sử số đo vẫn giữ.')" : "true")">
+                    <input type="hidden" name="id" value="@s.Id" />
+                    <input type="hidden" name="enabled" value="@(s.Enabled ? "false" : "true")" />
+                    <button class="btn sm @(s.Enabled ? "ghost" : "")" type="submit">@(s.Enabled ? "Tắt" : "Bật lại")</button>
+                </form>
+            </footer>
+        </article>
+    }
+</section>
+
+<section class="panel ai-form-panel" id="form">
+    <div class="hd">@(Model.IsEdit ? "Sửa dịch vụ " + f.Id : "Thêm dịch vụ AI") <span class="sp"></span>@if (Model.IsEdit) { <a class="btn sm ghost" href="/AiServices#form">Thêm mới thay vì sửa</a> }</div>
+    <div class="bd">
+        @if (Model.FormErrors.Count > 0)
+        {
+            <div class="alert alert-danger" role="alert"><b>Chưa lưu — cần sửa:</b><ul>@foreach (var e in Model.FormErrors) { <li>@e</li> }</ul></div>
+        }
+        <form method="post" asp-page-handler="Save" class="ai-form">
+            <input type="hidden" name="isEdit" value="@(Model.IsEdit ? "true" : "false")" />
+            <label>Mã <span class="muted">(chữ thường, số, gạch ngang)</span>
+                @if (Model.IsEdit)
+                {
+                    <input class="inp mono" name="input.Id" value="@f.Id" readonly />
+                }
+                else
+                {
+                    <input class="inp mono" name="input.Id" value="@f.Id" maxlength="32" required pattern="[a-z0-9][a-z0-9-]{1,31}" placeholder="vd. gemini-cli" />
+                }
+            </label>
+            <label>Tên hiển thị <input class="inp" name="input.Name" value="@f.Name" maxlength="60" required /></label>
+            <label>Kiểu kết nối
+                <select class="inp" name="input.Adapter" id="ai-adapter">
+                    @foreach (var (v, t) in new[] { ("cli-text", "Dòng lệnh, trả chữ (cli-text)"), ("cli-json", "Dòng lệnh, trả JSON (cli-json)"), ("openai-compatible-http", "HTTP chuẩn OpenAI") })
+                    {
+                        <option value="@v" selected="@(f.Adapter == v)">@t</option>
+                    }
+                </select>
+            </label>
+            <label class="ai-cli">Lệnh <span class="muted">(tệp .exe / .cmd có thật)</span> <input class="inp mono" name="input.Command" value="@f.Command" maxlength="260" placeholder="vd. gemini.cmd" /></label>
+            <label class="ai-cli ai-wide">Mẫu tham số <span class="muted">(mỗi dòng một tham số; truyền dạng mảng, không ghép chuỗi lệnh)</span>
+                <textarea class="inp mono" name="input.Args" rows="3">@f.Args</textarea>
+            </label>
+            <label class="ai-http">Địa chỉ <span class="muted">(chỉ https:// hoặc http://127.0.0.1)</span> <input class="inp mono" name="input.BaseUrl" value="@f.BaseUrl" maxlength="200" placeholder="https://…" /></label>
+            <label>Model <span class="muted">(cách nhau dấu phẩy)</span> <input class="inp" name="input.Models" value="@f.Models" maxlength="300" /></label>
+            <fieldset class="ai-roles">
+                <legend>Vai trò được làm</legend>
+                @foreach (var r in Enum.GetValues<AiRole>())
+                {
+                    var rt = AiServicesModel.RoleText(r);
+                    <label class="chk"><input type="checkbox" name="input.Roles" value="@rt" checked="@f.Roles.Contains(rt)" /> @AiServicesModel.RoleLabel(r)</label>
+                }
+            </fieldset>
+            <label>Số việc song song <input class="inp num" type="number" name="input.MaxJobs" value="@f.MaxJobs" min="1" max="8" /></label>
+            <label class="chk ai-paid"><input type="checkbox" name="input.Paid" value="true" checked="@f.Paid" /> Trả phí theo lượt dùng</label>
+            <label>Tên khóa trong két <span class="muted">(KHÔNG nhập giá trị khóa)</span> <input class="inp mono" name="input.SecretKeyName" value="@f.SecretKeyName" maxlength="64" pattern="[A-Z][A-Z0-9_]{1,63}" placeholder="vd. GEMINI_API_KEY" autocomplete="off" /></label>
+            <label>Link trang quản lý <input class="inp" name="input.ManageUrl" value="@f.ManageUrl" maxlength="300" placeholder="https://…" /></label>
+            <div class="ai-form-bar">
+                <button class="btn cta" type="submit">@(Model.IsEdit ? "Lưu thay đổi" : "Thêm dịch vụ")</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="panel" id="tro-ly">
+    <div class="hd">Trợ lý chat <span class="sp"></span><span class="muted">Nút chat nổi góc phải dưới dùng các cài đặt này</span></div>
+    <div class="bd">
+        @if (Model.Assistant == null)
+        {
+            <div class="empty">Không đọc được cài đặt trợ lý.</div>
+        }
+        else
+        {
+            var a = Model.Assistant;
+            <form method="post" asp-page-handler="Assistant" class="ai-form">
+                <label>AI trả lời mặc định
+                    <select class="inp" name="defaultAi">
+                        @foreach (var o in Model.AssistantOptions)
+                        {
+                            <option value="@o.Id" selected="@(o.Id == a.DefaultAi)" disabled="@(!o.Available && o.Id != a.DefaultAi)">@o.Name@(o.Available ? "" : " — " + (o.Reason ?? "không dùng được"))</option>
+                        }
+                    </select>
+                </label>
+                <label>Chế độ mặc định
+                    <select class="inp" name="defaultMode">
+                        @foreach (var m in Enum.GetValues<ChatMode>()) { <option value="@m" selected="@(m == a.DefaultMode)">@AiServicesModel.ModeLabel(m)</option> }
+                    </select>
+                </label>
+                <fieldset class="ai-roles ai-wide">
+                    <legend>AI dùng khi Nghiên cứu (hỏi nhiều AI cùng lúc, 1–4 AI)</legend>
+                    @foreach (var o in Model.AssistantOptions)
+                    {
+                        <label class="chk"><input type="checkbox" name="researchAis" value="@o.Id" checked="@a.ResearchAis.Contains(o.Id)" disabled="@(!o.Available && !a.ResearchAis.Contains(o.Id))" /> @o.Name</label>
+                    }
+                </fieldset>
+                <label class="chk ai-paid"><input type="checkbox" name="keepHistory" value="true" checked="@a.KeepHistory" /> Lưu lịch sử trò chuyện trên máy này</label>
+                <div class="ai-form-bar"><button class="btn" type="submit">Lưu cài đặt trợ lý</button></div>
+            </form>
+        }
+    </div>
+</section>
+
+<section class="panel">
+    <div class="hd">Chép sang máy khác</div>
+    <div class="bd ai-io">
+        <p class="muted">Tệp .ini chỉ chứa cấu hình (không có bí mật). Máy kia bấm "Nhập" để thêm / cập nhật; khóa lạ bị bỏ qua. Tối đa 256 KB.</p>
+        <a class="btn" href="?handler=Export">Xuất .ini</a>
+        <form method="post" asp-page-handler="Import" enctype="multipart/form-data" class="row">
+            <label class="sr-only" for="ini-file">Tệp .ini</label>
+            <input id="ini-file" type="file" name="file" accept=".ini,text/plain" required />
+            <button class="btn" type="submit">Nhập</button>
+        </form>
+    </div>
+</section>
+
+<script>
+    (function () {
+        // Ẩn ô không dùng theo kiểu kết nối (vẫn gửi lên, máy chủ tự kiểm).
+        var sel = document.getElementById('ai-adapter');
+        if (!sel) return;
+        function sync() {
+            var http = sel.value === 'openai-compatible-http';
+            document.querySelectorAll('.ai-cli').forEach(function (el) { el.hidden = http; });
+            document.querySelectorAll('.ai-http').forEach(function (el) { el.hidden = !http; });
+        }
+        sel.addEventListener('change', sync);
+        sync();
+    })();
+</script>
