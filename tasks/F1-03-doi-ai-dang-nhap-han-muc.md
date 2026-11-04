@@ -75,5 +75,9 @@
 - Điều chưa chắc: Không.
 
 ## Review (Claude)
+### Vòng 1 — ĐẠT (04/11 22:10)
+- Cổng KT lượt 2 ĐẠT (Hub 819, Core 1070); lượt 1 agy không làm dịch vụ Hub (để nguyên khung). 250/220 dòng.
+- Đọc diff: List bỏ dịch vụ tắt trùng tên, giờ hồi đã qua ⇒ xóa hạn mức; CheckAsync lưu tài khoản `<id>:default`, hủy bởi ct ném lại; CLI quota-record kiểm tham số; team.ps1 ghi hạn mức khi hết, lỗi chỉ cảnh báo.
+- [AG] lượt 1 bỏ trống phần chính (agy chờ tác vụ nền tới hết giờ).
 
 ## Kết quả
