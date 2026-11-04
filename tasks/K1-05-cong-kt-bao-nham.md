@@ -58,7 +58,17 @@
 - [ ] Commit: `K1-05: cổng KT miễn mọi commit (Claude) của quản lý, chỉ báo test luôn pass khi là câu lệnh thật`
 
 ## Báo cáo của agent
-
+| Tiêu chí | Lệnh / bằng chứng thật |
+|---|---|
+| Build 0 warning | `dotnet build AITeam.sln --no-restore -warnaserror -m:1`: đạt, 0 warning, 0 error; `dotnet build AITeam.sln -warnaserror` mã 1 dù 0 warning/0 error. |
+| Nghiệm thu K1-05 bất biến | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceK105GateFalsePositiveTests" --blame-hang-timeout 2m`: 16 đạt, 0 lỗi, 0 bỏ qua. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: dừng Ctrl+C theo giới hạn 3 phút, mã 1; Hub 848 đạt/8 lỗi; Core chưa tổng kết, có lỗi quyền file và Git Win32 error 5. |
+| Cổng kiểm tra | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-verify.ps1`: mã 1; biến trùng ở hàm ngoài phạm vi, clone kho tạm lỗi signal pipe Win32 error 5. |
+| BOM UTF-8 | Đọc byte đầu `team.ps1`: EF BB BF; PowerShell Parser: 0 lỗi cú pháp. |
+| Commit yêu cầu | Không chạy lệnh git; hệ thống tự commit/push theo chỉ dẫn Codex, chưa xác minh commit. |
+File đổi lượt sửa: `team.ps1` đổi đối số grep ở bước BOM sang chuỗi literal nháy đơn; file task cập nhật báo cáo. Không sửa test nghiệm thu.
+Quyết định: giữ nguyên bộ lọc/chọn commit khung và Get-AcceptRef; hai điểm gọi mới vẫn dùng Get-ClaudeOwnedFiles/Test-AlwaysPassLine. Assert từng lỗi đã xanh.
+Chưa xác minh: toàn solution và cổng kiểm tra đạt trong môi trường đủ quyền; không sửa các hàm ngoài phạm vi để xử lý lỗi môi trường.
 ## Review (Claude)
 
 ## Kết quả

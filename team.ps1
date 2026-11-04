@@ -2296,6 +2296,33 @@ function Get-NewTestProcessStartInfoWarnings {
     return $warnings
 }
 
+# K1-05 (R-015): KHUNG do Claude viết — agent điền thân. Thiết kế: tasks/K1-05-cong-kt-bao-nham.md.
+# Dòng test (đã bỏ dấu "+" của diff) là câu lệnh luôn pass thật: `if (…) return;` / `Assert.True(true[, …]);` đứng đầu dòng.
+function Test-AlwaysPassLine([string]$line) {
+    return ($line -match '^\s*if\s*\(.+\)\s*\{?\s*return\s*;' -or
+        $line -match '^\s*Assert\.True\(\s*true\s*(,[^)]*)?\)\s*;')
+}
+
+# Trong $Files: file mà commit cuối (không tính merge) chạm tới trong Base..HEAD là commit của quản lý (email = ManagerEmail,
+# tiêu đề có "(Claude)" hoặc bắt đầu "Test nghiệm thu") và HEAD giữ nguyên nội dung commit đó ⇒ file của Claude, không tính cho agent.
+function Get-ClaudeOwnedFiles([string]$Work, [string]$Base, [string[]]$Files, [string]$ManagerEmail) {
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        foreach ($file in $Files) {
+            try {
+                $history = @(git -C $Work log -1 --no-merges '--format=%H%x09%ae%x09%s' "$Base..HEAD" -- $file 2>$null)
+                if ($LASTEXITCODE -ne 0 -or $history.Count -ne 1) { continue }
+                $parts = "$($history[0])" -split "`t", 3
+                if ($parts.Count -ne 3 -or $parts[1] -ine $ManagerEmail -or
+                    ($parts[2] -notmatch '\(Claude\)' -and $parts[2] -notmatch '^Test nghiệm thu')) { continue }
+                git -C $Work diff --quiet $parts[0] HEAD -- $file 2>$null
+                if ($LASTEXITCODE -eq 0) { $file }
+            } catch { continue }
+        }
+    } finally { $ErrorActionPreference = $savedPreference }
+}
+
 function Invoke-Verify {
     $cfg = Get-Config
     $ctx = Get-TaskContext
@@ -2346,7 +2373,7 @@ function Invoke-Verify {
     # 2. BOM: file vốn có BOM phải giữ; .ps1 có chữ ngoài ASCII phải có BOM (PowerShell 5.1). Tự sửa + commit.
     $bomFixed = @()
     # File khung Claude tạo trên nhánh (chưa có trên main) cũng phải giữ BOM như bản khung (H3-01 lọt lỗi này).
-    $seedCommit = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+    $seedCommit = git -C $work log --format=%H '--grep=^Test nghiệm thu' "$base..HEAD" 2>$null | Select-Object -Last 1
     foreach ($f in $changed) {
         $full = Join-Path $work $f
         if (-not (Test-Path $full -PathType Leaf)) { continue }
@@ -2419,17 +2446,9 @@ function Invoke-Verify {
     if ($scope.Count -gt 0) {
         $always = @("tasks/$($ctx.TaskFile.Name)", "docs/screenshots/$Task", "CHANGELOG.md") + $accept
         $out = @($changed | Where-Object { -not (Test-PathInScope $_ ($scope + $always)) })
-        # File khung do Claude đưa lên trong commit "Test nghiệm thu … (Claude)": agent KHÔNG đổi ⇒ không tính ngoài phạm vi.
-        # Agent sửa file khung (bị cấm) ⇒ vẫn bị bắt (V4-06: Lan phải gộp JobModels.cs để qua cổng).
-        $claudeCommit = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
-        if ($claudeCommit -and $out.Count -gt 0) {
-            $out = @($out | Where-Object {
-                $inClaude = @(git -C $work show --name-only --format= $claudeCommit -- $_ 2>$null | Where-Object { $_ })
-                if (-not $inClaude) { return $true }
-                git -C $work diff --quiet $claudeCommit HEAD -- $_ 2>$null
-                return ($LASTEXITCODE -ne 0)
-            })
-        }
+        # Miễn file còn nguyên từ commit cuối của quản lý; agent sửa lại vẫn tính ngoài phạm vi.
+        $claudeOwned = @(Get-ClaudeOwnedFiles -Work $work -Base $base -Files $out -ManagerEmail "$($cfg.github.owner)@users.noreply.github.com")
+        $out = @($out | Where-Object { $claudeOwned -notcontains $_ })
         if ($out.Count -gt 0) { [void]$fails.Add("Sửa NGOÀI PHẠM VI task ($($out.Count) file) — hoàn tác các file này hoặc ghi lý do bắt buộc vào báo cáo để quản lý quyết: " + (($out | Select-Object -First 10) -join ', ')) }
     } else { [void]$notes.Add("Task không ghi đường dẫn trong mục Phạm vi → bỏ qua kiểm tra phạm vi.") }
     # 4b. Ngân sách code: dòng "- **Ngân sách:** ~400 dòng" trong file task (không tính file task và test nghiệm thu).
@@ -2458,7 +2477,7 @@ function Invoke-Verify {
         foreach ($line in (git -C $work diff -U0 $base HEAD -- $testFiles 2>$null)) {
             if ($line -match '^\+\+\+ b/(.+)$') { $cur = $Matches[1]; continue }
             if ($line -notmatch '^\+') { continue }
-            if ($line -match '^\+\s*if\s*\(.+\)\s*\{?\s*return\s*;' -or $line -match 'Assert\.True\(\s*true\s*\)') { $sus += "$cur → $($line.Substring(1).Trim())" }
+            if (Test-AlwaysPassLine $line.Substring(1)) { $sus += "$cur → $($line.Substring(1).Trim())" }
         }
         if ($sus.Count -gt 0) { [void]$warns.Add("Test có thể luôn pass (return sớm / Assert.True(true)): " + (($sus | Select-Object -First 5) -join ' | ')) }
     }
@@ -2774,7 +2793,7 @@ function Get-RunRecord($r, [string]$TaskName, [string]$logFile, [string]$agentId
         $base = git -C $work merge-base origin/main HEAD 2>$null | Select-Object -First 1
         if ($base) {
             # Chỉ đếm dòng agent viết: bỏ khung + test nghiệm thu của Claude (commit "Test nghiệm thu…") — trước đây V4-07 báo 512/230, thật 176.
-            $seed = git -C $work log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+            $seed = git -C $work log --format=%H '--grep=^Test nghiệm thu' "$base..HEAD" 2>$null | Select-Object -Last 1
             $from = if ($seed) { $seed } else { $base }
             foreach ($line in (git -C $work diff --numstat $from HEAD 2>$null)) {
                 $p = $line -split "`t"
@@ -2946,7 +2965,7 @@ function Invoke-LogRun {
         $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
         $base = git -C $Path merge-base origin/main HEAD 2>$null | Select-Object -First 1
         if ($base) {
-            $seed = git -C $Path log --format=%H --grep="^Test nghiệm thu" "$base..HEAD" 2>$null | Select-Object -Last 1
+            $seed = git -C $Path log --format=%H '--grep=^Test nghiệm thu' "$base..HEAD" 2>$null | Select-Object -Last 1
             $from = if ($seed) { $seed } else { $base }
             foreach ($line in (git -C $Path diff --numstat $from HEAD 2>$null)) {
                 $p = $line -split "`t"
