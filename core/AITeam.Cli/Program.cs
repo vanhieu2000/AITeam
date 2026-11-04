@@ -38,6 +38,7 @@ try
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         "rules-for-task" => RulesForTask(),
         "lesson-add" => LessonAdd(),
+        "lessons-import" => LessonsImport(),
         _ => Help(),
     };
 }
@@ -581,6 +582,12 @@ int RulesForTask()
         Console.Error.WriteLine($"LỖI: {ex.Message}");
         return 2;
     }
+}
+
+// F1-05 (R-015): khung — agent điền thân. In "Đã thêm N, bỏ qua M".
+int LessonsImport()
+{
+    throw new NotImplementedException(); // TODO(agent)
 }
 
 int LessonAdd()
