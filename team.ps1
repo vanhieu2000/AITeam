@@ -677,7 +677,7 @@ function Invoke-Assign {
 
     # Chia đều (chủ dự án 25/10): Minh / Lan dùng chung 1 tài khoản Antigravity, cùng code chính ⇒ người được gợi ý đang bận
     # còn người kia rảnh thì giao người rảnh (ghi lại Agent trong file task + bảng việc trên main). -Resume giữ nguyên người cũ.
-    if (-not $Resume -and $agentId -in @('A', 'B') -and -not (Test-Path (Join-Path $r.Work ("$agentId-$Task".ToLower())))) {
+    if (-not $Resume -and $agentId -in @('A', 'B') -and -not (Test-Path (Join-Path $r.Work ("$agentId-$Task".ToLower()))) -and -not (Test-BranchPrepared $r $branch)) {
         $free = Select-FreeAgent $r $agentId
         if ($free -ne $agentId) {
             Say "Chia đều việc: Agent $agentId đang bận, Agent $free rảnh ⇒ giao Agent $free." Cyan
@@ -735,10 +735,9 @@ function Invoke-Assign {
     git -C $r.Path fetch origin --quiet
     if ($LASTEXITCODE -ne 0) { throw "Không fetch được origin trước khi giao task." }
     # Nhánh đã có worktree (vd. lần trước gõ -Task ngắn hơn) ⇒ dùng lại đúng thư mục đó thay vì báo lỗi "already used by worktree".
-    $existing = (git -C $r.Path worktree list --porcelain) -join "`n"
-    $m = [regex]::Match($existing, "worktree ([^\n]+)\nHEAD [0-9a-f]+\nbranch refs/heads/$([regex]::Escape($branch))(\n|$)")
-    if ($m.Success -and ((Resolve-Path $m.Groups[1].Value -ErrorAction SilentlyContinue).Path -ne (Resolve-Path $work -ErrorAction SilentlyContinue).Path)) {
-        $work = $m.Groups[1].Value.Replace('/', '\')
+    $defaultWork = $work
+    $work = Resolve-TaskWork $r $branch $defaultWork
+    if ($work -ne $defaultWork) {
         Say "Nhánh $branch đã có thư mục làm việc → dùng lại $work" Yellow
     }
     if (-not (Test-Path $work)) {
@@ -890,6 +889,9 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
     }
     if (Test-QuotaExhausted $logText $errText) {
         Say "HẾT HẠN MỨC tài khoản Antigravity hiện tại → chạy .\team.ps1 switch-account rồi giao lại với -Resume" Yellow
+    }
+    if (Test-NetworkError $logText $errText) {
+        Say "LỖI MẠNG khi agent chạy (mất kết nối tới máy chủ AI) — kiểm tra mạng rồi giao lại với -Resume; KHÔNG phải hết hạn mức." Yellow
     }
     if (Set-ManagerIdentity $r.Path $cfg.github.owner) {
         Say "Agent đã ghi đè tên commit chung của repo → đã trả lại HieuDV (agent chỉ dùng tên riêng của worktree)." Yellow
@@ -1219,9 +1221,21 @@ function Invoke-AutoReview($r, [string]$taskFileName, [string]$work, [string]$de
 
 # Agent hết hạn mức? Lần chạy báo SUCCESS thì không. Còn lại dò từ khóa, "429"/"quota" phải đứng riêng
 # (trước đây "429" khớp nhầm vào số token như "thinking_tokens":42953).
+function Get-AgentErrorText([string]$logText, [string]$errText) {
+    try {
+        $entry = ConvertFrom-Json -InputObject $logText -ErrorAction Stop
+        return "$($entry.error)`n$errText"
+    } catch { return "$logText`n$errText" }
+}
+
+function Test-NetworkError([string]$logText, [string]$errText) {
+    if ($logText -match '"status"\s*:\s*"SUCCESS"') { return $false }
+    return (Get-AgentErrorText $logText $errText) -match '(?i)no such host|dial tcp|connection (refused|reset)|could not be made|deadline exceeded|Client\.Timeout|network is unreachable|TLS handshake timeout'
+}
+
 function Test-QuotaExhausted([string]$logText, [string]$errText) {
     if ($logText -match '"status"\s*:\s*"SUCCESS"') { return $false }
-    return ("$logText`n$errText") -match '(?i)RESOURCE_EXHAUSTED|\bquota\b|rate.?limit|\b429\b|credits? balance|out of credits'
+    return (Get-AgentErrorText $logText $errText) -match '(?i)RESOURCE_EXHAUSTED|\bquota\b|rate.?limit|\b429\b|credits? balance|out of credits'
 }
 
 # Repo chính luôn commit bằng tên chủ dự án. Đặt lại khi chưa có hoặc bị agent ghi đè (tên "Agent …" hoặc tên nhân viên trong team.json).
@@ -2100,6 +2114,53 @@ function Invoke-Hub {
 # ───────────────────────── Cổng kiểm tra tự động (verify) ─────────────────────────
 # Chạy ngay sau khi agent xong, TRƯỚC khi Claude review: bắt hết lỗi cơ học để Claude chỉ còn review nội dung.
 
+function Resolve-TaskWork($r, [string]$branch, [string]$defaultWork) {
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $listing = @(git -C $r.Path worktree list --porcelain 2>$null)
+        if ($LASTEXITCODE -ne 0) { return $defaultWork }
+        $pattern = '(?m)^worktree ([^\r\n]+)\r?\nHEAD [0-9a-f]+\r?\nbranch refs/heads/' + [regex]::Escape($branch) + '\r?$'
+        $match = [regex]::Match(($listing -join "`n"), $pattern)
+        if ($match.Success) { return $match.Groups[1].Value.Replace('/', '\') }
+        return $defaultWork
+    } catch { return $defaultWork }
+    finally { $ErrorActionPreference = $savedPreference }
+}
+
+function Test-BranchPrepared($r, [string]$branch) {
+    if (Resolve-TaskWork $r $branch '') { return $true }
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $remote = @(git -C $r.Path ls-remote --heads origin $branch 2>$null)
+        return ($LASTEXITCODE -eq 0 -and $remote.Count -gt 0)
+    } catch { return $false }
+    finally { $ErrorActionPreference = $savedPreference }
+}
+
+function Get-AcceptRef([string]$Work, [string]$Base, [string]$Path, [string]$ManagerEmail) {
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $history = @(git -C $Work log '--format=%H%x09%ae%x09%s' "$Base..HEAD" -- $Path 2>$null)
+        if ($LASTEXITCODE -ne 0) { return $null }
+        foreach ($line in $history) {
+            $parts = "$line" -split "`t", 3
+            if ($parts.Count -eq 3 -and $parts[1] -ieq $ManagerEmail -and
+                ($parts[2] -match '\(Claude\)' -or $parts[2] -match '^Test nghiệm thu')) {
+                return $parts[0]
+            }
+        }
+        git -C $Work cat-file -e "${Base}:$Path" 2>$null
+        if ($LASTEXITCODE -eq 0) { return $Base }
+        $added = @(git -C $Work log --reverse --diff-filter=A --format=%H "$Base..HEAD" -- $Path 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $added.Count -gt 0) { return $added[0] }
+        return $null
+    } catch { return $null }
+    finally { $ErrorActionPreference = $savedPreference }
+}
+
 function Get-TaskContext {
     $r = Resolve-Project $Project
     if (-not $Task) { throw "Thiếu -Task" }
@@ -2109,7 +2170,7 @@ function Get-TaskContext {
     $agentId = [regex]::Match($text, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
     [pscustomobject]@{
         R = $r; TaskFile = $taskFile; Text = $text; Branch = $branch; AgentId = $agentId
-        Work = (Join-Path $r.Work ("$agentId-$Task".ToLower()))
+        Work = Resolve-TaskWork $r $branch (Join-Path $r.Work ("$agentId-$Task".ToLower()))
     }
 }
 
@@ -2297,10 +2358,8 @@ function Invoke-Verify {
     }
     foreach ($a in $accept) {
         if (-not (Test-Path (Join-Path $work $a))) { [void]$fails.Add("Thiếu file test nghiệm thu: $a"); continue }
-        # Test nghiệm thu nằm sẵn trên main, hoặc là commit đầu tiên Claude đẩy lên nhánh task (vì tham chiếu lớp chưa có).
-        $ref = $base
-        git -C $work cat-file -e "${base}:$a" 2>$null
-        if ($LASTEXITCODE -ne 0) { $ref = git -C $work log --reverse --diff-filter=A --format=%H "$base..HEAD" -- $a 2>$null | Select-Object -First 1 }
+        # Ưu tiên bản sửa được quản lý đánh dấu, rồi mới dùng bản trên main hoặc lần thêm đầu.
+        $ref = Get-AcceptRef -Work $work -Base $base -Path $a -ManagerEmail "$($cfg.github.owner)@users.noreply.github.com"
         if (-not $ref) { [void]$fails.Add("Không tìm thấy commit thêm test nghiệm thu: $a"); continue }
         git -C $work diff --quiet $ref HEAD -- $a 2>$null
         if ($LASTEXITCODE -ne 0) {
