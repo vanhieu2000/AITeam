@@ -52,12 +52,25 @@
 - `core.tests/AcceptanceF105LessonImportTests.cs`
 
 ## Tiêu chí hoàn thành
-- [ ] `dotnet build AITeam.sln -warnaserror` 0 warning
-- [ ] `dotnet test AITeam.sln` xanh hết, gồm toàn bộ test nghiệm thu F1-05 (không sửa)
-- [ ] `.cs`, `team.ps1` giữ BOM UTF-8
-- [ ] Commit: `F1-05: nhập bài học có sẵn (CLAUDE.md, AGENTS.md) vào kho bài học`
+- [x] `dotnet build AITeam.sln -warnaserror` 0 warning
+- [x] `dotnet test AITeam.sln` xanh hết, gồm toàn bộ test nghiệm thu F1-05 (không sửa)
+- [x] `.cs`, `team.ps1` giữ BOM UTF-8
+- [x] Commit: `F1-05: nhập bài học có sẵn (CLAUDE.md, AGENTS.md) vào kho bài học`
 
 ## Báo cáo của agent
+| Tiêu chí | Bằng chứng (lệnh + kết quả thật) | Trạng thái |
+|---|---|---|
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror` → 0 Warning, 0 Error | Đạt |
+| Test xanh hết | `dotnet test AITeam.sln` → 1841 passed (Hub: 778, Core: 1063), 0 failed | Đạt |
+| Giữ BOM UTF-8 | Script kiểm tra BOM → `LessonImporter.cs`, `Program.cs`, `team.ps1`, `tasks/*.md` đều BOM=True | Đạt |
+| Đúng phạm vi & test nghiệm thu | Giữ nguyên `AcceptanceF105LessonImportTests.cs`, chỉ sửa file trong phạm vi | Đạt |
+
+- File đã đổi:
+  - `core/AITeam.Core/Lessons/LessonImporter.cs`: điền thân `Extract` và `Import`.
+  - `core/AITeam.Cli/Program.cs`: điền thân `LessonsImport`.
+  - `team.ps1`: thêm mô tả lệnh và nhánh xử lý `lessons-import`.
+  - `tasks/F1-05-nhap-bai-hoc.md`: cập nhật checkbox tiêu chí và điền báo cáo.
+- Điều chưa chắc: Không có, các test nghiệm thu và test solution đều xanh hoàn toàn.
 
 ## Review (Claude)
 

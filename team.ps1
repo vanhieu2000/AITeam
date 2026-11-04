@@ -41,6 +41,7 @@
   .\team.ps1 stop -All                              Dừng vòng auto và mọi assign nó đã sinh ra trên máy này
   .\team.ps1 auto -Project Ten [-Max 2]             Lấy task "Chờ làm" đủ phụ thuộc, giao song song tối đa Max (mặc định 2)
   .\team.ps1 try -Project Ten [-NoLaunch]           Build bản ĐÃ MERGE ra thư mục riêng (AITeam-try) rồi mở app để chủ dự án chạy thử
+  .\team.ps1 lessons-import                         Nhập bài học có sẵn (CLAUDE.md, AGENTS.md) vào kho bài học
 #>
 param(
     [Parameter(Position = 0)] [string] $Command = "help",
@@ -3969,6 +3970,19 @@ switch ($Command) {
     "verify" { $null = Invoke-Verify }
     "metrics" { Invoke-Metrics; Show-RunMetrics }
     "metrics-import" { Invoke-MetricsImport }
+    "lessons-import" {
+        $projPath = Join-Path $Root "core\AITeam.Cli\AITeam.Cli.csproj"
+        if (Test-Path -LiteralPath $projPath) {
+            $cliExe = Get-AITeamExe
+            if ($cliExe -and (Test-Path -LiteralPath $cliExe -PathType Leaf)) {
+                $out = & $cliExe lessons-import --root $Root
+                if ($out) { Write-Output $out }
+            } else {
+                [Console]::Error.WriteLine("LỖI: Chưa có aiteam CLI để nhập bài học.")
+                exit 1
+            }
+        }
+    }
     "new-request" { $null = Invoke-NewRequest }
     "request-report" { Invoke-RequestReport }
     "staff-report" { Invoke-StaffReport }
