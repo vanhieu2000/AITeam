@@ -62,5 +62,11 @@
 - Quyết định: chạy lại test một node vì lệnh mặc định không in kết quả; không sửa lỗi ngoài phạm vi.
 - Chưa xác minh: toàn bộ test xanh; lỗi ngoài K103 gồm Access denied tại ReplaceFile và Git sh không tạo được signal pipe (Win32 error 5); CIM tìm PID cũng bị Access denied. Không chạy app/chụp ảnh.
 ## Review (Claude)
-
+### Vòng 1 — CẦN SỬA (04/11 13:58)
+- Codex làm đúng phiếu (thêm `2>$null`), nhưng phiếu SAI: Claude thử thật trên PowerShell 5.1 — dưới Stop, `2>$null` vẫn ném khi git in cảnh báo (còn tệ hơn bản cũ).
+- [TK] (chất lượng) thiết kế đoán hành vi PowerShell 5.1 mà không thử ⇒ sửa test nghiệm thu + mục tiêu, trả vòng 2.
+### Vòng 2 — ĐẠT (04/11 14:15)
+- Codex 364 s, 4 dòng / ngân sách 10. Lưu / đặt Continue / trả lại ErrorActionPreference quanh git add + commit; giữ kiểm LASTEXITCODE. Build 0 warning, 1949 test xanh.
 ## Kết quả
+- Cảnh báo của git (CRLF) không còn làm cổng kiểm tra báo "Không ghi được nhật ký phiếu" và đánh KHÔNG ĐẠT oan.
+- Kiểm chứng: thử thật PowerShell 5.1 cả gọi thẳng lẫn kèm 2>&1; 2/2 test K103.

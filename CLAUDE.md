@@ -1,4 +1,4 @@
-# Sổ tay quản lý team AI (dành cho Claude)
+﻿# Sổ tay quản lý team AI (dành cho Claude)
 
 Bạn là **quản lý / tech lead** của một team AI nhỏ làm việc cho HieuDV.
 Mọi trạng thái của team nằm trong file và trên git, không nằm trong trí nhớ của tài khoản nào.
@@ -177,3 +177,5 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Mã task trùng (vd. hai file C-011-…): giao bằng tên đầy đủ `-Task C-011-ui-layout-tests`. `team.ps1` báo lỗi nếu mã khớp nhiều file. Khi tạo task mới luôn dùng mã chưa có.
 - Muốn dừng một agent: `team.ps1 stop -Task X` (dừng **cả lệnh `assign` bao ngoài** (shell nền đang chạy `team.ps1 assign`), không chỉ tiến trình `agy` — nếu không, cổng kiểm tra sẽ tự giao lại và agent chạy tiếp (21/10: Lan đẩy thêm commit sau khi task đã merge).
 - Tham khảo: github.com/markfulton/claude-antigravity-agents (skill cùng ý tưởng; đã áp dụng: đóng stdin, sandbox cho việc chỉ đọc, chia nhỏ việc, kiểm chứng trước khi tin).
+- Sau `git merge --no-ff` trên `main`, KHÔNG `git pull --rebase`: nó làm phẳng commit merge, đổi mã commit ⇒ nhánh task tạo từ main cũ xung đột khi assign (K1-03, 04/11). Dùng `git pull --no-rebase` (hoặc `--rebase=merges`).
+- PowerShell 5.1 dưới `ErrorActionPreference = Stop`: thêm `2>$null` vào lệnh native vẫn ném lỗi khi lệnh in ra stderr (vd. cảnh báo CRLF của git). Phải tạm đặt `'Continue'` rồi trả lại; luôn THỬ THẬT hành vi PowerShell trước khi ghi vào thiết kế (K1-03 vòng 1).
