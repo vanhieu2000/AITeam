@@ -17,7 +17,7 @@ public class AcceptanceV808AutoCommitTests
             $tokens=$null; $errors=$null
             $ast=[Management.Automation.Language.Parser]::ParseFile('__SOURCE__',[ref]$tokens,[ref]$errors)
             if ($errors.Count) { throw 'Không phân tích được team.ps1' }
-            $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in @('Invoke-Merge','Set-BoardStatus','Test-HasBom','Get-TaskId')},$false) | ForEach-Object { . ([scriptblock]::Create($_.Extent.Text)) }
+            $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in @('Invoke-Merge','Set-BoardStatus','Get-BoardInsertIndex','Test-HasBom','Get-TaskId')},$false) | ForEach-Object { . ([scriptblock]::Create($_.Extent.Text)) }
             function Invoke-RepoTransaction { param($RepoPath,$Action) & $Action }
             function Find-TaskFile { param($r,$taskId) Get-Item (Join-Path $r.Path 'tasks/V8-08.md') }
             function Say { param($text,$color) Write-Output $text }

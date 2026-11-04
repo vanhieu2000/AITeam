@@ -2615,6 +2615,28 @@ function Get-BoardClaim($r, [string]$taskId) {
 
 # Đổi ô cuối (trạng thái) của dòng task trên bảng việc, commit riêng file bảng việc và push lên main.
 # Khi có $Journal: cấp lượt và ghi nhật ký trước; chỉ commit bảng việc + phiếu của task trong cùng khóa repo.
+# Chỗ chèn dòng task mới: ngay sau dòng cuối của BẢNG VIỆC (bảng đầu tiên có cột Task + dòng kẻ), đọc qua dòng trống;
+# KHÔNG phải sau dòng "|" cuối cùng của file (R-015 04/11: 5 task F1-0x bị chèn vào bảng O-02 ở mục "Kế hoạch" ⇒ Hub không thấy).
+# Không có bảng việc ⇒ cuối file.
+function Get-BoardInsertIndex([string[]]$lines) {
+    for ($h = 0; $h -lt $lines.Count - 1; $h++) {
+        $head = $lines[$h].Trim()
+        if (-not $head.StartsWith('|')) { continue }
+        $cols = @($head.Trim('|') -split '\|' | ForEach-Object { $_.Trim() })
+        if (-not ($cols -contains 'Task')) { continue }
+        if ($lines[$h + 1].Trim() -notmatch '^\|[\s:|-]*-[\s:|-]*$') { continue }
+        $last = $h + 1
+        for ($i = $h + 2; $i -lt $lines.Count; $i++) {
+            $t = $lines[$i].Trim()
+            if ($t.Length -eq 0) { continue }
+            if (-not $t.StartsWith('|')) { break }
+            $last = $i
+        }
+        return $last + 1
+    }
+    return $lines.Count
+}
+
 function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journal = $null) {
     Invoke-RepoTransaction -RepoPath $r.Path -Action {
         $ErrorActionPreference = "Stop"
@@ -2650,8 +2672,7 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
                 $taskTitle = ($taskTitle -replace ('^' + [regex]::Escape($taskId) + '\b\s*'), '').Trim()
                 $agentId = [regex]::Match($reqText, '\*\*Agent:\*\*\s*(\S+)').Groups[1].Value
                 $taskBranch = [regex]::Match($reqText, '\*\*Nhánh:\*\*\s*`([^`]+)`').Groups[1].Value
-                $idx = 0
-                for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\|') { $idx = $i + 1 } }
+                $idx = Get-BoardInsertIndex $lines
                 $list = New-Object 'System.Collections.Generic.List[string]'
                 $list.AddRange([string[]]$lines)
                 $list.Insert($idx, ('| [{0} {1}]({2}) | {3} | `{4}` | {5} |' -f $taskId, $taskTitle, $journalTask, $agentId, $taskBranch, $status))

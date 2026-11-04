@@ -4,6 +4,7 @@
 @using AITeam.Hub.Models
 @inject WorkOverviewService WorkOverview
 @inject IApprovalService Approvals
+@inject IRequestProgressService ReqProgress
 @{
     ViewData["Title"] = "Văn phòng";
     // R-014 (Claude): trang chủ là bảng điều khiển. Khung giao việc + nghiên cứu theo phiếu chỉ hiện khi mở từ nút chat nổi (?embed=1).
@@ -65,7 +66,12 @@
     var doneToday = work.Tasks.Count(t => t.Status == OfficeTaskStatus.Merged && t.MergedAt?.Date == today);
     var stuck = work.Tasks.Count(t => t.Status is OfficeTaskStatus.NeedsFix or OfficeTaskStatus.Blocked);
     var ownerPending = Approvals.GetAll().Where(a => a.Status == ApprovalStatus.Pending && a.Kind != ApprovalKind.Merge && a.Kind != ApprovalKind.Improvement).ToList();
-    var openRequests = Model.Threads.Where(t => t.Status.Contains("🟡") || t.Status.Contains("Đang", StringComparison.OrdinalIgnoreCase)).Take(6).ToList();
+    // R-015: tiến độ phiếu theo dòng "Yêu cầu: R-xxx" trong file task (F1-02), không còn "0/0".
+    IReadOnlyDictionary<string, RequestProgress> progress;
+    try { progress = ReqProgress.GetAll().ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase); }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { progress = new Dictionary<string, RequestProgress>(); }
+    var openRequests = Model.Threads.Where(t => progress.TryGetValue(t.Id, out var p) ? p.State == RequestState.Open
+        : t.Status.Contains("🟡") || t.Status.Contains("Đang", StringComparison.OrdinalIgnoreCase)).Take(8).ToList();
     var events = work.Tasks
         .Select(t => new { Card = t, At = t.MergedAt.HasValue ? new DateTimeOffset(t.MergedAt.Value) : t.UpdatedAt })
         .Where(x => x.At.HasValue && x.Card.Status != OfficeTaskStatus.Cancelled)
@@ -124,7 +130,7 @@
             }
         </section>
             <section class="panel office-reqs" aria-labelledby="req-h">
-                <div class="hd"><span id="req-h">Yêu cầu đang mở</span><span class="muted num">@openRequests.Count</span><span class="sp"></span><a class="btn sm ghost" href="/Tracking?view=list">Tất cả</a></div>
+                <div class="hd"><span id="req-h">Yêu cầu đang mở</span><span class="muted num">@openRequests.Count</span><span class="sp"></span><a class="btn sm ghost" href="/Requests">Tất cả</a></div>
                 <div class="bd office-scroll">
                 @if (openRequests.Count == 0)
                 {
@@ -135,13 +141,12 @@
                     <ul class="office-req-list">
                     @foreach (var r in openRequests)
                     {
-                        var codes = r.Tasks.Select(t => t.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                        var cards = work.Tasks.Where(c => codes.Contains(HubMetricReader.TaskCode(c.Task.Id))).ToList();
-                        var total = Math.Max(codes.Count, cards.Count);
-                        var merged = cards.Count(c => c.Status == OfficeTaskStatus.Merged);
+                        progress.TryGetValue(r.Id, out var rp);
+                        var total = rp?.Total ?? 0;
+                        var merged = rp?.Merged ?? 0;
                         var pct = total == 0 ? 0 : (int)Math.Round(100.0 * merged / total);
                         <li>
-                            <a class="office-req-title" href="@Url.Page("/Request", new { id = r.Id })" title="@r.Title"><b>@r.Id</b> @r.Title</a>
+                            <a class="office-req-title" href="/Requests?id=@r.Id" title="@r.Title"><b>@r.Id</b> @r.Title</a>
                             <div class="office-req-meter"><div class="meter" role="img" aria-label="@merged trên @total task đã xong"><i style="width:@(pct)%"></i></div><span class="num muted">@merged/@total</span></div>
                         </li>
                     }

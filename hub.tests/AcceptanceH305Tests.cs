@@ -227,10 +227,11 @@ public sealed class AcceptanceH305Tests : IDisposable
         Assert.Contains("asp-page-handler=\"Send\"", req);
         Assert.Contains("@Html.AntiForgeryToken()", req);
         Assert.Contains("maxlength=\"4000\"", req);
-        Assert.Contains("?id=", req);
-        Assert.Contains("msg me", req);
-        Assert.Contains("msg bot", req);
-        Assert.Contains("white-space: pre-wrap", req);
+        Assert.Contains("id=", req);
+        // R-015 (Claude): bố cục danh sách | chi tiết thay luồng chat; lời nguyên văn trong thẻ .pg-verb (pre-wrap ở pages.css).
+        Assert.Contains("pg-verb", req);
+        Assert.Contains("asp-page-handler=\"State\"", req);
+        Assert.Contains("white-space: pre-wrap", Source(Path.Combine("hub", "wwwroot", "css", "pages.css")));
         Assert.Contains("Chưa có phiếu yêu cầu nào", req);
         Assert.DoesNotContain("Html.Raw", req);
 

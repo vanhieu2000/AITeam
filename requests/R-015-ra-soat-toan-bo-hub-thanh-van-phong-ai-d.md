@@ -62,6 +62,11 @@ Sự kiện cần ghi:
 - 2026-11-04 20:48:43 +05:30 | F1-02 | Verify | lượt 1 | ĐẠT <!-- workflow:F1-02:Verify:1 -->
 | 20:49 04/11/2026 | Cờ tự động AITeam/F1-02 lượt 1 | TO |
 - 2026-11-04 20:49:11 +05:30 | F1-02 | Assign | lượt 1 | ĐẠT <!-- workflow:F1-02:Assign:1 -->
+- 2026-11-04 21:23:46 +05:30 | F1-01 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-01:Verify:1 -->
+| 21:23 04/11/2026 | Cờ tự động AITeam/F1-01 lượt 1 | TO |
+- 2026-11-04 21:24:01 +05:30 | F1-01 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-01:Assign:1 -->
+- 2026-11-04 21:27:11 +05:30 | F1-03 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-03:Verify:1 -->
+- 2026-11-04 21:27:30 +05:30 | F1-03 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-03:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-015`, rồi điền:
 

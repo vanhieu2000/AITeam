@@ -1,119 +1,199 @@
 ﻿@page "/Requests"
 @model AITeam.Hub.Pages.RequestsModel
 @using AITeam.Hub.Pages
-@{ ViewData["Title"] = "Giao việc"; }
-<style>
-    .chat { display: flex; flex-direction: column; gap: 10px; max-height: 520px; overflow-y: auto; }
-    .msg { max-width: 78%; padding: 9px 12px; border-radius: 10px; overflow-wrap: anywhere; font-size: 13px; }
-    .msg.me { align-self: flex-end; background: var(--accent); color: #fff; }
-        .msg.me .verbatim { white-space: pre-wrap; }
-    .msg.bot { align-self: flex-start; background: var(--s2, #f1f3f6); color: var(--ink, #111); }
-    .req-item { display: block; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; text-decoration: none; color: inherit; }
-    .req-item.on { border-color: var(--accent); }
-    .req-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-</style>
+@using AITeam.Hub.Services
+@{
+    // R-015 (Claude): danh sách phiếu | chi tiết. Mockup docs/design/R-015-mockup.html màn "Yêu cầu".
+    ViewData["Title"] = "Yêu cầu";
+    var sel = Model.Selected;
+    RequestProgress? prog = null;
+    if (sel != null) Model.Progress.TryGetValue(sel.Id, out prog);
+    var selState = sel == null ? RequestState.Open : Model.StateOf(sel);
+    (string Css, string Text) StatePill(RequestState s) => s switch
+    {
+        RequestState.Done => ("ok", "Xong"),
+        RequestState.Cancelled => ("n", "Hủy"),
+        _ => ("run", "Đang làm"),
+    };
+    string Pill(OfficeTaskStatus s) => s switch
+    {
+        OfficeTaskStatus.Running or OfficeTaskStatus.Gate => "run",
+        OfficeTaskStatus.Review => "rev",
+        OfficeTaskStatus.NeedsFix or OfficeTaskStatus.Blocked => "fix",
+        OfficeTaskStatus.Merged => "ok",
+        _ => "n"
+    };
+    string ListUrl(string? id, string? f) => "?" + string.Join("&", new[] { id == null ? null : "id=" + Uri.EscapeDataString(id), f == null || f == "open" ? null : "f=" + f }.Where(x => x != null));
+    // Bước tiến độ: Tiếp nhận · Thiết kế · AI làm · Review · Xong
+    int step = 0;
+    if (sel != null)
+    {
+        step = selState == RequestState.Done ? 5
+            : prog == null || prog.Total == 0 ? (sel.Events.Count > 1 ? 2 : 1)
+            : prog.AllMerged ? 4
+            : prog.Review > 0 && prog.Running == 0 ? 4 : 3;
+    }
+    string[] steps = ["Tiếp nhận", "Thiết kế", "AI làm", "Review", "Xong"];
+}
+<link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
 
+@section Actions {
+    <a class="btn sm ghost" href="/Reports/Lessons">Xem lại &amp; bài học</a>
+}
+
+<div class="pg-fit">
 @if (!string.IsNullOrEmpty(Model.Message))
 {
-    <div class="panel" style="border-color: var(--ok); background: rgba(34, 197, 94, 0.08); padding: 10px 14px; margin-bottom: 12px; color: var(--ok);">@Model.Message</div>
+    <p class="pg-msg ok" role="status">@Model.Message</p>
 }
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
-    <div class="panel" style="border-color: var(--err); background: rgba(239, 68, 68, 0.08); padding: 10px 14px; margin-bottom: 12px; color: var(--err);">@Model.ErrorMessage</div>
+    <p class="pg-msg err" role="alert">@Model.ErrorMessage</p>
 }
 
-<p class="muted" style="margin: 0 0 12px;">Yêu cầu mới vào hàng chờ; Claude nhận ở đầu phiên làm việc, mở phiếu R-xxx và trả lời trong luồng này. Không có AI trả lời tức thì.</p>
-
-<div style="display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 14px; align-items: start;">
-    <div class="panel">
-        <div class="hd">Phiếu yêu cầu</div>
-        <div class="bd" style="max-height: 640px; overflow-y: auto;">
-            @if (Model.Waiting.Count > 0)
-            {
-                <div class="muted" style="font-size: 12px; font-weight: 600; margin-bottom: 6px;">Chờ Claude nhận</div>
+<div class="pg-split">
+    <section class="panel" aria-labelledby="rq-list-h">
+        <div class="hd"><span id="rq-list-h">Yêu cầu</span><span class="muted num">@Model.Threads.Count</span></div>
+        <details class="pg-pop" id="rq-new">
+            <summary class="pg-filter"><span class="btn sm cta" role="button">+ Yêu cầu mới</span><span class="muted" style="font-size:12px">Claude nhận đầu phiên làm việc</span></summary>
+            <form method="post" asp-page-handler="Send" class="pg-form">
+                @Html.AntiForgeryToken()
+                <label for="rq-project">Dự án</label>
+                <select id="rq-project" class="inp" name="project">
+                    @foreach (var p in Model.Projects) { <option value="@p.Name">@p.Name</option> }
+                    <option value="@RequestsModel.NewProject">@RequestsModel.NewProject</option>
+                </select>
+                <label for="rq-text">Nội dung</label>
+                <textarea id="rq-text" class="inp" name="text" rows="4" maxlength="4000" placeholder="Viết yêu cầu mới…"></textarea>
+                <div class="pg-row"><button type="button" class="btn sm ghost" onclick="this.closest('details').open=false">Đóng</button><button type="submit" class="btn sm pri">Gửi</button></div>
+            </form>
+        </details>
+        <nav class="pg-filter" aria-label="Lọc theo trạng thái">
+            <div class="seg">
+                @foreach (var (key, label) in RequestsModel.Filters)
+                {
+                    <a class="@(Model.Filter == key ? "on" : "")" href="@ListUrl(null, key)" aria-current="@(Model.Filter == key ? "page" : null)">@label <span class="num">@Model.CountIn(key)</span></a>
+                }
+            </div>
+        </nav>
+        <div class="pg-scroll">
+            <ul class="pg-list">
                 @foreach (var w in Model.Waiting)
                 {
-                    <div class="req-item">
-                        <div style="font-size: 12px; margin-bottom: 4px;"><span class="pill run">Chờ nhận</span> · @w.Project · @(w.Time?.ToString("HH:mm dd/MM") ?? "—")</div>
-                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px;">@w.Text</div>
-                    </div>
+                    <li><div class="pg-item s-warn">
+                        <span class="pg-l1"><b title="@w.Text">@w.Text</b><span class="pill fix">Chờ nhận</span></span>
+                        <span class="pg-l2"><span>@w.Project</span><span>@(w.Time?.ToString("HH:mm dd/MM") ?? "—")</span></span>
+                    </div></li>
                 }
-            }
+                @foreach (var t in Model.Visible)
+                {
+                    var st = StatePill(Model.StateOf(t));
+                    Model.Progress.TryGetValue(t.Id, out var p);
+                    <li><a class="@(sel?.Id == t.Id ? "on" : "") s-@(st.Css == "run" ? "run" : st.Css == "ok" ? "ok" : "off")" href="@ListUrl(t.Id, Model.Filter)" title="@t.Id · @t.Title">
+                        <span class="pg-l1"><b>@t.Id @t.Title</b><span class="pill @st.Css">@st.Text</span></span>
+                        <span class="pg-l2"><span>nhận @(string.IsNullOrEmpty(t.ReceivedAt) ? "—" : t.ReceivedAt.Split('·')[0].Trim())</span><span class="num">@(p == null ? "—" : $"{p.Merged}/{p.Total} task")</span></span>
+                    </a></li>
+                }
+            </ul>
             @if (Model.Threads.Count == 0)
             {
-                <div class="empty">Chưa có phiếu yêu cầu nào.</div>
+                <p class="pg-empty">Chưa có phiếu yêu cầu nào.</p>
             }
-            else
+            else if (Model.Visible.Count == 0)
             {
-                @foreach (var t in Model.Threads)
-                {
-                    <a href="?id=@t.Id" class="req-item @(Model.Selected?.Id == t.Id ? "on" : "")">
-                        <div class="req-title"><b>@t.Id</b> @t.Title</div>
-                        <div class="muted" style="font-size: 12px; margin-top: 4px;">@t.Status · @t.Tasks.Count task</div>
-                    </a>
-                }
+                <p class="pg-empty">Không có phiếu ở mục này.</p>
             }
         </div>
-    </div>
+    </section>
 
-    <div style="min-width: 0; display: flex; flex-direction: column; gap: 14px;">
-        @if(Model.Selected!=null){<p><a class="btn" href="@Url.Page("/Request",new{id=Model.Selected.Id})">Mở chi tiết yêu cầu</a></p>}
-        @if (Model.Selected != null)
-        {
-            <div class="panel">
-                <div class="hd"><span>@Model.Selected.Id · @Model.Selected.Title</span><span class="sp"></span><span>@Model.Selected.Status</span></div>
-                <div class="bd">
-                    <div class="chat">
-                        <div class="msg me">
-                            <div class="verbatim">@(string.IsNullOrEmpty(Model.Selected.Verbatim) ? "(phiếu không chép lời nguyên văn)" : Model.Selected.Verbatim)</div>
-                            <div style="font-size: 11px; opacity: 0.85; margin-top: 4px;">Anh · @Model.Selected.ReceivedAt</div>
-                        </div>
-                        @foreach (var e in Model.Selected.Events)
-                        {
-                            <div class="msg bot">
-                                <div style="font-size: 11px; margin-bottom: 2px;"><b>Claude</b> · @e.Time</div>
-                                <div>@e.Text</div>
-                                @if (!string.IsNullOrEmpty(e.Note)) { <div class="muted" style="font-size: 12px; margin-top: 2px;">@e.Note</div> }
-                            </div>
-                        }
-                        @if (Model.Selected.Tasks.Count > 0)
-                        {
-                            <div class="msg bot">
-                                <div style="margin-bottom: 6px;">Chia việc:</div>
-                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                    @foreach (var tk in Model.Selected.Tasks)
-                                    {
-                                        var label = string.IsNullOrEmpty(tk.Code) ? tk.Title : $"{tk.Code} · {tk.Who}";
-                                        if (!string.IsNullOrEmpty(tk.Code) && !string.IsNullOrEmpty(tk.Project) && !tk.Code.Contains('/'))
-                                        { <a class="tag" href="/p/@tk.Project/t/@tk.Code">@label</a> }
-                                        else { <span class="tag">@label</span> }
-                                    }
-                                </div>
-                            </div>
-                        }
-                        @if (Model.Selected.Evaluated)
-                        {
-                            <div class="msg bot">Đã đánh giá xong yêu cầu (mục 4 trong @Model.Selected.FileName).</div>
-                        }
-                    </div>
+    @if (sel == null)
+    {
+        <section class="panel"><p class="pg-empty">Chọn một phiếu bên trái, hoặc bấm “+ Yêu cầu mới”.</p></section>
+    }
+    else
+    {
+        var st = StatePill(selState);
+        <div class="pg-detail">
+            <section class="panel pg-head" aria-label="Phiếu đang xem">
+                <h2 title="@sel.Id · @sel.Title">@sel.Id · @sel.Title</h2>
+                <span class="pill @st.Css">@st.Text</span>
+                <div class="pg-acts">
+                    <a class="btn sm" href="@Url.Page("/RequestReview", new { id = sel.Id })">Xem lại từng bước</a>
+                    <a class="btn sm ghost" href="@Url.Page("/Request", new { id = sel.Id })">Chi tiết</a>
+                    @if (selState == RequestState.Open)
+                    {
+                        <form method="post" asp-page-handler="State" onsubmit="return confirm('Đánh dấu @sel.Id đã xong?')">
+                            <input type="hidden" name="id" value="@sel.Id" /><input type="hidden" name="state" value="done" />
+                            <button type="submit" class="btn sm @(prog?.AllMerged == true ? "pri" : "")" title="@(prog?.AllMerged == true ? "Mọi task đã merge" : "Còn task chưa merge")">Đánh dấu xong</button>
+                        </form>
+                        <form method="post" asp-page-handler="State" onsubmit="var n=prompt('Lý do hủy @sel.Id (có thể bỏ trống):',''); if(n===null) return false; this.note.value=n; return true;">
+                            <input type="hidden" name="id" value="@sel.Id" /><input type="hidden" name="state" value="cancel" /><input type="hidden" name="note" value="" />
+                            <button type="submit" class="btn sm ghost">Hủy phiếu</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-page-handler="State" onsubmit="return confirm('Mở lại @sel.Id?')">
+                            <input type="hidden" name="id" value="@sel.Id" /><input type="hidden" name="state" value="open" />
+                            <button type="submit" class="btn sm ghost">Mở lại</button>
+                        </form>
+                    }
                 </div>
-            </div>
-        }
+                <span class="pg-sub">@(string.IsNullOrEmpty(sel.ReceivedAt) ? "" : "Nhận " + sel.ReceivedAt + " · ")@(prog == null ? sel.Status : $"{prog.Merged}/{prog.Total} task đã merge · {prog.Running} đang chạy · {prog.Review} chờ review · {prog.NeedsFix} cần sửa")</span>
+            </section>
 
-        <div class="panel">
-            <div class="bd">
-                <form method="post" asp-page-handler="Send" style="display: flex; flex-direction: column; gap: 8px;">
-                    @Html.AntiForgeryToken()
-                    <div>
-                        <select class="inp" name="project">
-                            @foreach (var p in Model.Projects) { <option value="@p.Name">@p.Name</option> }
-                            <option value="@RequestsModel.NewProject">@RequestsModel.NewProject</option>
-                        </select>
+            <div class="pg-cards">
+                <section class="panel" aria-labelledby="rq-ask-h">
+                    <div class="hd"><span id="rq-ask-h">Anh yêu cầu</span></div>
+                    <div class="pg-scroll">
+                        <div class="pg-steps" role="list" aria-label="Tiến độ">
+                            @for (var i = 0; i < steps.Length; i++)
+                            {
+                                <div role="listitem" class="@(i + 1 < step || (step == 5 && i == 4) ? "done" : i + 1 == step ? "cur" : "")">@steps[i]</div>
+                            }
+                        </div>
+                        <p class="pg-verb">@(string.IsNullOrEmpty(sel.Verbatim) ? "(phiếu không chép lời nguyên văn)" : sel.Verbatim)</p>
+                        @if (prog == null || prog.Tasks.Count == 0)
+                        {
+                            <p class="pg-empty">Chưa có task gắn với phiếu này (task gắn bằng dòng “Yêu cầu: @sel.Id” trong file task).</p>
+                        }
+                        else
+                        {
+                            <table class="pg-table">
+                                <colgroup><col /><col class="w-s" /><col class="w-s" /></colgroup>
+                                <thead><tr><th scope="col">Task</th><th scope="col">Dự án</th><th scope="col">Trạng thái</th></tr></thead>
+                                <tbody>
+                                @foreach (var tk in prog.Tasks)
+                                {
+                                    <tr>
+                                        <td class="pg-wrap"><a href="/p/@Uri.EscapeDataString(tk.Project)/t/@Uri.EscapeDataString(tk.Code)"><b>@tk.Code</b></a> @tk.Title</td>
+                                        <td>@tk.Project</td>
+                                        <td><span class="pill @Pill(tk.Status)">@WorkOverviewService.Label(tk.Status)</span></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        }
                     </div>
-                    <textarea class="inp" name="text" rows="3" maxlength="4000" placeholder="Viết yêu cầu mới…" style="width: 100%; box-sizing: border-box;"></textarea>
-                    <div style="display: flex; justify-content: flex-end;"><button type="submit" class="btn pri">Gửi</button></div>
-                </form>
+                </section>
+
+                <section class="panel" aria-labelledby="rq-log-h">
+                    <div class="hd"><span id="rq-log-h">Nhật ký</span><span class="muted num">@sel.Events.Count</span></div>
+                    <div class="pg-scroll">
+                        @if (sel.Events.Count == 0)
+                        {
+                            <p class="pg-empty">Chưa có dòng nhật ký.</p>
+                        }
+                        <ul class="pg-tl">
+                            @foreach (var e in sel.Events.Reverse())
+                            {
+                                <li title="@e.Text @e.Note"><time class="num">@e.Time</time><span class="pg-t">@e.Text@if (!string.IsNullOrEmpty(e.Note)) {<small>@e.Note</small>}</span></li>
+                            }
+                        </ul>
+                    </div>
+                </section>
             </div>
         </div>
-    </div>
+    }
+</div>
 </div>
