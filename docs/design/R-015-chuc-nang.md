@@ -106,5 +106,18 @@ public static class LessonImporter
 - Import: bỏ qua bài đã có (so Title đã chuẩn hóa: bỏ khoảng trắng thừa, không phân biệt hoa thường với mọi bài học hiện có, mọi trạng thái); còn lại `AddDraft(title, body + "\n\nNguồn: " + source, "meo", null, null, null, null)`. Body > 4000 ⇒ cắt 4000. Chạy 2 lần ⇒ lần 2 Added = 0.
 - Lệnh `team.ps1 lessons-import` gọi `aiteam lessons-import` (hoặc tương đương trong CLI hiện có) cho `CLAUDE.md`, `AGENTS.md` của AITeam; in "Đã thêm N, bỏ qua M".
 
-## F1-03 · Đội AI
-Bổ sung sau khi Claude đọc xong `AiServices` / `AiAccounts` (thiết kế riêng mục này, giao Antigravity).
+## F1-03 · Đội AI: đăng nhập + hạn mức thật
+**Vấn đề (04/11, office.db thật):** mọi dòng "Đăng nhập chưa kiểm · Hạn mức chưa đo" vì nút Kiểm tra chỉ hiện thông báo, không lưu (`ai_account` trống); `ai_quota` trống vì `team.ps1` phát hiện hết hạn mức nhưng không ghi vào danh bạ; Antigravity hiện 2 lần (`agy` bật, `antigravity` tắt cùng tên).
+
+**Hợp đồng** — `hub/Services/AiTeamStatusService.cs` (khung) + CLI `quota-record`:
+```csharp
+public sealed record AiMemberStatus(string Id, string Name, bool Enabled, IReadOnlyList<AiRole> Roles, IReadOnlyList<string> Models,
+    string LoginState, DateTimeOffset? CheckedAt, string? Detail,
+    double? RemainingPct, DateTimeOffset? RestUntil, string? QuotaSource, DateTimeOffset? QuotaObservedAt);
+public interface IAiTeamStatusService { IReadOnlyList<AiMemberStatus> List(); Task<AiMemberStatus?> CheckAsync(string id, CancellationToken ct); }
+```
+- **List:** `registry.List(includeDisabled: true)`; BỎ dịch vụ tắt có Name trùng (không phân biệt hoa thường) một dịch vụ đang bật; sắp: bật trước, rồi Name, rồi Id. Đăng nhập = tài khoản `<id>:default` (hoặc tài khoản có CheckedAt mới nhất) của dịch vụ: LoginState / CheckedAt; chưa có ⇒ "unknown", null. Hạn mức = `LatestQuotas()` mới nhất của dịch vụ (theo ObservedAt); nếu RestUntil có và ≤ giờ hiện tại ⇒ coi như đã hồi: RemainingPct = null, RestUntil = null (giữ QuotaSource / QuotaObservedAt).
+- **CheckAsync:** id lạ / dịch vụ tắt ⇒ null, không tạo provider. Có ⇒ `factory.Create(service).CheckAsync(ct)`; ánh xạ: Installed=false ⇒ "not-installed"; LoggedIn true ⇒ "ok", false ⇒ "logged-out", null ⇒ "unknown"; ngoại lệ (trừ hủy bởi ct) ⇒ "error", Detail = message. LƯU bằng `registry.UpsertAccount(new AiAccount("<id>:default", id, "Mặc định", "local", state, now))`; Detail giữ trong bộ nhớ (không lưu). Trả `List()` dòng của id đó (Detail = kết quả vừa kiểm).
+- **CLI** `aiteam quota-record --db <office.db> --service <id> --remaining <0–100> [--rest-until <ISO 8601>] --source <chữ ≤100>`: mở `SqliteAiServiceRegistry(db, thư mục của db)`; dịch vụ không có ⇒ `LỖI: …`, mã 2; số / giờ sai ⇒ `LỖI: …`, mã 2; đúng ⇒ `RecordQuota(new AiQuota(service, null, remaining, restUntil, source, now))`, mã 0.
+- **team.ps1:** nơi `assign` báo hết hạn mức (`Test-QuotaExhausted` đúng) ⇒ gọi `aiteam quota-record --db "$env:USERPROFILE\.aiteam\hub\office.db" --service <codex|agy|opencode> --remaining 0 --source assign` (+ `--rest-until` nếu đọc được giờ hồi từ log). Lỗi khi ghi ⇒ chỉ `Write-Warning`, KHÔNG làm hỏng `assign`.
+- DI: `TryAddSingleton<IAiTeamStatusService, AiTeamStatusService>()`, `TimeProvider.System` nếu chưa có.
