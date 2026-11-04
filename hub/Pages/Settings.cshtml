@@ -31,12 +31,9 @@
         <!-- Menu con bên trái: Team · từng dự án -->
         <div class="subnav">
             <a class="nav @(isTeam ? "on" : "")" href="/Settings?tab=team">Team</a>
-            <div class="grp" style="padding-top: 8px;">Dự án</div>
-            @foreach (var proj in Model.Projects)
-            {
-                var isSelected = !isTeam && string.Equals(Model.Tab, proj.Name, StringComparison.OrdinalIgnoreCase);
-                <a class="nav @(isSelected ? "on" : "")" href="/Settings?tab=@proj.Name">@proj.Name</a>
-            }
+            @* R-015 (Claude): thông tin dự án chuyển sang trang Dự án (đường dẫn máy ghi team.local.json, không ghi projects.json). *@
+            <a class="nav" href="/Projects">Dự án →</a>
+            <a class="nav" href="/Secrets">Két bí mật →</a>
         </div>
 
         <!-- Cột phải: Mỗi lần chỉ hiện 1 form -->
@@ -94,45 +91,11 @@
         }
         else
         {
-            var proj = Model.CurrentProject!;
-            <!-- Form cấu hình Dự án -->
             <div class="panel">
-                <div class="hd">
-                    <span>@proj.Name</span>
-                    <span class="sp"></span>
-                    <span class="muted">projects.json · @proj.Repo</span>
-                </div>
+                <div class="hd"><span>Thông tin dự án đã chuyển</span></div>
                 <div class="bd">
-                    <form method="post" asp-page-handler="SaveProject">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="projectName" value="@proj.Name" />
-                        <div class="form2">
-                            <div class="field wide">
-                                <label>Công nghệ (Stack) <span class="info" title="Ngôn ngữ và framework chính của dự án">i</span></label>
-                                <input class="inp" type="text" name="stack" value="@proj.Stack" />
-                            </div>
-                            <div class="field">
-                                <label>Lệnh Build <span class="info" title="Lệnh build dự án, ví dụ dotnet build ...">i</span></label>
-                                <input class="inp mono" type="text" name="build" value="@proj.Build" placeholder="dotnet build ..." />
-                            </div>
-                            <div class="field">
-                                <label>Lệnh Test <span class="info" title="Lệnh chạy kiểm thử dự án, ví dụ dotnet test ...">i</span></label>
-                                <input class="inp mono" type="text" name="test" value="@proj.Test" placeholder="dotnet test ..." />
-                            </div>
-                            <div class="field">
-                                <label>Agent A — vùng phụ trách <span class="info" title="Các thư mục code phân công cho Agent A, ví dụ src/, tools/">i</span></label>
-                                <input class="inp" type="text" name="areaA" value="@(proj.Areas.TryGetValue("A", out var a) ? a : "")" placeholder="src/, tools/..." />
-                            </div>
-                            <div class="field">
-                                <label>Agent B — vùng phụ trách <span class="info" title="Các thư mục code phân công cho Agent B, ví dụ ui/, pages/">i</span></label>
-                                <input class="inp" type="text" name="areaB" value="@(proj.Areas.TryGetValue("B", out var b) ? b : "")" placeholder="ui/, pages/..." />
-                            </div>
-                        </div>
-                        <div class="actions">
-                            <a class="btn" href="/Settings?tab=@proj.Name">Hoàn tác</a>
-                            <button type="submit" class="btn pri">Lưu</button>
-                        </div>
-                    </form>
+                    <p>Lệnh build / test, vùng code, AI mặc định, trạng thái của từng dự án giờ sửa ở trang <a href="/Projects">Dự án</a>.</p>
+                    <a class="btn pri" href="/Projects">Mở trang Dự án</a>
                 </div>
             </div>
         }

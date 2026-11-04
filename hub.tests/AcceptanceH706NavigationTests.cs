@@ -216,7 +216,9 @@ public sealed class AcceptanceH706NavigationTests
         f.Projects = Enumerable.Range(0, count).Select(i => Project("DuAn" + i)).ToArray();
         var html = await f.RenderProjects();
         var main = Regex.Match(html, @"<main\b[\s\S]*?</main>").Value;
-        Assert.Equal(count, Regex.Matches(main, "href=\"/p/").Count);
+        // R-015 (Claude): danh sách | chi tiết — mỗi dự án 1 mục /Projects?name=…; chỉ dự án đang xem có nút Bảng việc /p/…
+        Assert.Equal(count, Regex.Matches(main, "href=\"/Projects\\?name=").Count);
+        Assert.Equal(Math.Min(count, 1), Regex.Matches(main, "href=\"/p/").Count);
         foreach (var p in f.Projects) Assert.Contains(p.Name, Text(main));
         Assert.Equal(count == 0, Text(main).Contains("Chưa có dự án.", StringComparison.Ordinal));
         Assert.Equal(1, f.ConfigReads);

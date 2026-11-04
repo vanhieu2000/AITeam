@@ -1,40 +1,212 @@
 ﻿@page
 @model AITeam.Hub.Pages.ProjectsModel
+@using AITeam.Hub.Pages
+@using AITeam.Hub.Services
 @{
+    // R-015 (Claude): danh sách | chi tiết. Mockup docs/design/R-015-mockup.html màn "Dự án".
     ViewData["Title"] = "Dự án";
-}
-
-<section class="screen on" id="s-projects" style="min-width: 0;">
-    <div class="row" style="margin-bottom: 16px; justify-content: space-between; align-items: center;">
-        <h2 style="margin: 0; font-size: 18px; font-weight: 600;">Dự án</h2>
-        <span class="muted" style="font-size: 13px;">@Model.Projects.Count dự án</span>
-    </div>
-
-    @if (Model.Projects.Count == 0)
+    var p = Model.Selected;
+    var editing = Model.Edit && Model.CanEdit && p != null;
+    string Pill(OfficeTaskStatus s) => s switch
     {
-        <div class="empty">Chưa có dự án.</div>
+        OfficeTaskStatus.Running or OfficeTaskStatus.Gate => "run",
+        OfficeTaskStatus.Review => "rev",
+        OfficeTaskStatus.NeedsFix or OfficeTaskStatus.Blocked => "fix",
+        OfficeTaskStatus.Merged => "ok",
+        _ => "n"
+    };
+    var open = Model.Tasks?.Where(t => t.Status is not (OfficeTaskStatus.Merged or OfficeTaskStatus.Cancelled)).ToList();
+    var recent = Model.Tasks?.Select(t => new { Card = t, At = t.MergedAt.HasValue ? new DateTimeOffset(t.MergedAt.Value) : t.UpdatedAt })
+        .Where(x => x.At.HasValue && x.Card.Status != OfficeTaskStatus.Cancelled).OrderByDescending(x => x.At).Take(20).ToList();
+    string Code(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v;
+}
+<link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+
+<div class="pg-fit">
+@if (!string.IsNullOrEmpty(Model.Message)) { <p class="pg-msg ok" role="status">@Model.Message</p> }
+@if (!string.IsNullOrEmpty(Model.ErrorMessage)) { <p class="pg-msg err" role="alert">@Model.ErrorMessage</p> }
+
+<div class="pg-split">
+    <section class="panel" aria-labelledby="pj-list-h">
+        <div class="hd"><span id="pj-list-h">Dự án</span><span class="muted num">@Model.All.Count</span></div>
+        @if (Model.CanEdit)
+        {
+            <details class="pg-pop" id="pj-new">
+                <summary class="pg-filter"><span class="btn sm cta" role="button">+ Thêm dự án</span></summary>
+                <form method="post" asp-page-handler="Add" class="pg-form">
+                    <label for="pj-name">Tên dự án <span class="muted">(chữ, số, . _ -)</span></label>
+                    <input id="pj-name" class="inp" name="newName" maxlength="64" pattern="[A-Za-z][A-Za-z0-9._\-]{0,63}" required />
+                    <fieldset style="border:0;padding:0;margin:0;display:grid;gap:4px">
+                        <legend class="muted" style="font-size:12px">Cách thêm</legend>
+                        <label class="chk"><input type="radio" name="mode" value="new" checked /> Dự án mới (tạo thư mục + kho GitHub private)</label>
+                        <label class="chk"><input type="radio" name="mode" value="github" /> Lấy từ GitHub</label>
+                        <label class="chk"><input type="radio" name="mode" value="folder" /> Thư mục có sẵn trên máy</label>
+                    </fieldset>
+                    <label for="pj-repo">Repo GitHub <span class="muted">(owner/tên — khi lấy từ GitHub)</span></label>
+                    <input id="pj-repo" class="inp" name="repo" maxlength="140" placeholder="vanhieu2000/TenDuAn" />
+                    <label for="pj-path">Thư mục <span class="muted">(khi dùng thư mục có sẵn)</span></label>
+                    <input id="pj-path" class="inp" name="path" maxlength="240" placeholder="D:\HIEUDV\TenDuAn" />
+                    <div class="pg-row"><button type="button" class="btn sm ghost" onclick="this.closest('details').open=false">Đóng</button><button class="btn sm pri" type="submit" onclick="this.textContent='Đang thêm…'">Thêm</button></div>
+                </form>
+            </details>
+        }
+        <nav class="pg-filter" aria-label="Lọc theo trạng thái">
+            <div class="seg">
+                @foreach (var (key, label) in ProjectsModel.Filters)
+                {
+                    <a class="@(Model.Filter == key ? "on" : "")" href="@Model.Link(f: key)" aria-current="@(Model.Filter == key ? "page" : null)">@label <span class="num">@Model.CountIn(key)</span></a>
+                }
+            </div>
+        </nav>
+        <div class="pg-scroll">
+            <ul class="pg-list">
+                @foreach (var x in Model.Visible)
+                {
+                    var st = ProjectsModel.StatusPill(x.Status);
+                    <li><a class="@(p?.Name == x.Name ? "on" : "") @(x.Status == ProjectStatus.Active ? "s-ok" : x.Status == ProjectStatus.Paused ? "s-warn" : "s-off")" href="@Model.Link(x.Name)" title="@x.Name">
+                        <span class="pg-l1"><b>@x.Name</b><span class="pill @st.Css">@st.Text</span></span>
+                        <span class="pg-l2"><span>@(string.IsNullOrEmpty(x.Repo) ? "chưa có repo" : x.Repo)</span>@if (!x.ExistsLocally) {<span>chưa có trên máy</span>}</span>
+                    </a></li>
+                }
+            </ul>
+            @if (Model.All.Count == 0)
+            {
+                <p class="pg-empty">Chưa có dự án.</p>
+            }
+            else if (Model.Visible.Count == 0)
+            {
+                <p class="pg-empty">Không có dự án ở mục này.</p>
+            }
+        </div>
+    </section>
+
+    @if (p == null)
+    {
+        <section class="panel"><p class="pg-empty">Chọn một dự án bên trái@(Model.CanEdit ? ", hoặc bấm “+ Thêm dự án”" : "").</p></section>
     }
     else
     {
-        <div class="grid projects-grid">
-            @foreach (var p in Model.Projects)
-            {
-                <div class="panel" style="display: flex; flex-direction: column; overflow-wrap: anywhere; min-width: 0;">
-                    <div class="hd project-heading">
-                        <a href="/p/@Uri.EscapeDataString(p.Name)" style="font-weight: 600; font-size: 15px; overflow-wrap: anywhere; word-break: break-word;">@p.Name</a>
-                        @if (!string.IsNullOrEmpty(p.Stack))
+        var st = ProjectsModel.StatusPill(p.Status);
+        <div class="pg-detail">
+            <section class="panel pg-head" aria-label="Dự án đang xem">
+                <h2 title="@p.Name">@p.Name</h2>
+                <span class="pill @st.Css">@st.Text</span>
+                <div class="pg-acts">
+                    <a class="btn sm pri" href="/p/@Uri.EscapeDataString(p.Name)">Bảng việc</a>
+                    <a class="btn sm ghost" href="/Tracking?project=@Uri.EscapeDataString(p.Name)">Theo dõi việc</a>
+                    @if (Model.CanEdit)
+                    {
+                        @if (p.Status != ProjectStatus.Active)
                         {
-                            <span class="pill" style="font-size: 11px;">@p.Stack</span>
+                            <form method="post" asp-page-handler="Status"><input type="hidden" name="name" value="@p.Name" /><input type="hidden" name="status" value="active" /><button class="btn sm" type="submit">Làm tiếp</button></form>
                         }
-                    </div>
-                    <div class="bd" style="flex: 1; font-size: 13px; color: var(--muted); overflow-wrap: anywhere;">
-                        @if (!string.IsNullOrEmpty(p.Repo))
+                        @if (p.Status == ProjectStatus.Active)
                         {
-                            <div style="margin-bottom: 4px;"><code>@p.Repo</code></div>
+                            <form method="post" asp-page-handler="Status" onsubmit="return confirm('Tạm dừng @p.Name? AI sẽ không được giao việc của dự án này.')"><input type="hidden" name="name" value="@p.Name" /><input type="hidden" name="status" value="paused" /><button class="btn sm ghost" type="submit">Tạm dừng</button></form>
                         }
-                    </div>
+                        @if (p.Status != ProjectStatus.Archived)
+                        {
+                            <form method="post" asp-page-handler="Status" onsubmit="return confirm('Lưu trữ @p.Name? Dự án ẩn khỏi giao việc; repo và file vẫn còn nguyên.')"><input type="hidden" name="name" value="@p.Name" /><input type="hidden" name="status" value="archived" /><button class="btn sm ghost" type="submit">Lưu trữ</button></form>
+                        }
+                    }
                 </div>
-            }
+                <span class="pg-sub">@(string.IsNullOrEmpty(p.Description) ? "Chưa có mô tả" : p.Description) · <span class="mono">@Code(p.Repo)</span> · nhánh <span class="mono">@p.Branch</span></span>
+            </section>
+
+            <div class="pg-cards">
+                <section class="panel" aria-labelledby="pj-info-h">
+                    <div class="hd"><span id="pj-info-h">Thông tin</span><span class="sp"></span>
+                        @if (Model.CanEdit && !editing) { <a class="btn sm" href="@Model.Link(p.Name, edit: true)">Sửa</a> }
+                    </div>
+                    <div class="pg-scroll">
+                        @if (editing)
+                        {
+                            <form method="post" asp-page-handler="Save">
+                                <input type="hidden" name="name" value="@p.Name" />
+                                <dl class="pg-kv">
+                                    <dt><label for="e-desc">Mô tả</label></dt><dd><input id="e-desc" class="inp" name="description" value="@p.Description" maxlength="200" /></dd>
+                                    <dt>Repo GitHub</dt><dd><span class="mono">@Code(p.Repo)</span> <span class="muted">(đổi bằng git)</span></dd>
+                                    <dt><label for="e-branch">Nhánh chính</label></dt><dd><input id="e-branch" class="inp" name="branch" value="@p.Branch" maxlength="100" required /></dd>
+                                    <dt><label for="e-path">Thư mục máy này</label></dt><dd><input id="e-path" class="inp" name="localPath" value="@p.LocalPath" maxlength="240" placeholder="để trống = giữ nguyên" /></dd>
+                                    <dt><label for="e-stack">Stack</label></dt><dd><input id="e-stack" class="inp" name="stack" value="@p.Stack" maxlength="300" /></dd>
+                                    <dt><label for="e-build">Lệnh build</label></dt><dd><input id="e-build" class="inp mono" name="build" value="@p.Build" maxlength="300" /></dd>
+                                    <dt><label for="e-test">Lệnh test</label></dt><dd><input id="e-test" class="inp mono" name="test" value="@p.Test" maxlength="300" /></dd>
+                                    <dt><label for="e-try">Chạy thử</label></dt><dd><input id="e-try" class="inp mono" name="tryCmd" value="@p.Try" maxlength="300" placeholder="CHAY-THU.cmd" /></dd>
+                                    <dt><label for="e-ai">AI mặc định</label></dt><dd><select id="e-ai" class="inp" name="defaultAi">@foreach (var (k, l) in ProjectsModel.AiChoices) { <option value="@k" selected="@(p.DefaultAi == k)">@l</option> }</select></dd>
+                                    <dt><label for="e-a">Vùng A</label></dt><dd><input id="e-a" class="inp" name="areaA" value="@(p.Areas.TryGetValue("A", out var a) ? a : "")" maxlength="300" /></dd>
+                                    <dt><label for="e-b">Vùng B</label></dt><dd><input id="e-b" class="inp" name="areaB" value="@(p.Areas.TryGetValue("B", out var b) ? b : "")" maxlength="300" /></dd>
+                                </dl>
+                                <div class="pg-row" style="display:flex;gap:6px;justify-content:flex-end;padding:0 14px 14px">
+                                    <a class="btn sm ghost" href="@Model.Link(p.Name)">Hủy</a><button class="btn sm pri" type="submit">Lưu</button>
+                                </div>
+                            </form>
+                        }
+                        else
+                        {
+                            <dl class="pg-kv">
+                                <dt>Mô tả</dt><dd>@(string.IsNullOrEmpty(p.Description) ? "—" : p.Description)</dd>
+                                <dt>Repo GitHub</dt><dd>@if (!string.IsNullOrEmpty(p.Repo)) { <a class="mono" href="https://github.com/@p.Repo" target="_blank" rel="noopener noreferrer">@p.Repo</a> } else { <span>—</span> }</dd>
+                                <dt>Nhánh chính</dt><dd class="mono">@p.Branch</dd>
+                                <dt>Thư mục máy này</dt><dd><span class="mono">@Code(p.LocalPath)</span> @if (p.ExistsLocally) { <span class="pill ok">có</span> } else { <span class="pill fix">chưa có</span> }</dd>
+                                <dt>Stack</dt><dd>@Code(p.Stack)</dd>
+                                <dt>Lệnh build</dt><dd class="mono">@Code(p.Build)</dd>
+                                <dt>Lệnh test</dt><dd class="mono">@Code(p.Test)</dd>
+                                <dt>Chạy thử</dt><dd class="mono">@Code(p.Try)</dd>
+                                <dt>AI mặc định</dt><dd>@(ProjectsModel.AiChoices.FirstOrDefault(x => x.Key == p.DefaultAi).Label ?? p.DefaultAi)</dd>
+                                @foreach (var kv in p.Areas.OrderBy(k => k.Key))
+                                {
+                                    <dt>Vùng @kv.Key</dt><dd>@kv.Value</dd>
+                                }
+                            </dl>
+                        }
+                    </div>
+                </section>
+
+                <div class="pg-stack">
+                    <section class="panel" aria-labelledby="pj-open-h">
+                        <div class="hd"><span id="pj-open-h">Việc &amp; yêu cầu đang mở</span></div>
+                        @if (open == null)
+                        {
+                            <p class="pg-empty">Chưa đọc được việc của dự án.</p>
+                        }
+                        else
+                        {
+                            <div class="pg-mini">
+                                <div><b class="num">@(Model.OpenRequests?.Count ?? 0)</b><span>yêu cầu mở</span></div>
+                                <div><b class="num">@open.Count(t => t.Status is OfficeTaskStatus.Running or OfficeTaskStatus.Gate)</b><span>đang chạy</span></div>
+                                <div><b class="num">@open.Count(t => t.Status == OfficeTaskStatus.Review)</b><span>chờ review</span></div>
+                                <div><b class="num">@open.Count(t => t.Status is OfficeTaskStatus.NeedsFix or OfficeTaskStatus.Blocked)</b><span>cần sửa</span></div>
+                            </div>
+                            <ul class="pg-tl">
+                                @foreach (var r in Model.OpenRequests ?? [])
+                                {
+                                    <li><span class="pill run">Đang làm</span><span class="pg-t"><a href="/Requests?id=@r.Id"><b>@r.Id</b></a></span><span class="num muted">@r.Merged/@r.Total</span></li>
+                                }
+                                @if ((Model.OpenRequests?.Count ?? 0) == 0) { <li class="muted">Không có yêu cầu đang mở.</li> }
+                            </ul>
+                        }
+                    </section>
+                    <section class="panel" aria-labelledby="pj-act-h">
+                        <div class="hd"><span id="pj-act-h">Hoạt động gần đây</span></div>
+                        <div class="pg-scroll">
+                            @if (recent == null || recent.Count == 0)
+                            {
+                                <p class="pg-empty">Chưa có hoạt động.</p>
+                            }
+                            else
+                            {
+                                <ul class="pg-tl">
+                                    @foreach (var e in recent)
+                                    {
+                                        <li title="@e.Card.Task.Title"><time class="num">@e.At!.Value.ToLocalTime().ToString("dd/MM HH:mm")</time><span class="pill @Pill(e.Card.Status)">@WorkOverviewService.Label(e.Card.Status)</span><span class="pg-t"><b>@HubMetricReader.TaskCode(e.Card.Task.Id)</b> @e.Card.Task.Title</span></li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
     }
-</section>
+</div>
+</div>
