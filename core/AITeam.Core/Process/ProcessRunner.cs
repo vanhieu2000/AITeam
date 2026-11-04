@@ -12,7 +12,9 @@ public sealed record ProcessSpec(
     TimeSpan Timeout,
     IReadOnlyDictionary<string, string>? Environment = null,
     // K1-02 (khung Claude): không có dòng stdout/stderr nào quá khoảng này ⇒ dừng cả cây tiến trình, Stalled = true. null = tắt.
-    TimeSpan? IdleTimeout = null);
+    TimeSpan? IdleTimeout = null,
+    // K1-04 (khung Claude): dòng stdout/stderr nào được tính là hoạt động (làm mới đồng hồ IdleTimeout). null = mọi dòng.
+    Func<string, bool>? IsActivity = null);
 
 /// <param name="Stalled">K1-02: bị dừng vì đứng im quá ProcessSpec.IdleTimeout (khác TimedOut = quá giờ cứng).</param>
 public sealed record ProcessResult(int ExitCode, string StdOut, string StdErr, TimeSpan Duration, bool TimedOut, bool Stalled = false);
@@ -51,16 +53,23 @@ public sealed class ProcessRunner : IProcessRunner
         var stdout = new StringBuilder();
         var stderr = new StringBuilder();
         long lastActivity = System.Environment.TickCount64;
+        void RecordActivity(string line)
+        {
+            bool active;
+            try { active = spec.IsActivity?.Invoke(line) ?? true; }
+            catch (Exception) { active = true; /* Bộ lọc lỗi không được làm gián đoạn việc đọc output. */ }
+            if (active) Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+        }
         p.OutputDataReceived += (_, e) =>
         {
             if (e.Data == null) return;
-            Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+            RecordActivity(e.Data);
             lock (stdout) stdout.AppendLine(e.Data);
         };
         p.ErrorDataReceived += (_, e) =>
         {
             if (e.Data == null) return;
-            Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+            RecordActivity(e.Data);
             lock (stderr) stderr.AppendLine(e.Data);
         };
         p.Start();

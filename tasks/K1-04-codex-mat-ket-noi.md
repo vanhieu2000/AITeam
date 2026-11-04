@@ -4,7 +4,8 @@
 - **Nhánh:** `agent-c/K1-04-codex-mat-ket-noi`
 - **Ưu tiên:** cao
 - **Ngân sách:** ~70 dòng
-- **Yêu cầu:** R-014 (hàng chờ sau review K1-02)
+- **Yêu cầu:** R-014
+- **Nguồn:** hàng chờ sau review K1-02
 - **Thời gian tối đa:** 25 phút
 - **Độ khó:** S
 - **Review AI:** không (Claude review)
@@ -67,6 +68,18 @@
 - [ ] Commit: `K1-04: Codex mất kết nối / đứng im 15 phút thì tự dừng, báo LỖI MẠNG`
 
 ## Báo cáo của agent
+
+| Tiêu chí | Bằng chứng thực tế |
+|---|---|
+| Build 0 warning | `dotnet build AITeam.sln -warnaserror -nodeReuse:false --no-restore -m:1`: thành công, 0 warning, 0 error, 42,47 giây. |
+| Build chuẩn | `dotnet build AITeam.sln -warnaserror -nodeReuse:false`: thất bại ở restore, mã 1, 0 warning/0 error; lần chẩn đoán cũng thất bại, chưa rõ nguyên nhân. |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: chưa có kết quả sau khi bắt đầu Hub.Tests; đã gửi Ctrl+C, lệnh dừng tiến trình bị sandbox chặn. Chưa xác minh toàn bộ xanh. |
+| K104/K102/O02/Codex | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~K104\|FullyQualifiedName~K102\|FullyQualifiedName~O02\|FullyQualifiedName~Codex" --blame-hang-timeout 2m`: 89 pass, 0 fail, 0 skip, 13 giây (dấu phân cách thực tế là ký tự pipe). |
+| BOM UTF-8 | Kiểm byte EF BB BF bằng PowerShell: ProcessRunner.cs, CodexProvider.cs, K104CodexExtraTests.cs, hai file nghiệm thu K104/K102 và team.ps1 đều có BOM. |
+| Commit/push | Không chạy git theo chỉ đạo; hệ thống tự commit/push, chưa có commit được kiểm. |
+- Giữ nguyên toàn bộ code và test; chỉ điền báo cáo trong file task, giữ BOM. Review (Claude) đang trống.
+- Quyết định: build tuần tự không restore để kiểm chứng khi restore song song thất bại; không chạy app/chụp ảnh.
+- Chưa chắc: toàn bộ test solution và nguyên nhân restore thất bại; không khẳng định đã hoàn thành mọi tiêu chí.
 
 ## Review (Claude)
 

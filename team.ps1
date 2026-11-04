@@ -1230,7 +1230,7 @@ function Get-AgentErrorText([string]$logText, [string]$errText) {
 
 function Test-NetworkError([string]$logText, [string]$errText) {
     if ($logText -match '"status"\s*:\s*"SUCCESS"') { return $false }
-    return (Get-AgentErrorText $logText $errText) -match '(?i)no such host|dial tcp|connection (refused|reset)|could not be made|deadline exceeded|Client\.Timeout|network is unreachable|TLS handshake timeout'
+    return (Get-AgentErrorText $logText $errText) -match '(?i)no such host|dial tcp|connection (refused|reset)|could not be made|deadline exceeded|Client\.Timeout|network is unreachable|TLS handshake timeout|mất kết nối tới máy chủ AI|Reconnecting|os error 10061|actively refused'
 }
 
 function Test-QuotaExhausted([string]$logText, [string]$errText) {
