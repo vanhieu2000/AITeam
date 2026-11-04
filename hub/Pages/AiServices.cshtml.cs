@@ -30,7 +30,7 @@ public sealed class AiServiceInput
 /// Xóa = tắt (giữ lịch sử số đo). Xuất / nhập .ini để chép sang máy kia (không chứa bí mật).
 /// </summary>
 [ValidateAntiForgeryToken]
-public sealed class AiServicesModel(IAiServiceRegistry registry, IAiProviderFactory factory, IChatAssistant assistant) : PageModel
+public sealed class AiServicesModel(IAiServiceRegistry registry, IAiProviderFactory factory, IChatAssistant assistant, IAiTeamStatusService? team = null) : PageModel
 {
     public const int MaxIniBytes = 256 * 1024;
 
@@ -39,6 +39,8 @@ public sealed class AiServicesModel(IAiServiceRegistry registry, IAiProviderFact
     public IReadOnlyList<AiService> Services { get; private set; } = [];
     public IReadOnlyDictionary<string, AiQuota> Quotas { get; private set; } = new Dictionary<string, AiQuota>();
     public IReadOnlyDictionary<string, IReadOnlyList<AiAccount>> AccountsByService { get; private set; } = new Dictionary<string, IReadOnlyList<AiAccount>>();
+    /// <summary>R-015 (F1-03): trạng thái đăng nhập / hạn mức đã lưu theo Id; ẩn dịch vụ tắt trùng tên.</summary>
+    public IReadOnlyDictionary<string, AiMemberStatus> Members { get; private set; } = new Dictionary<string, AiMemberStatus>();
     public AssistantSettings? Assistant { get; private set; }
     public IReadOnlyList<AssistantOption> AssistantOptions { get; private set; } = [];
     public AiServiceInput Form { get; private set; } = new();
@@ -68,6 +70,13 @@ public sealed class AiServicesModel(IAiServiceRegistry registry, IAiProviderFact
             Services = registry.List(includeDisabled: true).OrderByDescending(s => s.Enabled).ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase).ToList();
             Quotas = registry.LatestQuotas().GroupBy(q => q.ServiceId).ToDictionary(g => g.Key, g => g.OrderByDescending(q => q.ObservedAt).First());
             AccountsByService = registry.Accounts().GroupBy(a => a.ServiceId).ToDictionary(g => g.Key, g => (IReadOnlyList<AiAccount>)g.ToList());
+            if (team != null)
+            {
+                var members = team.List();
+                Members = members.ToDictionary(m => m.Id, StringComparer.OrdinalIgnoreCase);
+                var keep = members.Select(m => m.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                Services = Services.Where(s => keep.Contains(s.Id)).ToList();
+            }
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException)
         {
@@ -158,6 +167,15 @@ public sealed class AiServicesModel(IAiServiceRegistry registry, IAiProviderFact
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(HttpContext?.RequestAborted ?? CancellationToken.None);
             cts.CancelAfter(TimeSpan.FromSeconds(20));
+            if (team != null)
+            {
+                // R-015: kiểm qua F1-03 ⇒ kết quả được LƯU (trang hiện "đã kiểm lúc …" cả sau khi tải lại).
+                var m = await team.CheckAsync(service.Id, cts.Token);
+                var label = StateLabel(m?.LoginState);
+                var msg = $"{service.Name}: {label}.{(string.IsNullOrWhiteSpace(m?.Detail) ? "" : " " + m!.Detail)}";
+                if (m?.LoginState is "ok" or "unknown") Message = msg; else ErrorMessage = msg;
+                return RedirectToPage();
+            }
             var h = await factory.Create(service).CheckAsync(cts.Token);
             var login = h.LoggedIn switch { true => "đã đăng nhập", false => "chưa đăng nhập", null => "không rõ đăng nhập" };
             var text = $"{service.Name}: {(h.Installed ? "có cài" : "chưa cài")}, {login}.{(string.IsNullOrWhiteSpace(h.Detail) ? "" : " " + h.Detail)}";
@@ -295,4 +313,16 @@ public sealed class AiServicesModel(IAiServiceRegistry registry, IAiProviderFact
             return false;
         }
     }
+
+    /// <summary>LoginState (F1-03) ⇒ chữ hiển thị.</summary>
+    public static string StateLabel(string? state) => state switch
+    {
+        "ok" => "đã đăng nhập",
+        "logged-out" => "chưa đăng nhập",
+        "not-installed" => "chưa cài",
+        "error" => "kiểm tra lỗi",
+        _ => "chưa rõ đăng nhập",
+    };
+
+    public static string StatePill(string? state) => state switch { "ok" => "ok", "logged-out" or "not-installed" or "error" => "fix", _ => "n" };
 }

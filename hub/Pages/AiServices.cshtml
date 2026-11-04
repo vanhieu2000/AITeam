@@ -5,23 +5,38 @@
 @using AITeam.Hub.Services
 @{
     // R-014 UI-08 (Claude). Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.6 + 4.5b, mockup #ai + #settings.
-    ViewData["Title"] = "Tài khoản AI";
+    ViewData["Title"] = "Đội AI";
+    var now = DateTimeOffset.Now;
+    var members = Model.Members.Values.Where(m => m.Enabled).ToList();
+    var ready = members.Count(m => m.LoginState == "ok" && m.RestUntil is null);
+    var resting = members.Count(m => m.RestUntil is { } r && r > now);
+    var notChecked = members.Count(m => m.CheckedAt is null || m.CheckedAt < now.AddDays(-1));
     var f = Model.Form;
     string? SafeHref(string? url) => url != null && (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase)) ? url : null;
 }
+<link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/ai-services.css" asp-append-version="true" />
 
 @section Actions {
     <a class="btn sm" href="?handler=Export">Xuất .ini</a>
-    <a class="btn sm ghost" href="/AiAccounts">Đăng nhập &amp; hạn mức (trang cũ)</a>
+    <a class="btn sm ghost" href="/AiAccounts">Đổi tài khoản Antigravity</a>
 }
 
+@* R-015 (Claude): vừa khít màn hình — KPI, thẻ AI tự cuộn bên trái, form thêm / sửa + nâng cao bên phải. Đăng nhập / hạn mức đã lưu (F1-03). *@
+<div class="pg-fit ai-page">
+<div class="kpis office-kpis ai-kpis">
+    <div class="kpi ok"><span class="l">Sẵn sàng</span><span class="v num">@ready</span><span class="d muted">đã đăng nhập, còn hạn mức</span></div>
+    <div class="kpi @(resting > 0 ? "warn" : "")"><span class="l">Hết hạn mức</span><span class="v num">@resting</span><span class="d muted">@(resting > 0 ? "đang chờ hồi" : "không có")</span></div>
+    <div class="kpi"><span class="l">Chưa kiểm 24 giờ</span><span class="v num">@notChecked</span><span class="d muted">bấm "Kiểm tra" trên thẻ</span></div>
+    <div class="kpi run"><span class="l">Đang bật</span><span class="v num">@members.Count</span><span class="d muted">AI trong danh bạ máy này</span></div>
+</div>
 <p class="ai-sub">Danh bạ dịch vụ AI của máy này (SQLite <code>@Model.Location</code>). Thêm AI = thêm một dòng, không sửa code. Khóa API để trong <a href="/Secrets">két bí mật</a>; ở đây chỉ ghi <b>tên khóa</b>.</p>
 
 @if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert alert-success" role="status">@Model.Message</div> }
 @if (!string.IsNullOrEmpty(Model.ErrorMessage)) { <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div> }
 @if (Model.Error != null) { <div class="alert alert-danger" role="alert">@Model.Error <a href="/AiServices">Thử lại</a></div> }
 
+<div class="ai-cols">
 <section class="ai-grid" aria-label="Dịch vụ AI">
     @if (Model.Services.Count == 0 && Model.Error == null)
     {
@@ -47,29 +62,18 @@
                 <dt>Model</dt><dd>@(s.Models.Count == 0 ? "—" : string.Join(", ", s.Models))</dd>
                 <dt>Song song</dt><dd class="num">@s.MaxJobs việc</dd>
                 <dt>Chi phí</dt><dd>@(s.Paid ? "Trả phí" : "Miễn phí / gói có sẵn")</dd>
+                @{ Model.Members.TryGetValue(s.Id, out var mem); }
                 <dt>Đăng nhập</dt>
                 <dd>
-                    @if (accounts == null || accounts.Count == 0) { <span class="muted">chưa kiểm</span> }
-                    else
-                    {
-                        @foreach (var a in accounts)
-                        {
-                            <div>@a.Alias · @(a.LoginState ?? "chưa rõ") <span class="muted num">@a.CheckedAt?.ToLocalTime().ToString("HH:mm dd/MM")</span></div>
-                        }
-                    }
+                    @if (mem == null || mem.CheckedAt == null) { <span class="pill n">chưa kiểm</span> }
+                    else { <span class="pill @AiServicesModel.StatePill(mem.LoginState)">@AiServicesModel.StateLabel(mem.LoginState)</span> <span class="muted num">kiểm @mem.CheckedAt.Value.ToLocalTime().ToString("HH:mm dd/MM")</span> }
                 </dd>
                 <dt>Hạn mức</dt>
                 <dd>
-                    @if (q == null) { <span class="muted">chưa đo</span> }
-                    else
-                    {
-                        var pct = q.RemainingPct;
-                        <div class="ai-quota">
-                            <span class="num">@(pct is { } p ? p.ToString("0") + "% còn" : "không rõ %")</span>
-                            @if (pct is { } pp) { <span class="meter" aria-hidden="true"><i class="@(pp < 15 ? "low" : "")" style="width:@(Math.Clamp(pp, 0, 100).ToString("0"))%"></i></span> }
-                        </div>
-                        @if (q.RestUntil is { } rest && rest > DateTimeOffset.Now) { <div class="ai-rest">Hồi lúc <span class="num">@rest.ToLocalTime().ToString("HH:mm dd/MM")</span></div> }
-                    }
+                    @if (mem?.RestUntil is { } rest) { <span class="pill fix">Hết</span> <span class="ai-rest">hồi lúc <span class="num">@rest.ToLocalTime().ToString("HH:mm dd/MM")</span></span> }
+                    else if (mem?.RemainingPct is { } pp) { <span class="num">@pp.ToString("0")% còn</span> <span class="meter" aria-hidden="true"><i class="@(pp < 15 ? "low" : "")" style="width:@(Math.Clamp(pp, 0, 100).ToString("0"))%"></i></span> }
+                    else if (mem?.QuotaObservedAt is { } seen) { <span class="muted">đã hồi · lần hết gần nhất @seen.ToLocalTime().ToString("dd/MM")</span> }
+                    else { <span class="muted">chưa thấy báo hết</span> }
                 </dd>
                 @if (s.SecretKeyName != null) { <dt>Tên khóa</dt><dd><code>@s.SecretKeyName</code></dd> }
             </dl>
@@ -90,6 +94,7 @@
     }
 </section>
 
+<aside class="ai-side">
 <section class="panel ai-form-panel" id="form">
     <div class="hd">@(Model.IsEdit ? "Sửa dịch vụ " + f.Id : "Thêm dịch vụ AI") <span class="sp"></span>@if (Model.IsEdit) { <a class="btn sm ghost" href="/AiServices#form">Thêm mới thay vì sửa</a> }</div>
     <div class="bd">
@@ -193,6 +198,9 @@
         </form>
     </div>
 </section>
+</aside>
+</div>
+</div>
 
 <script>
     (function () {

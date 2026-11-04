@@ -97,7 +97,15 @@
 .trk-body { min-width: 0; }
 .trk-body .track-group { margin: 0 0 12px; }
 
+/* Đội AI */
+.ai-page .ai-kpis { margin: 0; }
+.ai-page .ai-sub { margin: 0; }
+.ai-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+.ai-side { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.ai-side .panel { margin: 0; }
+
 @media (min-width: 1100px) {
+  .ai-cols { grid-template-columns: minmax(0, 1fr) 400px; }
   .pg-split { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
   .pg-cards { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
 }
@@ -113,6 +121,10 @@
   .pg-stack { grid-template-rows: auto minmax(0, 1fr); }
   .pg-scroll { flex: 1; overflow: auto; }
   .trk-body { flex: 1; min-height: 0; overflow: auto; }
+  .ai-page .ai-sub { flex: none; }
+  .ai-cols { flex: 1; min-height: 0; }
+  .ai-cols > .ai-grid { overflow: auto; min-height: 0; align-content: start; }
+  .ai-cols > .ai-side { overflow: auto; min-height: 0; }
   /* Báo cáo: tổng quan = KPI + lưới 3 cột 2 hàng co giãn; biểu đồ SVG tự thu nhỏ trong thẻ */
   .rp .rp-filter, .rp .tabs { margin: 0; flex: none; }
   .rp .rp-warn { flex: none; margin: 0; }
