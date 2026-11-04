@@ -1,0 +1,102 @@
+﻿@page "/r/{id}/review"
+@model AITeam.Hub.Pages.RequestReviewModel
+@using AITeam.Hub.Pages
+@{
+    // R-014 UI-06 (Claude). Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.4 "Xem lại từng bước", mockup #review.
+    ViewData["Title"] = "Xem lại " + Model.Id;
+    var t = Model.Timeline;
+    double? totalMin = t != null && t.Steps.Any(s => s.Minutes.HasValue) ? t.Steps.Sum(s => s.Minutes ?? 0) : null;
+}
+<link rel="stylesheet" href="~/css/lessons.css" asp-append-version="true" />
+
+@section Actions {
+    <a class="btn sm" href="/Request?id=@Model.Id">Phiếu @Model.Id</a>
+    <a class="btn sm" href="/Reports/Lessons?request=@Model.Id">Bài học của phiếu</a>
+}
+
+@if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert alert-success" role="status">@Model.Message</div> }
+@if (!string.IsNullOrEmpty(Model.ErrorMessage)) { <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div> }
+
+@if (Model.Error != null)
+{
+    <div class="empty">@Model.Error <a href="/Requests">Danh sách yêu cầu</a></div>
+}
+else if (t != null)
+{
+    <header class="rv-head">
+        <h2>@t.RequestId · @t.Title</h2>
+        <div class="rv-sum">
+            <span><b class="num">@t.Steps.Count</b> bước</span>
+            <span>Tổng <b class="num">@(t.TotalHours is { } h ? h.ToString("0.#") + " giờ" : "chưa đo")</b></span>
+            <span>Phút AI <b class="num">@RequestReviewModel.Minutes(totalMin)</b></span>
+            <span>Lỗi phát sinh <b class="num">@t.Steps.Sum(s => s.Findings.Count)</b></span>
+        </div>
+    </header>
+
+    @if (t.Warnings.Count > 0)
+    {
+        <details class="rp-warn"><summary>@t.Warnings.Count cảnh báo khi đọc dữ liệu</summary><ul>@foreach (var w in t.Warnings.Take(20)) { <li>@w</li> }</ul></details>
+    }
+
+    @if (t.Steps.Count == 0)
+    {
+        <div class="empty">Phiếu chưa có dòng nhật ký nào để dựng dòng thời gian.</div>
+    }
+    else
+    {
+        <ol class="rv-steps">
+            @foreach (var s in t.Steps)
+            {
+                var hasErr = s.Findings.Count > 0;
+                var firstTask = s.Tasks.FirstOrDefault();
+                <li class="rv-step @(hasErr ? "has-err" : "")">
+                    @if (s.WaitMinutesBefore is { } wait)
+                    {
+                        <div class="rv-wait">Chờ <span class="num">@RequestReviewModel.Minutes(wait)</span> trước bước này</div>
+                    }
+                    <div class="rv-card">
+                        <div class="rv-n num" aria-hidden="true">@s.Order</div>
+                        <div class="rv-main">
+                            <div class="rv-title">
+                                <b>@s.Name</b>
+                                @if (hasErr) { <span class="pill err">@s.Findings.Count lỗi</span> }
+                            </div>
+                            <dl class="rv-facts">
+                                <div><dt>Ai làm</dt><dd>@(s.Actor ?? "—")@(s.Model != null ? " · " + s.Model : "")</dd></div>
+                                <div><dt>Lúc</dt><dd class="num">@(s.Start?.ToLocalTime().ToString("HH:mm dd/MM") ?? "—")</dd></div>
+                                <div><dt>Phút</dt><dd class="num">@RequestReviewModel.Minutes(s.Minutes)</dd></div>
+                                <div><dt>Token</dt><dd class="num">@RequestReviewModel.Tokens(s.Tokens)</dd></div>
+                                <div><dt>Lượt / vòng</dt><dd class="num">@s.Runs / @s.Rounds</dd></div>
+                                @if (s.Tasks.Count > 0)
+                                {
+                                    <div><dt>Task</dt><dd>@string.Join(", ", s.Tasks)</dd></div>
+                                }
+                            </dl>
+                            @if (hasErr)
+                            {
+                                <ul class="rv-findings">@foreach (var f in s.Findings) { <li>@f</li> }</ul>
+                            }
+                        </div>
+                        <div class="rv-act">
+                            @foreach (var (kind, label) in new[] { ("meo", "Ghi mẹo"), ("cai-tien", "Đề xuất cải tiến") })
+                            {
+                                <details class="rv-note">
+                                    <summary class="btn sm @(kind == "meo" ? "" : "ghost")">@label</summary>
+                                    <form method="post" asp-page-handler="Lesson" asp-route-id="@Model.Id" class="rv-form">
+                                        <input type="hidden" name="kind" value="@kind" />
+                                        <input type="hidden" name="step" value="@s.Name" />
+                                        <input type="hidden" name="task" value="@firstTask" />
+                                        <input type="hidden" name="ai" value="@s.Actor" />
+                                        <label>Tiêu đề <input class="inp" name="title" maxlength="120" required /></label>
+                                        <label>Nội dung <textarea class="inp" name="body" rows="3" maxlength="4000" placeholder="Chuyện gì xảy ra, lần sau làm khác thế nào"></textarea></label>
+                                        <button class="btn sm pri" type="submit">Lưu bản nháp</button>
+                                    </form>
+                                </details>
+                            }
+                        </div>
+                    </div>
+                </li>
+            }
+        </ol>
+    }
+}

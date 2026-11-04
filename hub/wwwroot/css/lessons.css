@@ -1,0 +1,51 @@
+﻿/* R-014 UI-06 · Xem lại từng bước + Mẹo & bài học (Claude). Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.4. */
+.ls-sub { margin: 0 0 12px; color: var(--muted); font-size: 13px; max-width: 90ch; }
+.ls-filter { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; margin: 12px 0; }
+.ls-filter label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
+.ls-list { display: grid; gap: 10px; }
+.ls-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 16px; display: grid; gap: 6px; }
+.ls-card.off { opacity: .7; }
+.ls-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ls-top b { font-size: 14px; overflow-wrap: anywhere; }
+.ls-id { color: var(--faint); font-size: 12px; }
+.ls-body { font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ls-scope { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.ls-act { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.ls-new { margin-bottom: 12px; }
+.ls-new > summary, .ls-promote > summary, .rv-note > summary { list-style: none; cursor: pointer; display: inline-flex; }
+.ls-new > summary::-webkit-details-marker, .ls-promote > summary::-webkit-details-marker, .rv-note > summary::-webkit-details-marker { display: none; }
+.ls-form, .rv-form { display: grid; gap: 8px; margin-top: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); max-width: 640px; }
+.ls-form label, .rv-form label { display: grid; gap: 2px; font-size: 12.5px; color: var(--muted); }
+.ls-form .inp, .rv-form .inp { width: 100%; }
+.ls-form textarea, .rv-form textarea { height: auto; padding: 6px 10px; resize: vertical; }
+.ls-form fieldset { border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.ls-form legend { font-size: 12.5px; color: var(--muted); padding: 0 4px; }
+.ls-form .chk { display: inline-flex; flex-direction: row; align-items: center; gap: 4px; color: var(--text); }
+.ls-form .btn { justify-self: start; }
+
+.rv-head h2 { margin: 0 0 6px; font-size: 18px; overflow-wrap: anywhere; }
+.rv-sum { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.rv-sum b { color: var(--text); }
+.rv-steps { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 2px solid var(--line); display: grid; gap: 10px; }
+.rv-step { position: relative; }
+.rv-wait { font-size: 12px; color: var(--warn); margin: 0 0 4px 4px; }
+.rv-card { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.rv-step.has-err .rv-card { border-left: 4px solid var(--err); }
+.rv-n { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 600; font-size: 13px; margin-left: -34px; border: 2px solid var(--bg); }
+.rv-title { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.rv-title b { overflow-wrap: anywhere; }
+.rv-facts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 6px 0 0; font-size: 12.5px; }
+.rv-facts div { display: flex; gap: 4px; }
+.rv-facts dt { color: var(--muted); }
+.rv-facts dd { margin: 0; }
+.rv-findings { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--err); }
+.rv-act { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.rv-note[open] { width: min(420px, 60vw); }
+.rv-note[open] > summary { align-self: flex-end; }
+.rp-warn { margin-bottom: 10px; font-size: 12.5px; color: var(--warn); }
+
+@media (max-width: 1000px) {
+  .rv-card { grid-template-columns: 32px minmax(0, 1fr); }
+  .rv-act { grid-column: 2; flex-direction: row; align-items: flex-start; flex-wrap: wrap; }
+  .rv-note[open] { width: 100%; }
+}

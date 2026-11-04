@@ -73,6 +73,16 @@ public static class HubV3Registration
             sp.GetRequiredService<IAiServiceRegistry>(),
             sp.GetService<IProcessRunner>() ?? new ProcessRunner(),
             sp.GetRequiredService<ISecretLookup>()));
+        // W2-02 / UI-06 (R-014): luật chuẩn rules/L-xxx.md + bài học lessons/LS-xxx.md.
+        // HUB_FAKE / HUB_EMPTY ghi vào thư mục tạm riêng, không đụng repo thật.
+        services.TryAddSingleton<AITeam.Core.Lessons.ILessonService>(sp =>
+        {
+            var demo = Environment.GetEnvironmentVariable("HUB_FAKE") == "1" || Environment.GetEnvironmentVariable("HUB_EMPTY") == "1";
+            var root = demo
+                ? Path.Combine(Path.GetTempPath(), "aiteam-hub-demo-lessons")
+                : sp.GetRequiredService<HubPaths>().AITeamRoot;
+            return new AITeam.Core.Lessons.LessonService(root);
+        });
         // V10-05 (R-014): trợ lý chat
         services.TryAddSingleton<IChatAssistant, ChatAssistant>();
         return services;

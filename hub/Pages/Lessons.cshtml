@@ -1,0 +1,164 @@
+﻿@page "/Reports/Lessons"
+@model AITeam.Hub.Pages.LessonsModel
+@using AITeam.Core.Lessons
+@using AITeam.Hub.Pages
+@{
+    // R-014 UI-06 (Claude). Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.4 "Mẹo & bài học" + 4.5 "Luật chuẩn".
+    ViewData["Title"] = "Mẹo & bài học";
+    var view = Model.View ?? "draft";
+    int Count(string k) => Model.Counts.TryGetValue(k, out var c) ? c : 0;
+}
+<link rel="stylesheet" href="~/css/lessons.css" asp-append-version="true" />
+
+@section Actions {
+    <a class="btn sm" href="/Reports">Báo cáo</a>
+    <a class="btn sm" href="/Requests">Chọn yêu cầu để xem lại</a>
+}
+
+<p class="ls-sub">Bài học rút ra khi xem lại từng yêu cầu. Bản nháp được Claude nâng thành <b>luật chuẩn</b> (mã L-xxx); luật đang hiệu lực tự chèn vào prompt khi giao việc đúng loại việc / bước / AI.</p>
+
+@if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert alert-success" role="status">@Model.Message</div> }
+@if (!string.IsNullOrEmpty(Model.ErrorMessage)) { <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div> }
+@if (Model.Error != null) { <div class="alert alert-danger" role="alert">@Model.Error <a href="@Model.Link()">Thử lại</a></div> }
+
+<nav class="tabs" aria-label="Trạng thái bài học">
+    @foreach (var (key, text) in new[] { ("draft", "Bản nháp"), ("promoted", "Đã thành luật"), ("dropped", "Đã bỏ"), ("rules", "Luật chuẩn") })
+    {
+        <a class="tab @(view == key ? "on" : "")" href="@Model.Link(key)" aria-current="@(view == key ? "page" : null)">@text<span class="c num">@Count(key)</span></a>
+    }
+</nav>
+
+<form method="get" class="ls-filter" aria-label="Lọc bài học">
+    @if (view != "draft") { <input type="hidden" name="view" value="@view" /> }
+    @if (view != "rules")
+    {
+        <label>Loại
+            <select class="inp" name="kind">
+                <option value="">Tất cả</option>
+                <option value="meo" selected="@(Model.Kind == "meo")">Mẹo</option>
+                <option value="cai-tien" selected="@(Model.Kind == "cai-tien")">Đề xuất cải tiến</option>
+            </select>
+        </label>
+        <label>Yêu cầu <input class="inp" name="request" value="@Model.RequestFilter" placeholder="R-014" size="8" /></label>
+    }
+    <label>AI
+        <select class="inp" name="ai">
+            <option value="">Tất cả</option>
+            @foreach (var a in Model.AiOptions) { <option value="@a" selected="@(string.Equals(a, Model.Ai, StringComparison.OrdinalIgnoreCase))">@a</option> }
+        </select>
+    </label>
+    <label>Tìm <input class="inp" type="search" name="q" value="@Model.Query" placeholder="chữ trong tiêu đề / nội dung" /></label>
+    <button class="btn" type="submit">Lọc</button>
+</form>
+
+@if (view == "rules")
+{
+    @if (Model.RuleItems.Count == 0)
+    {
+        <div class="empty">Chưa có luật chuẩn nào. Nâng một bản nháp thành luật ở tab "Bản nháp".</div>
+    }
+    <div class="ls-list">
+        @foreach (var r in Model.RuleItems)
+        {
+            var active = r.Status == RuleStatus.Active;
+            <article class="ls-card @(active ? "" : "off")" aria-labelledby="r-@r.Id">
+                <div class="ls-top">
+                    <span class="mono ls-id">@r.Id</span>
+                    @if (active) { <span class="pill ok">Đang hiệu lực</span> } else { <span class="pill n">Đã ngừng</span> }
+                    <b id="r-@r.Id">@r.Title</b>
+                </div>
+                <div class="ls-body">@r.Body</div>
+                <div class="ls-scope">
+                    <span>Loại việc: @(r.TaskTypes.Count == 0 ? "mọi loại" : string.Join(", ", r.TaskTypes))</span>
+                    <span>Bước: @(r.Steps.Count == 0 ? "mọi bước" : string.Join(", ", r.Steps))</span>
+                    <span>AI: @(r.Ais.Count == 0 ? "mọi AI" : string.Join(", ", r.Ais))</span>
+                    @if (r.SourceLesson != null) { <span>Từ bài học @r.SourceLesson</span> }
+                    <span class="num">@r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                </div>
+                @if (active)
+                {
+                    <form method="post" asp-page-handler="Retire" class="ls-act" onsubmit="return confirm('Ngừng luật @r.Id? Luật sẽ không còn chèn vào prompt.')">
+                        <input type="hidden" name="id" value="@r.Id" />
+                        <button class="btn sm ghost" type="submit">Ngừng luật</button>
+                    </form>
+                }
+            </article>
+        }
+    </div>
+}
+else
+{
+    @if (view == "draft")
+    {
+        <details class="ls-new">
+            <summary class="btn sm">Ghi mẹo mới</summary>
+            <form method="post" asp-page-handler="Add" class="ls-form">
+                <label>Loại
+                    <select class="inp" name="kind"><option value="meo">Mẹo</option><option value="cai-tien">Đề xuất cải tiến</option></select>
+                </label>
+                <label>Tiêu đề <input class="inp" name="title" maxlength="120" required /></label>
+                <label>Nội dung <textarea class="inp" name="body" rows="3" maxlength="4000"></textarea></label>
+                <button class="btn pri" type="submit">Lưu bản nháp</button>
+            </form>
+        </details>
+    }
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty">@(view == "draft" ? "Không có bản nháp nào. Ghi mẹo từ trang Xem lại từng bước của một yêu cầu." : "Không có bài học nào ở mục này.")</div>
+    }
+    <div class="ls-list">
+        @foreach (var l in Model.Items)
+        {
+            <article class="ls-card" aria-labelledby="l-@l.Id">
+                <div class="ls-top">
+                    <span class="mono ls-id">@l.Id</span>
+                    <span class="pill @(l.Kind == "cai-tien" ? "run" : "rev")">@LessonsModel.KindText(l.Kind)</span>
+                    @if (l.RuleId != null) { <a class="pill ok" href="@Model.Link("rules")">→ @l.RuleId</a> }
+                    <b id="l-@l.Id">@l.Title</b>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(l.Body)) { <div class="ls-body">@l.Body</div> }
+                <div class="ls-scope">
+                    @if (l.RequestId != null) { <a href="/r/@l.RequestId/review">@l.RequestId</a> }
+                    @if (l.TaskId != null) { <span>task @l.TaskId</span> }
+                    @if (l.Step != null) { <span>bước: @l.Step</span> }
+                    @if (l.Ai != null) { <span>AI: @l.Ai</span> }
+                    <span class="num">@l.CreatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")</span>
+                </div>
+                @if (l.Status == LessonStatus.Draft)
+                {
+                    <div class="ls-act">
+                        <details class="ls-promote">
+                            <summary class="btn sm cta">Nâng thành luật chuẩn</summary>
+                            <form method="post" asp-page-handler="Promote" class="ls-form">
+                                <input type="hidden" name="id" value="@l.Id" />
+                                <label>Tên luật <input class="inp" name="title" value="@l.Title" maxlength="120" required /></label>
+                                <label>Nội dung luật (chèn vào prompt) <textarea class="inp" name="body" rows="3" maxlength="4000">@l.Body</textarea></label>
+                                <fieldset>
+                                    <legend>Loại việc áp dụng <span class="muted">(không chọn = mọi loại)</span></legend>
+                                    @foreach (var (id, name) in Model.TaskTypes)
+                                    {
+                                        <label class="chk"><input type="checkbox" name="types" value="@id" /> @name</label>
+                                    }
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Bước áp dụng <span class="muted">(không chọn = mọi bước)</span></legend>
+                                    @foreach (var (code, name) in Model.Steps)
+                                    {
+                                        <label class="chk"><input type="checkbox" name="steps" value="@code" checked="@(l.Step != null && (string.Equals(l.Step, name, StringComparison.OrdinalIgnoreCase) || string.Equals(l.Step, code, StringComparison.OrdinalIgnoreCase)))" /> @name</label>
+                                    }
+                                </fieldset>
+                                <label>AI áp dụng <span class="muted">(mã, cách nhau dấu phẩy; trống = mọi AI)</span> <input class="inp" name="ais" value="@l.Ai" maxlength="200" /></label>
+                                <button class="btn pri" type="submit">Nâng thành luật</button>
+                            </form>
+                        </details>
+                        <form method="post" asp-page-handler="Drop" onsubmit="return confirm('Bỏ bản nháp @l.Id?')">
+                            <input type="hidden" name="id" value="@l.Id" />
+                            <button class="btn sm ghost" type="submit">Bỏ</button>
+                        </form>
+                    </div>
+                }
+            </article>
+        }
+    </div>
+}

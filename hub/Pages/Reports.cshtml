@@ -9,8 +9,8 @@
     var d = Model.Data;
     var tab = Model.Tab ?? "overview";
     string AriaSort(string key) => Model.Sort == key ? (Model.Dir == "asc" ? "ascending" : "descending") : "none";
-    string SortUrl(string key) => Model.Url(("sort", key), ("dir", Model.Sort == key && Model.Dir == "desc" ? "asc" : null));
-    string Person(string key) => Model.Url(("person", key), ("tab", null));
+    string SortUrl(string key) => Model.Link(("sort", key), ("dir", Model.Sort == key && Model.Dir == "desc" ? "asc" : null));
+    string Person(string key) => Model.Link(("person", key), ("tab", null));
 }
 <link rel="stylesheet" href="~/css/reports.css" asp-append-version="true" />
 
@@ -64,7 +64,7 @@
 
 @if (Model.Error != null)
 {
-    <div class="alert alert-danger" role="alert">@Model.Error <a href="@Model.Url()">Thử lại</a></div>
+    <div class="alert alert-danger" role="alert">@Model.Error <a href="@Model.Link()">Thử lại</a></div>
 }
 else if (d != null)
 {
@@ -77,10 +77,10 @@ else if (d != null)
     }
 
     <nav class="tabs" aria-label="Nhóm báo cáo">
-        <a class="tab @(tab == "overview" ? "on" : "")" href="@Model.Url(("tab", null))" aria-current="@(tab == "overview" ? "page" : null)">Tổng quan</a>
-        <a class="tab @(tab == "people" ? "on" : "")" href="@Model.Url(("tab", "people"))" aria-current="@(tab == "people" ? "page" : null)">Theo người / AI<span class="c num">@d.Scores.Count</span></a>
-        <a class="tab @(tab == "projects" ? "on" : "")" href="@Model.Url(("tab", "projects"))" aria-current="@(tab == "projects" ? "page" : null)">Theo dự án<span class="c num">@d.MinutesByProject.Count</span></a>
-        <a class="tab @(tab == "errors" ? "on" : "")" href="@Model.Url(("tab", "errors"))" aria-current="@(tab == "errors" ? "page" : null)">Lỗi<span class="c num">@d.ErrorMatrix.Sum(c => c.Count)</span></a>
+        <a class="tab @(tab == "overview" ? "on" : "")" href="@Model.Link(("tab", null))" aria-current="@(tab == "overview" ? "page" : null)">Tổng quan</a>
+        <a class="tab @(tab == "people" ? "on" : "")" href="@Model.Link(("tab", "people"))" aria-current="@(tab == "people" ? "page" : null)">Theo người / AI<span class="c num">@d.Scores.Count</span></a>
+        <a class="tab @(tab == "projects" ? "on" : "")" href="@Model.Link(("tab", "projects"))" aria-current="@(tab == "projects" ? "page" : null)">Theo dự án<span class="c num">@d.MinutesByProject.Count</span></a>
+        <a class="tab @(tab == "errors" ? "on" : "")" href="@Model.Link(("tab", "errors"))" aria-current="@(tab == "errors" ? "page" : null)">Lỗi<span class="c num">@d.ErrorMatrix.Sum(c => c.Count)</span></a>
     </nav>
 
     @if (tab == "overview")
@@ -116,7 +116,7 @@ else if (d != null)
 
             <figure class="rp-chart">
                 <figcaption><b>Phút AI theo dự án</b></figcaption>
-                @SvgCharts.HBars("Phút AI theo dự án", d.MinutesByProject.Select(v => new SvgCharts.Bar(v.Name, Math.Round(v.Value, 1), Model.Url(("project", v.Name), ("tab", "projects")))).ToList(), "phút", "--c2")
+                @SvgCharts.HBars("Phút AI theo dự án", d.MinutesByProject.Select(v => new SvgCharts.Bar(v.Name, Math.Round(v.Value, 1), Model.Link(("project", v.Name), ("tab", "projects")))).ToList(), "phút", "--c2")
                 <details class="rp-table"><summary>Xem bảng số</summary>
                     <table class="dash-table"><thead><tr><th scope="col">Dự án</th><th scope="col">Phút AI</th></tr></thead>
                         <tbody>@foreach (var v in d.MinutesByProject) { <tr><td>@v.Name</td><td class="num">@ReportsModel.Num(v.Value)</td></tr> }</tbody></table>
@@ -138,7 +138,7 @@ else if (d != null)
                 <div class="rp-legend">
                     @foreach (var (v, i) in d.DifficultyCounts.Select((v, i) => (v, i)))
                     {
-                        <a class="lg lg-@(i switch { 0 => "c3", 1 => "c1", 2 => "c4", _ => "c0" })" href="@Model.Url(("difficulty", v.Name))">@v.Name: <span class="num">@v.Value</span></a>
+                        <a class="lg lg-@(i switch { 0 => "c3", 1 => "c1", 2 => "c4", _ => "c0" })" href="@Model.Link(("difficulty", v.Name))">@v.Name: <span class="num">@v.Value</span></a>
                     }
                 </div>
             </figure>
@@ -224,7 +224,7 @@ else if (d != null)
                                 <th scope="row">@v.Name</th>
                                 <td class="num">@ReportsModel.Num(v.Value)</td>
                                 <td><div class="rp-score"><span class="num">@ReportsModel.Num(pct, "%")</span><span class="meter" aria-hidden="true"><i style="width:@(pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></i></span></div></td>
-                                <td><a href="@Model.Url(("project", v.Name), ("tab", null))">Lọc dự án này</a> · <a href="/Tracking?project=@Uri.EscapeDataString(v.Name)">Theo dõi việc</a></td>
+                                <td><a href="@Model.Link(("project", v.Name), ("tab", null))">Lọc dự án này</a> · <a href="/Tracking?project=@Uri.EscapeDataString(v.Name)">Theo dõi việc</a></td>
                             </tr>
                         }
                     </tbody>

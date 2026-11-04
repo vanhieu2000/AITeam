@@ -7,6 +7,7 @@
 @if(Model.Error!=null){<p class="panel detail-section">@Model.Error</p>}
 @if(d!=null){
 <h2>@d.Request.Id · @d.Request.Title</h2><p class="muted">@d.Request.Status · @d.Request.ReceivedAt</p>
+<p><a class="btn sm" href="/r/@d.Request.Id/review">Xem lại từng bước</a> <a class="btn sm ghost" href="/Reports/Lessons?request=@d.Request.Id">Mẹo &amp; bài học của phiếu</a></p>
 @foreach(var warning in d.Warnings){<p class="panel detail-section">@warning</p>}
 <section class="panel detail-section"><h3>Lời yêu cầu nguyên văn</h3><blockquote>@(string.IsNullOrEmpty(d.Request.Verbatim)?"Chưa ghi lời yêu cầu nguyên văn.":d.Request.Verbatim)</blockquote></section>
 <section class="panel detail-section"><h3>Mười bước</h3><p class="muted">Bước hiện tại theo trạng thái task; bước thiếu bằng chứng được giữ là chưa xác nhận.</p><ol class="request-steps">@for(var i=0;i<steps.Length;i++){<li class="@(i+1==d.CurrentStep?"current":"")"><strong>@(i+1). @steps[i]</strong><span>@(i+1==d.CurrentStep&&!d.Request.Evaluated?"Hiện tại":d.Evidence[i]?"Đã có kết quả":"Chưa xác nhận")</span></li>}</ol></section>

@@ -51,7 +51,7 @@ public sealed class UI05ReportsPageTests
         Assert.Equal(new DateOnly(2026, 11, 4), svc.Last.To);
         Assert.Equal("overview", p.Tab);
         Assert.Equal(["codex", "opencode"], p.SortedScores.Select(s => s.Person));
-        Assert.Equal("/Reports?range=30", p.Url());
+        Assert.Equal("/Reports?range=30", p.Link());
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public sealed class UI05ReportsPageTests
         var p = Page(new FakeReports());
         p.Project = "A&B"; p.Tab = "people"; p.Sort = "tasks";
         p.OnGet();
-        Assert.Equal("/Reports?range=30&project=A%26B&tab=people&sort=tasks", p.Url());
+        Assert.Equal("/Reports?range=30&project=A%26B&tab=people&sort=tasks", p.Link());
         Assert.Equal("/Reports?range=30&project=A%26B&handler=Csv&table=scores", p.CsvUrl("scores"));
     }
 

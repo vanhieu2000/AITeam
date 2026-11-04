@@ -122,7 +122,7 @@ public sealed class ReportsModel(IReportService reports) : PageModel
     }
 
     /// <summary>URL giữ nguyên bộ lọc hiện tại, thay các khóa được truyền (null = bỏ).</summary>
-    public string Url(params (string Key, string? Value)[] changes)
+    public string Link(params (string Key, string? Value)[] changes)
     {
         var q = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
@@ -142,7 +142,7 @@ public sealed class ReportsModel(IReportService reports) : PageModel
         return "/Reports" + (s.Length == 0 ? "" : "?" + s);
     }
 
-    public string CsvUrl(string table) => Url(("handler", "Csv"), ("table", table), ("tab", null), ("sort", null), ("dir", null));
+    public string CsvUrl(string table) => Link(("handler", "Csv"), ("table", table), ("tab", null), ("sort", null), ("dir", null));
 
     public static string Num(double? v, string unit = "")
     {
