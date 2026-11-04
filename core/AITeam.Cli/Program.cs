@@ -1,6 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Globalization;
+using AITeam.Core.AiServices;
 using AITeam.Core.Lessons;
 using AITeam.Core.Workflow;
 
@@ -35,6 +37,7 @@ try
         "diagnose-run" => DiagnoseRun(),
         "parse-run-log" => ParseRunLog(),
         "opencode-check" => await OpenCodeCheck(),
+        "quota-record" => QuotaRecord(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         "rules-for-task" => RulesForTask(),
         "lesson-add" => LessonAdd(),
@@ -628,6 +631,67 @@ int LessonAdd()
         var lessonService = new LessonService(root);
         var lesson = lessonService.AddDraft(title, body, kind, request, task, step, ai);
         Console.WriteLine(lesson.Id);
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"LỖI: {ex.Message}");
+        return 2;
+    }
+}
+
+// F1-03 (R-015): khung — agent điền thân. aiteam quota-record --db <office.db> --service <id> --remaining <0-100> [--rest-until <ISO>] --source <chữ>
+int QuotaRecord()
+{
+    var db = Arg("--db");
+    var service = Arg("--service");
+    var remainingStr = Arg("--remaining");
+    var restUntilStr = Arg("--rest-until");
+    var source = Arg("--source");
+
+    if (string.IsNullOrWhiteSpace(db) || string.IsNullOrWhiteSpace(service) || string.IsNullOrWhiteSpace(remainingStr) || string.IsNullOrWhiteSpace(source))
+    {
+        Console.Error.WriteLine("LỖI: thiếu tham số bắt buộc (--db, --service, --remaining, --source).");
+        return 2;
+    }
+
+    if (!double.TryParse(remainingStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var remaining) || remaining < 0 || remaining > 100)
+    {
+        Console.Error.WriteLine("LỖI: remaining không hợp lệ (phải từ 0 đến 100).");
+        return 2;
+    }
+
+    DateTimeOffset? restUntil = null;
+    if (!string.IsNullOrWhiteSpace(restUntilStr))
+    {
+        if (!DateTimeOffset.TryParse(restUntilStr, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsedRest))
+        {
+            Console.Error.WriteLine("LỖI: rest-until không hợp lệ (phải theo chuẩn ISO 8601).");
+            return 2;
+        }
+        restUntil = parsedRest;
+    }
+
+    var cleanSource = source.Trim();
+    if (cleanSource.Length == 0 || cleanSource.Length > 100 || cleanSource.Any(char.IsControl))
+    {
+        Console.Error.WriteLine("LỖI: source không hợp lệ.");
+        return 2;
+    }
+
+    try
+    {
+        var dbPath = Path.GetFullPath(db);
+        var dbDir = Path.GetDirectoryName(dbPath) ?? "";
+        var registry = new SqliteAiServiceRegistry(dbPath, dbDir);
+        var svc = registry.Get(service);
+        if (svc == null)
+        {
+            Console.Error.WriteLine($"LỖI: dịch vụ '{service}' không tồn tại.");
+            return 2;
+        }
+
+        registry.RecordQuota(new AiQuota(svc.Id, null, remaining, restUntil, cleanSource, DateTimeOffset.UtcNow));
         return 0;
     }
     catch (Exception ex)
