@@ -20,8 +20,10 @@
 - `team.ps1`: hàm `Set-BoardStatus` (~dòng 2617–2700).
 
 ## Mục tiêu
-1. Trong `Set-BoardStatus`, mọi lệnh `git -C … add` / `git -C … commit` có `2>$null` (giống các lệnh git khác trong cùng hàm).
-2. Giữ nguyên các dòng kiểm `$LASTEXITCODE -ne 0` ⇒ `throw 'Không cập nhật được bảng việc.'`.
+> Vòng 2 (Claude sửa 04/11 14:00): thiết kế vòng 1 SAI — đã thử thật trên PowerShell 5.1, chỉ thêm `2>$null` dưới Stop vẫn ném lỗi khi git in cảnh báo.
+1. Trong `Set-BoardStatus`, ngay trước `git -C … add -- $commitFiles`: lưu `ErrorActionPreference` cũ vào biến riêng rồi đặt `'Continue'`; ngay sau `git -C … commit …`: trả lại giá trị cũ. Giữ `2>$null` trên cả hai lệnh.
+2. Giữ nguyên các dòng kiểm `LASTEXITCODE -ne 0` ⇒ `throw 'Không cập nhật được bảng việc.'` (đặt trong vùng Continue vẫn đúng: `throw` luôn dừng).
+3. Không bọc thêm try/catch; không đổi các lệnh git khác.
 
 ## Phạm vi (được sửa những gì)
 - `team.ps1`
