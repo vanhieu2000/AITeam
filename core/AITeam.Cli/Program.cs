@@ -35,6 +35,7 @@ try
         "diagnose-run" => DiagnoseRun(),
         "parse-run-log" => ParseRunLog(),
         "opencode-check" => await OpenCodeCheck(),
+        "quota-record" => QuotaRecord(),
         "mcp" => await AITeam.Cli.McpServerCommand.RunAsync(args),
         "rules-for-task" => RulesForTask(),
         "lesson-add" => LessonAdd(),
@@ -611,4 +612,10 @@ int LessonAdd()
         Console.Error.WriteLine($"LỖI: {ex.Message}");
         return 2;
     }
+}
+
+// F1-03 (R-015): khung — agent điền thân. aiteam quota-record --db <office.db> --service <id> --remaining <0-100> [--rest-until <ISO>] --source <chữ>
+int QuotaRecord()
+{
+    throw new NotImplementedException(); // TODO(agent)
 }
