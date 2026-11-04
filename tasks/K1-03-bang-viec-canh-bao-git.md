@@ -51,17 +51,16 @@
 
 ## Báo cáo của agent
 
-| Tiêu chí | Bằng chứng / kết quả thật |
+| Tiêu chí | Bằng chứng / kết quả thật vòng 2 |
 |---|---|
-| Build 0 warning | `dotnet build AITeam.sln --no-restore -warnaserror -nodeReuse:false -m:1 -v:normal`: thành công, 0 warning, 0 error. |
-| Test toàn solution | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: quá 3 phút chưa có tổng kết; chưa xác minh xanh hết. Đã gửi Ctrl+C; CIM bị Access denied khi tìm PID để dừng. |
-| Test K103 bất biến | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceK103BoardGitWarningTests" --blame-hang-timeout 2m`: 2 pass, 0 fail, 0 skip; không sửa test. |
-| BOM | `[IO.File]::ReadAllBytes('team.ps1')`: ba byte đầu `EF-BB-BF`. |
-| Commit / push | Không chạy git theo chỉ dẫn Codex; hệ thống tự commit/push, chưa xác minh commit. |
-- File đổi: `team.ps1` thêm `2>$null` đúng một lệnh add trong Set-BoardStatus; commit đã có chuyển hướng, giữ nguyên hai kiểm tra LASTEXITCODE và throw. File task này bổ sung báo cáo.
-- Quyết định: dùng build một node sau khi lệnh build ban đầu trả mã 1 nhưng chỉ in 0 warning/0 error, không có chẩn đoán.
-- Chưa xác minh: bộ test toàn solution và phiên test đã dừng hoàn toàn; không chạy app/chụp ảnh; không sửa ngoài phạm vi.
-
+| Build 0 warning — đạt | `dotnet build AITeam.sln -warnaserror -nodeReuse:false -m:1`: thành công, 0 warning, 0 error. |
+| K103 bất biến — đạt | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --filter "FullyQualifiedName~AcceptanceK103BoardGitWarningTests" --blame-hang-timeout 2m -m:1 -nodeReuse:false`: 2 pass, 0 fail, 0 skip; không sửa test. |
+| Toàn solution — chưa đạt | `dotnet test AITeam.sln --no-build --blame-hang-timeout 2m`: không in kết quả, đã gửi Ctrl+C; chưa xác minh tiến trình dừng. Chạy lại thêm `-m:1 -nodeReuse:false`: Hub 914 pass, 10 fail, 0 skip; Core chưa tổng kết, có lỗi; đã dừng bằng Ctrl+C, mã thoát 1. |
+| BOM — đạt | `[BitConverter]::ToString([IO.File]::ReadAllBytes($path)[0..2])`: `EF-BB-BF`. |
+| Commit / push — hệ thống thực hiện | Không chạy lệnh Git theo chỉ dẫn Codex; chưa có commit được kiểm. |
+- File đổi: `team.ps1` thêm 3 dòng lưu ErrorActionPreference vào biến riêng, đặt Continue trước add, khôi phục ngay sau commit; giữ stderr và LASTEXITCODE. File task cập nhật báo cáo.
+- Quyết định: chạy lại test một node vì lệnh mặc định không in kết quả; không sửa lỗi ngoài phạm vi.
+- Chưa xác minh: toàn bộ test xanh; lỗi ngoài K103 gồm Access denied tại ReplaceFile và Git sh không tạo được signal pipe (Win32 error 5); CIM tìm PID cũng bị Access denied. Không chạy app/chụp ảnh.
 ## Review (Claude)
 
 ## Kết quả
