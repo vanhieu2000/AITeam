@@ -72,5 +72,13 @@
 - Tự quyết: giữ -m:1 như lượt trước; không chạy app/chụp ảnh; không sửa lỗi ngoài phạm vi. Review (Claude) đang trống.
 - Chưa xác minh nguyên nhân gốc 3 lỗi R014 và các lỗi toàn solution khác; cần Claude xử lý phần giao diện hoặc giao phạm vi chẩn đoán phù hợp.
 ## Review (Claude)
+### Vòng 1 — ĐẠT (04/11 20:55)
+- Cổng KT lượt 1–2: KHÔNG ĐẠT vì 3 test `R014OfficeTrackingTests` đỏ. Nguyên nhân: dữ liệu giả của test cũ không có dòng tiêu đề bảng, thiết kế F1-06 bắt buộc tiêu đề ⇒ Claude thêm tiêu đề vào dữ liệu giả (giống bảng thật). Hub 794/794 xanh.
+- Đọc diff: `BoardTable.Parse` đúng thiết kế (cột theo tên, bỏ dòng trống, thiếu `|`, dừng ở chữ / tiêu đề mục, Id trùng giữ dòng đầu, NonBacktracking). 4 dịch vụ dùng chung, hết `cells[^2]`.
+- [TK] (test) thiết kế không nêu bảng thiếu dòng tiêu đề; test cũ dùng bảng không tiêu đề ⇒ Codex mất 2 lượt.
+- **Optional:** `PerformanceService.ReadStatuses` vẫn fallback `TaskState.Unknown` ⇒ "🟡 Đang chạy" ra Pending (có từ trước) — xử lý cùng F1-02.
 
 ## Kết quả
+- Hub đọc đủ mọi task trên bảng việc kể cả khi có dòng trống hay dòng thiếu dấu `|` (trước đó mất 38 task).
+- 4 chỗ đọc bảng dùng chung 1 bộ đọc; test nghiệm thu F1-06 + 794 test Hub xanh.
+
