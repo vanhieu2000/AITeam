@@ -46,13 +46,13 @@ public interface IRequestProgressService
     RequestStateResult SetState(string id, RequestState state, string? note);
 }
 ```
-- **Task của phiếu** = hợp của (a) mọi `<dự án>/tasks/*.md` (trừ README.md) của mọi dự án có `ExistsLocally`, có dòng khớp `^- \*\*Yêu cầu:\*\*\s*(R-\d{3})\s*$` đúng id; Code = Id của file (cùng quy tắc Id F1-06, lấy từ tên file); Title = dòng `# …` đầu file bỏ `Code ·`; (b) các mã trong bảng "Chia việc" của phiếu (`RequestThread.Tasks`, mã rỗng bỏ qua) — dự án lấy từ ô Dự án, rỗng ⇒ "AITeam". Gộp theo (dự án, mã) không phân biệt hoa thường.
-- Trạng thái task: dòng bảng việc (`BoardTable.Parse` của dự án) ⇒ `WorkOverviewService.ParseStatus(row.Status, TaskState.Unknown)`; không có trên bảng ⇒ `Planned`.
+- **Task của phiếu** = mọi `<dự án>/tasks/*.md` (trừ README.md) của mọi dự án có `ExistsLocally`, có dòng khớp `^- \*\*Yêu cầu:\*\*\s*(R-\d{3})\s*$` đúng id (CLAUDE.md bắt buộc dòng này). Code = Id lấy từ tên file (cùng quy tắc Id F1-06); Title = dòng `# …` đầu file bỏ phần `Code ·`. KHÔNG dùng bảng "Chia việc" của phiếu (ô kiểu "UI-01..09", "V10-01, V10-04" không đếm được). Sắp theo dự án rồi Code.
+- Trạng thái task: dòng bảng việc (`BoardTable.Parse` của dự án) ⇒ `WorkOverviewService.ParseStatus(row.Status, fallback)` với fallback theo emoji của chữ trạng thái (🟡 Assigned · 🔵 Review · 🔴 NeedsFix · ✅ Merged · khác Unknown) — bảng ghi "🟡 Đang chạy · máy …" phải ra Running; không có trên bảng ⇒ `Planned`.
 - Đếm: Merged = Merged; Running = Running + Gate; Review = Review; NeedsFix = NeedsFix + Blocked; Cancelled không tính vào Total. AllMerged = Total > 0 && Merged == Total.
 - State từ dòng `- **Trạng thái:**`: chứa `✅` ⇒ Done; chứa `❌` hoặc "Hủy" (không phân biệt hoa thường) ⇒ Cancelled; còn lại Open.
 - **SetState** ghi đúng dòng `- **Trạng thái:** …` của file phiếu (dòng khác giữ nguyên từng byte, giữ BOM nếu có, giữ kiểu xuống dòng):
   - Done ⇒ `✅ Xong HH:mm dd/MM/yyyy`; Cancelled ⇒ `❌ Hủy HH:mm dd/MM/yyyy`; Open ⇒ `🟡 Đang làm`. Có note ⇒ thêm ` — <note>`.
-  - note: bỏ ký tự điều khiển / xuống dòng (thay bằng khoảng trắng), Trim, tối đa 200 ký tự; rỗng ⇒ không thêm.
+  - note: thay ký tự điều khiển / xuống dòng bằng khoảng trắng, gộp khoảng trắng liên tiếp thành 1, Trim, cắt tối đa 200 ký tự; rỗng ⇒ không thêm.
   - Thêm 1 dòng vào cuối bảng "## 3. Nhật ký" (nếu có bảng): `| HH:mm dd/MM | Đổi trạng thái phiếu: <Xong/Hủy/Mở lại> (Hub) | <note> |` — ký tự `|` trong note thay bằng `/`.
   - id sai dạng / không có phiếu / không có dòng Trạng thái ⇒ `Ok=false`, Error tiếng Việt cố định, KHÔNG ghi. Ghi nguyên tử (file tạm cùng thư mục rồi `File.Replace`/`Move`), chặn reparse point ở file và thư mục `requests`.
   - Giờ lấy từ `TimeProvider` (constructor), để test được.
@@ -83,6 +83,7 @@ public interface IProjectAdminService
     ProjectResult Add(ProjectAdd add);
 }
 ```
+- **List / Get:** theo thứ tự `projects.json`; Get không phân biệt hoa thường. `LocalPath` / `ExistsLocally` = đường dẫn đã giải của `TeamConfigService` (`ProjectInfo.Path`). `status` lạ / thiếu ⇒ Active; `branch` thiếu ⇒ "main".
 - **Kiểm tra (sai ⇒ `Ok=false` + lỗi tiếng Việt, không ghi gì):** tên `^[A-Za-z][A-Za-z0-9._-]{0,63}$`; repo `^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}$`; đường dẫn: tuyệt đối (`Path.IsPathFullyQualified`), không có đoạn `..`, ≤ 240 ký tự, không ký tự điều khiển; lệnh build/test/try, stack, nhánh: 1 dòng, ≤ 300 ký tự, không ký tự điều khiển; nhánh `^[A-Za-z0-9._/-]{1,100}$`; mô tả ≤ 200 ký tự 1 dòng; defaultAi trong danh sách; khóa vùng `^[A-Z]$`, giá trị ≤ 300 ký tự 1 dòng.
 - **Update:** dự án phải có. Ghi các trường vào phần tử của dự án trong `projects.json`, GIỮ nguyên trường lạ và các dự án khác, giữ `path`/`workDir` cũ y nguyên. `LocalPath` khác rỗng ⇒ ghi `team.local.json` → `paths.<Tên>` (giữ mọi khóa khác). Ghi nguyên tử + `.bak` (dùng lại cách ghi của `TeamConfigService`).
 - **SetStatus:** chỉ đổi `status`. Không có xóa dự án (Lưu trữ = ẩn khỏi giao việc, repo còn nguyên).
