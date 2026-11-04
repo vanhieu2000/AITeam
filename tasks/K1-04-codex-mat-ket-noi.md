@@ -4,7 +4,8 @@
 - **Nhánh:** `agent-c/K1-04-codex-mat-ket-noi`
 - **Ưu tiên:** cao
 - **Ngân sách:** ~70 dòng
-- **Yêu cầu:** R-014 (hàng chờ sau review K1-02)
+- **Yêu cầu:** R-014
+- **Nguồn:** hàng chờ sau review K1-02
 - **Thời gian tối đa:** 25 phút
 - **Độ khó:** S
 - **Review AI:** không (Claude review)
