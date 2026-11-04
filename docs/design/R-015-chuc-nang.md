@@ -101,7 +101,7 @@ public static class LessonImporter
     public static LessonImportResult Import(ILessonService lessons, IEnumerable<ImportedLesson> items);
 }
 ```
-- Extract: lấy mọi mục `## …` có tiêu đề bắt đầu "Bài học" hoặc "Lỗi hay gặp" (không phân biệt hoa thường); mỗi gạch đầu dòng cấp 1 (`- …`, kể cả các dòng con thụt lề nối theo) là 1 bài học. Body = nguyên văn gạch đầu dòng (bỏ `- ` đầu), Title = câu đầu (tới `.`, `:`, `→`, `⇒` đầu tiên) bỏ `**`, cắt ≤ 120 ký tự. Source = tham số (vd. "CLAUDE.md").
+- Extract: lấy mọi mục `## …` có tiêu đề bắt đầu "Bài học" hoặc "Lỗi hay gặp" (không phân biệt hoa thường); mỗi gạch đầu dòng cấp 1 (`- …`, kể cả các dòng con thụt lề nối theo) là 1 bài học. Body = nguyên văn gạch đầu dòng (bỏ `- ` đầu), Title: bỏ `**` trước, rồi lấy tới dấu phân cách đầu tiên: `.` hoặc `:` đứng trước khoảng trắng / cuối dòng ("5.1", "`.ps1`" KHÔNG phải phân cách), `→`, `⇒`, ` — `; Trim, cắt ≤ 120 ký tự. Dòng con thụt lề (bắt đầu bằng khoảng trắng, không phải `- ` cấp 1) nối vào Body của gạch đầu dòng trước. Source = tham số (vd. "CLAUDE.md").
 - Import: bỏ qua bài đã có (so Title đã chuẩn hóa: bỏ khoảng trắng thừa, không phân biệt hoa thường với mọi bài học hiện có, mọi trạng thái); còn lại `AddDraft(title, body + "\n\nNguồn: " + source, "meo", null, null, null, null)`. Body > 4000 ⇒ cắt 4000. Chạy 2 lần ⇒ lần 2 Added = 0.
 - Lệnh `team.ps1 lessons-import` gọi `aiteam lessons-import` (hoặc tương đương trong CLI hiện có) cho `CLAUDE.md`, `AGENTS.md` của AITeam; in "Đã thêm N, bỏ qua M".
 
