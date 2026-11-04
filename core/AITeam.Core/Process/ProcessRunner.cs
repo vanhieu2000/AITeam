@@ -53,16 +53,23 @@ public sealed class ProcessRunner : IProcessRunner
         var stdout = new StringBuilder();
         var stderr = new StringBuilder();
         long lastActivity = System.Environment.TickCount64;
+        void RecordActivity(string line)
+        {
+            bool active;
+            try { active = spec.IsActivity?.Invoke(line) ?? true; }
+            catch (Exception) { active = true; /* Bộ lọc lỗi không được làm gián đoạn việc đọc output. */ }
+            if (active) Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+        }
         p.OutputDataReceived += (_, e) =>
         {
             if (e.Data == null) return;
-            Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+            RecordActivity(e.Data);
             lock (stdout) stdout.AppendLine(e.Data);
         };
         p.ErrorDataReceived += (_, e) =>
         {
             if (e.Data == null) return;
-            Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+            RecordActivity(e.Data);
             lock (stderr) stderr.AppendLine(e.Data);
         };
         p.Start();

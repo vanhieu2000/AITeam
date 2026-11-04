@@ -20,7 +20,23 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
     public static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(15);
 
     /// <summary>K1-04 (khung Claude): false = dòng thử lại / mất kết nối (sự kiện `error`, log `ERROR codex_…`), không tính là đang làm việc.</summary>
-    internal static bool IsActivityLine(string line) => throw new NotImplementedException(); // TODO(agent)
+    internal static bool IsActivityLine(string line)
+    {
+        if (!line.TrimStart().StartsWith('{'))
+            return !line.Contains(" ERROR codex_", StringComparison.Ordinal);
+        try
+        {
+            using var doc = JsonDocument.Parse(line);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object
+                || !root.TryGetProperty("type", out var type) || type.ValueKind != JsonValueKind.String) return true;
+            if (type.ValueEquals("error")) return false;
+            return !((type.ValueEquals("item.completed") || type.ValueEquals("item.started"))
+                && root.TryGetProperty("item", out var item) && item.ValueKind == JsonValueKind.Object
+                && item.TryGetProperty("type", out var itemType) && itemType.ValueKind == JsonValueKind.String && itemType.ValueEquals("error"));
+        }
+        catch (JsonException) { return true; }
+    }
 
     /// <summary>(exe, tiền tố tham số): <c>codex.js</c> chạy bằng node; còn lại chạy thẳng.</summary>
     internal (string Exe, List<string> Prefix) ResolveLaunch()
@@ -62,7 +78,7 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
         ProcessResult res;
         try
         {
-            res = await runner.RunAsync(new ProcessSpec(exe, BuildArguments(r, last), r.WorkDir, r.PromptFile, r.Timeout), ct).ConfigureAwait(false);
+            res = await runner.RunAsync(new ProcessSpec(exe, BuildArguments(r, last), r.WorkDir, r.PromptFile, r.Timeout, IdleTimeout: IdleTimeout, IsActivity: IsActivityLine), ct).ConfigureAwait(false);
         }
         catch (System.ComponentModel.Win32Exception ex)
         {
@@ -109,6 +125,16 @@ public sealed class CodexProvider(ProviderConfig config, IProcessRunner runner) 
                 }
             }
             catch (JsonException) { /* dòng hỏng: bỏ qua, kết luận dựa trên turn.completed */ }
+        }
+        if (res.Stalled)
+        {
+            var network = (res.StdOut + "\n" + res.StdErr)
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries).Any(line => !IsActivityLine(line));
+            var minutes = (int)IdleTimeout.TotalMinutes;
+            var detail = network
+                ? $"Codex mất kết nối tới máy chủ AI suốt {minutes} phút (Reconnecting… / waiting for network) — đã dừng. Kiểm tra mạng hoặc openai_base_url trong ~/.codex/config.toml."
+                : $"Codex đứng im {minutes} phút không có hoạt động — đã dừng.";
+            return new AgentRunResult(id, RunStatus.TimedOut, "", tokens, res.Duration, model, thread, detail);
         }
         bool ok = completed && error == null && res.ExitCode == 0;
         var kind = ErrorClassifier.Classify((error ?? "") + "\n" + res.StdErr, ok);
