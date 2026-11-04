@@ -92,5 +92,12 @@
 - Xung đột harness ngoài phạm vi: `AcceptanceS104SkillPromptsTests.cs:149` (các ca assign dòng 58) báo không nhận ra hàm mới `Resolve-TaskWork`; cần Claude cập nhật phần nạp hàm của harness theo hợp đồng K101, không sửa test hoặc thêm mã nhận diện test để né lỗi.
 
 ## Review (Claude)
-
+### Vòng 1 — ĐẠT (04/11 13:40)
+- Codex 354 s (lượt 2; lượt 1 hỏng do proxy Codex 127.0.0.1:17841 không chạy, không phải lỗi agent). 70 dòng / ngân sách 150.
+- Đã kiểm tra: diff đối chiếu từng mục tiêu; `Get-AgentErrorText` chỉ lấy `error`; `Get-AcceptRef` đòi đúng email + dấu; `Resolve-TaskWork` dùng `[regex]::Escape`, lỗi git trả mặc định; bỏ đoạn dò worktree inline.
+- Cổng KHÔNG ĐẠT vì `AcceptanceS104SkillPromptsTests` (harness nạp danh sách hàm cố định, chưa giả lập 3 hàm mới) ⇒ Claude sửa harness (commit "(Claude)"), 82/82 test liên quan xanh.
+- [TK] (test) phiếu không liệt kê harness S104 phải giả lập hàm mới mà `Invoke-Assign` gọi.
+- [CK] (chất lượng) "Không ghi được nhật ký phiếu": `git add` trong `Set-BoardStatus` thiếu `2>$null` ⇒ giao K1-03.
 ## Kết quả
+- Cổng phân biệt LỖI MẠNG với HẾT HẠN MỨC, nhận bản sửa test nghiệm thu của quản lý, tìm đúng worktree theo nhánh và không đổi Agent của nhánh đã chuẩn bị.
+- Kiểm chứng: 5/5 test K101, toàn bộ test trên bản clone sạch.

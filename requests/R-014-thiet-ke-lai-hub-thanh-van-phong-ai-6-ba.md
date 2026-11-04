@@ -117,3 +117,5 @@ Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
   1.
 - Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có / chưa
 | 12:45 04/11/2026 | K1-01, K1-02: Codex chạy 25–30 phút không sửa file nào. Nguyên nhân: cấu hình Codex trỏ `openai_base_url` tới proxy 127.0.0.1:17841 nhưng proxy không chạy ⇒ lỗi 10061, Codex chờ mạng tới hết giờ. Đã dừng; chờ chủ dự án bật proxy hoặc chọn AI khác. [CK] cổng không bắt được lỗi này sớm (K1-02 sẽ thêm canh đứng im cho OpenCode; nên áp cho cả Codex). |
+| 13:05 04/11/2026 | Claude tắt dòng proxy hỏng trong ~/.codex/config.toml (có bản sao lưu, theo yêu cầu chủ dự án); giao lại K1-01, K1-02 cho Codex. OpenCode free bị chặn vì repo private. |
+| 13:40 04/11/2026 | K1-01 (354 s) và K1-02 (702 s) Codex xong. Review vòng 1 ĐẠT; Claude sửa harness S104 [TK]. Merge cả hai. Lỗi [CK] mới: git add thiếu 2>$null trong Set-BoardStatus ⇒ phiếu K1-03 + test nghiệm thu. |

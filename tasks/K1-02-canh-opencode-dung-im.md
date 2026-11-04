@@ -86,5 +86,10 @@
 - Chưa xác minh: chạy OpenCode thật 20 phút; toàn bộ solution xanh trong môi trường không bị chặn quyền. Không sửa lỗi ngoài phạm vi.
 
 ## Review (Claude)
-
+### Vòng 1 — ĐẠT (04/11 13:40)
+- Codex 702 s (lượt 2; lượt 1 hỏng do proxy Codex). 84 dòng / ngân sách 90. Cổng: build 0 warning, 1018 + 924 test xanh; chỉ báo lỗi ghi nhật ký phiếu ([CK], K1-03).
+- Đã kiểm tra: mốc hoạt động `Interlocked` + `TickCount64`; bộ canh dừng bằng `monitorCts` trong `finally`; `using` cho mọi CTS; giết cả cây; hủy từ người gọi vẫn ném; `Parse` trả đúng câu "đứng im 20 phút".
+- Optional (hàng chờ): Codex treo kiểu "Reconnecting… waiting for network" vẫn in dòng nên bộ canh đứng im không bắt được ⇒ nên dò chuỗi này để dừng sớm.
 ## Kết quả
+- `aiteam run --provider opencode` tự dừng khi OpenCode không in gì 20 phút, báo "Quá thời gian — đứng im (treo hoặc hết lượt miễn phí)".
+- Kiểm chứng: 7/7 test K102, toàn bộ test trên bản clone sạch.
