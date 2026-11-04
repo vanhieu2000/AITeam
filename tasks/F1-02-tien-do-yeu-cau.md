@@ -57,7 +57,20 @@
 - [ ] Commit: `F1-02: tiến độ yêu cầu theo file task + đóng / hủy phiếu`
 
 ## Báo cáo của agent
-
+| Tiêu chí | Bằng chứng thực tế |
+|---|---|
+| Build 0 warning | `dotnet build AITeam.sln --no-restore -warnaserror -m:1`: đạt, 0 warning, 0 lỗi (37,16 giây); restore mặc định thất bại không hiện chẩn đoán. |
+| Test nghiệm thu nguyên vẹn | `dotnet test hub.tests/AITeam.Hub.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~F102RequestProgress" --blame-hang-timeout 2m`: 16 pass, 0 fail, 0 skip (15 nghiệm thu + 1 bổ sung). |
+| Test toàn solution | `dotnet test AITeam.sln --no-build --no-restore --blame-hang-timeout 2m -m:1`: Hub 802 pass/8 fail/0 skip; Core chưa hoàn tất, dừng ở giới hạn ~3 phút. Lỗi ngoài phạm vi: File.Replace bị từ chối quyền, Git con lỗi signal pipe Win32 5; không báo toàn suite đạt. |
+| BOM UTF-8 | Kiểm 3 byte đầu bằng PowerShell: cả 3 file `.cs` sửa/tạo đều EF BB BF. |
+| Commit/push | Không chạy git theo chỉ thị Codex; hệ thống tự commit/push, chưa xác minh commit. |
+- File đổi: `RequestProgressService.cs` (gom/đếm task, ghi trạng thái an toàn); `HubV3Registration.cs` (DI singleton TryAdd); `F102RequestProgressExtraTests.cs` (LF không BOM, note điều khiển, trạng thái/id sai); file task (báo cáo).
+- Quyết định: dùng `File.Move(..., true)` nguyên tử cùng thư mục theo thiết kế vì sandbox chặn `File.Replace`; không sửa test nghiệm thu hay code ngoài phạm vi.
+- Chưa xác minh: toàn suite xanh ngoài sandbox; không chạy app/chụp ảnh; lượt test DLL cũ ban đầu không dùng làm bằng chứng cho bản mới.
 ## Review (Claude)
+### Vòng 1 — ĐẠT (04/11 21:15)
+- Cổng KT lượt 1 ĐẠT (Hub 810, Core 1052). 172/260 dòng.
+- Đọc diff: gom task theo dòng Yêu cầu + BoardTable, fallback emoji đúng (🟡 Đang chạy ⇒ Running); SetState ghi nguyên tử, giữ BOM / kiểu xuống dòng, chặn reparse point, id chỉ `\AR-\d{3}\z`.
+- **Optional:** `GetAll` đọc lại mọi file task mỗi lần gọi — nếu Văn phòng chậm thì thêm bộ đệm theo thời điểm sửa file.
 
 ## Kết quả

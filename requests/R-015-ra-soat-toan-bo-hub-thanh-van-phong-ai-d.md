@@ -16,7 +16,13 @@
 ## 2. Chia việc
 | Task | Dự án | Ai | Ngân sách | Model | Vì sao giao / tự làm |
 |---|---|---|---|---|---|
-| | | A / B / Claude | ~N dòng | mặc định | |
+| Menu 9 mục, bỏ 11 trang, đóng 7 phiếu cũ | AITeam | Claude | — | — | Giao diện chỉ Claude làm |
+| F1-06 bộ đọc bảng việc | AITeam | Codex (C) | ~220 | mặc định | Lõi nhỏ, rõ |
+| F1-02 tiến độ yêu cầu | AITeam | Codex (C) | ~260 | mặc định | Sau F1-06 (dùng BoardTable) |
+| F1-01 quản lý dự án | AITeam | Codex (C) | ~320 | mặc định | Bảo mật đầu vào form, Codex làm kỹ |
+| F1-05 nhập bài học | AITeam | Antigravity (A) | ~150 | mặc định | Song song Codex |
+| F1-03 Đội AI | AITeam | Antigravity (B) | ~220 | mặc định | Sau F1-05 (chung team.ps1, Program.cs) |
+| ~~F4~~ "Claude tự quyết" | — | — | — | — | Không cần code: merge tay không ghi nhật ký ⇒ sửa CLAUDE.md |
 
 Mỗi file task phải có dòng `- **Yêu cầu:** R-015` để `team.ps1 request-report` gom số liệu.
 
@@ -27,6 +33,13 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-015` để `team.ps1 reque
 | 16:25 | UI-10 Văn phòng vừa khít màn hình, thẻ tự cuộn; 924 test Hub xanh; commit 6d6f719 | Claude |
 | 16:20 | Nhận yêu cầu rà soát toàn bộ trang + chức năng | |
 | 16:45 | Rà xong 31 trang: trùng ×14, hỏng 3, dự án không quản lý được, 4 chức năng không có dữ liệu ⇒ đề xuất docs/design/R-015-ra-soat-van-phong-ai.md, chờ duyệt | Claude |
+| 19:05 | Chủ dự án duyệt đề xuất R-015 | |
+| 19:35 | Bước 1 xong: menu 9 mục, bỏ 11 trang (chuyển hướng 302), đóng R-005..R-013; Hub 778/778; commit 5e4a68b | Claude |
+| 19:50 | Thiết kế chức năng docs/design/R-015-chuc-nang.md; task + test nghiệm thu F1-06 | Claude |
+| 19:54 | Giao F1-06 Codex: bị chặn — _Layout còn hàm IsPath không dùng (build -warnaserror) ⇒ sửa main, giao lại | [TK] Claude |
+| 20:00 | Giao F1-05 lỗi: team.ps1 gọi Get-AgyModelsCached không tồn tại (V9-14) ⇒ Claude sửa 1 dòng (chặn dây chuyền), giao lại -Dev agy | [CK] |
+| 20:30 | Viết task + test nghiệm thu F1-01, F1-02, F1-03; F4 bỏ (sửa quy trình CLAUDE.md) | Claude |
+| 20:35 | F1-06 lượt 1 KHÔNG ĐẠT (3 test Theo dõi việc đỏ) ⇒ cổng tự giao lại; F1-05 lượt 1 agy treo hết giờ; F1-03 chờ khóa phạm vi F1-05 | |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
@@ -37,6 +50,18 @@ Sự kiện cần ghi:
 - merge;
 - báo chủ dự án.
 
+- 2026-11-04 20:14:39 +05:30 | F1-06 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-06:Verify:1 -->
+| 20:15 04/11/2026 | Cờ tự động AITeam/F1-06 lượt 1 | TO |
+- 2026-11-04 20:15:23 +05:30 | F1-06 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-06:Assign:1 -->
+- 2026-11-04 20:16:27 +05:30 | F1-05 | Verify | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-05:Verify:1 -->
+| 20:16 04/11/2026 | Cờ tự động AITeam/F1-05 lượt 1 | TO |
+- 2026-11-04 20:16:58 +05:30 | F1-05 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:F1-05:Assign:1 -->
+- 2026-11-04 20:26:23 +05:30 | F1-06 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:F1-06:Verify:2 -->
+- 2026-11-04 20:35:17 +05:30 | F1-05 | Verify | lượt 2 | ĐẠT <!-- workflow:F1-05:Verify:2 -->
+| 20:35 04/11/2026 | Cờ tự động AITeam/F1-05 lượt 2 | TO |
+- 2026-11-04 20:48:43 +05:30 | F1-02 | Verify | lượt 1 | ĐẠT <!-- workflow:F1-02:Verify:1 -->
+| 20:49 04/11/2026 | Cờ tự động AITeam/F1-02 lượt 1 | TO |
+- 2026-11-04 20:49:11 +05:30 | F1-02 | Assign | lượt 1 | ĐẠT <!-- workflow:F1-02:Assign:1 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-015`, rồi điền:
 

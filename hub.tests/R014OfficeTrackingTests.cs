@@ -46,7 +46,7 @@ public sealed class R014OfficeTrackingTests
                 $"# {r.Id} · Tên <script>bad</script> {r.Id}\n\n- **Agent:** {r.Agent}\n- **Độ khó:** {r.Diff}\n" + (r.Req == null ? "" : $"- **Yêu cầu:** {r.Req}\n"));
             cards.Add(new TaskCard("P", r.Id, $"Tên <script>bad</script> {r.Id}", r.Agent, "b", TaskState.Unknown, file, 1, null));
         }
-        File.WriteAllText(Path.Combine(path, "tasks", "README.md"), string.Join('\n', rows.Select(r => $"| {r.Id} | {r.Agent} | b | {r.State} |")));
+        File.WriteAllText(Path.Combine(path, "tasks", "README.md"), "| Task | Agent | Nhánh | Trạng thái |\n|---|---|---|---|\n" + string.Join('\n', rows.Select(r => $"| {r.Id} | {r.Agent} | b | {r.State} |")));
         return await HubTestHost.StartAsync(env, s =>
         {
             s.AddSingleton<ITeamConfigService>(new Config(project));
