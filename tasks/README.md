@@ -101,6 +101,8 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [V10-02 Chạy AI theo danh bạ](V10-02-adapter-ai-tu-danh-ba.md) | B | `agent-o/V10-02-adapter-ai-tu-danh-ba` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8) |
 | [W2-02 Luật chuẩn + bài học](W2-02-luat-chuan-va-bai-hoc.md) | B | `agent-o/W2-02-luat-chuan-va-bai-hoc` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8, vòng 2) |
 | [V10-05 Trợ lý chat](V10-05-tro-ly-chat.md) | B | `agent-o/V10-05-tro-ly-chat` | ✅ Đã merge 04/11 (Antigravity Gemini 3.8) |
+| [K1-01 Cổng KT: lỗi mạng, bản sửa test, worktree](K1-01-cong-kt-han-muc-test-nghiem-thu-worktree.md) | C | `agent-c/K1-01-cong-kt-han-muc-test-nghiem-thu-worktree` | ⏳ Chờ giao (Codex sau 12:09) |
+| [K1-02 Canh OpenCode đứng im](K1-02-canh-opencode-dung-im.md) | C | `agent-c/K1-02-canh-opencode-dung-im` | ⏳ Chờ giao (Codex sau 12:09) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
@@ -111,6 +113,7 @@ Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đ
   2. [CK] Cổng KT chỉ coi commit ĐẦU của nhánh là test nghiệm thu của Claude; bản sửa test sau đó bị coi là agent sửa (W2-02) ⇒ nhận commit "(Claude)" của danh tính quản lý; Claude commit trong worktree agent phải ghi đè danh tính.
   3. [CK] `assign` tìm worktree theo tên `a-/b-<task>`; worktree đặt tên khác (rv\X) ⇒ cổng KT không chạy (V10-03). `Select-FreeAgent` đổi Agent trên main ⇒ xung đột file task với nhánh đã chuẩn bị sẵn.
   4. [CK] OpenCode free hết lượt thì đứng im thay vì báo lỗi ⇒ bộ canh `oc-run.ps1` (log đứng 15′) nên đưa vào `assign -Dev opencode`.
+  ⇒ Đã viết task 04/11: mục 1–3 = K1-01, mục 4 = K1-02 (Codex, test nghiệm thu Claude viết trước).
 - **Giao diện R-014 (Claude): ✅ XONG 04/11** UI-04 Duyệt, UI-05 Báo cáo + biểu đồ, UI-06 Xem lại + bài học, UI-07 Quy trình, UI-08 Tài khoản AI + trợ lý, UI-09 khung chat nối thật; menu trỏ /Reports, /Reports/Lessons, /Workflow, /AiServices. Còn lại R-014: đánh giá yêu cầu (mục 4 phiếu) + 4 mục [CK] cổng kiểm tra cho Codex.
 Theo `docs/HUB-DESIGN.md` mục 7:
 - **H-003 (B):** nối trang với dịch vụ thật; trang Agent, Hộp thư. Sau H-001 và H-002.
