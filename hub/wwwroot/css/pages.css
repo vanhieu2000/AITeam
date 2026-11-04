@@ -1,4 +1,4 @@
-/* R-015 (Claude): bố cục dùng chung cho trang quản lý (Yêu cầu, Dự án, Đội AI) — mockup docs/design/R-015-mockup.html.
+﻿/* R-015 (Claude): bố cục dùng chung cho trang quản lý (Yêu cầu, Dự án, Đội AI) — mockup docs/design/R-015-mockup.html.
    Màn rộng ≥ 1100 px và cao ≥ 620 px: trang vừa khít khung, không cuộn cả trang, mỗi nội dung 1 thẻ tự cuộn bên trong.
    Nhỏ hơn: xếp dọc, cuộn trang như thường. Tiền tố pg- để không trùng lớp cũ (.split, .info … trong hub.css). */
 

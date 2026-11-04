@@ -20,6 +20,10 @@ public sealed class LessonsModel(ILessonService lessons, IWorkflowConfigService 
     [BindProperty(SupportsGet = true, Name = "request")] public string? RequestFilter { get; set; }
     [BindProperty(SupportsGet = true)] public string? Ai { get; set; }
     [BindProperty(SupportsGet = true, Name = "q")] public string? Query { get; set; }
+    /// <summary>R-015: mục đang xem bên phải (LS-xxx / L-xxx); không có / lạ ⇒ mục đầu danh sách.</summary>
+    [BindProperty(SupportsGet = true)] public string? Sel { get; set; }
+
+    public string SelLink(string id) => Link() + (Link().Contains('?') ? "&" : "?") + "sel=" + Uri.EscapeDataString(id);
 
     public IReadOnlyList<Lesson> Items { get; private set; } = [];
     public IReadOnlyList<Rule> RuleItems { get; private set; } = [];
