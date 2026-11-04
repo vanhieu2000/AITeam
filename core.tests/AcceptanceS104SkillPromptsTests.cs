@@ -199,6 +199,8 @@ function Test-AgentTouchedMain { }; function Get-RunRecord { }; function Save-Ru
 # V9-16 (R-012): lint task có test riêng (V916TaskLintTests); harness skill-prompt giả lập lint đạt.
 function Invoke-LintTask { }
 function Test-QuotaExhausted { $x.mode -eq 'fallback' }
+# K1-01 (Claude): assign dò worktree / nhánh đã chuẩn bị và lỗi mạng qua hàm riêng; harness giữ thư mục mặc định.
+function Resolve-TaskWork { param($r,$branch,$defaultWork) $defaultWork }; function Test-BranchPrepared { $false }; function Test-NetworkError { $false }
 $script:captured=$null; $script:calls=0; $script:ro=$false; $script:cwd=$repo
 # Khóa giả chỉ chạy action trong sandbox, không dùng khóa Codex trên máy.
 function Invoke-WorkflowCodexLock { param([scriptblock]$Action) & $Action }
