@@ -85,6 +85,7 @@ Sự kiện cần ghi:
 | ~08:50 04/11/2026 | UI-07 Quy trình & vai trò (sơ đồ luồng, sửa bước, chống ghi đè) — 973f8da | Claude |
 | ~09:20 04/11/2026 | UI-08 Tài khoản AI (danh bạ, kiểm tra kết nối, .ini) + Cài đặt trợ lý — bf28b4f | Claude |
 | ~10:00 04/11/2026 | UI-09 Khung chat nối thật (bỏ iframe) + menu trỏ trang mới — 7af1983. Clone sạch: Hub 924/924, Core 1009/1009, 0 warning | Claude |
+| ~11:00 04/11/2026 | Chủ dự án duyệt giao Codex 4 lỗi [CK]. Claude viết K1-01 (team.ps1: lỗi mạng ≠ hạn mức, nhận bản sửa test của quản lý, tìm đúng worktree; 5 test nghiệm thu đỏ) + K1-02 (OpenCode đứng im 20′ tự dừng; khung + 7 test, 3 đỏ). Lint task ĐẠT; hẹn giao Codex 12:12 | Claude |
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
 
