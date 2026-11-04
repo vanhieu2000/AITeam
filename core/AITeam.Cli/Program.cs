@@ -587,7 +587,24 @@ int RulesForTask()
 // F1-05 (R-015): khung — agent điền thân. In "Đã thêm N, bỏ qua M".
 int LessonsImport()
 {
-    throw new NotImplementedException(); // TODO(agent)
+    var lessonService = new LessonService(root);
+    var allItems = new List<ImportedLesson>();
+
+    var files = new[] { "CLAUDE.md", "AGENTS.md" };
+    foreach (var fileName in files)
+    {
+        var filePath = Path.Combine(root, fileName);
+        if (File.Exists(filePath))
+        {
+            var content = File.ReadAllText(filePath, Encoding.UTF8);
+            var items = LessonImporter.Extract(content, fileName);
+            allItems.AddRange(items);
+        }
+    }
+
+    var result = LessonImporter.Import(lessonService, allItems);
+    Console.WriteLine($"Đã thêm {result.Added}, bỏ qua {result.Skipped}");
+    return 0;
 }
 
 int LessonAdd()
