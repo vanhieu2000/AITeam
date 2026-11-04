@@ -153,15 +153,8 @@ public sealed class PerformanceService(HubPaths paths, ITeamConfigService config
         try
         {
             var raw = HubMetricReader.ReadText(project.Path, "tasks/README.md");
-            if (raw == null) return map;
-            foreach (var line in raw.Split('\n').Where(l => l.StartsWith('|')))
-            {
-                var cells = line.Split('|');
-                if (cells.Length < 5) continue;
-                var id = Regex.Match(cells[1], @"[A-Za-z][A-Za-z0-9]*-\d+").Value;
-                if (id.Length == 0) continue;
-                map[id] = WorkOverviewService.ParseStatus(cells[^2].Trim(), TaskState.Unknown);
-            }
+            foreach (var row in BoardTable.Parse(raw))
+                map[row.Id] = WorkOverviewService.ParseStatus(row.Status, TaskState.Unknown);
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
         {

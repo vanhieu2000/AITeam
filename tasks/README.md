@@ -122,5 +122,8 @@ Theo `docs/HUB-DESIGN.md` mục 7:
 - **H-005 (B):** module "AITeam Hub" trong HDV Tool (WebView2), làm ở dự án HDVTool.
 
 | O-02 | OpenCode/DeepSeek | agent-c/O-02-opencode-deepseek | Chờ kiểm mạng/Windows; 8 test mới đạt |
-| [F1-06 · Bộ đọc bảng việc dùng chung](F1-06-bo-doc-bang-viec.md) | C | `agent-c/F1-06-bo-doc-bang-viec` | 🟡 Đang chạy · máy HIEUDV · 20:15 04/11/2026 |
-| [F1-05 · Nhập bài học có sẵn vào kho bài học](F1-05-nhap-bai-hoc.md) | A | `agent-a/F1-05-nhap-bai-hoc` | 🔴 Cần sửa · tự giao lại |
+| [F1-06 · Bộ đọc bảng việc dùng chung](F1-06-bo-doc-bang-viec.md) | C | `agent-c/F1-06-bo-doc-bang-viec` | ✅ Đã merge 04/11 (Codex, vòng 1) |
+| [F1-05 · Nhập bài học có sẵn vào kho bài học](F1-05-nhap-bai-hoc.md) | A | `agent-a/F1-05-nhap-bai-hoc` | ✅ Đã merge 04/11 (Antigravity, vòng 1) |
+| [F1-02 · Tiến độ yêu cầu: đếm task đúng, đóng / hủy phiếu](F1-02-tien-do-yeu-cau.md) | C | `agent-c/F1-02-tien-do-yeu-cau` | ✅ Đã merge 04/11 (Codex, vòng 1) |
+| [F1-01 · Dịch vụ quản lý dự án: thêm / sửa / trạng thái](F1-01-quan-ly-du-an.md) | C | `agent-c/F1-01-quan-ly-du-an` | 🟡 Đang chạy · máy HIEUDV · 20:58 04/11/2026 |
+| [F1-03 · Đội AI: lưu kết quả kiểm đăng nhập, ghi hạn mức thật, bỏ dòng trùng](F1-03-doi-ai-dang-nhap-han-muc.md) | B | `agent-b/F1-03-doi-ai-dang-nhap-han-muc` | 🟡 Đang chạy · máy HIEUDV · 20:59 04/11/2026 |

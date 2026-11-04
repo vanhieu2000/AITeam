@@ -19,16 +19,14 @@
 - `hub/Services/ProjectAdminService.cs` (khung do Claude viết)
 - `docs/design/R-015-chuc-nang.md` mục F1-01
 - `hub/Services/TeamConfigService.cs` (`GetProjects`, `SaveProject`, `WriteWithBackup` — dùng lại cách ghi nguyên tử + .bak)
-- `hub/Services/HubV3Registration.cs` (đăng ký DI)
 
 ## Mục tiêu
 1. Điền thân `ProjectAdminService` (List, Get, Update, SetStatus, Add) đúng thiết kế mục F1-01.
 2. Điền thân `PowerShellProjectScriptRunner.Run`: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File <AITeamRoot>\team.ps1` + args qua `ProcessStartInfo.ArgumentList`, stdin rỗng (đóng ngay), đọc stdout + stderr không chặn, quá `timeout` ⇒ kill cả cây, trả mã 124 + output đã có.
-3. Đăng ký DI: `IProjectScriptRunner` → `PowerShellProjectScriptRunner`, `IProjectAdminService` → `ProjectAdminService` (singleton, `TryAdd`).
+3. Đăng ký DI: ĐÃ CÓ trong khung (Claude) — không sửa `HubV3Registration.cs`.
 
 ## Phạm vi (được sửa những gì)
 - `hub/Services/ProjectAdminService.cs`
-- `hub/Services/HubV3Registration.cs`
 - `hub/Services/TeamConfigService.cs` (chỉ nếu cần mở hàm ghi nguyên tử dùng chung; không đổi hành vi cũ)
 - `hub.tests/F101ProjectAdminExtraTests.cs` (tạo mới nếu cần)
 - `tasks/F1-01-quan-ly-du-an.md`
@@ -37,6 +35,7 @@
 - KHÔNG sửa `hub.tests/AcceptanceF101ProjectAdminTests.cs` và test đang có.
 - Không sửa `hub/Pages/**`, `hub/wwwroot/**`, `team.ps1`, `projects.json`, `team.local.json` thật.
 - Không thêm chức năng xóa dự án.
+- Không sửa `hub/Services/HubV3Registration.cs` (F1-03 đang làm song song).
 - Không đổi `ProjectInfo`, `ITeamConfigService`.
 
 ## Ràng buộc (bảo mật / dữ liệu / tương thích)

@@ -101,7 +101,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
    7. Lỗi agent mắc mà có thể lặp lại ở task khác ⇒ thêm ngay vào mục "Lỗi hay gặp" trong `AGENTS.md` của dự án (và `templates/AGENTS.md` nếu chung). Không chỉ ghi trong file task: agent task sau không đọc file task cũ.
 7. **Kết luận**
    - **ĐẠT**:
-     1. `git merge --no-ff` vào `main`.
+     1. `git merge --no-ff` vào `main`. Merge tay thì NGAY SAU ĐÓ ghi `team.ps1 claude-decision -Kind merge -Title "Merge <task>" -Task <task> -Request R-xxx -Detail "<AI>, vòng N"` (R-015: Hub "Claude tự quyết" = 0 vì merge tay không ghi nhật ký; `team.ps1 merge` tự ghi).
      2. Kiểm tra lại bằng bản **clone sạch** từ GitHub: build + test.
      3. Push `main`, rồi `team.ps1 cleanup`.
      3b. **Làm mới bản chạy thử cho chủ dự án:** `team.ps1 try -Project X -NoLaunch` ⇒ `<dự án>\ban-chay-thu\<App>.exe` là bản vừa merge. Báo cáo ghi rõ "mở `D:\<dự án>\ban-chay-thu\<App>.exe` để thử".

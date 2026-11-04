@@ -32,8 +32,7 @@ public sealed class WorkOverviewService(HubPaths paths,ITeamConfigService config
             {
                 var board=boards.GetBoard(project.Name);var statuses=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
                 var raw=HubMetricReader.ReadText(project.Path,"tasks/README.md");
-                if(raw!=null)foreach(var line in raw.Split('\n').Where(l=>l.StartsWith('|')))
-                {var cells=line.Split('|');if(cells.Length<5)continue;var id=Regex.Match(cells[1],@"[A-Za-z][A-Za-z0-9]*-\d+").Value;if(id.Length>0)statuses[id]=cells[^2].Trim();}
+                foreach(var row in BoardTable.Parse(raw)) statuses[row.Id]=row.Status;
                 foreach(var task in board.Tasks)
                 {
                     var code=HubMetricReader.TaskCode(task.Id);var runs=metrics.Runs.Where(r=>r.Project.Equals(project.Name,StringComparison.OrdinalIgnoreCase)&&r.Task==code).ToList();
