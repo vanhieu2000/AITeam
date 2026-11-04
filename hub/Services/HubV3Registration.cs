@@ -27,6 +27,8 @@ public static class HubV3Registration
             sp.GetRequiredService<ITaskBoardService>(), sp.GetRequiredService<IGitHistory>()));
         services.TryAddSingleton<ITeamInsightsService, TeamInsightsService>();
         services.TryAddSingleton<IRequestService, RequestService>();
+        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddSingleton<IRequestProgressService, RequestProgressService>();
         services.TryAddSingleton<IAiReviewService, AiReviewService>();
         services.TryAddSingleton<IOfficeService, OfficeService>();
         // W2-01 / R-014: cấu hình loại việc → bước → người phụ trách (config/workflow.json).
