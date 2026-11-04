@@ -2,9 +2,7 @@
 @{
     // R-014 (Claude): menu 3 nhóm, nút chat nổi thay mục Giao việc / Trò chuyện. Thiết kế: docs/design/R-014-van-phong-ai.md mục 3.
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-    var requestPath = Context.Request.Path;
     bool IsPage(params string[] pages) => pages.Any(p => currentPage.Equals(p, StringComparison.OrdinalIgnoreCase));
-    bool IsPath(params string[] paths) => paths.Any(p => requestPath.StartsWithSegments(p, StringComparison.OrdinalIgnoreCase));
 
     // R-015 (Claude): menu 9 mục, 3 nhóm. Thiết kế: docs/design/R-015-ra-soat-van-phong-ai.md mục 3.
     var isOffice = string.IsNullOrEmpty(currentPage) || currentPage == "/" || IsPage("/Office");
