@@ -2314,8 +2314,11 @@ function Get-ClaudeOwnedFiles([string]$Work, [string]$Base, [string[]]$Files, [s
                 $history = @(git -C $Work log -1 --no-merges '--format=%H%x09%ae%x09%s' "$Base..HEAD" -- $file 2>$null)
                 if ($LASTEXITCODE -ne 0 -or $history.Count -ne 1) { continue }
                 $parts = "$($history[0])" -split "`t", 3
-                if ($parts.Count -ne 3 -or $parts[1] -ine $ManagerEmail -or
-                    ($parts[2] -notmatch '\(Claude\)' -and $parts[2] -notmatch '^Test nghiệm thu')) { continue }
+                # "Test nghiệm thu…" (khung) miễn như luật cũ V4-06; commit "(Claude)" khác phải đúng email quản lý.
+                if ($parts.Count -ne 3) { continue }
+                $isSeed = $parts[2] -match '^Test nghiệm thu'
+                $isClaude = $parts[1] -ieq $ManagerEmail -and $parts[2] -match '\(Claude\)'
+                if (-not ($isSeed -or $isClaude)) { continue }
                 git -C $Work diff --quiet $parts[0] HEAD -- $file 2>$null
                 if ($LASTEXITCODE -eq 0) { $file }
             } catch { continue }

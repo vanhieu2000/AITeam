@@ -70,5 +70,10 @@ File đổi lượt sửa: `team.ps1` đổi đối số grep ở bước BOM sa
 Quyết định: giữ nguyên bộ lọc/chọn commit khung và Get-AcceptRef; hai điểm gọi mới vẫn dùng Get-ClaudeOwnedFiles/Test-AlwaysPassLine. Assert từng lỗi đã xanh.
 Chưa xác minh: toàn solution và cổng kiểm tra đạt trong môi trường đủ quyền; không sửa các hàm ngoài phạm vi để xử lý lỗi môi trường.
 ## Review (Claude)
+### Vòng 1 — ĐẠT (04/11 23:15)
+- Cổng KT lượt 1 ĐẠT (Hub 856, Core 1090), 24/60 dòng. Cảnh báo "luôn pass" là bản cổng CŨ trên main báo nhầm đúng lỗi task này sửa.
+- Đọc diff: 2 hàm đúng thiết kế; Invoke-Verify dùng cả 2. Codex đổi thêm 3 chỗ `--grep="…"` sang nháy đơn (tương đương) vì test của Claude kiểm chuỗi rộng.
+- Sau merge `tools/test-verify.ps1` hỏng 5 kịch bản V4-06: khung "Test nghiệm thu" trong harness không có email quản lý ⇒ bị tính ngoài phạm vi. [TK] thiết kế bắt email cho cả commit khung (luật cũ không bắt). **Claude sửa** 5 dòng: commit "Test nghiệm thu…" miễn như cũ, commit "(Claude)" khác phải đúng email. test-verify về 43 ĐẠT như trước (1 HỎNG + kịch bản 17 lỗi có sẵn từ trước).
+- [TK] (test) test nghiệm thu thiếu ca khung "Test nghiệm thu" khác email.
 
 ## Kết quả

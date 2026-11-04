@@ -109,7 +109,7 @@ Hướng dẫn cho agent: [AGENTS.md](../AGENTS.md).
 | [F1-02 · Tiến độ yêu cầu: đếm task đúng, đóng / hủy phiếu](F1-02-tien-do-yeu-cau.md) | C | `agent-c/F1-02-tien-do-yeu-cau` | ✅ Đã merge 04/11 (Codex, vòng 1) |
 | [F1-01 · Dịch vụ quản lý dự án: thêm / sửa / trạng thái](F1-01-quan-ly-du-an.md) | C | `agent-c/F1-01-quan-ly-du-an` | ✅ Đã merge 04/11 (Codex, vòng 1) |
 | [F1-03 · Đội AI: lưu kết quả kiểm đăng nhập, ghi hạn mức thật, bỏ dòng trùng](F1-03-doi-ai-dang-nhap-han-muc.md) | B | `agent-b/F1-03-doi-ai-dang-nhap-han-muc` | ✅ Đã merge 04/11 (Antigravity, vòng 1) |
-| [K1-05 · Cổng KT hết báo nhầm: commit "(Claude)" sau khung, chữ Assert.True(true) trong dữ liệu](K1-05-cong-kt-bao-nham.md) | C | `agent-c/K1-05-cong-kt-bao-nham` | 🔵 Chờ review · cổng KT ĐẠT |
+| [K1-05 · Cổng KT hết báo nhầm: commit "(Claude)" sau khung, chữ Assert.True(true) trong dữ liệu](K1-05-cong-kt-bao-nham.md) | C | `agent-c/K1-05-cong-kt-bao-nham` | ✅ Đã merge 04/11 (Codex, vòng 1) |
 
 Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đã merge
 
@@ -122,6 +122,8 @@ Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đ
   4. Thay trang `/Research` bằng chế độ "Hỏi cùng lúc" của trợ lý chat (đề xuất R-015 mục 3) — cần thiết kế riêng.
   5. Optional review: F1-01 nhả khóa cấu hình trước khi chạy `add-project`; F1-02 bộ đệm theo thời điểm sửa file; F1-05 bỏ qua bài học tiêu đề rỗng thay vì dừng.
   6. Trang Dự án: nút Chạy thử / Lấy bản mới / Mở thư mục (mockup có) cần lệnh nền an toàn từ Hub ⇒ thiết kế + task lõi.
+  7. [CK] `tools/test-verify.ps1` có sẵn 2 lỗi (trước K1-05): kịch bản 17 dừng vì thiếu hàm Assert-PrepPlanApproval trong harness; 1 HỎNG "không biến cục bộ nào đè tham số script".
+  (Mục 1 đã xong: K1-05 merge 04/11 23:15.)
 
 - **Sửa cổng / công cụ (R-014, phát hiện đêm 03–04/11, giao Codex sau 12:09 04/11):**
   1. [CK] `team.ps1` báo "HẾT HẠN MỨC" khi lượt agy kết thúc bằng lỗi mạng "no such host" (V10-02) ⇒ phân biệt lỗi mạng / hạn mức thật.
