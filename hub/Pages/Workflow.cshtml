@@ -1,0 +1,182 @@
+﻿@page "/Workflow"
+@model AITeam.Hub.Pages.WorkflowModel
+@using AITeam.Core.Workflow
+@using AITeam.Hub.Pages
+@{
+    // R-014 UI-07 (Claude). Thiết kế: docs/design/R-014-van-phong-ai.md mục 4.5, mockup #workflow.
+    ViewData["Title"] = "Quy trình & vai trò";
+    var cur = Model.Current;
+    var skillsHint = string.Join(", ", Model.Skills);
+}
+<link rel="stylesheet" href="~/css/workflow.css" asp-append-version="true" />
+
+@section Actions {
+    <a class="btn sm" href="/Reports/Lessons?view=rules">Luật chuẩn</a>
+    <a class="btn sm ghost" href="/Map">Bảng vai trò cũ</a>
+}
+
+<p class="wf-sub">Mỗi loại việc là một chuỗi bước. Mỗi bước có người phụ trách, AI dự phòng, skill và luật chuẩn gắn kèm. Lưu ở <code>config/workflow.json</code> (đi qua git, dùng chung 2 máy).</p>
+
+@if (!string.IsNullOrEmpty(Model.Message)) { <div class="alert alert-success" role="status">@Model.Message</div> }
+@if (Model.Error != null) { <div class="alert alert-danger" role="alert">@Model.Error <a href="/Workflow">Thử lại</a></div> }
+@if (Model.SaveErrors.Count > 0)
+{
+    <div class="alert alert-danger" role="alert">
+        <b>Chưa lưu — cần sửa:</b>
+        <ul>@foreach (var e in Model.SaveErrors) { <li>@e</li> }</ul>
+    </div>
+}
+
+@if (Model.Config != null && cur != null)
+{
+    <nav class="tabs wf-types" aria-label="Loại việc">
+        @foreach (var t in Model.Config.TaskTypes)
+        {
+            <a class="tab @(t.Id == cur.Id ? "on" : "")" href="/Workflow?type=@t.Id" aria-current="@(t.Id == cur.Id ? "page" : null)">@t.Name<span class="c num">@t.Steps.Count</span></a>
+        }
+    </nav>
+
+    <section class="wf-flow" aria-label="Sơ đồ luồng @cur.Name">
+        <ol>
+            @foreach (var s in cur.Steps)
+            {
+                <li class="wf-node k-@WorkflowModel.ActorKind(s.Owner)">
+                    <b>@s.Name</b>
+                    <span>@Model.ActorName(s.Owner)@(s.Fallback != null ? " → " + Model.ActorName(s.Fallback) : "")</span>
+                    @if (s.OwnerApproval) { <span class="wf-flag">Cần anh duyệt</span> }
+                    @if (s.Rules.Count > 0) { <span class="wf-rules">@s.Rules.Count luật</span> }
+                </li>
+            }
+        </ol>
+        <div class="wf-legend">
+            <span class="k-claude">Claude</span><span class="k-ai">AI làm việc</span><span class="k-gate">Cổng kiểm tra</span><span class="k-owner">Chủ dự án</span>
+        </div>
+    </section>
+
+    <form method="post" asp-page-handler="Save" class="wf-form" id="wf-form">
+        <input type="hidden" name="type" value="@cur.Id" />
+        <input type="hidden" name="revision" value="@Model.Config.Revision" />
+        <div class="wf-typehead">
+            <label>Tên loại việc <input class="inp" name="name" value="@cur.Name" maxlength="40" required /></label>
+            <label>Tiền tố mã task <span class="muted">(suy loại việc từ mã, vd. H, V)</span> <input class="inp" name="prefixes" value="@string.Join(", ", cur.CodePrefixes)" maxlength="100" /></label>
+            <span class="muted mono">mã: @cur.Id</span>
+        </div>
+
+        <div class="wf-scroll">
+            <table class="dash-table wf-steps">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th><th scope="col">Mã bước</th><th scope="col">Tên bước</th><th scope="col">Phụ trách</th><th scope="col">Dự phòng</th>
+                        <th scope="col">Skill</th><th scope="col">Luật</th><th scope="col">Phút</th><th scope="col">Vòng</th><th scope="col">Anh duyệt</th><th scope="col"><span class="sr-only">Thao tác</span></th>
+                    </tr>
+                </thead>
+                <tbody id="wf-rows">
+                    @for (var i = 0; i < cur.Steps.Count; i++)
+                    {
+                        var s = cur.Steps[i];
+                        <tr class="wf-row">
+                            <td class="num wf-i">@(i + 1)</td>
+                            <td><input class="inp mono" data-f="Code" name="steps[@i].Code" value="@s.Code" maxlength="32" required aria-label="Mã bước" /></td>
+                            <td><input class="inp" data-f="Name" name="steps[@i].Name" value="@s.Name" maxlength="40" required aria-label="Tên bước" /></td>
+                            <td>
+                                <select class="inp" data-f="Owner" name="steps[@i].Owner" aria-label="Người phụ trách">
+                                    @foreach (var (id, name) in Model.Actors) { <option value="@id" selected="@(id == s.Owner)">@name</option> }
+                                </select>
+                            </td>
+                            <td>
+                                <select class="inp" data-f="Fallback" name="steps[@i].Fallback" aria-label="AI dự phòng">
+                                    <option value="">—</option>
+                                    @foreach (var (id, name) in Model.Actors) { <option value="@id" selected="@(id == s.Fallback)">@name</option> }
+                                </select>
+                            </td>
+                            <td><input class="inp" data-f="Skills" name="steps[@i].Skills" value="@string.Join(", ", s.Skills)" list="wf-skills" aria-label="Skill gắn kèm, cách nhau dấu phẩy" /></td>
+                            <td><input class="inp mono" data-f="Rules" name="steps[@i].Rules" value="@string.Join(", ", s.Rules)" list="wf-rules" aria-label="Mã luật L-xxx, cách nhau dấu phẩy" /></td>
+                            <td><input class="inp num" data-f="MaxMinutes" name="steps[@i].MaxMinutes" type="number" min="1" max="240" value="@s.MaxMinutes" aria-label="Giới hạn phút" /></td>
+                            <td><input class="inp num" data-f="MaxRounds" name="steps[@i].MaxRounds" type="number" min="1" max="5" value="@s.MaxRounds" aria-label="Giới hạn vòng" /></td>
+                            <td class="wf-c"><input type="checkbox" data-f="OwnerApproval" name="steps[@i].OwnerApproval" value="true" checked="@s.OwnerApproval" aria-label="Cần chủ dự án duyệt" /></td>
+                            <td class="wf-ops">
+                                <button type="button" class="btn sm ghost" data-op="up" aria-label="Đưa bước lên">↑</button>
+                                <button type="button" class="btn sm ghost" data-op="down" aria-label="Đưa bước xuống">↓</button>
+                                <button type="button" class="btn sm ghost" data-op="del" aria-label="Xóa bước">✕</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <datalist id="wf-skills">@foreach (var sk in Model.Skills) { <option value="@sk"></option> }</datalist>
+        <datalist id="wf-rules">@foreach (var r in Model.ActiveRules) { <option value="@r.Id">@r.Title</option> }</datalist>
+
+        <div class="wf-bar">
+            <button type="button" class="btn" id="wf-add">Thêm bước</button>
+            <span class="sp"></span>
+            <span class="muted">Skill có sẵn: @(skillsHint.Length == 0 ? "(chưa có thư mục skills/)" : skillsHint)</span>
+            <a class="btn ghost" href="/Workflow?type=@cur.Id">Hủy thay đổi</a>
+            <button type="submit" class="btn cta">Lưu quy trình</button>
+        </div>
+    </form>
+
+    @if (Model.ActiveRules.Count > 0)
+    {
+        <section class="panel wf-rulelib">
+            <div class="hd">Luật chuẩn đang hiệu lực <span class="sp"></span><a class="btn sm ghost" href="/Reports/Lessons?view=rules">Quản lý</a></div>
+            <ul>
+                @foreach (var r in Model.ActiveRules)
+                {
+                    <li><span class="mono">@r.Id</span> @r.Title <span class="muted">· @(r.TaskTypes.Count == 0 ? "mọi loại" : string.Join(", ", r.TaskTypes)) · @(r.Steps.Count == 0 ? "mọi bước" : string.Join(", ", r.Steps))</span></li>
+                }
+            </ul>
+        </section>
+    }
+
+    <template id="wf-new">
+        <tr class="wf-row">
+            <td class="num wf-i"></td>
+            <td><input class="inp mono" data-f="Code" maxlength="32" required aria-label="Mã bước" placeholder="vd. qc" /></td>
+            <td><input class="inp" data-f="Name" maxlength="40" required aria-label="Tên bước" /></td>
+            <td><select class="inp" data-f="Owner" aria-label="Người phụ trách">@foreach (var (id, name) in Model.Actors) { <option value="@id">@name</option> }</select></td>
+            <td><select class="inp" data-f="Fallback" aria-label="AI dự phòng"><option value="">—</option>@foreach (var (id, name) in Model.Actors) { <option value="@id">@name</option> }</select></td>
+            <td><input class="inp" data-f="Skills" list="wf-skills" aria-label="Skill gắn kèm" /></td>
+            <td><input class="inp mono" data-f="Rules" list="wf-rules" aria-label="Mã luật" /></td>
+            <td><input class="inp num" data-f="MaxMinutes" type="number" min="1" max="240" aria-label="Giới hạn phút" /></td>
+            <td><input class="inp num" data-f="MaxRounds" type="number" min="1" max="5" aria-label="Giới hạn vòng" /></td>
+            <td class="wf-c"><input type="checkbox" data-f="OwnerApproval" value="true" aria-label="Cần chủ dự án duyệt" /></td>
+            <td class="wf-ops">
+                <button type="button" class="btn sm ghost" data-op="up" aria-label="Đưa bước lên">↑</button>
+                <button type="button" class="btn sm ghost" data-op="down" aria-label="Đưa bước xuống">↓</button>
+                <button type="button" class="btn sm ghost" data-op="del" aria-label="Xóa bước">✕</button>
+            </td>
+        </tr>
+    </template>
+}
+
+<script>
+    (function () {
+        var form = document.getElementById('wf-form');
+        if (!form) return;
+        var body = document.getElementById('wf-rows');
+        // Đặt lại name="steps[i].X" theo thứ tự đang hiện (sau khi thêm / xóa / đổi chỗ).
+        function renumber() {
+            body.querySelectorAll('tr.wf-row').forEach(function (tr, i) {
+                tr.querySelector('.wf-i').textContent = i + 1;
+                tr.querySelectorAll('[data-f]').forEach(function (el) { el.name = 'steps[' + i + '].' + el.dataset.f; });
+            });
+        }
+        body.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-op]');
+            if (!b) return;
+            var tr = b.closest('tr');
+            if (b.dataset.op === 'up' && tr.previousElementSibling) body.insertBefore(tr, tr.previousElementSibling);
+            if (b.dataset.op === 'down' && tr.nextElementSibling) body.insertBefore(tr.nextElementSibling, tr);
+            if (b.dataset.op === 'del' && confirm('Xóa bước này khỏi quy trình?')) tr.remove();
+            renumber();
+        });
+        document.getElementById('wf-add').addEventListener('click', function () {
+            body.appendChild(document.getElementById('wf-new').content.cloneNode(true));
+            renumber();
+            body.lastElementChild.querySelector('[data-f=Code]').focus();
+        });
+        form.addEventListener('submit', renumber);
+        renumber();
+    })();
+</script>
