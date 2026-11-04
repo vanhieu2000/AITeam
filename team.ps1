@@ -2296,6 +2296,18 @@ function Get-NewTestProcessStartInfoWarnings {
     return $warnings
 }
 
+# K1-05 (R-015): KHUNG do Claude viết — agent điền thân. Thiết kế: tasks/K1-05-cong-kt-bao-nham.md.
+# Dòng test (đã bỏ dấu "+" của diff) là câu lệnh luôn pass thật: `if (…) return;` / `Assert.True(true[, …]);` đứng đầu dòng.
+function Test-AlwaysPassLine([string]$line) {
+    throw 'TODO(agent) K1-05'
+}
+
+# Trong $Files: file mà commit cuối (không tính merge) chạm tới trong Base..HEAD là commit của quản lý (email = ManagerEmail,
+# tiêu đề có "(Claude)" hoặc bắt đầu "Test nghiệm thu") và HEAD giữ nguyên nội dung commit đó ⇒ file của Claude, không tính cho agent.
+function Get-ClaudeOwnedFiles([string]$Work, [string]$Base, [string[]]$Files, [string]$ManagerEmail) {
+    throw 'TODO(agent) K1-05'
+}
+
 function Invoke-Verify {
     $cfg = Get-Config
     $ctx = Get-TaskContext
