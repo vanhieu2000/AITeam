@@ -8,7 +8,7 @@ namespace AITeam.Core.Providers;
 public sealed class OpenCodeProvider(ProviderConfig config, IProcessRunner runner) : IAgentProvider
 {
     public const string DefaultModel = "opencode/deepseek-v4.1-flash-free";
-    /// <summary>K1-02 (khung Claude): OpenCode không in dòng nào quá khoảng này ⇒ dừng (hết lượt free hay đứng im). TODO(agent): truyền vào ProcessSpec + xử lý Stalled trong Parse.</summary>
+    /// <summary>K1-02 (khung Claude): OpenCode không in dòng nào quá khoảng này ⇒ dừng (hết lượt free hay đứng im).</summary>
     public static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(20);
     public string Id => config.Id;
     public ProviderKind Kind => ProviderKind.OpenCode;
@@ -63,7 +63,7 @@ public sealed class OpenCodeProvider(ProviderConfig config, IProcessRunner runne
             args.AddRange(["run", "Lam dung theo file dinh kem.", "-f", request.PromptFile, "--dir", request.WorkDir,
                 "--format", "json", "--title", request.Title ?? Path.GetFileNameWithoutExtension(request.PromptFile), "-m", model]);
             var result = await runner.RunAsync(new ProcessSpec(exe, args, request.WorkDir, null, request.Timeout,
-                new Dictionary<string, string> { ["OPENCODE_CONFIG"] = permissions }), ct);
+                new Dictionary<string, string> { ["OPENCODE_CONFIG"] = permissions }, IdleTimeout), ct);
             if (request.LogDir != null)
             {
                 Directory.CreateDirectory(request.LogDir);
@@ -108,6 +108,8 @@ public sealed class OpenCodeProvider(ProviderConfig config, IProcessRunner runne
             catch (JsonException) { known = false; }
             catch (OverflowException) { known = false; }
         }
+        if (result.Stalled) return new(id, RunStatus.TimedOut, "", TokenUsage.Unknown, result.Duration, model, session,
+            $"OpenCode đứng im {(int)IdleTimeout.TotalMinutes} phút không in gì (treo hoặc hết lượt miễn phí) — đã dừng.");
         var ok = result.ExitCode == 0 && error.Length == 0 && !string.IsNullOrWhiteSpace(text);
         var statusCode = ErrorClassifier.Classify(error + "\n" + result.StdErr, ok);
         var usage = known && steps > 0 ? new TokenUsage(input, 0, output) { ReportedTotal = total } : TokenUsage.Unknown;

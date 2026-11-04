@@ -50,9 +50,21 @@ public sealed class ProcessRunner : IProcessRunner
         using var p = new System.Diagnostics.Process { StartInfo = psi };
         var stdout = new StringBuilder();
         var stderr = new StringBuilder();
-        p.OutputDataReceived += (_, e) => { if (e.Data != null) lock (stdout) stdout.AppendLine(e.Data); };
-        p.ErrorDataReceived += (_, e) => { if (e.Data != null) lock (stderr) stderr.AppendLine(e.Data); };
+        long lastActivity = System.Environment.TickCount64;
+        p.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data == null) return;
+            Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+            lock (stdout) stdout.AppendLine(e.Data);
+        };
+        p.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data == null) return;
+            Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
+            lock (stderr) stderr.AppendLine(e.Data);
+        };
         p.Start();
+        Interlocked.Exchange(ref lastActivity, System.Environment.TickCount64);
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
 
@@ -65,20 +77,50 @@ public sealed class ProcessRunner : IProcessRunner
         p.StandardInput.Close();
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var timeoutStarted = System.Environment.TickCount64;
         timeoutCts.CancelAfter(spec.Timeout);
-        bool timedOut = false;
+        using var idleCts = new CancellationTokenSource();
+        using var monitorCts = new CancellationTokenSource();
+        using var waitCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, idleCts.Token);
+        async Task MonitorIdleAsync()
+        {
+            if (spec.IdleTimeout is not { } idle) return;
+            var interval = TimeSpan.FromMilliseconds(Math.Max(100, Math.Min(idle.TotalMilliseconds / 4, 5000)));
+            try
+            {
+                while (true)
+                {
+                    await Task.Delay(interval, monitorCts.Token).ConfigureAwait(false);
+                    if (p.HasExited) return;
+                    if (System.Environment.TickCount64 - Interlocked.Read(ref lastActivity) < idle.TotalMilliseconds) continue;
+                    idleCts.Cancel();
+                    return;
+                }
+            }
+            catch (OperationCanceledException) when (monitorCts.IsCancellationRequested) { /* Đã dừng bộ canh. */ }
+        }
+        var monitor = MonitorIdleAsync();
+        bool timedOut = false, stalled = false;
         try
         {
-            await p.WaitForExitAsync(timeoutCts.Token).ConfigureAwait(false);
+            await p.WaitForExitAsync(waitCts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            timedOut = !ct.IsCancellationRequested;
+            timedOut = !ct.IsCancellationRequested && (timeoutCts.IsCancellationRequested
+                || System.Environment.TickCount64 - timeoutStarted >= spec.Timeout.TotalMilliseconds);
+            stalled = !timedOut && !ct.IsCancellationRequested && idleCts.IsCancellationRequested;
             try { p.Kill(entireProcessTree: true); } catch (InvalidOperationException) { /* đã thoát */ }
             await p.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
-            if (!timedOut) throw;
+            ct.ThrowIfCancellationRequested();
         }
+        finally
+        {
+            monitorCts.Cancel();
+            await monitor.ConfigureAwait(false);
+        }
+        ct.ThrowIfCancellationRequested();
         p.WaitForExit(); // xả nốt output bất đồng bộ
-        return new ProcessResult(p.ExitCode, stdout.ToString(), stderr.ToString(), sw.Elapsed, timedOut);
+        return new ProcessResult(p.ExitCode, stdout.ToString(), stderr.ToString(), sw.Elapsed, timedOut, stalled);
     }
 }
