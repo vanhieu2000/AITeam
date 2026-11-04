@@ -1,0 +1,115 @@
+﻿/* UI-10 (Claude, chủ dự án 04/11): Văn phòng vừa khít màn hình — không cuộn cả trang, mỗi nội dung 1 thẻ, thẻ dài tự cuộn bên trong.
+   Màn rộng ≥ 1100 px và cao ≥ 620 px: bố cục cố định. Nhỏ hơn: xếp dọc, cuộn trang như thường. Chỉ dùng token màu của hub.css. */
+
+.office { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* Cảnh báo việc cần anh duyệt: 1 dòng */
+.office-alert { margin: 0; padding: 8px 12px; }
+.office-alert-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* KPI gọn */
+.office-kpis { margin: 0; gap: 12px; }
+.office-kpis .kpi { padding: 10px 14px; border-left: 3px solid var(--line-2); transition: border-color .15s, box-shadow .15s; }
+.office-kpis .kpi .v { font-size: 26px; line-height: 32px; }
+.office-kpis .kpi.run { border-left-color: var(--run); }
+.office-kpis .kpi.rev { border-left-color: var(--rev); }
+.office-kpis .kpi.ok { border-left-color: var(--ok); }
+.office-kpis .kpi.warn { border-left-color: var(--fix); }
+.office-kpis .kpi:hover { box-shadow: 0 2px 8px rgba(15, 23, 42, .08); }
+.office-kpis .kpi:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Vùng chính: bàn làm việc | (yêu cầu / sự kiện) */
+.office-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+.office-main, .office-side { display: grid; gap: 12px; min-width: 0; align-content: start; }
+.office-board .panel { margin: 0; display: flex; flex-direction: column; min-height: 0; }
+.office-board .panel > .hd { flex: none; }
+.office-board .panel > .hd .muted { margin-left: 4px; }
+.office-scroll { min-height: 0; }
+.office-empty { color: var(--muted); margin: 4px 0; font-size: 13px; }
+
+/* Thẻ bàn làm việc */
+.office-desk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.office-desk {
+  display: flex; flex-direction: column; gap: 8px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--line-2);
+  border-radius: var(--r); padding: 10px 12px; transition: border-color .15s, box-shadow .15s;
+}
+.office-desk:hover { box-shadow: 0 2px 10px rgba(15, 23, 42, .08); }
+.office-desk.s-run { border-left-color: var(--run); }
+.office-desk.s-rev { border-left-color: var(--rev); }
+.office-desk.s-ok { border-left-color: var(--ok); }
+.office-desk.s-err { border-left-color: var(--err); }
+.office-desk.s-mgr { border-left-color: #7c3aed; }
+.desk-h { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.desk-av { width: 30px; height: 30px; border-radius: 50%; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
+.desk-who { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.3; }
+.desk-who small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desk-h .pill { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+.desk-task { background: var(--surface-2); border-radius: 6px; padding: 6px 8px; font-size: 13px; display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.desk-task-title { flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.desk-task small { flex: none; }
+.desk-idle { margin: 0; color: var(--faint); font-size: 12.5px; }
+.desk-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 12px; color: var(--muted); }
+.desk-feed li { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.desk-feed time { color: var(--text); font-weight: 600; margin-right: 2px; }
+.desk-form { display: flex; gap: 6px; margin: 0; min-width: 0; }
+.desk-form select { flex: 1; min-width: 0; height: 30px; font-size: 12.5px; }
+.desk-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.desk-inline { display: inline; margin: 0; }
+
+/* Khối lệnh gập ở chân thẻ Bàn làm việc */
+.office-cmd { flex: none; border-top: 1px solid var(--line); background: var(--surface); }
+.office-cmd > summary { cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 8px; list-style: none; }
+.office-cmd > summary::-webkit-details-marker { display: none; }
+.office-cmd > summary::before { content: "▸"; transition: transform .15s; }
+.office-cmd[open] > summary::before { transform: rotate(90deg); }
+.office-cmd > summary:hover { color: var(--text); }
+.office-cmd-body { padding: 0 14px 12px; display: grid; gap: 6px; max-height: 260px; overflow: auto; }
+.office-cmd-body label { font-size: 12px; color: var(--muted); }
+.office-cmd-body textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.office-cmd-body h4 { margin: 6px 0 0; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.office-cmd-body table { font-size: 12.5px; }
+.office-msg { border: 1px solid; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+.office-msg.ok { color: var(--ok); background: var(--ok-soft); border-color: var(--ok); }
+.office-msg.err { color: var(--err); background: var(--err-soft); border-color: var(--err); }
+
+/* Yêu cầu đang mở */
+.office-req-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.office-req-list li { padding: 8px 0; border-bottom: 1px solid var(--line); display: grid; gap: 4px; min-width: 0; }
+.office-req-list li:last-child { border-bottom: 0; }
+.office-req-title { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.office-req-title b { color: var(--accent); }
+.office-req-meter { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.office-req-meter .meter { flex: 1; }
+
+/* Sự kiện: 1 dòng mỗi sự kiện */
+.office-feed li { align-items: center; padding: 6px 0; }
+.office-feed time { width: 74px; font-size: 12px; }
+.office-feed .pill { flex: none; }
+.office-feed-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Màn rộng: chia 2 cột */
+@media (min-width: 1100px) {
+  .office-board { grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr); }
+}
+
+/* Màn rộng + đủ cao: vừa khít khung, không cuộn trang; thẻ tự cuộn bên trong */
+@media (min-width: 1100px) and (min-height: 620px) {
+  .content:has(> .office) { overflow: hidden; display: flex; flex-direction: column; }
+  .office { flex: 1; min-height: 0; }
+  .office-board { flex: 1; min-height: 0; }
+  .office-main, .office-side { min-height: 0; align-content: stretch; }
+  /* Trái: bàn làm việc theo nội dung (tối đa 62% chiều cao), yêu cầu lấp phần còn lại. Phải: sự kiện cao hết khung. */
+  .office-main { grid-template-rows: minmax(0, auto) minmax(140px, 1fr); }
+  .office-agents { max-height: 62vh; }
+  .office-side { grid-template-rows: minmax(0, 1fr); }
+  .office-scroll { flex: 1; overflow: auto; }
+}
+
+@media (max-width: 760px) {
+  .office-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .office-desk, .office-kpis .kpi, .office-cmd > summary::before { transition: none; }
+}

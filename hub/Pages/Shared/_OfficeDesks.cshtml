@@ -1,20 +1,21 @@
 ﻿@model AITeam.Hub.Pages.OfficeModel
 @using AITeam.Hub.Services
 
+@* UI-10 (Claude 04/11): thẻ bàn làm việc gọn — tên, vai trò, trạng thái, việc đang làm, 2 tin gần nhất; ô giao việc chỉ hiện khi có task. *@
 <div id="office-desks">
 @if (Model.View is { } v && v.Desks.Count > 0)
 {
     <div class="office-desk-grid">
         @foreach (var d in v.Desks)
         {
-            var borderColor = d.State switch
+            var stateClass = d.State switch
             {
-                DeskState.Working => "var(--run)",
-                DeskState.Review => "var(--rev)",
-                DeskState.Idle => "var(--ok)",
-                DeskState.Resting => "var(--err)",
-                DeskState.Manager => "#7c3aed",
-                _ => "var(--bd)"
+                DeskState.Working => "s-run",
+                DeskState.Review => "s-rev",
+                DeskState.Idle => "s-ok",
+                DeskState.Resting => "s-err",
+                DeskState.Manager => "s-mgr",
+                _ => "s-n"
             };
             var avatarColor = d.Key switch
             {
@@ -35,21 +36,19 @@
                 _ => "n"
             };
             var initial = string.IsNullOrEmpty(d.Name) ? "?" : d.Name[..1].ToUpperInvariant();
-            <div data-desk-key="@d.Key" class="panel office-desk" style="border-left:4px solid @borderColor; margin:0; display:flex; flex-direction:column; gap:10px; min-width:0">
-                <div class="row" style="justify-content:space-between; align-items:center; gap:8px">
-                    <div class="row" style="gap:8px; min-width:0; flex:1">
-                        <div style="width:34px; height:34px; border-radius:50%; background:@avatarColor; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0">@initial</div>
-                        <div style="min-width:0">
-                            <div><b>@d.Name</b></div>
-                            <div class="muted" style="font-size:12px; overflow-wrap:anywhere">@d.Role</div>
-                        </div>
+            <article data-desk-key="@d.Key" class="office-desk @stateClass">
+                <header class="desk-h">
+                    <span class="desk-av" style="background:@avatarColor" aria-hidden="true">@initial</span>
+                    <div class="desk-who">
+                        <b>@d.Name</b>
+                        <small title="@d.Role">@d.Role</small>
                     </div>
-                    <span class="pill @pillClass" style="flex-shrink:0">@d.StateText</span>
-                </div>
+                    <span class="pill @pillClass">@d.StateText</span>
+                </header>
                 @if (d.Task is { } t)
                 {
-                    <div style="background:var(--s2); padding:8px 10px; border-radius:6px; font-size:13px">
-                        <div>
+                    <div class="desk-task">
+                        <div class="desk-task-title" title="@t.Id @t.Title">
                             @if (!string.IsNullOrEmpty(t.Project))
                             {
                                 <a href="/p/@t.Project/t/@t.Id"><b>@t.Id</b></a>
@@ -62,50 +61,52 @@
                         </div>
                         @if (t.ElapsedMin is { } min)
                         {
-                            <div class="muted" style="font-size:12px">@min phút</div>
+                            <small class="muted num">@min phút</small>
                         }
                     </div>
+                }
+                else if (d.Key != "research")
+                {
+                    <p class="desk-idle">Không có việc đang làm</p>
                 }
                 @if (d.Feed.Count > 0)
                 {
-                    <div style="display:flex; flex-direction:column; gap:4px">
-                        @foreach (var m in d.Feed)
+                    <ul class="desk-feed">
+                        @foreach (var m in d.Feed.Take(2))
                         {
-                            <div style="font-size:12px; overflow-wrap:anywhere" title="@m.Text">
-                                <b>@m.At.ToString("HH:mm")</b> @m.Text
-                            </div>
+                            <li title="@m.Text"><time class="num">@m.At.ToString("HH:mm")</time> @m.Text</li>
                         }
-                    </div>
-                }
-                @if (d.Key == "research")
-                {
-                    <div class="row" style="margin-top:auto">
-                        <a class="btn sm pri" href="/Research">Mở phòng nghiên cứu</a>
-                    </div>
+                    </ul>
                 }
                 @if (Model.ControlsEnabled && d.Key is "A" or "B" or "C")
                 {
                     <partial name="_OfficeControl" model="Model" view-data="@(new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData) { ["OfficeDeskKey"] = d.Key })" />
                 }
+                @if (d.Key == "research")
+                {
+                    <div class="desk-actions">
+                        <a class="btn sm pri" href="/Research">Mở phòng nghiên cứu</a>
+                    </div>
+                }
                 @if (d.Task is { } tf && !string.IsNullOrEmpty(tf.Project))
                 {
-                    <div class="row" style="gap:6px; margin-top:auto; flex-wrap:wrap">
+                    <div class="desk-actions">
                         <a class="btn sm" href="/p/@tf.Project/t/@tf.Id">Mở task</a>
-                        <a class="btn sm" href="/p/@tf.Project/t/@tf.Id?tab=report">Xem báo cáo</a>
+                        <a class="btn sm ghost" href="/p/@tf.Project/t/@tf.Id?tab=report">Báo cáo</a>
                         @if (Model.ControlsEnabled)
                         {
                             var isAgentDesk = d.Key is "A" or "B" or "C";
                             if (isAgentDesk && d.State == DeskState.Working)
                             {
                                 @* hx-confirm phải nằm trên form (HTMX 2 bỏ qua hx-confirm trên nút submit) ⇒ mỗi lệnh 1 form *@
-                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Dừng task @tf.Id? Agent sẽ bị dừng ngay." style="display:inline; margin:0">
+                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Dừng task @tf.Id? Agent sẽ bị dừng ngay." class="desk-inline">
                                     <input type="hidden" name="target" value="@tf.Project/@tf.Id" />
                                     <button type="submit" class="btn sm danger" name="command" value="Stop">Dừng</button>
                                 </form>
                             }
                             else if (d.Key == "gate")
                             {
-                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Chạy lại cổng kiểm tra cho @tf.Id?" style="display:inline; margin:0">
+                                <form method="post" asp-page-handler="Command" hx-post="/?handler=Command" hx-target="#office-control" hx-swap="outerHTML" hx-confirm="Chạy lại cổng kiểm tra cho @tf.Id?" class="desk-inline">
                                     <input type="hidden" name="target" value="@tf.Project/@tf.Id" />
                                     <button type="submit" class="btn sm" name="command" value="Verify">Kiểm tra lại</button>
                                 </form>
@@ -113,12 +114,12 @@
                         }
                     </div>
                 }
-            </div>
+            </article>
         }
     </div>
 }
 else
 {
-    <p class="muted">Chưa có dữ liệu tác nhân để hiển thị.</p>
+    <p class="office-empty">Chưa có dữ liệu tác nhân để hiển thị.</p>
     <button class="btn sm" disabled>Chưa thể giao việc</button>
 }</div>

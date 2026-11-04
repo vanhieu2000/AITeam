@@ -69,7 +69,7 @@
     var events = work.Tasks
         .Select(t => new { Card = t, At = t.MergedAt.HasValue ? new DateTimeOffset(t.MergedAt.Value) : t.UpdatedAt })
         .Where(x => x.At.HasValue && x.Card.Status != OfficeTaskStatus.Cancelled)
-        .OrderByDescending(x => x.At).Take(8).ToList();
+        .OrderByDescending(x => x.At).Take(25).ToList();
     string Pill(OfficeTaskStatus s) => s switch
     {
         OfficeTaskStatus.Running or OfficeTaskStatus.Gate => "run",
@@ -86,28 +86,36 @@
     <button class="btn cta" type="button" data-chat="task">+ Giao việc mới</button>
 }
 
+<link rel="stylesheet" href="~/css/office.css" asp-append-version="true" />
+
+@* UI-10 (Claude, chủ dự án 04/11): trang vừa khít màn hình, không cuộn cả trang; mỗi nội dung 1 thẻ, thẻ dài tự cuộn bên trong. *@
+<div class="office">
 @if (ownerPending.Count > 0)
 {
-    <div class="dash-alert" role="status">
+    <div class="dash-alert office-alert" role="status">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M12 8v5M12 16h.01"/></svg>
-        <div><b class="num">@ownerPending.Count việc cần anh duyệt</b> · @string.Join(" · ", ownerPending.Take(2).Select(a => a.Title))</div>
-        <span class="sp" style="flex:1"></span>
-        <a class="btn" href="/Approvals">Xem ngay</a>
+        <div class="office-alert-text"><b class="num">@ownerPending.Count việc cần anh duyệt</b> · @string.Join(" · ", ownerPending.Take(2).Select(a => a.Title))</div>
+        <a class="btn sm" href="/Approvals">Xem ngay</a>
     </div>
 }
 
-<div class="kpis">
-    <a class="kpi" href="/Tracking?state=running"><span class="l">Đang chạy</span><span class="v num">@running</span><span class="d muted">AI đang code / cổng KT</span></a>
-    <a class="kpi" href="/Tracking?state=review"><span class="l">Chờ Claude review</span><span class="v num">@review</span><span class="d muted">sau cổng kiểm tra</span></a>
-    <a class="kpi" href="/Tracking?state=done"><span class="l">Xong hôm nay</span><span class="v num">@doneToday</span><span class="d muted">đã merge vào main</span></a>
-    <a class="kpi @(stuck > 0 ? "warn" : "")" href="/Tracking?state=fix"><span class="l">Cần sửa / bị chặn</span><span class="v num">@stuck</span><span class="d muted">@(stuck > 0 ? "cần xử lý" : "không có")</span></a>
-</div>
+    <div class="kpis office-kpis">
+        <a class="kpi run" href="/Tracking?state=running"><span class="l">Đang chạy</span><span class="v num">@running</span><span class="d muted">AI đang code / cổng KT</span></a>
+        <a class="kpi rev" href="/Tracking?state=review"><span class="l">Chờ Claude review</span><span class="v num">@review</span><span class="d muted">sau cổng kiểm tra</span></a>
+        <a class="kpi ok" href="/Tracking?state=done"><span class="l">Xong hôm nay</span><span class="v num">@doneToday</span><span class="d muted">đã merge vào main</span></a>
+        <a class="kpi @(stuck > 0 ? "warn" : "")" href="/Tracking?state=fix"><span class="l">Cần sửa / bị chặn</span><span class="v num">@stuck</span><span class="d muted">@(stuck > 0 ? "cần xử lý" : "không có")</span></a>
+    </div>
 
-<div class="dash-grid">
-    <div class="dash-col">
+    <div class="office-board">
+        <div class="office-main">
         <section class="panel office-agents" aria-labelledby="desks-h">
-            <h3 id="desks-h">Bàn làm việc</h3>
-            <div hx-get="?handler=Desks" hx-trigger="every 10s" hx-target="#office-desks" hx-swap="outerHTML">
+            <div class="hd"><span id="desks-h">Bàn làm việc</span>
+                @if (Model.View is { } dv)
+                {
+                    <span class="muted num">@dv.Working đang làm · @dv.Review chờ review · @dv.Idle rảnh</span>
+                }
+            </div>
+            <div class="bd office-scroll" hx-get="?handler=Desks" hx-trigger="every 10s" hx-target="#office-desks" hx-swap="outerHTML">
                 <partial name="_OfficeDesks" model="Model" />
             </div>
             @if (Model.ControlsEnabled)
@@ -115,18 +123,16 @@
                 <partial name="_OfficeControl" model="Model" />
             }
         </section>
-
-        <section class="panel" aria-labelledby="req-h">
-            <div class="row" style="justify-content:space-between"><h3 id="req-h">Yêu cầu đang mở</h3><a class="btn sm ghost" href="/Tracking?view=list">Tất cả</a></div>
-            @if (openRequests.Count == 0)
-            {
-                <p class="muted">Không có yêu cầu nào đang làm. Bấm “+ Giao việc mới” để bắt đầu.</p>
-            }
-            else
-            {
-                <table class="dash-table">
-                    <thead><tr><th>Yêu cầu</th><th>Tiến độ task</th><th class="num">Task</th></tr></thead>
-                    <tbody>
+            <section class="panel office-reqs" aria-labelledby="req-h">
+                <div class="hd"><span id="req-h">Yêu cầu đang mở</span><span class="muted num">@openRequests.Count</span><span class="sp"></span><a class="btn sm ghost" href="/Tracking?view=list">Tất cả</a></div>
+                <div class="bd office-scroll">
+                @if (openRequests.Count == 0)
+                {
+                    <p class="office-empty">Không có yêu cầu nào đang làm. Bấm “+ Giao việc mới” để bắt đầu.</p>
+                }
+                else
+                {
+                    <ul class="office-req-list">
                     @foreach (var r in openRequests)
                     {
                         var codes = r.Tasks.Select(t => t.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -134,37 +140,42 @@
                         var total = Math.Max(codes.Count, cards.Count);
                         var merged = cards.Count(c => c.Status == OfficeTaskStatus.Merged);
                         var pct = total == 0 ? 0 : (int)Math.Round(100.0 * merged / total);
-                        <tr>
-                            <td><a href="@Url.Page("/Request", new { id = r.Id })"><b>@r.Id</b></a> @r.Title</td>
-                            <td style="min-width:140px"><div class="meter" role="img" aria-label="@merged trên @total task đã xong"><i style="width:@(pct)%"></i></div></td>
-                            <td class="num">@merged / @total</td>
-                        </tr>
+                        <li>
+                            <a class="office-req-title" href="@Url.Page("/Request", new { id = r.Id })" title="@r.Title"><b>@r.Id</b> @r.Title</a>
+                            <div class="office-req-meter"><div class="meter" role="img" aria-label="@merged trên @total task đã xong"><i style="width:@(pct)%"></i></div><span class="num muted">@merged/@total</span></div>
+                        </li>
                     }
-                    </tbody>
-                </table>
-            }
-        </section>
-    </div>
+                    </ul>
+                }
+                </div>
+            </section>
+        </div>
 
-    <section class="panel" aria-labelledby="ev-h">
-        <div class="row" style="justify-content:space-between"><h3 id="ev-h">Sự kiện gần đây</h3><a class="btn sm ghost" href="/Tracking">Theo dõi việc</a></div>
-        @if (events.Count == 0)
-        {
-            <p class="muted">Chưa có sự kiện.</p>
-        }
-        <ul class="feed">
-            @foreach (var e in events)
-            {
-                <li>
-                    <time class="num" datetime="@e.At!.Value.ToString("o")">@e.At.Value.ToLocalTime().ToString("dd/MM HH:mm")</time>
-                    <span><span class="pill @Pill(e.Card.Status)">@WorkOverviewService.Label(e.Card.Status)</span>
-                        <a href="@TaskUrl(e.Card.Task)">@HubMetricReader.TaskCode(e.Card.Task.Id)</a> @e.Card.Task.Title</span>
-                </li>
-            }
-        </ul>
-        @foreach (var w in work.Warnings.Take(1))
-        {
-            <p class="faint" style="font-size:12px">@w</p>
-        }
-    </section>
+        <div class="office-side">
+
+            <section class="panel office-events" aria-labelledby="ev-h">
+                <div class="hd"><span id="ev-h">Sự kiện gần đây</span><span class="sp"></span><a class="btn sm ghost" href="/Tracking">Theo dõi việc</a></div>
+                <div class="bd office-scroll">
+                @if (events.Count == 0)
+                {
+                    <p class="office-empty">Chưa có sự kiện.</p>
+                }
+                <ul class="feed office-feed">
+                    @foreach (var e in events)
+                    {
+                        <li>
+                            <time class="num" datetime="@e.At!.Value.ToString("o")">@e.At.Value.ToLocalTime().ToString("dd/MM HH:mm")</time>
+                            <span class="pill @Pill(e.Card.Status)">@WorkOverviewService.Label(e.Card.Status)</span>
+                            <span class="office-feed-text" title="@e.Card.Task.Title"><a href="@TaskUrl(e.Card.Task)">@HubMetricReader.TaskCode(e.Card.Task.Id)</a> @e.Card.Task.Title</span>
+                        </li>
+                    }
+                </ul>
+                @foreach (var w in work.Warnings.Take(1))
+                {
+                    <p class="faint" style="font-size:12px">@w</p>
+                }
+                </div>
+            </section>
+        </div>
+    </div>
 </div>
