@@ -86,6 +86,8 @@ Sự kiện cần ghi:
 | ~09:20 04/11/2026 | UI-08 Tài khoản AI (danh bạ, kiểm tra kết nối, .ini) + Cài đặt trợ lý — bf28b4f | Claude |
 | ~10:00 04/11/2026 | UI-09 Khung chat nối thật (bỏ iframe) + menu trỏ trang mới — 7af1983. Clone sạch: Hub 924/924, Core 1009/1009, 0 warning | Claude |
 | ~11:00 04/11/2026 | Chủ dự án duyệt giao Codex 4 lỗi [CK]. Claude viết K1-01 (team.ps1: lỗi mạng ≠ hạn mức, nhận bản sửa test của quản lý, tìm đúng worktree; 5 test nghiệm thu đỏ) + K1-02 (OpenCode đứng im 20′ tự dừng; khung + 7 test, 3 đỏ). Lint task ĐẠT; hẹn giao Codex 12:12 | Claude |
+| 12:40 04/11/2026 | Cờ tự động AITeam/K1-02 lượt 1 | HT |
+| 12:43 04/11/2026 | Cờ tự động AITeam/K1-01 lượt 1 | HT |
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
 
@@ -114,3 +116,4 @@ Dán kết quả `.\team.ps1 request-report -Request R-014`, rồi điền:
 - **Cải tiến quy trình áp dụng cho yêu cầu sau** (tối đa 2, cụ thể, sửa file nào):
   1.
 - Đã ghi vào `docs/HIEU-SUAT-LOG.md`: có / chưa
+| 12:45 04/11/2026 | K1-01, K1-02: Codex chạy 25–30 phút không sửa file nào. Nguyên nhân: cấu hình Codex trỏ `openai_base_url` tới proxy 127.0.0.1:17841 nhưng proxy không chạy ⇒ lỗi 10061, Codex chờ mạng tới hết giờ. Đã dừng; chờ chủ dự án bật proxy hoặc chọn AI khác. [CK] cổng không bắt được lỗi này sớm (K1-02 sẽ thêm canh đứng im cho OpenCode; nên áp cho cả Codex). |
