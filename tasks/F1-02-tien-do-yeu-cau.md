@@ -68,5 +68,9 @@
 - Quyết định: dùng `File.Move(..., true)` nguyên tử cùng thư mục theo thiết kế vì sandbox chặn `File.Replace`; không sửa test nghiệm thu hay code ngoài phạm vi.
 - Chưa xác minh: toàn suite xanh ngoài sandbox; không chạy app/chụp ảnh; lượt test DLL cũ ban đầu không dùng làm bằng chứng cho bản mới.
 ## Review (Claude)
+### Vòng 1 — ĐẠT (04/11 21:15)
+- Cổng KT lượt 1 ĐẠT (Hub 810, Core 1052). 172/260 dòng.
+- Đọc diff: gom task theo dòng Yêu cầu + BoardTable, fallback emoji đúng (🟡 Đang chạy ⇒ Running); SetState ghi nguyên tử, giữ BOM / kiểu xuống dòng, chặn reparse point, id chỉ `\AR-\d{3}\z`.
+- **Optional:** `GetAll` đọc lại mọi file task mỗi lần gọi — nếu Văn phòng chậm thì thêm bộ đệm theo thời điểm sửa file.
 
 ## Kết quả
