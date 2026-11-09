@@ -118,6 +118,7 @@ Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đ
 - **Hàng chờ R-016 (09/11):**
   1. [CK] `tools/test-verify.ps1` kịch bản 17 (V8-02) hỏng: `Assert-PrepPlanApproval` không tìm thấy (đã hỏng trên main trước khi sửa 8a46d33) ⇒ task nhỏ Codex.
   2. [CK] Định tuyến `assign` đoán "Độ khó L/PowerShell" cho task C# (U-01/U-02 MyControls) ⇒ xem Select-TaskDeveloper.
+  4. [CK] Khóa phạm vi (V9-15) giữ danh sách đường dẫn lúc `assign`, sửa Phạm vi trong file task không nhả ⇒ task song song chờ tới khi task kia xong (U-03/U-07, ~25′). Nên đọc lại Phạm vi hoặc có lệnh `scope-unlock`.
   3. [CK] Phiếu R-xxx nằm ở AITeam nhưng `Set-BoardStatus` chỉ tìm `<dự án>/requests` ⇒ nhật ký phiếu của dự án ngoài AITeam không được ghi tự động.
 
 - **Hàng chờ R-015 (04/11 22:20, chưa giao):**
