@@ -37,5 +37,18 @@
                       "A":  "Core, Adb, Device (hồ sơ), FixCenter (engine + actions), Data, build",
                       "B":  "App/Views, Diagnostics (khảo sát), Backup, resources/debloat, resources/packs"
                   }
+    },
+    {
+        "name":  "MyControls",
+        "repo":  "vanhieu2000/MyControls",
+        "path":  "D:\\99. Test\\IOT_Control",
+        "stack":  "C# .NET Framework 4.7.2 WinForms control library (SDK-style csproj), GDI+",
+        "build":  "dotnet build MyControls.sln -c Release",
+        "test":  "dotnet test MyControls.sln -c Release",
+        "areas":  {
+                      "A":  "MyControls/Core, MyControls/Data, MyControls/Design (nền: theme, binder, designer)",
+                      "B":  "MyControls/Inputs, Containers, Navigation, DataViews, Feedback (control cụ thể)"
+                  },
+        "workDir":  "D:\\AITeam-work\\MyControls"
     }
 ]
