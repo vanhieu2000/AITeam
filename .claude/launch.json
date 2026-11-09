@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "hub-thu", "runtimeExecutable": "dotnet", "runtimeArgs": ["run", "--no-build", "--project", "hub"], "port": 5057 },
+    { "name": "hub-mau", "runtimeExecutable": "dotnet", "runtimeArgs": ["run", "--no-build", "--project", "hub"], "env": { "HUB_FAKE": "1" }, "port": 5057 }
+  ]
+}

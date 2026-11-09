@@ -1,4 +1,4 @@
-# Hướng dẫn cho AI agent — dự án {{PROJECT}}
+﻿# Hướng dẫn cho AI agent — dự án {{PROJECT}}
 
 Bạn là lập trình viên trong team AI. **Quản lý: Claude**. Claude giao task, review, test và quyết định merge.
 Chủ dự án: HieuDV.
@@ -43,6 +43,7 @@ Chủ dự án: HieuDV.
 - Sau khi push, **cổng kiểm tra tự động** (`team.ps1 verify`) chạy ngay: đã commit + push hết, BOM, build 0 warning, test pass, đúng phạm vi, test nghiệm thu còn nguyên, có báo cáo. Không đạt sẽ bị giao lại kèm danh sách lỗi.
 
 ## Lỗi hay gặp (đã xảy ra nhiều lần — bắt buộc tránh)
+- **Test KHÔNG được sửa trạng thái toàn cục của .NET / WinForms** (gán `LicenseManager.CurrentContext`, ghi reflection vào biến nội bộ, `Application.SetUnhandledExceptionMode`…): test chạy song song ⇒ tiến trình test sập ngẫu nhiên. Designer / tài nguyên tạo trong test phải Dispose. Không commit thư mục `TestResults/`.
 - **Giữ nguyên BOM UTF-8** của file đang có BOM khi sửa; script `.ps1` luôn lưu UTF-8 có BOM.
 - **Không viết test luôn pass**: không `if (...) return;` sớm, không `Assert.True(true)`, không bắt exception rồi bỏ qua. Bỏ phần code mới đi thì test phải đỏ.
 - Kiểm tra chuỗi lệnh đã gửi (tới thiết bị / tiến trình) bằng `Contains` phần cốt lõi, không `StartsWith`: lệnh thật thường có tiền tố.

@@ -1,4 +1,4 @@
-﻿# Quy trình v5.4 — ĐANG ÁP DỤNG (chủ dự án chốt 02/11/2026, R-012; v5.1 sau đánh giá R-012; v5.2 03/11 R-014: giao diện do Claude; v5.3 04/11 sau đánh giá R-014; v5.4 04/11 sau đánh giá R-015)
+﻿# Quy trình v5.5 — ĐANG ÁP DỤNG (v5.5 10/11 sau đánh giá R-016: chạy đúng lệnh bước TN trước khi push khung; test toàn bộ 10 lần trên clone sạch cuối mỗi giai đoạn; chủ dự án chốt 02/11/2026, R-012; v5.1 sau đánh giá R-012; v5.2 03/11 R-014: giao diện do Claude; v5.3 04/11 sau đánh giá R-014; v5.4 04/11 sau đánh giá R-015)
 
 Mục v5 này THẮNG mọi mục cũ bên dưới (v3 / v4 chỉ còn để tra cứu).
 Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, chức năng F1–F14, phân loại nguyên nhân lỗi: **`docs/MO-TA-HE-THONG.md`** (đọc trước khi thiết kế / viết task).
