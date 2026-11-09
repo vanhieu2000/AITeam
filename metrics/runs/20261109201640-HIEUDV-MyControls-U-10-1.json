@@ -1,0 +1,50 @@
+{
+    "at":  "2026-11-09T20:16:40",
+    "head":  "fa8617c978a02041deae59d7cabd0be5a39a0c15",
+    "machine":  "HIEUDV",
+    "project":  "MyControls",
+    "task":  "U-10",
+    "run":  "1",
+    "agent":  "A",
+    "model":  "gemini-3.8-flash-high",
+    "findings":  [
+
+                 ],
+    "status":  "SUCCESS",
+    "durationSec":  248,
+    "tokensKnown":  true,
+    "inputTokens":  134697,
+    "outputTokens":  14650,
+    "thinkingTokens":  9841,
+    "totalTokens":  149347,
+    "maxMinutes":  35,
+    "difficulty":  "M",
+    "hasOutput":  true,
+    "linesAdded":  16,
+    "linesRemoved":  0,
+    "filesChanged":  2,
+    "verifyOk":  false,
+    "verifyFails":  3,
+    "autoRetry":  true,
+    "hungBackgroundTask":  false,
+    "log":  "U-10-1.json",
+    "conversationId":  "a5536804-9bb8-4c47-85fe-4a25d5e0f4de",
+    "request":  "R-016",
+    "flags":  [
+
+              ],
+    "pause":  false,
+    "failureFingerprint":  "71A9FCC89E0556D5D0D92A60B405260A210662B82DD5EC42DBC13CF0797C52A3",
+    "failureFingerprints":  [
+                                "71A9FCC89E0556D5D0D92A60B405260A210662B82DD5EC42DBC13CF0797C52A3",
+                                "CA0DF7352F2E2AAEE69BE71CBCE5C537DC9DE149FD5744B85F6B0A03CA894538",
+                                "942AAFCA6C35EF321B4635EAD7EAC947FE6FDF77D85EEAF61515C255E6B4D1A6",
+                                "A251DF9C04065AF3B6BD63DD4B35671F05483D93F56D21373B73406ADE3B721B",
+                                "386B96D686AE49723CB19837B40B18BAF1BF58E64C4225C713E64A2811F1362F",
+                                "CBF0ED4800D65DB9FFA291740DE9D21DB37EE5A80294CE7F3F3ABEFDA499B5C7",
+                                "8157153F992F7C05E821A5B3D8E96FB650CCE2B4237600B021FD37B0F33E0266",
+                                "01B1BCDD520E2398DE3534B54919C9B65B1AE42939AEFF72C13DC063420511EE",
+                                "04974B076F4328D20EFE5B4C7C1896BC0CBED90D58620BED3FCB92F73AC5B437",
+                                "076822C5BCB629E4592E0879C93BFD7E2A777EB614DA27CDED1F2DBD301CD0EA"
+                            ]
+}
