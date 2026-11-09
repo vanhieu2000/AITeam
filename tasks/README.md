@@ -115,6 +115,11 @@ Trạng thái: 🟡 Đã giao · 🔵 Chờ review · 🔴 Cần sửa · ✅ Đ
 
 ## Kế hoạch / hàng chờ
 
+- **Hàng chờ R-016 (09/11):**
+  1. [CK] `tools/test-verify.ps1` kịch bản 17 (V8-02) hỏng: `Assert-PrepPlanApproval` không tìm thấy (đã hỏng trên main trước khi sửa 8a46d33) ⇒ task nhỏ Codex.
+  2. [CK] Định tuyến `assign` đoán "Độ khó L/PowerShell" cho task C# (U-01/U-02 MyControls) ⇒ xem Select-TaskDeveloper.
+  3. [CK] Phiếu R-xxx nằm ở AITeam nhưng `Set-BoardStatus` chỉ tìm `<dự án>/requests` ⇒ nhật ký phiếu của dự án ngoài AITeam không được ghi tự động.
+
 - **Hàng chờ R-015 (04/11 22:20, chưa giao):**
   1. [CK] Cổng KT: commit "(Claude)" sau commit đầu (khung DI, sửa dữ liệu giả) bị tính "sửa ngoài phạm vi" (F1-01); chuỗi `Assert.True(true)` trong DỮ LIỆU test bị báo "test luôn pass" (F1-05) ⇒ task nhỏ Codex.
   2. [CK] `team.ps1 new-task` đặt tên file / nhánh từ tiêu đề tiếng Việt thành "b-c-b-ng-vi-c" ⇒ bỏ dấu đúng (đ→d, ư→u…).
