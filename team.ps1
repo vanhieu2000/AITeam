@@ -2695,7 +2695,7 @@ function Set-BoardStatus($r, [string]$taskId, [string]$status, [hashtable]$Journ
         $reqText = [IO.File]::ReadAllText((Join-Path $r.Path "tasks/$journalTask"), (New-Object Text.UTF8Encoding($false, $true)))
         $reqMatch = [regex]::Match($reqText, '\*\*Yêu cầu:\*\*\s*(R-\d+)')
         $reqRel = if ($reqMatch.Success) { "requests/$($reqMatch.Groups[1].Value).md" } else { $null }
-        if ($reqRel -and -not (Test-Path -LiteralPath (Join-Path $r.Path $reqRel))) {
+        if ($reqRel -and -not (Test-Path -LiteralPath (Join-Path $r.Path $reqRel)) -and (Test-Path -LiteralPath (Join-Path $r.Path 'requests'))) {  # R-016: du an ngoai AITeam khong co thu muc requests
             $requestFiles=@(Get-ChildItem -LiteralPath (Join-Path $r.Path 'requests') -File | Where-Object { $_.Name -match ('^'+[regex]::Escape($reqMatch.Groups[1].Value)+'-.+\.md$') })
             if ($requestFiles.Count -eq 1) { $reqRel='requests/'+$requestFiles[0].Name }
         }
