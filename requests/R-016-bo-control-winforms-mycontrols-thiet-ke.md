@@ -34,6 +34,13 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-016` để `team.ps1 reque
 | ~13:45 | add-project MyControls (kho private vanhieu2000/MyControls) | |
 | ~14:05 | Xong GĐ0 (Claude): đổi tên My*, csproj SDK-style net472, sln, test xUnit, BUILD-DLL, AGENTS.md luật riêng | build 0 warning, 1/1 test |
 | 13:49 | Xong task + khung + test nghiệm thu U-01 (25 ca), U-02 (16 ca) | Giao A: U-01, B: U-02 (Antigravity) |
+| 13:5x | Giao lần 1–2 thất bại trước khi chạy: Set-BoardStatus đòi `<dự án>/requests` (Claude sửa 1 dòng team.ps1, 8a46d33); TaskLinter chặn mục Phạm vi | [CK] + [TK] |
+| 14:00 | Giao U-01 → Minh (agy), U-02 → Codex | |
+| 14:05 | U-02 Codex xong 277 s; cổng KT lỗi "Không ghi được nhật ký phiếu" (phiếu phải nằm trong repo dự án) ⇒ thêm `requests/R-016…` vào MyControls, chạy lại verify ĐẠT 21/21 | [CK] |
+| 14:08 | Review U-02 vòng 1 ĐẠT, merge | 476/450 dòng; 2 Optional |
+| 14:17 | U-01 lượt 2 xong (lượt 1 không push ⇒ cổng KT tự giao lại) ; cổng KT ĐẠT 37/37 | [AG] không push |
+| 14:20 | Review U-01 vòng 1 ĐẠT, merge | 4 Optional; ngân sách ước thấp [TK] |
+| 14:25 | Clone sạch: build 0 warning, 57/57 test; BUILD-DLL ⇒ MyControls.dll 87 KB; project net48 trống tham chiếu DLL build + chạy OK | GĐ1 (U-01, U-02) xong |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
