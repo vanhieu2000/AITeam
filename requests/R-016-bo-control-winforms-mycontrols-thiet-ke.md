@@ -41,6 +41,20 @@ Mỗi file task phải có dòng `- **Yêu cầu:** R-016` để `team.ps1 reque
 | 14:17 | U-01 lượt 2 xong (lượt 1 không push ⇒ cổng KT tự giao lại) ; cổng KT ĐẠT 37/37 | [AG] không push |
 | 14:20 | Review U-01 vòng 1 ĐẠT, merge | 4 Optional; ngân sách ước thấp [TK] |
 | 14:25 | Clone sạch: build 0 warning, 57/57 test; BUILD-DLL ⇒ MyControls.dll 87 KB; project net48 trống tham chiếu DLL build + chạy OK | GĐ1 (U-01, U-02) xong |
+| 14:3x | Chủ dự án: "Làm tiếp GĐ2" | Chia 3 đợt × 2 task song song |
+| 14:49 | Giao U-03 (agy). U-07 bị KHÓA PHẠM VI (U-03 khai cả `MyControls/Inputs/`) ~25′ | [TK] phạm vi rộng; [CK] khóa giữ phạm vi lúc giao, không đọc lại |
+| 15:17–15:20 | U-03 ĐẠT (lượt 2) merge; giao U-07 (Codex) | |
+| 15:21 | Giao U-04 (agy, Review AI), U-05 (agy) | Claude tự gỡ thuộc tính cũ của demo trong commit khung để 2 task không cùng giữ file demo |
+| 16:22 | U-07 ĐẠT vòng 1 merge (ghép thử với main 99/99) | (gián đoạn ~40′: hạn mức Claude) |
+| 16:25 | U-05 ĐẠT vòng 1 merge | |
+| 16:2x | U-04: review AI 2 vòng (7 lỗi) → Claude CẦN SỬA 3 lỗi → Codex sửa; test đỏ do test nghiệm thu dùng CultureInfo("vi-VN") ăn thiết lập vùng của máy [TK] → Claude sửa môi trường test | |
+| 16:37 | U-04 ĐẠT vòng 2 merge; bỏ miễn trừ quy ước MyButton/MyTextBox/MyToggleSwitch | 145/145 |
+| 16:4x | Giao U-06 (agy, Review AI), U-08 (Codex) | |
+| 16:49 | U-08 ĐẠT vòng 1 merge | Codex 322 s |
+| 16:57 | U-03B (5 Optional gom lại, Codex 190 s) ĐẠT merge | |
+| 17:0x | Claude chụp ảnh nghiệm thu bằng app tạm ⇒ phát hiện MyLabel cao 0 px [TK] ⇒ U-05B | |
+| 17:22 | U-06 ĐẠT vòng 2 (review AI 6 lỗi, Codex sửa 2) merge; U-05B ĐẠT merge | |
+| 17:25 | Nghiệm thu GĐ2: clone sạch build 0 warning, **189/189**, MyControls.dll 152 KB, app ngoài repo tham chiếu dist DLL chụp 3 theme | Ảnh `docs/screenshots/GD2/`. Chưa thử kéo thả trong VS Designer (cần chủ dự án) |
 
 Sự kiện cần ghi:
 - xong phân tích / thiết kế;
