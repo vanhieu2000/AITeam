@@ -1,0 +1,21 @@
+{
+    "id":  "A-004",
+    "kind":  "security",
+    "title":  "Cổng KT: U-50 chạm file nhạy cảm",
+    "detail":  "Cổng KT phát hiện file nhạy cảm trong diff:\r\n- tests/MyControls.Tests/Security/PasswordTests.cs",
+    "project":  "MyControls",
+    "task":  "U-50",
+    "commit":  "210c80263a3ab79d754ed3c916374470e7e944aa",
+    "links":  [
+
+              ],
+    "requestedBy":  "Claude",
+    "requestedAt":  "2026-11-11T02:14:52",
+    "status":  "pending",
+    "decidedAt":  null,
+    "note":  null,
+    "risk":  "medium",
+    "files":  [
+                  "tests/MyControls.Tests/Security/PasswordTests.cs"
+              ]
+}
