@@ -1,0 +1,21 @@
+{
+    "id":  "A-003",
+    "kind":  "security",
+    "title":  "Cổng KT: U-34 chạm file nhạy cảm",
+    "detail":  "Cổng KT phát hiện file nhạy cảm trong diff:\r\n- tests/MyControls.Tests/TextBox/TokenBoxTests.cs",
+    "project":  "MyControls",
+    "task":  "U-34",
+    "commit":  "0ff63d71ff89b204e3def85d0b148e7b9ce65315",
+    "links":  [
+
+              ],
+    "requestedBy":  "Claude",
+    "requestedAt":  "2026-11-10T21:31:12",
+    "status":  "pending",
+    "decidedAt":  null,
+    "note":  null,
+    "risk":  "medium",
+    "files":  [
+                  "tests/MyControls.Tests/TextBox/TokenBoxTests.cs"
+              ]
+}
