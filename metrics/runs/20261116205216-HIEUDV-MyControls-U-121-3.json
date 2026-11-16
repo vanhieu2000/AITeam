@@ -1,0 +1,43 @@
+{
+    "at":  "2026-11-16T20:52:16",
+    "head":  "d96861aaa5b466dba0a2793be5e2693a369baa7e",
+    "machine":  "HIEUDV",
+    "project":  "MyControls",
+    "task":  "U-121",
+    "run":  "3",
+    "agent":  "B",
+    "model":  "gemini-3.8-flash-medium",
+    "findings":  [
+
+                 ],
+    "status":  "SUCCESS",
+    "durationSec":  4084,
+    "tokensKnown":  true,
+    "inputTokens":  1256187,
+    "outputTokens":  118484,
+    "thinkingTokens":  69254,
+    "totalTokens":  1374671,
+    "maxMinutes":  150,
+    "difficulty":  "L",
+    "hasOutput":  true,
+    "linesAdded":  566,
+    "linesRemoved":  180,
+    "filesChanged":  20,
+    "verifyOk":  false,
+    "verifyFails":  1,
+    "autoRetry":  false,
+    "hungBackgroundTask":  false,
+    "log":  "U-121-3.json",
+    "conversationId":  "1cf70d99-a626-4711-9a5d-353e7e2623ad",
+    "request":  "R-016",
+    "flags":  [
+
+              ],
+    "pause":  false,
+    "failureFingerprint":  "CA64F608F209A149B24CCC8D3DA7EF2485425C406025380476AC790212BD101A",
+    "failureFingerprints":  [
+                                "CA64F608F209A149B24CCC8D3DA7EF2485425C406025380476AC790212BD101A",
+                                "C5DDA2162012D91C17004472B096C79004518C77B168180D27FE1C3BAFFDC64F",
+                                "87614F0C5C78C936951B4767F53BB95DECA6EA93C56D51E306FD2ED43B03DCE0"
+                            ]
+}
