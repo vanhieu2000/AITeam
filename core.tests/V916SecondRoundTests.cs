@@ -23,6 +23,12 @@ public sealed class V916SecondRoundTests : IDisposable
         var fake=new NoProcesses();var text=TaskText.Replace("new.cs",path).Replace("- `tests/AcceptanceNewTests.cs`","Không — chỉ sửa dữ liệu/tài liệu");
         Assert.True((await TaskLinter.RunAsync(root,text,fake,CancellationToken.None)).Ok);Assert.Equal(0,fake.Calls);
     }
+    [Fact]public async Task Explicit_exemption_is_accepted_when_task_file_uses_crlf()
+    {
+        var fake=new NoProcesses();var text=TaskText.Replace("## Test nghiệm thu\n- `tests/AcceptanceNewTests.cs`","- **Test nghiệm thu:** Không — dùng kiểm thủ công đã nêu").Replace("\n","\r\n");
+        Assert.True((await TaskLinter.RunAsync(root,text,fake,CancellationToken.None)).Ok);Assert.Equal(0,fake.Calls);
+        Assert.False(TaskLinter.Inspect(root,text.Replace("Không — dùng kiểm thủ công đã nêu","Không —")).Ok);
+    }
     [Fact]public async Task Explicit_exemption_requires_reason_and_does_not_skip_path_safety()
     {
         var fake=new NoProcesses();var text=TaskText.Replace("## Test nghiệm thu\n- `tests/AcceptanceNewTests.cs`","- **Test nghiệm thu:** Không — dùng kiểm thủ công đã nêu");

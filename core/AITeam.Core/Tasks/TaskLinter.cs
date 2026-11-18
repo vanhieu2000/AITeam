@@ -36,7 +36,7 @@ public static class TaskLinter
         return new(errors.Count == 0, errors);
     }
     private static bool HasTestExemption(string text) => Regex.IsMatch(text,
-        @"(?im)^[ \t]*-[ \t]*\*\*Test nghiệm thu:\*\*[ \t]*Không[ \t]*[—–-][ \t]*\S[^\r\n]*$");
+        @"(?im)^[ \t]*-[ \t]*\*\*Test nghiệm thu:\*\*[ \t]*Không[ \t]*[—–-][ \t]*\S[^\r\n]*\r?$");
     private static bool NoLogic(string text)
     {
         text = Regex.Replace(text, @"<!--[\s\S]*?-->", "");
