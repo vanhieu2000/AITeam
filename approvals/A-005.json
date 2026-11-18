@@ -1,4 +1,4 @@
-{
+﻿{
     "id":  "A-005",
     "kind":  "security",
     "title":  "Cổng KT: U-50 chạm file nhạy cảm",
@@ -11,9 +11,9 @@
               ],
     "requestedBy":  "Claude",
     "requestedAt":  "2026-11-11T02:19:25",
-    "status":  "pending",
-    "decidedAt":  null,
-    "note":  null,
+    "status":  "approved",
+    "decidedAt":  "2026-11-13T21:04:53",
+    "note":  "Chủ dự án duyệt trực tiếp trong chat Claude ngày 13/11/2026 (HieuDV: Duyệt, merge U-50). Claude ghi hộ vào hồ sơ. Từ commit a54fbbe tới nhánh chỉ thêm 1 commit review sửa file task.",
     "risk":  "medium",
     "files":  [
                   "tests/MyControls.Tests/Security/PasswordTests.cs"

@@ -82,6 +82,46 @@ Sự kiện cần ghi:
 | 21:33 09/11/2026 | Cờ tự động MyControls/U-21B-scada-chart-theo-theme lượt 1 | TO |
 | 22:41 09/11/2026 | Cờ tự động MyControls/U-17 lượt 1 | TO |
 | 22:42 09/11/2026 | Cờ tự động MyControls/U-17 lượt 3 | HT |
+| 20:45 10/11/2026 | Cờ tự động MyControls/U-27 lượt 1 | TO |
+| 20:55 10/11/2026 | Cờ tự động MyControls/U-26 lượt 1 | TO |
+| 21:07 10/11/2026 | Cờ tự động MyControls/U-25 lượt 3 | TO |
+| 21:21 10/11/2026 | Cờ tự động MyControls/U-32 lượt 1 | TO |
+| 21:48 10/11/2026 | Cờ tự động MyControls/U-35 lượt 1 | TO |
+| 01:17 11/11/2026 | Cờ tự động MyControls/U-41 lượt 1 | TO |
+| 02:11 11/11/2026 | Cờ tự động MyControls/U-48 lượt 1 | TO |
+| 02:16 11/11/2026 | Cờ tự động MyControls/U-50 lượt 1 | TO |
+| 07:40 11/11/2026 | Cờ tự động MyControls/U-70 lượt 1 | TO |
+| 08:17 11/11/2026 | Cờ tự động MyControls/U-67 lượt 3 | TN — có thể test nghiệm thu sai; Tạm dừng |
+| 21:21 13/11/2026 | Cờ tự động MyControls/U-69 lượt 3 | CH |
+| 21:49 13/11/2026 | Cờ tự động MyControls/U-71 lượt 1 | TO |
+| 23:44 13/11/2026 | Cờ tự động MyControls/U-72 lượt 1 | TO |
+| 23:49 13/11/2026 | Cờ tự động MyControls/U-73 lượt 1 | TO |
+| 08:09 14/11/2026 | Cờ tự động MyControls/U-75 lượt 1 | TO |
+| 08:18 14/11/2026 | Cờ tự động MyControls/U-76 lượt 1 | TO |
+| 19:04 14/11/2026 | Cờ tự động MyControls/U-75 lượt 11 | TO |
+| 19:53 14/11/2026 | Cờ tự động MyControls/U-78 lượt 1 | TO |
+| 20:12 14/11/2026 | Cờ tự động MyControls/U-77 lượt 1 | TO |
+| 20:22 14/11/2026 | Cờ tự động MyControls/U-78 lượt 3 | TO |
+| 20:40 14/11/2026 | Cờ tự động MyControls/U-78 lượt 5 | TO |
+| 20:44 14/11/2026 | Cờ tự động MyControls/U-78 lượt 7 | HT |
+| 00:55 15/11/2026 | Cờ tự động MyControls/U-83 lượt 1 | TO |
+| 01:16 15/11/2026 | Cờ tự động MyControls/U-85 lượt 1 | TO |
+| 01:58 15/11/2026 | Cờ tự động MyControls/U-90 lượt 1 | TO |
+| 08:48 15/11/2026 | Cờ tự động MyControls/U-95 lượt 1 | TO |
+| 08:53 15/11/2026 | Cờ tự động MyControls/U-97 lượt 1 | TO |
+| 13:39 15/11/2026 | Cờ tự động MyControls/U-98 lượt 1 | TO |
+| 13:55 15/11/2026 | Cờ tự động MyControls/U-101 lượt 1 | TO |
+| 14:07 15/11/2026 | Cờ tự động MyControls/U-102 lượt 1 | TO |
+| 14:08 15/11/2026 | Cờ tự động MyControls/U-99 lượt 1 | TO |
+| 22:04 15/11/2026 | Cờ tự động MyControls/U-108 lượt 1 | TO |
+| 22:07 15/11/2026 | Cờ tự động MyControls/U-106 lượt 1 | TO |
+| 22:10 15/11/2026 | Cờ tự động MyControls/U-107 lượt 1 | TO |
+| 22:52 15/11/2026 | Cờ tự động MyControls/U-105 lượt 1 | TO |
+| 22:57 15/11/2026 | Cờ tự động MyControls/U-109 lượt 1 | TO |
+| 08:35 16/11/2026 | Cờ tự động MyControls/U-111 lượt 1 | TO |
+| 13:16 16/11/2026 | Cờ tự động MyControls/U-115 lượt 1 | HT |
+| 21:48 16/11/2026 | Cờ tự động MyControls/U-122 lượt 5 | TO |
+| 22:02 16/11/2026 | Cờ tự động MyControls/U-122 lượt 6 | TO |
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-016`, rồi điền:
 
