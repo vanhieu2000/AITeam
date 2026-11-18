@@ -3,9 +3,102 @@
 # Dựng thư mục tạm có: bản sao team.ps1 + team.json/projects.json giả, remote git trần, repo dự án "Demo",
 # worktree agent với commit khung "Test nghiệm thu … (Claude)" + commit của agent; rồi chạy verify và kiểm kết quả.
 # Không đụng repo / cấu hình thật. Không cần mạng.
-param([switch]$Keep, [string]$TeamPs1 = "", [switch]$PipelineOnly, [switch]$AcceptOnly)   # -TeamPs1: thử với bản team.ps1 khác (vd. bản cũ) để chắc test bắt được lỗi
+param([switch]$Keep, [string]$TeamPs1 = "", [switch]$PipelineOnly, [switch]$AcceptOnly, [switch]$WorkflowOnly)   # -WorkflowOnly không gọi git hoặc AI.
 $ErrorActionPreference = "Stop"
 $src = Split-Path $PSScriptRoot -Parent
+function Test-WorkflowV6 {
+    $teamFile = if ($TeamPs1) { $TeamPs1 } else { Join-Path $src 'team.ps1' }
+    $parseErrors = $null
+    $tree = [Management.Automation.Language.Parser]::ParseFile($teamFile, [ref]$null, [ref]$parseErrors)
+    if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
+    foreach ($functionName in @('Get-TaskWorkflow','Assert-TaskWorkflow','Get-WorkflowDeveloper','Get-WorkflowFileErrors','Get-WorkflowTestCommand','Test-WorkflowTestFound','Get-WorkflowQuotaStatus','Invoke-Assign')) {
+        $node = $tree.Find({ param($item) $item -is [Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq $functionName }, $true)
+        if (-not $node) { throw "Thiếu hàm v6: $functionName" }
+        . ([scriptblock]::Create($node.Extent.Text))
+    }
+    $temporary = Join-Path $env:TEMP ('aiteam-v6-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory (Join-Path $temporary 'docs') -Force | Out-Null
+    function VerifyV6([string]$name, [bool]$condition) {
+        if (-not $condition) { throw "KHÔNG ĐẠT v6: $name" }
+        $script:v6Checks++
+        Write-Host "ĐẠT v6: $name"
+    }
+    function RejectV6([string]$name, [scriptblock]$action, [string]$message) {
+        $errorText = ''
+        try { & $action | Out-Null } catch { $errorText = $_.Exception.Message }
+        VerifyV6 $name ($errorText.Contains($message))
+    }
+    $script:v6Checks = 0
+    try {
+        $verifyNode = $tree.Find({ param($item) $item -is [Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq 'Invoke-Verify' }, $true)
+        $verifyCommands = @($verifyNode.FindAll({ param($item) $item -is [Management.Automation.Language.CommandAst] }, $true) | ForEach-Object { $_.GetCommandName() })
+        VerifyV6 'verify nối kiểm tra file, bộ lọc và số test vào cổng thật' ('Get-WorkflowFileErrors' -in $verifyCommands -and 'Get-WorkflowTestCommand' -in $verifyCommands -and 'Test-WorkflowTestFound' -in $verifyCommands)
+        $planPath = Join-Path $temporary 'docs/KE-HOACH-DU-AN.md'
+        [IO.File]::WriteAllText($planPath, '### CN-01 · Chức năng thật', [Text.Encoding]::UTF8)
+        $declaration = '- **Loại:** UI' + "`r`n" + '- **Chức năng:** CN-01' + "`r`n" + '- **Test vùng:** ' + [char]96 + 'FullyQualifiedName~Demo' + [char]96
+        $wf = Get-TaskWorkflow $declaration
+        # Gọi Invoke-Assign thật, dừng ở kiểm tra đầu vào, trước mọi thao tác git/AI.
+        function Get-Config { @{} }
+        function Resolve-Project { @{Path=$temporary} }
+        function Find-TaskFile { @{FullName=(Join-Path $temporary 'task.md')} }
+        $Task = 'X-01'; $Project = 'Demo'; $Resume = $false
+        [IO.File]::WriteAllText((Join-Path $temporary 'task.md'), $declaration, [Text.Encoding]::UTF8)
+        $Dev = 'agy'
+        RejectV6 'Invoke-Assign thật từ chối UI cho agy trước khi giao' { Invoke-Assign } 'phải giao cho codex'
+        [IO.File]::WriteAllText((Join-Path $temporary 'task.md'), $declaration.Replace('UI','BE'), [Text.Encoding]::UTF8)
+        $Dev = 'codex'
+        RejectV6 'Invoke-Assign thật từ chối BE cho codex trước khi giao' { Invoke-Assign } 'phải giao cho agy'
+        [IO.File]::WriteAllText((Join-Path $temporary 'task.md'), $declaration.Replace('CN-01','CN-99'), [Text.Encoding]::UTF8)
+        RejectV6 'Invoke-Assign thật từ chối mã không có trong kế hoạch' { Invoke-Assign } 'CN-99'
+        Assert-TaskWorkflow $wf $temporary $false
+        VerifyV6 'đọc đủ khai báo, mã trong kế hoạch và định tuyến UI' ($wf.Filter -eq 'FullyQualifiedName~Demo' -and (Get-WorkflowDeveloper $wf '') -eq 'codex')
+        RejectV6 'UI không giao agy' { Get-WorkflowDeveloper $wf 'agy' } 'phải giao cho codex'
+        $wf.Kind = 'BE'
+        RejectV6 'BE không giao codex' { Get-WorkflowDeveloper $wf 'codex' } 'phải giao cho agy'
+        VerifyV6 'BE mặc định agy' ((Get-WorkflowDeveloper $wf '') -eq 'agy')
+        VerifyV6 'BE hết hạn mức chờ Antigravity' ((Get-WorkflowQuotaStatus $wf 'agy' 'sai') -eq '⏸ Chờ Antigravity')
+        foreach ($kind in @('UI','TEST')) {
+            $wf.Kind = $kind
+            VerifyV6 "$kind hết hạn mức chờ Claude" ((Get-WorkflowQuotaStatus $wf 'codex' 'sai') -eq '⏸ Chờ Claude làm')
+        }
+        $wf.Features = 'CN-99'
+        RejectV6 'mã không có trong kế hoạch' { Assert-TaskWorkflow $wf $temporary $false } 'CN-99'
+        $wf.Features = ''
+        RejectV6 'thiếu chức năng' { Assert-TaskWorkflow $wf $temporary $false } 'Chức năng'
+        $wf.Features = 'CN-01'
+        $wf.Kind = 'SAI'
+        RejectV6 'loại sai' { Assert-TaskWorkflow $wf $temporary $false } 'Loại task'
+        $wf.Kind = ''
+        RejectV6 'giao mới thiếu loại' { Assert-TaskWorkflow $wf $temporary $false } 'Loại task'
+        Assert-TaskWorkflow $wf $temporary $true
+        VerifyV6 'Resume task cũ và KT giữ định tuyến' ((Get-WorkflowDeveloper $wf 'agy') -eq 'agy')
+        $wf.Kind = 'BE'
+        $fileErrors = @(Get-WorkflowFileErrors $wf @('Form.Designer.cs','UI/A.RESX','Pages/A.cshtml','UI/A.razor','WWWROOT/a.js','docs/design/mock.md','MyControls/Inputs/A.cs','src/Logic.cs') @{uiLocked=@('MyControls/Inputs/**')})
+        VerifyV6 'BE khóa đủ mặc định, gốc, khác hoa thường và tùy chỉnh' ($fileErrors.Count -eq 7 -and ($fileErrors -join ';').Contains('Form.Designer.cs'))
+        foreach ($kind in @('UI','TEST','BE')) {
+            $wf.Kind = $kind
+            VerifyV6 "$kind không sửa kế hoạch" (@(Get-WorkflowFileErrors $wf @('DOCS\KE-HOACH-DU-AN.md') @{}).Count -eq 1)
+            $wf.Filter = ''
+            RejectV6 "$kind thiếu Test vùng" { Get-WorkflowTestCommand $wf 'dotnet test' } 'thiếu Test vùng'
+        }
+        $wf.Kind = 'KT'
+        VerifyV6 'KT thiếu bộ lọc chạy toàn bộ như cũ' ((Get-WorkflowTestCommand $wf 'dotnet test') -eq 'dotnet test')
+        $wf.Filter = 'FullyQualifiedName~Demo|(Name=Good&Name!=Bad)'
+        $command = Get-WorkflowTestCommand $wf 'dotnet test Demo.sln'
+        VerifyV6 'bộ lọc an toàn là một đối số được trích dẫn' ($command -eq ('dotnet test Demo.sln --filter "' + $wf.Filter + '"'))
+        $wf.Filter = 'Demo" & echo sai'
+        RejectV6 'từ chối ký tự chèn lệnh' { Get-WorkflowTestCommand $wf 'dotnet test' } 'không an toàn'
+        VerifyV6 'không có test không được báo đạt' (-not (Test-WorkflowTestFound 'No test matches the given testcase filter.'))
+        VerifyV6 'tổng kết có test được nhận' (Test-WorkflowTestFound 'Passed! Failed: 0, Passed: 2, Skipped: 0, Total: 2')
+        VerifyV6 'assembly rỗng không che test đã chạy ở assembly khác' (Test-WorkflowTestFound "No test matches the given testcase filter.`nPassed! Passed: 1, Total: 1")
+        Remove-Item -LiteralPath $planPath
+        RejectV6 'thiếu kế hoạch' { Assert-TaskWorkflow $wf $temporary $false } 'Thiếu file kế hoạch'
+        Write-Host "V6: $script:v6Checks kiểm tra đạt."
+    } finally {
+        Remove-Item -LiteralPath $temporary -Recurse -Force
+    }
+}
+if ($WorkflowOnly) { Test-WorkflowV6; exit 0 }
 if ($AcceptOnly) {
     # Bằng chứng QC phải giữ nguyên finding của nguồn, kể cả chỉ mục tự xóa/đổi lỗi.
     . (Join-Path $src 'tools/workflow-accept.ps1')
@@ -110,6 +203,7 @@ function New-Scenario($name, [scriptblock]$agentChanges, [int]$budget = 20, [str
 }
 
 try {
+    Test-WorkflowV6
     Write-Host "Kiểm tra tĩnh: hàm không gán biến cục bộ trùng tên tham số script (PowerShell không phân biệt hoa thường — R-004: `$dev đè -Dev)" -ForegroundColor Cyan
     $teamFile = if ($TeamPs1) { $TeamPs1 } else { Join-Path $src "team.ps1" }
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($teamFile, [ref]$null, [ref]$null)

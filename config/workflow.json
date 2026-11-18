@@ -59,8 +59,8 @@
         {
           "code": "code_loi",
           "name": "Code lõi",
-          "owner": "codex",
-          "fallback": "opencode",
+          "owner": "minh",
+          "fallback": null,
           "skills": [
             "07-code",
             "code-test"
@@ -73,8 +73,8 @@
         {
           "code": "giao_dien",
           "name": "Giao diện",
-          "owner": "claude",
-          "fallback": null,
+          "owner": "codex",
+          "fallback": "claude",
           "skills": [
             "code-web"
           ],
@@ -174,8 +174,8 @@
         {
           "code": "code",
           "name": "Code",
-          "owner": "codex",
-          "fallback": "opencode",
+          "owner": "minh",
+          "fallback": null,
           "skills": [
             "07-code",
             "code-test"
@@ -258,8 +258,8 @@
         {
           "code": "code",
           "name": "Code",
-          "owner": "opencode",
-          "fallback": "codex",
+          "owner": "minh",
+          "fallback": null,
           "skills": [
             "07-code",
             "code-test"
@@ -333,7 +333,7 @@
         {
           "code": "code",
           "name": "Code",
-          "owner": "opencode",
+          "owner": "minh",
           "fallback": null,
           "skills": [
             "07-code",
@@ -452,8 +452,8 @@
         {
           "code": "code",
           "name": "Code",
-          "owner": "codex",
-          "fallback": "opencode",
+          "owner": "minh",
+          "fallback": null,
           "skills": [
             "07-code",
             "code-test"

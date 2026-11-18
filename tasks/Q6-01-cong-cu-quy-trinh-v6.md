@@ -86,11 +86,24 @@ Không có file riêng. Codex viết kịch bản trong công cụ test, Claude 
 ## Tiêu chí hoàn thành
 - [ ] Build `dotnet build AITeam.sln` 0 warning
 - [ ] `powershell -File tools\test-verify.ps1` đạt các kịch bản mới
-- [ ] Giao task UI cho `agy` bị từ chối, giao task BE cho `codex` bị từ chối
-- [ ] Task BE sửa `.Designer.cs` bị cổng kiểm tra từ chối
-- [ ] Task thiếu mã chức năng trong kế hoạch không giao được
+- [x] Giao task UI cho `agy` bị từ chối, giao task BE cho `codex` bị từ chối
+- [x] Task BE sửa `.Designer.cs` bị cổng kiểm tra từ chối
+- [x] Task thiếu mã chức năng trong kế hoạch không giao được
 
 ## Báo cáo của agent
+
+| Tiêu chí | Bằng chứng thực tế |
+|---|---|
+| Build 0 warning | Chưa đạt: `dotnet build AITeam.sln --no-restore -m:1 -nodeReuse:false -p:UseSharedCompilation=false`: 0 lỗi, 5 warning NU1900 do không truy cập NuGet; build mặc định thất bại khi chạy nhiều luồng. |
+| Kịch bản mới | `powershell -File tools/test-verify.ps1 -WorkflowOnly`: 30/30 đạt; chưa chạy toàn bộ script vì phần cũ gọi git, trái chỉ dẫn lượt này. |
+| Giao UI/BE sai người | Cùng lệnh trên: gọi `Invoke-Assign` thật, UI→agy và BE→codex đều bị từ chối trước khi giao. |
+| BE sửa Designer | Cùng lệnh trên: 7 đường dẫn giao diện mặc định/tùy chỉnh bị chặn; kiểm tra helper đã nối vào `Invoke-Verify`. |
+| Mã chức năng không tồn tại | Cùng lệnh trên: `Invoke-Assign` thật từ chối CN-99; có ca thiếu loại/chức năng/kế hoạch và Resume cũ. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 848 đạt/8 lỗi; Core 1068 đạt/23 lỗi; tổng 1916 đạt/31 lỗi/0 bỏ qua (quyền File.Replace/git, harness thiếu helper, assert tài liệu cũ). |
+| File đổi | `team.ps1`: CN-01–05; `tools/test-verify.ps1`: ca v6 không git/AI; `projects.json`: 9 uiLocked MyControls; `team.json`: review 2; `config/workflow.json`: phân vai; file task: báo cáo. |
+| Tự quyết | Thêm `-WorkflowOnly` để kiểm tra trong sandbox; lệnh test vùng chỉ nhận `dotnet test` chưa có filter; giữ BOM UTF-8 và CRLF hai script. |
+| Chưa xác minh | Test cũ trích riêng hàm bị thiếu helper mới (`V915QueueTests.cs:253`, `AcceptanceS104SkillPromptsTests.cs:149`, `AcceptanceV804FlakyRetryTests.cs:111`); không sửa test nghiệm thu, cần Claude cập nhật harness. |
+| Bàn giao | Không chạy git theo chỉ dẫn; hệ thống tự commit/push, chưa có commit được kiểm. Không chạy app/chụp ảnh. |
 
 ## Review (Claude)
 
