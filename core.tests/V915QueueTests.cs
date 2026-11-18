@@ -230,13 +230,15 @@ public sealed class V915QueueTests
         var root = sandbox.Root;
         WriteCliWrapper(root);
         Directory.CreateDirectory(Path.Combine(root, "tasks"));
+        Directory.CreateDirectory(Path.Combine(root, "docs"));
+        File.WriteAllText(Path.Combine(root, "docs", "KE-HOACH-DU-AN.md"), "### CN-01 · Thử nghiệm", new UTF8Encoding(false));
         Directory.CreateDirectory(Path.Combine(root, ".state"));
         File.WriteAllText(Path.Combine(root, "tasks", "B-2-viec-b.md"),
-            "## Phạm vi\r\n- `core/a.cs`\r\n- **Agent:** A\r\n- **Nhánh:** `agent-a/B-2`\r\n", new UTF8Encoding(false));
+            "- **Loại:** BE\r\n- **Chức năng:** CN-01\r\n## Phạm vi\r\n- `core/a.cs`\r\n- **Agent:** A\r\n- **Nhánh:** `agent-a/B-2`\r\n", new UTF8Encoding(false));
         File.WriteAllText(Path.Combine(root, ".state", "locks.json"),
             """[{"task":"A-1","provider":"codex","at":"2026-01-01T00:00:00","scope":["core/a.cs"]}]""",
             new UTF8Encoding(false));
-        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign", "Invoke-ScopeLock"], """
+        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign", "Invoke-ScopeLock", "Get-TaskWorkflow", "Assert-TaskWorkflow", "Get-WorkflowDeveloper"], """
             $Project = 'P'; $Task = 'B-2'; $Resume = $true; $Dev = 'agy'
             function Get-AITeamExe { Join-Path $Root 'cli.cmd' }
             function Get-Config { [pscustomobject]@{ developers = @(); agy = [pscustomobject]@{ exe = 'agy'; model = '' }; github = [pscustomobject]@{ owner = 'x' } } }
@@ -262,9 +264,11 @@ public sealed class V915QueueTests
         var root = sandbox.Root;
         WriteCliWrapper(root);
         Directory.CreateDirectory(Path.Combine(root, "tasks"));
+        Directory.CreateDirectory(Path.Combine(root, "docs"));
+        File.WriteAllText(Path.Combine(root, "docs", "KE-HOACH-DU-AN.md"), "### CN-01 · Thử nghiệm", new UTF8Encoding(false));
         File.WriteAllText(Path.Combine(root, "tasks", "B-2-viec-b.md"),
-            "## Phạm vi\r\n- `core/b.cs`\r\n- **Agent:** A\r\n- **Nhánh:** `agent-a/B-2`\r\n", new UTF8Encoding(false));
-        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign", "Invoke-ScopeLock"], """
+            "- **Loại:** BE\r\n- **Chức năng:** CN-01\r\n## Phạm vi\r\n- `core/b.cs`\r\n- **Agent:** A\r\n- **Nhánh:** `agent-a/B-2`\r\n", new UTF8Encoding(false));
+        var result = await sandbox.RunAsync("team.ps1", ["Invoke-Assign", "Invoke-ScopeLock", "Get-TaskWorkflow", "Assert-TaskWorkflow", "Get-WorkflowDeveloper"], """
             $Project = 'P'; $Task = 'B-2'; $Resume = $true; $Dev = 'agy'
             function Get-AITeamExe { Join-Path $Root 'cli.cmd' }
             function Get-Config { [pscustomobject]@{ developers = @(); agy = [pscustomobject]@{ exe = 'agy'; model = '' }; github = [pscustomobject]@{ owner = 'x' } } }

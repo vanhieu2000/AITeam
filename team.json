@@ -20,7 +20,7 @@
     { "id": "C", "name": "Agent C (Codex)", "focus": "Dự phòng: việc nhỏ khi Antigravity hết hạn mức (chạy bằng Codex CLI)" }
   ],
   "review": {
-    "maxRounds": 3,
+    "maxRounds": 2,
     "_ghichu": "Quá số vòng trả về mà vẫn chưa đạt thì quản lý tự sửa hoặc hỏi chủ dự án."
   }
 }

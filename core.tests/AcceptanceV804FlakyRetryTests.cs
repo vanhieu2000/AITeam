@@ -95,6 +95,8 @@ public class AcceptanceV804FlakyRetryTests
             $warns = New-Object Collections.ArrayList
             $notes = New-Object Collections.ArrayList
             $r = @{ Info = @{ test = 'dotnet test AITeam.sln'; build = $null } }
+            $workflow = @{ Kind = 'KT'; Filter = '' }
+            $regionalCommand = $r.Info.test
             $work = $pwd
             $script:count = 0
             function Invoke-ShellCapture {

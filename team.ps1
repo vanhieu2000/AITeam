@@ -336,8 +336,9 @@ function Invoke-AddProject {
         }
     }
 
-    $vars = @{ PROJECT = $Project; BUILD = $(if ($Build) { $Build } else { "(điền lệnh build)" }); TEST = $(if ($Test) { $Test } else { "(điền lệnh test)" }) }
+    $vars = @{ PROJECT = $Project; STACK = $Stack; BUILD = $(if ($Build) { $Build } else { "(điền lệnh build)" }); TEST = $(if ($Test) { $Test } else { "(điền lệnh test)" }) }
     if (Copy-Template "AGENTS.md" (Join-Path $target "AGENTS.md") $vars) { Say "  + AGENTS.md" }
+    if (Copy-Template "KE-HOACH-DU-AN.md" (Join-Path $target "docs\KE-HOACH-DU-AN.md") $vars) { Say "  + docs/KE-HOACH-DU-AN.md" }
     if (Copy-Template "board.md" (Join-Path $target "tasks\README.md") $vars) { Say "  + tasks\README.md" }
     if (Copy-Template "gitignore.txt" (Join-Path $target ".gitignore") $vars) { Say "  + .gitignore" }
     if (Copy-Template "editorconfig.txt" (Join-Path $target ".editorconfig") $vars) { Say "  + .editorconfig" }
@@ -638,6 +639,70 @@ function Invoke-ScopeLock {
     throw "Không $verb được khóa phạm vi$(if ($message) { ": $message" } else { '.' })"
 }
 
+function Get-TaskWorkflow([string]$text) {
+    $values = @{}
+    foreach ($label in @('Loại', 'Chức năng', 'Test vùng')) {
+        $match = [regex]::Match($text, '(?m)^-\s*\*\*' + $label + ':\*\*[ \t]*([^\r\n]*)')
+        $values[$label] = ([regex]::Replace($match.Groups[1].Value, '<!--.*?-->', '')).Trim().Trim([char]96).Trim()
+    }
+    [pscustomobject]@{ Kind=$values['Loại']; Features=$values['Chức năng']; Filter=$values['Test vùng'] }
+}
+
+function Assert-TaskWorkflow($workflow, [string]$projectPath, [bool]$resumeTask) {
+    if ($resumeTask -and -not $workflow.Kind) { return }
+    if ($workflow.Kind -cnotin @('UI','TEST','BE','KT')) { throw 'Loại task phải là UI, TEST, BE hoặc KT.' }
+    $plan = Join-Path $projectPath 'docs/KE-HOACH-DU-AN.md'
+    if (-not (Test-Path -LiteralPath $plan -PathType Leaf)) { throw 'Thiếu file kế hoạch docs/KE-HOACH-DU-AN.md.' }
+    if ($workflow.Features -notmatch '^CN-\d+(\s*,\s*CN-\d+)*$') { throw 'Thiếu hoặc sai mã Chức năng CN-xx trong task.' }
+    $known = @([regex]::Matches([IO.File]::ReadAllText($plan), '(?m)^###\s+(CN-\d+)\b') | ForEach-Object { $_.Groups[1].Value })
+    foreach ($feature in ($workflow.Features -split '\s*,\s*')) {
+        if ($feature -notin $known) { throw "Mã chức năng $feature không có trong kế hoạch dự án." }
+    }
+}
+
+function Get-WorkflowDeveloper($workflow, [string]$requested) {
+    $expected = switch ($workflow.Kind) { 'UI' { 'codex' }; 'TEST' { 'codex' }; 'BE' { 'agy' } }
+    if ($expected -and $requested -and $requested -ne $expected) { throw "Task $($workflow.Kind) phải giao cho $expected, không được giao cho $requested." }
+    if ($expected) { return $expected }
+    return $requested
+}
+
+function Get-WorkflowFileErrors($workflow, [string[]]$files, $info) {
+    $locked = @('**/*.Designer.cs','**/*.resx','**/*.cshtml','**/*.razor','**/wwwroot/**','docs/design/**') + @($info.uiLocked)
+    foreach ($file in $files) {
+        $relativeFile = $file.Replace('\','/')
+        if ($workflow.Kind -in @('UI','TEST','BE') -and $relativeFile -ieq 'docs/KE-HOACH-DU-AN.md') { "Không được sửa kế hoạch dự án: $file" }
+        if ($workflow.Kind -ne 'BE') { continue }
+        foreach ($pattern in $locked) {
+            if (-not $pattern) { continue }
+            $expression = [regex]::Escape($pattern.Replace('\','/')).Replace('\*\*/','(?:.*/)?').Replace('\*\*','.*').Replace('\*','[^/]*')
+            if ($relativeFile -imatch ('^' + $expression + '$')) { "Task BE không được sửa giao diện: $file"; break }
+        }
+    }
+}
+
+function Get-WorkflowTestCommand($workflow, [string]$command) {
+    if (-not $workflow.Filter) {
+        if ($workflow.Kind -in @('UI','TEST','BE')) { throw 'Task UI, TEST, BE thiếu Test vùng.' }
+        return $command
+    }
+    if ($workflow.Filter -notmatch '\A[A-Za-z0-9~=._|&!() ]+\z') { throw 'Test vùng chứa ký tự không an toàn.' }
+    if ($command -notmatch '^\s*dotnet\s+test\b' -or $command -match '(?i)--filter\b') { throw 'Lệnh Test vùng phải là dotnet test và chưa có --filter.' }
+    # Whitelist loại dấu nháy và ký tự mở rộng; dấu nháy kép bảo vệ |, & khỏi shell.
+    return $command + ' --filter "' + $workflow.Filter + '"'
+}
+
+function Test-WorkflowTestFound([string]$output) {
+    # Solution có thể có assembly không khớp; chỉ cần có test thực sự chạy trong vùng.
+    return $output -match '(?im)(?:Passed:|Total tests:|Total:)\s*[1-9]\d*'
+}
+
+function Get-WorkflowQuotaStatus($workflow, [string]$provider, [string]$fallbackStatus) {
+    if ($provider -eq 'codex' -and $workflow.Kind -in @('UI','TEST')) { return '⏸ Chờ Claude làm' }
+    if ($provider -eq 'agy' -and $workflow.Kind -eq 'BE') { return '⏸ Chờ Antigravity' }
+    return $fallbackStatus
+}
+
 function Invoke-Assign {
     function Record-QuotaExhausted([string]$service, [string]$logText = "", [string]$errText = "") {
         try {
@@ -669,6 +734,9 @@ function Invoke-Assign {
     $taskFile = Find-TaskFile $r $Task
     if ($Resume -and (Stop-ReviewReassignment $r $taskFile.FullName $Task $cfg)) { return }
     $text = Get-Content $taskFile.FullName -Raw -Encoding UTF8
+    $workflow = Get-TaskWorkflow $text
+    Assert-TaskWorkflow $workflow $r.Path ([bool]$Resume)
+    $Dev = Get-WorkflowDeveloper $workflow $Dev
     $routeReason=$null
     $devFromResume=$false
     if (-not $Dev) {
@@ -799,11 +867,15 @@ function Invoke-Assign {
     if ($Dev -notin @("codex", "opencode") -and (Set-McpConfig $r $work $taskFile $agentId)) {
         $mcpNote = "`nBÁO TIẾN ĐỘ QUA MCP (chủ dự án theo dõi trên trang Văn phòng): có công cụ aiteam_post_message. Gọi NGẮN (1 câu): khi bắt đầu; sau mỗi phần chạy được; khi gặp vướng cần quản lý quyết (kind question); khi xong (kind done, kèm số test pass). Không gọi quá 15 lần. Công cụ khác: aiteam_get_test_results (kết quả cổng kiểm tra lần trước)."
     }
+    $testInstruction = if ($workflow.Filter) { "Chỉ chạy Test vùng: $($workflow.Filter); không chạy toàn bộ test." } else { "Test: $($r.Info.test)" }
+    $finalTestInstruction = if ($workflow.Filter) { 'Chạy build và Test vùng của task ở cuối; không chạy toàn bộ test.' } else { 'Chạy đủ lệnh Build + Test của dự án đúng 1 lần ở cuối, trước khi commit.' }
     $prompt = @"
 Bạn là $($devInfo.name) (mã $($devInfo.id), chuyên: $($devInfo.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.$staffNotes$mcpNote
 Thư mục hiện tại là bản làm việc riêng của bạn, đã ở đúng nhánh $branch.
 Đọc AGENTS.md rồi làm task tasks/$($taskFile.Name) đến hết "Tiêu chí hoàn thành".
-Build: $($r.Info.build)   Test: $($r.Info.test)
+Đọc docs/KE-HOACH-DU-AN.md trước khi làm.
+Vai trò v6: $(switch ($workflow.Kind) { 'UI' { 'Codex làm giao diện đúng mockup, không viết logic nghiệp vụ.' }; 'TEST' { 'Codex viết và chạy test theo kế hoạch, không thêm ca ngoài kế hoạch.' }; 'BE' { 'Antigravity làm backend và nối chức năng vào giao diện; không thiết kế, sửa bố cục hoặc test nghiệm thu.' }; default { 'Làm công cụ, tài liệu theo phạm vi task.' } })
+Build: $($r.Info.build). $testInstruction
 Xong thì điền mục "Báo cáo của agent" trong file task, commit rồi git push -u origin $branch.
 Bạn đang chạy tự động, KHÔNG có người trả lời câu hỏi: tự quyết theo AGENTS.md.
 Kế hoạch của bạn coi như ĐÃ ĐƯỢC DUYỆT: không dừng lại xin xác nhận, làm luôn tới khi push xong.
@@ -826,7 +898,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
 - Test giao diện: TUYỆT ĐỐI không gọi Show(), ShowDialog(), MessageBox, Application.Run, không mở app thật. Dựng form / control ẩn (CreateControl, PerformLayout) trên luồng STA riêng; đặt Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException) để lỗi ném ra thay vì bật hộp thoại. Code dựng màn hình có hộp thoại chào mừng / thông báo thì phải tắt được qua tham số hoặc cờ trong test.LÀM NHANH (thời gian chạy được đo):
 - Đọc PROJECT_MAP.md / AGENTS.md rồi chỉ mở đúng file cần sửa; không đọc lại cả file đã đọc, không in nguyên file dài ra màn hình.
 - Trong lúc làm: build tăng dần (không clean), thêm --no-restore sau lần restore đầu; chạy RIÊNG test liên quan bằng dotnet test --no-build --filter "FullyQualifiedName~TênLớpTest".
-- Chạy đủ lệnh Build + Test của dự án đúng 1 lần ở cuối, trước khi commit.
+- $finalTestInstruction
 - Sửa file bằng chỉnh sửa nhỏ đúng chỗ, không viết lại cả file khi chỉ đổi vài dòng.
 "@
     $prompt = Add-SkillPrompt -Prompt $prompt -Root $Root -Stage code -Stack $r.Info.stack
@@ -927,7 +999,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
 
     # R-004: -Dev codex ⇒ Codex viết code; agy hết hạn mức ⇒ tự chuyển sang Codex (trừ -Dev agy). Codex không ghi được .git ⇒ team.ps1 commit + push.
     $agyQuota = ($Dev -notin @("codex", "opencode")) -and (Test-QuotaExhausted $logText $errText)
-    if ($Dev -in @("codex", "opencode") -or ($agyQuota -and ($Dev -ne "agy" -or $devFromResume))) {
+    if ($Dev -in @("codex", "opencode") -or ($agyQuota -and $workflow.Kind -ne 'BE' -and ($Dev -ne "agy" -or $devFromResume))) {
         if ($agyQuota) {
             Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
             Say "Antigravity hết hạn mức → tự chuyển $Task sang Codex (dự phòng)." Yellow
@@ -943,10 +1015,12 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
             if (Test-QuotaExhausted $cxLog $cxErr) {
                 Record-QuotaExhausted $devProvider $cxLog $cxErr
             }
-            Set-BoardStatus $r $Task "🟡 Dừng · Codex: $($cx.Status)" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
+            $pauseStatus = "🟡 Dừng · Codex: $($cx.Status)"
+            if (Test-QuotaExhausted $cxLog $cxErr) { $pauseStatus = Get-WorkflowQuotaStatus $workflow $devProvider $pauseStatus }
+            Set-BoardStatus $r $Task $pauseStatus -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }
             return
         }
-    } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task "🟡 Dừng · hết hạn mức Antigravity" -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }; if ($NoVerify) { return @{ Ok = $false; Quota = $true } }; return }
+    } elseif ($agyQuota) { Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false); Set-BoardStatus $r $Task (Get-WorkflowQuotaStatus $workflow 'agy' '🟡 Dừng · hết hạn mức Antigravity') -Journal @{ TaskFile = $taskFile.Name; Event = 'Assign'; Result = 'LỖI' }; if ($NoVerify) { return @{ Ok = $false; Quota = $true } }; return }
     if ($NoVerify) {
         Save-RunMetrics (Get-RunRecord $r $Task $log $agentId $model $work $null $false)
         $agentOk = if ($devProvider -in @('codex','opencode')) { [bool]$cx.Ok } else { $proc -and $proc.ExitCode -eq 0 -and $logText -match '"status"\s*:\s*"SUCCESS"' }
@@ -2344,6 +2418,13 @@ function Invoke-Verify {
     [void]$notes.Add("File thay đổi so với main: $($changed.Count)")
     if ($changed.Count -eq 0) { [void]$fails.Add("Nhánh không có thay đổi nào so với main (agent chưa làm hoặc chưa commit).") }
 
+    $workflow = Get-TaskWorkflow $ctx.Text
+    $workflowFiles = @(git -C $work diff --name-only $base HEAD 2>$null | Where-Object { $_ })
+    foreach ($failure in @(Get-WorkflowFileErrors $workflow $workflowFiles $r.Info)) { [void]$fails.Add($failure) }
+    $regionalCommand = $null
+    try { $regionalCommand = Get-WorkflowTestCommand $workflow $r.Info.test }
+    catch { [void]$fails.Add($_.Exception.Message) }
+
     # 0. Cổng KT (V10-03 / R-014): diff chạm file nhạy cảm ⇒ tạo mục duyệt bảo mật cho (task, commit HEAD).
     $sensitiveFiles = @(Get-SensitiveChanges $changed $cfg)
     if ($sensitiveFiles.Count -gt 0) {
@@ -2528,9 +2609,9 @@ function Invoke-Verify {
         }
     }
     $testAttempts = @()
-    if ($r.Info.test -and -not ($fails | Where-Object { $_ -like 'Build LỖI*' })) {
+    if ($regionalCommand -and -not ($fails | Where-Object { $_ -like 'Build LỖI*' })) {
         # Chốt chặn treo: test giao diện bật hộp thoại modal từng làm treo cả agent lẫn cổng kiểm tra (21/10/2026, 47 phút / task).
-        $testCmd = $r.Info.test
+        $testCmd = $regionalCommand
         if ($testCmd -match '^\s*dotnet\s+test\b' -and $testCmd -notmatch 'blame-hang') { $testCmd += " --blame-hang-timeout 3m --blame-hang-dump-type none" }
         $tCheck = Invoke-WorkflowCheck -Stage 'Test' -Run {
             param($attempt)
@@ -2545,6 +2626,7 @@ function Invoke-Verify {
 
         if ($t.Output -match '(?i)blame-hang|hang timeout|The active test run was aborted') { [void]$fails.Add("Test bị TREO (quá 3 phút, thường do test giao diện mở hộp thoại / form / MessageBox thật). Xem luật 'Test giao diện' trong lời giao việc.") }
         $summary = @($t.Output -split "`r?`n" | Where-Object { $_ -match '(?i)(Passed!|Failed!|Total tests|Tổng số|Đạt!|Không đạt!)' } | ForEach-Object { $_.Trim() })
+        if ($workflow.Filter -and -not (Test-WorkflowTestFound $t.Output)) { [void]$fails.Add("Test vùng không khớp test nào hoặc không có tổng kết số test đã chạy.") }
         if ($t.Code -ne 0) {
             $failed = @($t.Output -split "`r?`n" | Where-Object { $_ -match '^\s*(Failed|Không đạt)\s+\S' } | Select-Object -First 10 | ForEach-Object { $_.Trim() })
             [void]$fails.Add("Test KHÔNG ĐẠT (mã $($t.Code)):`n  " + (($failed + $summary) -join "`n  "))

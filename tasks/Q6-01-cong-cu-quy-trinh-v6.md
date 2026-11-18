@@ -86,12 +86,36 @@ Không có file riêng. Codex viết kịch bản trong công cụ test, Claude 
 ## Tiêu chí hoàn thành
 - [ ] Build `dotnet build AITeam.sln` 0 warning
 - [ ] `powershell -File tools\test-verify.ps1` đạt các kịch bản mới
-- [ ] Giao task UI cho `agy` bị từ chối, giao task BE cho `codex` bị từ chối
-- [ ] Task BE sửa `.Designer.cs` bị cổng kiểm tra từ chối
-- [ ] Task thiếu mã chức năng trong kế hoạch không giao được
+- [x] Giao task UI cho `agy` bị từ chối, giao task BE cho `codex` bị từ chối
+- [x] Task BE sửa `.Designer.cs` bị cổng kiểm tra từ chối
+- [x] Task thiếu mã chức năng trong kế hoạch không giao được
 
 ## Báo cáo của agent
 
+| Tiêu chí | Bằng chứng thực tế vòng 1 |
+|---|---|
+| Build 0 warning | Chưa đạt: `dotnet build AITeam.sln --no-restore -m:1 -nodeReuse:false -p:UseSharedCompilation=false`: 0 lỗi, 5 warning NU1900 do không truy cập NuGet. |
+| Kịch bản v6; UI/BE sai người; BE sửa Designer; CN thiếu | `powershell -NoProfile -File tools/test-verify.ps1 -WorkflowOnly`: 33/33 đạt, gồm đủ các trường hợp từ chối; chưa chạy toàn script vì có git. |
+| Review 1: mã hóa | `projects.json`, `team.json` đã bỏ BOM; kiểm byte bằng `[IO.File]::ReadAllBytes`: hai JSON không BOM, hai script có BOM và CRLF, không LF lẻ. |
+| Review 2: harness | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS104SkillPromptsTests\|FullyQualifiedName~V915QueueTests\|FullyQualifiedName~AcceptanceV804FlakyRetryTests" --blame-hang-timeout 2m`: 55 đạt/0 lỗi/0 bỏ qua (18 giây); dấu \ trước dấu phân cách chỉ để hiển thị bảng. |
+| Review 3–4: KT và STACK | WorkflowOnly có 3 kiểm tra mới đạt: KT thiếu bộ lọc dùng lệnh test dự án; có bộ lọc dùng Test vùng; add-project truyền STACK cho mẫu. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 848 đạt/8 lỗi; Core 1078 đạt/13 lỗi (2 phút 38 giây); tổng 1926 đạt/21 lỗi/0 bỏ qua; lỗi quyền File.Replace và Git signal pipe trong sandbox. |
+| File đổi/lý do | `team.ps1`: lời giao KT, STACK; hai JSON: bỏ BOM; ba lớp test nêu trên: chỉ cập nhật môi trường, giữ assert; `tools/test-verify.ps1`: thêm 3 kiểm tra; file task: báo cáo. |
+| Kiểm tra bổ sung | Build Core khi test giữ DLL bị MSB3027/MSB3021; sau test chạy lại `dotnet build core.tests/AITeam.Core.Tests.csproj --no-restore -m:1 -nodeReuse:false -p:UseSharedCompilation=false`: 0 lỗi/3 NU1900; filter 55/55 chạy lại đạt. |
+| Quyết định/chưa xác minh | Không sửa ngoài phạm vi review, không nới assert; không chạy app/chụp ảnh. Không gọi git trực tiếp hoặc merge main; hệ thống tự commit/push, chưa có commit được kiểm. |
 ## Review (Claude)
+### Vòng 1 — CẦN SỬA
+Claude đã sửa phần tài liệu trên main (S107, W104), Codex merge main rồi sửa đủ 4 điểm:
+1. Xóa BOM vừa thêm vào `projects.json` và `team.json`, giữ nguyên mã hóa cũ.
+2. Được phép cập nhật phần dựng môi trường của `core.tests/AcceptanceS104SkillPromptsTests.cs`, `core.tests/V915QueueTests.cs`, `core.tests/AcceptanceV804FlakyRetryTests.cs`: nạp thêm các hàm v6, dữ liệu task mẫu có Loại, Chức năng và file kế hoạch. Không nới lỏng assert.
+3. Lời giao việc của task KT không có Test vùng: giữ câu chạy lệnh test của dự án, không in Test vùng rỗng.
+4. `add-project`: truyền thêm `STACK` khi tạo `docs/KE-HOACH-DU-AN.md`.
+
+### Vòng 2 — ĐẠT
+Đã kiểm tra: cổng kiểm tra ĐẠT (Hub 856, Core 1091), đọc toàn bộ diff, Claude chạy 42 tình huống cố tình làm sai đều đúng, gồm 3 lần gọi lệnh `assign` thật.
 
 ## Kết quả
+- Giao giao diện hoặc test cho Antigravity, giao backend cho Codex đều bị từ chối ngay.
+- Task thiếu loại việc hoặc mã chức năng trong kế hoạch dự án không giao được.
+- Antigravity sửa file giao diện thì cổng kiểm tra không cho qua.
+- Cổng kiểm tra chỉ chạy test của vùng task, toàn bộ test chạy một lần khi merge.

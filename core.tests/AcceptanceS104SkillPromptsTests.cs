@@ -165,7 +165,7 @@ $x = Get-Content -LiteralPath $inputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $tokens=$null; $errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $x.source 'team.ps1'),[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw ($errors | Out-String) }
-$names=@('Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Assert-PrepPlanApproval','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun','Get-ReviewRoundLimit','Get-ReviewRoundCount','Stop-ReviewReassignment','Get-RecordedDeveloper','ConvertTo-DeveloperProvider') # H7-02 + V6-02 + W1-03 + V9-14
+$names=@('Get-TaskWorkflow','Assert-TaskWorkflow','Get-WorkflowDeveloper','Get-WorkflowQuotaStatus','Invoke-Plan','Invoke-Prep','Invoke-Assign','Invoke-CodexDevelop','Invoke-CodexRetry','Assert-PrepPlanApproval','Resolve-WorkflowAssignment','Invoke-WorkflowRoleRun','Get-ReviewRoundLimit','Get-ReviewRoundCount','Stop-ReviewReassignment','Get-RecordedDeveloper','ConvertTo-DeveloperProvider') # H7-02 + V6-02 + W1-03 + V9-14
 foreach ($f in $ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$true)) {
     if ($f.Name -in $names) { . ([scriptblock]::Create($f.Extent.Text)) }
 }
@@ -174,10 +174,11 @@ $Project='demo'; $Task='S1-04'; $Request='R-010'; $Name='S1'; $Resume=$true; $Fe
 $Dev=if($x.mode -eq 'codex'){'codex'}else{''}
 $repo=Join-Path $x.tmp 'dự án ngoài AITeam'; $logs=Join-Path $x.tmp 'logs'; $workRoot=Join-Path $x.tmp 'work'
 $planDir=Join-Path $Root 'plans/R-010'
-foreach($d in @($repo,$logs,$workRoot,$planDir,(Join-Path $Root 'templates'),(Join-Path $Root 'staff'),(Join-Path $repo 'tasks'))) { New-Item -ItemType Directory -Force $d | Out-Null }
+foreach($d in @($repo,$logs,$workRoot,$planDir,(Join-Path $Root 'templates'),(Join-Path $Root 'staff'),(Join-Path $repo 'tasks'),(Join-Path $repo 'docs'))) { New-Item -ItemType Directory -Force $d | Out-Null }
 # Các worktree giả cùng trỏ tới repo tạm qua Resolve-Path giả; không có thao tác trên repo thật.
 foreach($d in @((Join-Path $workRoot 'a-s1-04'),(Join-Path $workRoot 'prep-s1-04'))) { New-Item -ItemType Directory -Force $d | Out-Null }
-[IO.File]::WriteAllText((Join-Path $repo 'tasks/S1-04.md'), "- **Agent:** A`n- **Nhánh:** ``agent-a/S1-04``")
+[IO.File]::WriteAllText((Join-Path $repo 'tasks/S1-04.md'), "- **Loại:** KT`n- **Chức năng:** CN-01`n- **Agent:** A`n- **Nhánh:** ``agent-a/S1-04``")
+[IO.File]::WriteAllText((Join-Path $repo 'docs/KE-HOACH-DU-AN.md'), '### CN-01 · Thử nghiệm')
 [IO.File]::WriteAllText((Join-Path $planDir 'brief.md'),'brief giả')
 [IO.File]::WriteAllText((Join-Path $planDir 'plan.md'),"### S1-04 · Kết nối`n- **Agent:** A`n- **Ngân sách:** ~280 dòng`n`n## Quyết định của quản lý (giả)`n- ĐÃ DUYỆT.")
 foreach($f in @('codex-plan.md','codex-prep.md')) { [IO.File]::WriteAllText((Join-Path $Root "templates/$f"),'CHỈ đọc old.cs {REQUEST} {TASK}') }
