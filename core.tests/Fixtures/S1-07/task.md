@@ -68,7 +68,7 @@ Ghi đường dẫn trong `…`, ví dụ `tests/Foo.Tests/AcceptanceT003Tests.c
 
 ## Tiêu chí hoàn thành
 - [ ] Build `{{BUILD}}` 0 warning
-- [ ] Test `{{TEST}}` pass hết, gồm toàn bộ test nghiệm thu (không sửa) + test mới của agent cho phần đã làm
+- [ ] Test vùng của task pass hết, gồm test nghiệm thu (không sửa). Không chạy toàn bộ test: toàn bộ test chạy một lần khi merge
 - [ ]
 
 ## Báo cáo của agent

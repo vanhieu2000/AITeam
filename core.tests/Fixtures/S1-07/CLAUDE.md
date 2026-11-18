@@ -9,7 +9,7 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 |---|---|---|
 | Chủ dự án | HieuDV (người dùng) | Đưa yêu cầu, quyết định sản phẩm, đăng nhập tài khoản, bấm UAC |
 | Quản lý | Claude (bạn) | Hiểu yêu cầu → ý tưởng → kế hoạch → task → giao việc → review / test → merge → báo cáo |
-| Agent A, Agent B | Antigravity CLI (`agy`), chạy ngầm | Code theo task trên nhánh riêng, tự build / test, push nhánh |
+| Agent A, Agent B | Antigravity CLI (`agy`), chạy ngầm | Làm backend và tự nối vào giao diện (task BE). KHÔNG thiết kế, KHÔNG sửa giao diện |
 
 - Cấu hình chung: `team.json`. Danh sách dự án: `projects.json`.
 - Mọi lệnh điều phối: `team.ps1`.
