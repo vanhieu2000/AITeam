@@ -336,7 +336,7 @@ function Invoke-AddProject {
         }
     }
 
-    $vars = @{ PROJECT = $Project; BUILD = $(if ($Build) { $Build } else { "(điền lệnh build)" }); TEST = $(if ($Test) { $Test } else { "(điền lệnh test)" }) }
+    $vars = @{ PROJECT = $Project; STACK = $Stack; BUILD = $(if ($Build) { $Build } else { "(điền lệnh build)" }); TEST = $(if ($Test) { $Test } else { "(điền lệnh test)" }) }
     if (Copy-Template "AGENTS.md" (Join-Path $target "AGENTS.md") $vars) { Say "  + AGENTS.md" }
     if (Copy-Template "KE-HOACH-DU-AN.md" (Join-Path $target "docs\KE-HOACH-DU-AN.md") $vars) { Say "  + docs/KE-HOACH-DU-AN.md" }
     if (Copy-Template "board.md" (Join-Path $target "tasks\README.md") $vars) { Say "  + tasks\README.md" }
@@ -867,13 +867,15 @@ function Invoke-Assign {
     if ($Dev -notin @("codex", "opencode") -and (Set-McpConfig $r $work $taskFile $agentId)) {
         $mcpNote = "`nBÁO TIẾN ĐỘ QUA MCP (chủ dự án theo dõi trên trang Văn phòng): có công cụ aiteam_post_message. Gọi NGẮN (1 câu): khi bắt đầu; sau mỗi phần chạy được; khi gặp vướng cần quản lý quyết (kind question); khi xong (kind done, kèm số test pass). Không gọi quá 15 lần. Công cụ khác: aiteam_get_test_results (kết quả cổng kiểm tra lần trước)."
     }
+    $testInstruction = if ($workflow.Filter) { "Chỉ chạy Test vùng: $($workflow.Filter); không chạy toàn bộ test." } else { "Test: $($r.Info.test)" }
+    $finalTestInstruction = if ($workflow.Filter) { 'Chạy build và Test vùng của task ở cuối; không chạy toàn bộ test.' } else { 'Chạy đủ lệnh Build + Test của dự án đúng 1 lần ở cuối, trước khi commit.' }
     $prompt = @"
 Bạn là $($devInfo.name) (mã $($devInfo.id), chuyên: $($devInfo.focus)) trong team AI của dự án $($r.Info.name). Quản lý là Claude.$staffNotes$mcpNote
 Thư mục hiện tại là bản làm việc riêng của bạn, đã ở đúng nhánh $branch.
 Đọc AGENTS.md rồi làm task tasks/$($taskFile.Name) đến hết "Tiêu chí hoàn thành".
 Đọc docs/KE-HOACH-DU-AN.md trước khi làm.
 Vai trò v6: $(switch ($workflow.Kind) { 'UI' { 'Codex làm giao diện đúng mockup, không viết logic nghiệp vụ.' }; 'TEST' { 'Codex viết và chạy test theo kế hoạch, không thêm ca ngoài kế hoạch.' }; 'BE' { 'Antigravity làm backend và nối chức năng vào giao diện; không thiết kế, sửa bố cục hoặc test nghiệm thu.' }; default { 'Làm công cụ, tài liệu theo phạm vi task.' } })
-Build: $($r.Info.build). Chỉ chạy Test vùng: $($workflow.Filter); không chạy toàn bộ test.
+Build: $($r.Info.build). $testInstruction
 Xong thì điền mục "Báo cáo của agent" trong file task, commit rồi git push -u origin $branch.
 Bạn đang chạy tự động, KHÔNG có người trả lời câu hỏi: tự quyết theo AGENTS.md.
 Kế hoạch của bạn coi như ĐÃ ĐƯỢC DUYỆT: không dừng lại xin xác nhận, làm luôn tới khi push xong.
@@ -896,7 +898,7 @@ CHỈ LÀM ĐÚNG THIẾT KẾ:
 - Test giao diện: TUYỆT ĐỐI không gọi Show(), ShowDialog(), MessageBox, Application.Run, không mở app thật. Dựng form / control ẩn (CreateControl, PerformLayout) trên luồng STA riêng; đặt Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException) để lỗi ném ra thay vì bật hộp thoại. Code dựng màn hình có hộp thoại chào mừng / thông báo thì phải tắt được qua tham số hoặc cờ trong test.LÀM NHANH (thời gian chạy được đo):
 - Đọc PROJECT_MAP.md / AGENTS.md rồi chỉ mở đúng file cần sửa; không đọc lại cả file đã đọc, không in nguyên file dài ra màn hình.
 - Trong lúc làm: build tăng dần (không clean), thêm --no-restore sau lần restore đầu; chạy RIÊNG test liên quan bằng dotnet test --no-build --filter "FullyQualifiedName~TênLớpTest".
-- Chạy build và Test vùng của task ở cuối; không chạy toàn bộ test.
+- $finalTestInstruction
 - Sửa file bằng chỉnh sửa nhỏ đúng chỗ, không viết lại cả file khi chỉ đổi vài dòng.
 "@
     $prompt = Add-SkillPrompt -Prompt $prompt -Root $Root -Stage code -Stack $r.Info.stack

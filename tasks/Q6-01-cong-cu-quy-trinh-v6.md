@@ -92,16 +92,17 @@ Không có file riêng. Codex viết kịch bản trong công cụ test, Claude 
 
 ## Báo cáo của agent
 
-| Tiêu chí | Bằng chứng thực tế lượt sửa cổng |
+| Tiêu chí | Bằng chứng thực tế vòng 1 |
 |---|---|
-| Build 0 warning | Chưa đạt: `dotnet build AITeam.sln --no-restore -m:1 -nodeReuse:false -p:UseSharedCompilation=false`: 0 lỗi, 5 warning NU1900 (không truy cập NuGet), 20,62 giây. |
-| Kịch bản v6 | `powershell -NoProfile -File tools/test-verify.ps1 -WorkflowOnly`: 30/30 đạt; toàn bộ script chưa chạy vì gọi git. |
-| UI/BE sai người; BE sửa Designer; CN không tồn tại | Cùng lệnh trên gọi Invoke-Assign thật từ chối UI→agy, BE→codex, CN-99; kiểm tra 7 đường dẫn giao diện bị chặn. |
-| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: mã 1; Hub 848 đạt/8 lỗi; Core 1068 đạt/23 lỗi; tổng 1916 đạt/31 lỗi/0 bỏ qua; Core 2 phút 31 giây. |
-| Chặn tài liệu | S107 dòng 24 yêu cầu nguyên văn hướng dẫn cũ trong CLAUDE.md/templates/task.md; W104 dòng 73 giới hạn 60 dòng, thực tế TEST-CHUAN.md có 91 dòng; cả ba file ngoài phạm vi sửa. |
-| Chặn harness | S104 dòng 170 và V915 dòng 253/268 chỉ nạp danh sách hàm cũ, thiếu Get-TaskWorkflow và helper v6; V804 dòng 88–109 trích riêng bước 8 nhưng regionalCommand khởi tạo trước đó ở team.ps1:2423, nên không chạy test (0 thay vì 2 lần). |
-| Quyết định/phạm vi | Không sửa test nghiệm thu, không thêm mã nhận diện test; cần Claude cập nhật harness/tài liệu được phép trước khi sửa tiếp. Chỉ đổi file task để ghi bằng chứng mới. |
-| Bàn giao/chưa xác minh | Không chạy lệnh git; hệ thống tự commit/push, chưa có commit được kiểm. Không chạy app/chụp ảnh. Shutdown MSBuild thành công; compiler server báo không tắt được. |
+| Build 0 warning | Chưa đạt: `dotnet build AITeam.sln --no-restore -m:1 -nodeReuse:false -p:UseSharedCompilation=false`: 0 lỗi, 5 warning NU1900 do không truy cập NuGet. |
+| Kịch bản v6; UI/BE sai người; BE sửa Designer; CN thiếu | `powershell -NoProfile -File tools/test-verify.ps1 -WorkflowOnly`: 33/33 đạt, gồm đủ các trường hợp từ chối; chưa chạy toàn script vì có git. |
+| Review 1: mã hóa | `projects.json`, `team.json` đã bỏ BOM; kiểm byte bằng `[IO.File]::ReadAllBytes`: hai JSON không BOM, hai script có BOM và CRLF, không LF lẻ. |
+| Review 2: harness | `dotnet test core.tests/AITeam.Core.Tests.csproj --no-build --no-restore --filter "FullyQualifiedName~AcceptanceS104SkillPromptsTests\|FullyQualifiedName~V915QueueTests\|FullyQualifiedName~AcceptanceV804FlakyRetryTests" --blame-hang-timeout 2m`: 55 đạt/0 lỗi/0 bỏ qua (18 giây); dấu \ trước dấu phân cách chỉ để hiển thị bảng. |
+| Review 3–4: KT và STACK | WorkflowOnly có 3 kiểm tra mới đạt: KT thiếu bộ lọc dùng lệnh test dự án; có bộ lọc dùng Test vùng; add-project truyền STACK cho mẫu. |
+| Test solution | `dotnet test AITeam.sln --no-build --no-restore -m:1 --blame-hang-timeout 2m`: Hub 848 đạt/8 lỗi; Core 1078 đạt/13 lỗi (2 phút 38 giây); tổng 1926 đạt/21 lỗi/0 bỏ qua; lỗi quyền File.Replace và Git signal pipe trong sandbox. |
+| File đổi/lý do | `team.ps1`: lời giao KT, STACK; hai JSON: bỏ BOM; ba lớp test nêu trên: chỉ cập nhật môi trường, giữ assert; `tools/test-verify.ps1`: thêm 3 kiểm tra; file task: báo cáo. |
+| Kiểm tra bổ sung | Build Core khi test giữ DLL bị MSB3027/MSB3021; sau test chạy lại `dotnet build core.tests/AITeam.Core.Tests.csproj --no-restore -m:1 -nodeReuse:false -p:UseSharedCompilation=false`: 0 lỗi/3 NU1900; filter 55/55 chạy lại đạt. |
+| Quyết định/chưa xác minh | Không sửa ngoài phạm vi review, không nới assert; không chạy app/chụp ảnh. Không gọi git trực tiếp hoặc merge main; hệ thống tự commit/push, chưa có commit được kiểm. |
 ## Review (Claude)
 ### Vòng 1 — CẦN SỬA
 Claude đã sửa phần tài liệu trên main (S107, W104), Codex merge main rồi sửa đủ 4 điểm:

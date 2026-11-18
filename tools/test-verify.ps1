@@ -91,6 +91,20 @@ function Test-WorkflowV6 {
         VerifyV6 'không có test không được báo đạt' (-not (Test-WorkflowTestFound 'No test matches the given testcase filter.'))
         VerifyV6 'tổng kết có test được nhận' (Test-WorkflowTestFound 'Passed! Failed: 0, Passed: 2, Skipped: 0, Total: 2')
         VerifyV6 'assembly rỗng không che test đã chạy ở assembly khác' (Test-WorkflowTestFound "No test matches the given testcase filter.`nPassed! Passed: 1, Total: 1")
+        $assignNode = $tree.Find({ param($item) $item -is [Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq 'Invoke-Assign' }, $true)
+        $instructions = @($assignNode.FindAll({ param($item) $item -is [Management.Automation.Language.AssignmentStatementAst] -and $item.Left.Extent.Text -in @('$testInstruction','$finalTestInstruction') }, $true))
+        $r = @{ Info = @{ test = 'dotnet test Demo.sln' } }
+        $workflow = @{ Kind = 'KT'; Filter = '' }
+        foreach ($instruction in $instructions) { . ([scriptblock]::Create($instruction.Extent.Text)) }
+        VerifyV6 'KT không có bộ lọc giữ lời chạy test dự án' ($testInstruction -eq 'Test: dotnet test Demo.sln' -and $finalTestInstruction -like '*Build + Test của dự án*')
+        $workflow.Filter = 'FullyQualifiedName~Demo'
+        foreach ($instruction in $instructions) { . ([scriptblock]::Create($instruction.Extent.Text)) }
+        VerifyV6 'task có bộ lọc chỉ yêu cầu Test vùng' ($testInstruction.Contains($workflow.Filter) -and $finalTestInstruction.Contains('Test vùng'))
+        $addNode = $tree.Find({ param($item) $item -is [Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq 'Invoke-AddProject' }, $true)
+        $variables = $addNode.Find({ param($item) $item -is [Management.Automation.Language.AssignmentStatementAst] -and $item.Left.Extent.Text -eq '$vars' }, $true)
+        $Stack = 'ASP.NET Core'; $Build = ''; $Test = ''
+        . ([scriptblock]::Create($variables.Extent.Text))
+        VerifyV6 'add-project truyền STACK cho mẫu kế hoạch' ($vars.STACK -eq $Stack)
         Remove-Item -LiteralPath $planPath
         RejectV6 'thiếu kế hoạch' { Assert-TaskWorkflow $wf $temporary $false } 'Thiếu file kế hoạch'
         Write-Host "V6: $script:v6Checks kiểm tra đạt."

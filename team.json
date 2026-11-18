@@ -1,4 +1,4 @@
-﻿{
+{
   "_ghichu": "Cấu hình chung của team (đưa lên git). Đường dẫn riêng từng máy để trong team.local.json (không đưa lên git).",
   "projectsRoot": "D:\\",
   "workRoot": "D:\\AITeam-work",
