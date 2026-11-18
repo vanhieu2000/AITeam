@@ -3,6 +3,7 @@
 - **Loại:** BE <!-- UI (Codex) · TEST (Codex) · BE (Antigravity) · KT (công cụ, tài liệu) -->
 - **Chức năng:** CN-xx <!-- Mã phải có trong docs/KE-HOACH-DU-AN.md -->
 - **Test vùng:** `FullyQualifiedName~TenLopTest` <!-- Bộ lọc test cổng kiểm tra sẽ chạy -->
+<!-- Task UI và TEST chưa có test đỏ để giao: thêm dòng - **Test nghiệm thu:** Không — <lý do>. Task BE phải trỏ tới test do Codex viết ở task TEST. -->
 - **Agent:** {{AGENT}}
 - **Nhánh:** `{{BRANCH}}`
 - **Ưu tiên:** trung bình

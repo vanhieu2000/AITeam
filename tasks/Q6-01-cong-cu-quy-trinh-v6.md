@@ -9,6 +9,7 @@
 - **Yêu cầu:** R-018
 - **Thời gian tối đa:** 60 phút
 - **Độ khó:** M
+- **Test nghiệm thu:** Không — Codex viết kịch bản trong tools/test-verify.ps1, Claude nghiệm thu bằng các tình huống cố tình làm sai
 
 ## Tóm tắt
 - Chức năng mới cho người dùng: Không. Đây là luật tự động của công cụ giao việc.
