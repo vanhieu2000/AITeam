@@ -13,7 +13,7 @@
 ## 2. Yêu cầu
 | Mã | Ngày nhận | Lời chủ dự án | Mã chức năng | Trạng thái |
 |---|---|---|---|---|
-| R-018 | 19/11/2026 | Tách giao diện và backend, kế hoạch chung ngay khi nhận yêu cầu, chuẩn test, áp dụng cho toàn bộ dự án | CN-01 đến CN-05 | Đang làm |
+| R-018 | 19/11/2026 | Tách giao diện và backend, kế hoạch chung ngay khi nhận yêu cầu, chuẩn test, áp dụng cho toàn bộ dự án | CN-01 đến CN-05 | Đã xong |
 
 ## 3. Mockup đã duyệt
 Giao diện chỉ được làm theo mockup có trạng thái **Đã duyệt**.
@@ -45,20 +45,20 @@ Giao diện chỉ được làm theo mockup có trạng thái **Đã duyệt**.
 ## 5. Phân công
 | Mã | Giao diện (Codex, dự phòng Claude) | Test (Codex, dự phòng Claude) | Backend + nối giao diện (Antigravity) | File giao diện | File backend | Trạng thái |
 |---|---|---|---|---|---|---|
-| CN-01 đến CN-05 | Không có | Codex | Codex (việc công cụ, Loại KT) | Không có | `team.ps1`, `projects.json`, `team.json`, `config/workflow.json` | Đang làm, task Q6-01 |
+| CN-01 đến CN-05 | Không có | Codex | Codex (việc công cụ, Loại KT) | Không có | `team.ps1`, `projects.json`, `team.json`, `config/workflow.json` | Đã xong, task Q6-01 |
 
 ## 6. Kế hoạch test
 | Mã test | Chức năng | Loại (Đúng / Lỗi / Liên kết) | Ca kiểm tra | Kết quả mong đợi | File test | Trạng thái |
 |---|---|---|---|---|---|---|
-| T-01 | CN-01 | Lỗi | Giao task UI cho `agy` | Bị từ chối | `tools/test-verify.ps1` | Chưa làm |
-| T-02 | CN-01 | Lỗi | Giao task BE cho `codex` | Bị từ chối | `tools/test-verify.ps1` | Chưa làm |
-| T-03 | CN-01 | Lỗi | Task có mã chức năng không có trong kế hoạch | Bị từ chối | `tools/test-verify.ps1` | Chưa làm |
-| T-04 | CN-02 | Lỗi | Task BE sửa `.Designer.cs` | Cổng kiểm tra không đạt | `tools/test-verify.ps1` | Chưa làm |
-| T-05 | CN-03 | Đúng | Task có Test vùng | Chỉ chạy bộ lọc của task | `tools/test-verify.ps1` | Chưa làm |
+| T-01 | CN-01 | Lỗi | Giao task UI cho `agy` | Bị từ chối | `tools/test-verify.ps1` | Đạt |
+| T-02 | CN-01 | Lỗi | Giao task BE cho `codex` | Bị từ chối | `tools/test-verify.ps1` | Đạt |
+| T-03 | CN-01 | Lỗi | Task có mã chức năng không có trong kế hoạch | Bị từ chối | `tools/test-verify.ps1` | Đạt |
+| T-04 | CN-02 | Lỗi | Task BE sửa `.Designer.cs` | Cổng kiểm tra không đạt | `tools/test-verify.ps1` | Đạt |
+| T-05 | CN-03 | Đúng | Task có Test vùng | Chỉ chạy bộ lọc của task | `tools/test-verify.ps1` | Đạt |
 
 ## 7. Tiến độ
-- **Đang làm:** Q6-01 công cụ quy trình v6.
-- **Việc tiếp theo:** áp dụng quy trình cho HDVTool, ChinaAndroidToolbox, MyControls.
+- **Đang làm:** Không có.
+- **Việc tiếp theo:** Chờ yêu cầu mới của chủ dự án.
 - **Hàng chờ:** Không có.
 
 ## 8. Lịch sử thay đổi
