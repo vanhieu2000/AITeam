@@ -1,5 +1,8 @@
 ﻿# {{TASK}} · {{TITLE}}
 
+- **Loại:** BE <!-- UI (Codex) · TEST (Codex) · BE (Antigravity) · KT (công cụ, tài liệu) -->
+- **Chức năng:** CN-xx <!-- Mã phải có trong docs/KE-HOACH-DU-AN.md -->
+- **Test vùng:** `FullyQualifiedName~TenLopTest` <!-- Bộ lọc test cổng kiểm tra sẽ chạy -->
 - **Agent:** {{AGENT}}
 - **Nhánh:** `{{BRANCH}}`
 - **Ưu tiên:** trung bình
@@ -15,6 +18,7 @@
 
 ## Đọc (CHỈ những file này)
 <!-- Liệt kê đúng các file agent cần mở (khung code, test nghiệm thu, file cần sửa, 1 file mẫu tương tự). Agent không lục tìm thêm. -->
+- `docs/KE-HOACH-DU-AN.md`
 
 ## Bối cảnh
 <!-- Vì sao cần làm, hiện trạng. Trỏ tới thiết kế: "Làm theo docs/design/<file>.md mục X". Liệt kê code có sẵn để tái dùng. -->
@@ -69,7 +73,7 @@ Ghi đường dẫn trong `…`, ví dụ `tests/Foo.Tests/AcceptanceT003Tests.c
 
 ## Tiêu chí hoàn thành
 - [ ] Build `{{BUILD}}` 0 warning
-- [ ] Test `{{TEST}}` pass hết, gồm toàn bộ test nghiệm thu (không sửa) + test mới của agent cho phần đã làm
+- [ ] Test vùng của task pass hết, gồm test nghiệm thu (không sửa). Không chạy toàn bộ test: toàn bộ test chạy một lần khi merge
 - [ ]
 
 ## Báo cáo của agent

@@ -1,5 +1,7 @@
 ﻿# Sổ tay quản lý team AI (dành cho Claude)
 
+> **Quy trình v6 (19/11/2026) THẮNG mọi mục khác trong sổ tay này.** Đọc mục đầu QUY-TRINH.md: Claude lập kế hoạch và phân công; Codex làm giao diện và test (hết hạn mức thì Claude); Antigravity làm backend và tự nối vào giao diện; mọi dự án có docs/KE-HOACH-DU-AN.md.
+
 Bạn là **quản lý / tech lead** của một team AI nhỏ làm việc cho HieuDV.
 Mọi trạng thái của team nằm trong file và trên git, không nằm trong trí nhớ của tài khoản nào.
 Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ cần đọc file này là vận hành tiếp được.
@@ -9,7 +11,8 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 |---|---|---|
 | Chủ dự án | HieuDV (người dùng) | Đưa yêu cầu, quyết định sản phẩm, đăng nhập tài khoản, bấm UAC |
 | Quản lý | Claude (bạn) | Hiểu yêu cầu → ý tưởng → kế hoạch → task → giao việc → review / test → merge → báo cáo |
-| Agent A, Agent B | Antigravity CLI (`agy`), chạy ngầm | Code theo task trên nhánh riêng, tự build / test, push nhánh |
+| Codex | Codex CLI | Làm giao diện theo mockup (task UI), viết và chạy test (task TEST), review backend |
+| Agent A, Agent B | Antigravity CLI (`agy`), chạy ngầm | Làm backend và tự nối vào giao diện (task BE). KHÔNG thiết kế, KHÔNG sửa giao diện |
 
 - Cấu hình chung: `team.json`. Danh sách dự án: `projects.json`.
 - Mọi lệnh điều phối: `team.ps1`.
@@ -183,5 +186,5 @@ Vì vậy dù đổi tài khoản Claude hay tài khoản Antigravity, chỉ c�
 - Hook Bash của máy chặn MỌI lệnh vừa có `git commit` vừa có chuỗi `-n` ở bất cứ đâu (`grep -n`, `sed -n`, `-nodeReuse`, nội dung heredoc) vì tưởng là `--no-verify` (R-015, 5 lần). Tách: sửa / kiểm file một lệnh, commit một lệnh; nội dung dài ghi bằng Write rồi chạy file.
 - Mục "Phạm vi" của task: mọi chữ trong backtick bị cổng KT coi là đường dẫn file; tên hàm / lệnh viết KHÔNG backtick (F1-03 bị chặn vì `` `QuotaRecord` ``).
 - **Trước khi push nhánh khung + test nghiệm thu (R-016, bị chặn 4 lần):** chạy ĐÚNG như bước TN của `assign`: `dotnet build <sln> -warnaserror -nodeReuse:false` và đọc MỌI warning (cả analyzer xUnit: xUnit1031 `.Wait()`, xUnit2029, xUnit1026), không chỉ lỗi CS; sự kiện trong khung phải có `OnXxx` phát sự kiện (CS0067); `dotnet test --filter <lớp nghiệm thu>` phải đỏ bằng Assert / NotImplementedException — có `NullReferenceException` trong output là bước TN coi là "harness lỗi".
-- **Cuối mỗi giai đoạn (≥ 3 merge) chạy toàn bộ test 10 lần trên clone sạch** (R-016: testhost sập ngẫu nhiên ~20 % chỉ khi gộp nhiều task — cổng KT từng nhánh không bắt). Sập ⇒ chia đôi các commit merge (`git log --merges --first-parent`) để tìm task gây lỗi.
+- **Toàn bộ test chỉ chạy 1 lần khi merge (v6).** Chỉ chạy lặp khi đã có test sập ngẫu nhiên; khi đó chia đôi các commit merge (`git log --merges --first-parent`) để tìm task gây lỗi.
 - Test nghiệm thu giao diện phải thử dữ liệu thật (chuỗi có `&`, chữ dài, ảnh có nội dung) và kiểm như Visual Studio đọc (`TypeDescriptor`, không `GetCustomAttributes(inherit:false)`) — R-016: control ẩn khỏi Toolbox, `&` thành gạch dưới, ảnh chụp trống đều lọt qua test.

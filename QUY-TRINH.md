@@ -1,4 +1,44 @@
-﻿# Quy trình v5.5 — ĐANG ÁP DỤNG (v5.5 10/11 sau đánh giá R-016: chạy đúng lệnh bước TN trước khi push khung; test toàn bộ 10 lần trên clone sạch cuối mỗi giai đoạn; chủ dự án chốt 02/11/2026, R-012; v5.1 sau đánh giá R-012; v5.2 03/11 R-014: giao diện do Claude; v5.3 04/11 sau đánh giá R-014; v5.4 04/11 sau đánh giá R-015)
+﻿# Quy trình v6 — ĐANG ÁP DỤNG CHO MỌI DỰ ÁN (chủ dự án chốt 19/11/2026, R-018)
+
+Mục v6 này THẮNG mọi mục cũ bên dưới, kể cả v5.2 (Claude tự code giao diện) và luật chạy toàn bộ test 10 lần.
+
+## Phân vai
+| Việc | Ai làm | Dự phòng | Không được làm |
+|---|---|---|---|
+| Nhận yêu cầu, viết kế hoạch, mockup, phân công, nghiệm thu, merge | **Claude** | Không | Không làm thay phần của AI khác khi họ còn hạn mức |
+| Giao diện theo mockup (task **UI**) | **Codex** | Claude khi Codex hết hạn mức | Viết logic nghiệp vụ |
+| Viết và chạy test theo kế hoạch (task **TEST**) | **Codex** | Claude khi Codex hết hạn mức | Thêm ca ngoài kế hoạch |
+| Backend và tự nối chức năng vào giao diện (task **BE**) | **Antigravity** | Dừng chờ và báo chủ dự án | Thiết kế, sửa bố cục, sửa test nghiệm thu |
+| Test giao diện bước cuối | **Chủ dự án** | Không | Không |
+
+OpenCode không nằm trong phân công v6. Việc công cụ, tài liệu không có giao diện dùng **Loại: KT**.
+
+## File kế hoạch chung: `docs/KE-HOACH-DU-AN.md`
+Mỗi dự án có đúng một file (mẫu `templates/KE-HOACH-DU-AN.md`). Claude viết ngay khi nhận yêu cầu, gồm yêu cầu, mockup đã duyệt, danh sách chức năng `CN-xx`, phân công, kế hoạch test, tiến độ và lịch sử thay đổi. Yêu cầu mới hoặc sửa đổi đều cập nhật vào file này rồi làm tiếp, không mở kế hoạch riêng. AI khác chỉ đọc.
+
+## Thứ tự làm mỗi yêu cầu
+1. **Claude** cập nhật kế hoạch và mockup. **Chủ dự án duyệt một lần.**
+2. **Codex** làm giao diện đúng mockup, đặt tên control và tạo hàm xử lý rỗng cho từng thao tác.
+3. **Codex** viết test theo kế hoạch, lúc này test đang đỏ.
+4. **Antigravity** làm backend, điền hàm xử lý để nối vào giao diện, làm đến khi test xanh.
+5. **Codex** review phần backend một lần, gom hết lỗi cho Antigravity sửa một lượt.
+6. **Claude** đối chiếu kế hoạch rồi merge. **Chủ dự án** test giao diện.
+
+## Khai báo trong file task
+- `- **Loại:** UI`, `BE`, `TEST` hoặc `KT`
+- `- **Chức năng:** CN-01, CN-02` (mã phải có trong `docs/KE-HOACH-DU-AN.md`)
+- `- **Test vùng:** `FullyQualifiedName~TenLopTest`` (bộ lọc test của task)
+
+## Chuẩn test
+Chi tiết ở `docs/TEST-CHUAN.md`.
+- Chỉ test ca đã ghi trong kế hoạch.
+- Agent chỉ chạy test của task. Cổng kiểm tra chạy build và **Test vùng**. Toàn bộ test chạy **1 lần khi merge**.
+- Chỉ chạy lặp khi có test sập ngẫu nhiên.
+- Review tối đa 2 lượt. Lượt 2 chỉ kiểm tra phần đã sửa; chỉ lỗi mất dữ liệu, bảo mật hoặc hỏng chức năng chính mới được trả lại, lỗi nhỏ đưa vào hàng chờ.
+
+---
+
+# Quy trình v5.5 — ĐANG ÁP DỤNG (v5.5 10/11 sau đánh giá R-016: chạy đúng lệnh bước TN trước khi push khung; test toàn bộ 10 lần trên clone sạch cuối mỗi giai đoạn; chủ dự án chốt 02/11/2026, R-012; v5.1 sau đánh giá R-012; v5.2 03/11 R-014: giao diện do Claude; v5.3 04/11 sau đánh giá R-014; v5.4 04/11 sau đánh giá R-015)
 
 Mục v5 này THẮNG mọi mục cũ bên dưới (v3 / v4 chỉ còn để tra cứu).
 Hệ thống là gì, mục đích, vai trò, trạng thái task, dữ liệu, chức năng F1–F14, phân loại nguyên nhân lỗi: **`docs/MO-TA-HE-THONG.md`** (đọc trước khi thiết kế / viết task).

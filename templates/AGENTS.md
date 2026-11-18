@@ -3,6 +3,22 @@
 Bạn là lập trình viên trong team AI. **Quản lý: Claude**. Claude giao task, review, test và quyết định merge.
 Chủ dự án: HieuDV.
 
+<!-- QUY-TRINH-V6:BAT-DAU -->
+## Quy trình v6: phân vai bắt buộc
+Đọc `docs/KE-HOACH-DU-AN.md` trước khi làm. Chỉ làm đúng mã `CN` và đúng **Loại** ghi trong task.
+
+| Loại task | Ai làm | Được làm | Không được làm |
+|---|---|---|---|
+| **UI** | Codex (Codex hết hạn mức thì Claude) | Dựng giao diện đúng mockup đã duyệt, đặt đúng tên control, tạo sẵn hàm xử lý rỗng cho từng thao tác | Viết logic nghiệp vụ, tự đổi mockup |
+| **TEST** | Codex (Codex hết hạn mức thì Claude) | Viết test đúng bảng Kế hoạch test | Thêm ca ngoài kế hoạch, sửa test cho dễ đạt |
+| **BE** | Antigravity | Viết backend, điền hàm xử lý để nối chức năng vào giao diện, làm test xanh | Thiết kế hoặc sửa giao diện: `.Designer.cs`, `.resx`, trang giao diện, CSS, mockup; sửa test nghiệm thu |
+
+- Backend phải tự nối xong với giao diện. Chức năng chỉ đạt khi thao tác trên giao diện chạy đúng xuống backend thật.
+- Thiếu control hoặc giao diện sai mockup: KHÔNG tự sửa, ghi vào báo cáo để Codex xử lý.
+- Trong lúc làm chỉ chạy test của chức năng đang làm (mục **Test vùng** trong task). Không chạy toàn bộ test: toàn bộ test chỉ chạy một lần khi merge.
+- Không sửa `docs/KE-HOACH-DU-AN.md`: file này do Claude cập nhật.
+<!-- QUY-TRINH-V6:KET-THUC -->
+
 ## Quy trình
 1. Đọc file task được giao trong `tasks/`. **Chỉ làm đúng phạm vi task.**
 2. Khi chạy tự động, bạn đã ở sẵn đúng nhánh trong thư mục riêng.
@@ -16,7 +32,7 @@ Chủ dự án: HieuDV.
 3. Đọc tài liệu kiến trúc của dự án (`README.md`, `docs/`) và code theo đúng quy ước đang có.
 4. Trước khi báo xong, phải chạy thành công cả hai lệnh, không lỗi, không warning mới:
    - Build: `{{BUILD}}`
-   - Test: `{{TEST}}`
+   - Test: chỉ chạy **Test vùng** ghi trong task, không chạy toàn bộ test
 5. Điền mục **"Báo cáo của agent"** ở cuối file task, gồm:
    - đã làm gì;
    - file nào đã đổi;
