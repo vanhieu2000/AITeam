@@ -38,6 +38,7 @@ Sự kiện cần ghi:
 - 2026-11-19 01:24:18 +05:30 | Q6-01 | Assign | lượt 1 | KHÔNG ĐẠT <!-- workflow:Q6-01:Assign:1 -->
 - 2026-11-19 01:32:55 +05:30 | Q6-01 | Verify | lượt 2 | KHÔNG ĐẠT <!-- workflow:Q6-01:Verify:2 -->
 - 2026-11-19 01:45:41 +05:30 | Q6-01 | Verify | lượt 3 | ĐẠT <!-- workflow:Q6-01:Verify:3 -->
+- 2026-11-19 02:02:26 +05:30 | Q6-01 | Merge | lượt 2 | ĐẠT <!-- workflow:Q6-01:Merge:2 -->
 ## 4. Đánh giá sau khi xong (Claude)
 Dán kết quả `.\team.ps1 request-report -Request R-018`, rồi điền:
 
