@@ -103,5 +103,10 @@ Không có file riêng. Codex viết kịch bản trong công cụ test, Claude 
 | Quyết định/phạm vi | Không sửa test nghiệm thu, không thêm mã nhận diện test; cần Claude cập nhật harness/tài liệu được phép trước khi sửa tiếp. Chỉ đổi file task để ghi bằng chứng mới. |
 | Bàn giao/chưa xác minh | Không chạy lệnh git; hệ thống tự commit/push, chưa có commit được kiểm. Không chạy app/chụp ảnh. Shutdown MSBuild thành công; compiler server báo không tắt được. |
 ## Review (Claude)
-
+### Vòng 1 — CẦN SỬA
+Claude đã sửa phần tài liệu trên main (S107, W104), Codex merge main rồi sửa đủ 4 điểm:
+1. Xóa BOM vừa thêm vào `projects.json` và `team.json`, giữ nguyên mã hóa cũ.
+2. Được phép cập nhật phần dựng môi trường của `core.tests/AcceptanceS104SkillPromptsTests.cs`, `core.tests/V915QueueTests.cs`, `core.tests/AcceptanceV804FlakyRetryTests.cs`: nạp thêm các hàm v6, dữ liệu task mẫu có Loại, Chức năng và file kế hoạch. Không nới lỏng assert.
+3. Lời giao việc của task KT không có Test vùng: giữ câu chạy lệnh test của dự án, không in Test vùng rỗng.
+4. `add-project`: truyền thêm `STACK` khi tạo `docs/KE-HOACH-DU-AN.md`.
 ## Kết quả
