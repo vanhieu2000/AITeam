@@ -110,4 +110,12 @@ Claude đã sửa phần tài liệu trên main (S107, W104), Codex merge main r
 2. Được phép cập nhật phần dựng môi trường của `core.tests/AcceptanceS104SkillPromptsTests.cs`, `core.tests/V915QueueTests.cs`, `core.tests/AcceptanceV804FlakyRetryTests.cs`: nạp thêm các hàm v6, dữ liệu task mẫu có Loại, Chức năng và file kế hoạch. Không nới lỏng assert.
 3. Lời giao việc của task KT không có Test vùng: giữ câu chạy lệnh test của dự án, không in Test vùng rỗng.
 4. `add-project`: truyền thêm `STACK` khi tạo `docs/KE-HOACH-DU-AN.md`.
+
+### Vòng 2 — ĐẠT
+Đã kiểm tra: cổng kiểm tra ĐẠT (Hub 856, Core 1091), đọc toàn bộ diff, Claude chạy 42 tình huống cố tình làm sai đều đúng, gồm 3 lần gọi lệnh `assign` thật.
+
 ## Kết quả
+- Giao giao diện hoặc test cho Antigravity, giao backend cho Codex đều bị từ chối ngay.
+- Task thiếu loại việc hoặc mã chức năng trong kế hoạch dự án không giao được.
+- Antigravity sửa file giao diện thì cổng kiểm tra không cho qua.
+- Cổng kiểm tra chỉ chạy test của vùng task, toàn bộ test chạy một lần khi merge.
