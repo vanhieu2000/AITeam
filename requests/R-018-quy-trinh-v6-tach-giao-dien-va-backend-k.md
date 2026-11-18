@@ -1,21 +1,23 @@
 # R-018 · Quy trinh v6: tach giao dien va backend, ke hoach chung, chuan test
 
 - **Nhận lúc:** 01:03 19/11/2026 · máy HIEUDV
-- **Trạng thái:** 🟡 Đang làm
+- **Trạng thái:** ✅ Xong
 - **Lời chủ dự án:**
-  > (chép nguyên văn yêu cầu)
+  > cải tiến các tiếp nhận và giao việc đi . tôi thấy rất hay lỗi ở giao diện cứ sửa đi sửa lại. bây giờ bắt buộc tách ra . chỉ có bạn hoặc codex thực hiện giao diện theo mockup đề ra , còn google anti và opencode làm back end chức năng . và việc test cũng phải có bộ quy chuẩn test
+  >
+  > đầu tiên bạn hoặc codex sẽ làm phần UI ưu tiên codex nếu hết hạn thì bạn làm , còn plan và phân công thì bạn vẫn lên , còn back end do google anti làm và đảm bảo chức năng phải link được với front end chứ không phải bạn phải đi nối , chỉ là bỏ không cho google anti thiết kế và làm UI nữa . test thì cũng vậy ưu tiên cho codex làm . plan và test như nào lên kế hoạch hoàn bộ ngay từ đầu vào file chung của dự án , có yêu cầu mới hay sửa cập nhật vào để tiếp tục làm sau. tôi muốn viết plan ngay khi nhân bao gồm cả mockup chức năng để toàn bộ AI đều tuân theo mục mình phải làm là gì , phải test chức năng gì . cập nhật quy tắc này cho toàn bộ dự án của tôi
 
 ## 1. Phân tích (Claude)
-- Mục tiêu hiểu được:
-- Dự án / phần bị ảnh hưởng:
-- Quyết định đã tự chọn (không hỏi):
+- Mục tiêu hiểu được: tách giao diện và backend theo AI, có một file kế hoạch chung cho mỗi dự án, chuẩn hóa để giảm test lặp.
+- Dự án / phần bị ảnh hưởng: AITeam, HDVTool, ChinaAndroidToolbox, MyControls.
+- Quyết định đã tự chọn (không hỏi): OpenCode không vào phân công vì công cụ cấm bản miễn phí chạy trên repo private; Antigravity hết hạn mức thì task BE dừng chờ.
 - Điều cần chủ dự án quyết (nếu có):
 - Thiết kế: `docs/design/...`
 
 ## 2. Chia việc
 | Task | Dự án | Ai | Ngân sách | Model | Vì sao giao / tự làm |
 |---|---|---|---|---|---|
-| | | A / B / Claude | ~N dòng | mặc định | |
+| Q6-01 | AITeam | Codex | ~450 dòng | mặc định | Sửa công cụ giao việc và cổng kiểm tra |
 
 Mỗi file task phải có dòng `- **Yêu cầu:** R-018` để `team.ps1 request-report` gom số liệu.
 
