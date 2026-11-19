@@ -21,7 +21,7 @@ Mỗi dự án có đúng một file (mẫu `templates/KE-HOACH-DU-AN.md`). Clau
 2. **Codex** làm giao diện đúng mockup, đặt tên control và tạo hàm xử lý rỗng cho từng thao tác.
 3. **Codex** viết test theo kế hoạch, lúc này test đang đỏ.
 4. **Antigravity** làm backend, điền hàm xử lý để nối vào giao diện, làm đến khi test xanh.
-5. **Codex** review phần backend một lần, gom hết lỗi cho Antigravity sửa một lượt.
+5. **Codex** review phần backend một lần và tự nối phần Antigravity chưa nối vào giao diện.
 6. **Claude** đối chiếu kế hoạch rồi merge. **Chủ dự án** test giao diện.
 
 ## Khai báo trong file task
