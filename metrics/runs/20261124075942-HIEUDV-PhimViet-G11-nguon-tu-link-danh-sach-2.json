@@ -1,0 +1,41 @@
+{
+    "at":  "2026-11-24T07:59:42",
+    "head":  "f7fbcb675917d86a8ef37dcbc382a1641f71d448",
+    "machine":  "HIEUDV",
+    "project":  "PhimViet",
+    "task":  "G11-nguon-tu-link-danh-sach",
+    "run":  "2",
+    "agent":  "A",
+    "model":  "gemini-3.8-flash-high",
+    "findings":  [
+
+                 ],
+    "status":  "SUCCESS",
+    "durationSec":  1387,
+    "tokensKnown":  true,
+    "inputTokens":  434201,
+    "outputTokens":  100560,
+    "thinkingTokens":  39341,
+    "totalTokens":  534761,
+    "maxMinutes":  40,
+    "difficulty":  "M",
+    "hasOutput":  true,
+    "linesAdded":  2571,
+    "linesRemoved":  40,
+    "filesChanged":  22,
+    "verifyOk":  null,
+    "verifyFails":  null,
+    "autoRetry":  false,
+    "hungBackgroundTask":  true,
+    "log":  "G11-nguon-tu-link-danh-sach-2.json",
+    "conversationId":  "5a222455-8599-4e7e-921d-8de25d206ee1",
+    "request":  "R-001",
+    "flags":  [
+
+              ],
+    "pause":  false,
+    "failureFingerprint":  null,
+    "failureFingerprints":  [
+
+                            ]
+}
