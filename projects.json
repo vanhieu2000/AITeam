@@ -45,11 +45,55 @@
         "stack":  "C# .NET Framework 4.7.2 WinForms control library (SDK-style csproj), GDI+",
         "build":  "dotnet build MyControls.sln -c Release",
         "test":  "dotnet test MyControls.sln -c Release",
-        "uiLocked": ["MyControls/Inputs/**", "MyControls/Containers/**", "MyControls/Navigation/**", "MyControls/DataViews/**", "MyControls/Feedback/**", "MyControls/Industrial/**", "MyControls/Scada/**", "MyControls/Reports/**", "MyControls/Core/**"],
+        "uiLocked":  [
+                         "MyControls/Inputs/**",
+                         "MyControls/Containers/**",
+                         "MyControls/Navigation/**",
+                         "MyControls/DataViews/**",
+                         "MyControls/Feedback/**",
+                         "MyControls/Industrial/**",
+                         "MyControls/Scada/**",
+                         "MyControls/Reports/**",
+                         "MyControls/Core/**"
+                     ],
         "areas":  {
                       "A":  "MyControls/Core, MyControls/Data, MyControls/Design (nền: theme, binder, designer)",
                       "B":  "MyControls/Inputs, Containers, Navigation, DataViews, Feedback (control cụ thể)"
                   },
         "workDir":  "D:\\AITeam-work\\MyControls"
+    },
+    {
+        "name":  "PhimViet",
+        "repo":  "vanhieu2000/PhimViet",
+        "path":  "D:\\HIEUDV\\APP_Phim",
+        "stack":  "Android Kotlin Compose Media3 Room (fork OpenStream)",
+        "build":  ".\\gradlew assembleDebug",
+        "test":  ".\\gradlew testDebugUnitTest",
+        "areas":  {
+                      "A":  "nền tảng / hạ tầng",
+                      "B":  "tính năng"
+                  }
+    },
+    {
+        "name":  "VietMusic",
+        "repo":  "vanhieu2000/VietMusic",
+        "path":  "D:\\HIEUDV\\app_music",
+        "stack":  "Android Kotlin Compose Media3 Room Hilt (6 module Gradle)",
+        "build":  ".\\tools\\gradle17.cmd assembleDebug",
+        "test":  ".\\tools\\gradle17.cmd test",
+        "areas":  {
+                      "A":  "providers/, playback/, data/, domain/, core/ (backend, test)",
+                      "B":  "app/src/main/kotlin/com/hieudv/vietmusic/ui/**/*ViewModel.kt, di/ (nối chức năng vào giao diện)"
+                  },
+        "uiLocked":  [
+                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/**/*Screen.kt",
+                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/components/**",
+                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/theme/**",
+                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/navigation/**",
+                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/VietMusicRoot.kt",
+                         "app/src/main/res/drawable/**",
+                         "app/src/main/res/mipmap-anydpi/**",
+                         "docs/design/**"
+                     ]
     }
 ]
