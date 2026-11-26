@@ -1,99 +1,103 @@
 [
-    {
-        "name":  "HDVTool",
-        "repo":  "vanhieu2000/HDVTool",
-        "path":  "D:\\HDVTool",
-        "workDir":  "D:\\HDVTool-agents",
-        "stack":  "C# .NET 10 WinForms, SQLite",
-        "build":  "dotnet build HDVTool.sln",
-        "test":  "dotnet test",
-        "areas":  {
-                      "A":  "src/, tools/, Directory.*.props, tests của Core",
-                      "B":  "modules/, tests của module"
-                  }
-    },
-    {
-        "name":  "AITeam",
-        "repo":  "vanhieu2000/AITeam",
-        "path":  "D:\\AITeam",
-        "workDir":  "D:\\AITeam-work\\AITeam",
-        "stack":  "ASP.NET Core .NET 10 Razor Pages + HTMX (AITeam Hub)",
-        "build":  "dotnet build AITeam.sln",
-        "test":  "dotnet test AITeam.sln",
-        "areas":  {
-                      "A":  "hub/Services/, hub/Program.cs, hub.tests/ (dịch vụ, dữ liệu)",
-                      "B":  "hub/Pages/, hub/wwwroot/, hub/DevData/ (giao diện)"
-                  }
-    },
-    {
-        "name":  "ChinaAndroidToolbox",
-        "repo":  "vanhieu2000/ChinaAndroidToolbox",
-        "path":  "D:\\ChinaAndroidToolbox",
-        "workDir":  "D:\\AITeam-work\\ChinaAndroidToolbox",
-        "stack":  "C# .NET WinForms, ADB, SQLite",
-        "build":  "dotnet build ChinaAndroidToolbox.sln",
-        "test":  "dotnet test ChinaAndroidToolbox.sln",
-        "areas":  {
-                      "A":  "Core, Adb, Device (hồ sơ), FixCenter (engine + actions), Data, build",
-                      "B":  "App/Views, Diagnostics (khảo sát), Backup, resources/debloat, resources/packs"
-                  }
-    },
-    {
-        "name":  "MyControls",
-        "repo":  "vanhieu2000/MyControls",
-        "path":  "D:\\99. Test\\IOT_Control",
-        "stack":  "C# .NET Framework 4.7.2 WinForms control library (SDK-style csproj), GDI+",
-        "build":  "dotnet build MyControls.sln -c Release",
-        "test":  "dotnet test MyControls.sln -c Release",
-        "uiLocked":  [
-                         "MyControls/Inputs/**",
-                         "MyControls/Containers/**",
-                         "MyControls/Navigation/**",
-                         "MyControls/DataViews/**",
-                         "MyControls/Feedback/**",
-                         "MyControls/Industrial/**",
-                         "MyControls/Scada/**",
-                         "MyControls/Reports/**",
-                         "MyControls/Core/**"
-                     ],
-        "areas":  {
-                      "A":  "MyControls/Core, MyControls/Data, MyControls/Design (nền: theme, binder, designer)",
-                      "B":  "MyControls/Inputs, Containers, Navigation, DataViews, Feedback (control cụ thể)"
-                  },
-        "workDir":  "D:\\AITeam-work\\MyControls"
-    },
-    {
-        "name":  "PhimViet",
-        "repo":  "vanhieu2000/PhimViet",
-        "path":  "D:\\HIEUDV\\APP_Phim",
-        "stack":  "Android Kotlin Compose Media3 Room (fork OpenStream)",
-        "build":  ".\\gradlew assembleDebug",
-        "test":  ".\\gradlew testDebugUnitTest",
-        "areas":  {
-                      "A":  "nền tảng / hạ tầng",
-                      "B":  "tính năng"
-                  }
-    },
-    {
-        "name":  "VietMusic",
-        "repo":  "vanhieu2000/VietMusic",
-        "path":  "D:\\HIEUDV\\app_music",
-        "stack":  "Android Kotlin Compose Media3 Room Hilt (6 module Gradle)",
-        "build":  ".\\tools\\gradle17.cmd assembleDebug",
-        "test":  ".\\tools\\gradle17.cmd test",
-        "areas":  {
-                      "A":  "providers/, playback/, data/, domain/, core/ (backend, test)",
-                      "B":  "app/src/main/kotlin/com/hieudv/vietmusic/ui/**/*ViewModel.kt, di/ (nối chức năng vào giao diện)"
-                  },
-        "uiLocked":  [
-                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/**/*Screen.kt",
-                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/components/**",
-                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/theme/**",
-                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/navigation/**",
-                         "app/src/main/kotlin/com/hieudv/vietmusic/ui/VietMusicRoot.kt",
-                         "app/src/main/res/drawable/**",
-                         "app/src/main/res/mipmap-anydpi/**",
-                         "docs/design/**"
-                     ]
+  {
+    "name": "HDVTool",
+    "repo": "vanhieu2000/HDVTool",
+    "path": "D:\\HDVTool",
+    "workDir": "D:\\HDVTool-agents",
+    "stack": "C# .NET 10 WinForms, SQLite",
+    "build": "dotnet build HDVTool.sln",
+    "test": "dotnet test",
+    "areas": {
+      "A": "src/, tools/, Directory.*.props, tests của Core",
+      "B": "modules/, tests của module"
     }
+  },
+  {
+    "name": "AITeam",
+    "repo": "vanhieu2000/AITeam",
+    "path": "D:\\AITeam",
+    "workDir": "D:\\AITeam-work\\AITeam",
+    "stack": "ASP.NET Core .NET 10 Razor Pages + HTMX (AITeam Hub)",
+    "build": "dotnet build AITeam.sln",
+    "test": "dotnet test AITeam.sln",
+    "areas": {
+      "A": "hub/Services/, hub/Program.cs, hub.tests/ (dịch vụ, dữ liệu)",
+      "B": "hub/Pages/, hub/wwwroot/, hub/DevData/ (giao diện)"
+    }
+  },
+  {
+    "name": "ChinaAndroidToolbox",
+    "repo": "vanhieu2000/ChinaAndroidToolbox",
+    "path": "D:\\ChinaAndroidToolbox",
+    "workDir": "D:\\AITeam-work\\ChinaAndroidToolbox",
+    "stack": "C# .NET WinForms, ADB, SQLite",
+    "build": "dotnet build ChinaAndroidToolbox.sln",
+    "test": "dotnet test ChinaAndroidToolbox.sln",
+    "areas": {
+      "A": "Core, Adb, Device (hồ sơ), FixCenter (engine + actions), Data, build",
+      "B": "App/Views, Diagnostics (khảo sát), Backup, resources/debloat, resources/packs"
+    }
+  },
+  {
+    "name": "MyControls",
+    "repo": "vanhieu2000/MyControls",
+    "path": "D:\\99. Test\\IOT_Control",
+    "stack": "C# .NET Framework 4.7.2 WinForms control library (SDK-style csproj), GDI+",
+    "build": "dotnet build MyControls.sln -c Release",
+    "test": "dotnet test MyControls.sln -c Release",
+    "uiLocked": [
+      "MyControls/Inputs/**",
+      "MyControls/Containers/**",
+      "MyControls/Navigation/**",
+      "MyControls/DataViews/**",
+      "MyControls/Feedback/**",
+      "MyControls/Industrial/**",
+      "MyControls/Scada/**",
+      "MyControls/Reports/**",
+      "MyControls/Core/**"
+    ],
+    "areas": {
+      "A": "MyControls/Core, MyControls/Data, MyControls/Design (nền: theme, binder, designer)",
+      "B": "MyControls/Inputs, Containers, Navigation, DataViews, Feedback (control cụ thể)"
+    },
+    "workDir": "D:\\AITeam-work\\MyControls"
+  },
+  {
+    "name": "PhimViet",
+    "repo": "vanhieu2000/PhimViet",
+    "path": "D:\\HIEUDV\\APP_Phim",
+    "stack": "Android Kotlin Compose Media3 Room (fork OpenStream)",
+    "build": ".\\gradlew assembleDebug",
+    "test": ".\\gradlew testDebugUnitTest",
+    "areas": {
+      "A": "nền tảng / hạ tầng",
+      "B": "tính năng"
+    }
+  },
+  {
+    "name": "VietMusic",
+    "repo": "vanhieu2000/VietMusic",
+    "path": "D:\\HIEUDV\\app_music",
+    "stack": "Android Kotlin Compose Media3 Room Hilt (6 module Gradle)",
+    "build": ".\\tools\\gradle17.cmd assembleDebug",
+    "test": ".\\tools\\gradle17.cmd test",
+    "areas": {
+      "A": "providers/, playback/, data/, domain/, core/ (backend, test)",
+      "B": "app/src/main/kotlin/com/hieudv/vietmusic/ui/**/*ViewModel.kt, di/ (nối chức năng vào giao diện)"
+    },
+    "uiLocked": [
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/**/*Screen.kt",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/common/ScreenParts.kt",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/player/QueueAndTimer.kt",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/library/FoldersAndDownloads.kt",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/**/*Screens.kt",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/components/**",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/theme/**",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/navigation/**",
+      "app/src/main/kotlin/com/hieudv/vietmusic/ui/VietMusicRoot.kt",
+      "app/src/main/res/drawable/**",
+      "app/src/main/res/mipmap-anydpi/**",
+      "docs/design/**"
+    ]
+  }
 ]
