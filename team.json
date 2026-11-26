@@ -8,9 +8,9 @@
   },
   "agy": {
     "exe": "C:\\Tools\\agy\\bin\\agy.exe",
-    "model": "gemini-3.8-flash-high",
-    "requiredModel": "gemini-3.8-flash-high",
-    "_ghichuModel": "Chủ dự án 04/11: Antigravity dùng Gemini 3.8 (không cần Argon 4), CHỈ làm chức năng lõi, không sửa giao diện.",
+    "model": "gemini-4-hydrogen-high",
+    "requiredModel": "gemini-4-hydrogen-high",
+    "_ghichuModel": "Chủ dự án 26/11: dùng model mới nhất Gemini 4 Hydrogen (High mặc định; XHigh cho task khó ghi '- **Model:** `gemini-4-hydrogen-xhigh`'; Medium cho việc đơn giản). Antigravity CHỈ làm chức năng lõi, không sửa giao diện. Trước đó (04/11): Gemini 3.8.",
     "accounts": [ "Antigravity Pro 1", "Antigravity Pro 2" ]
   },
   "codex": { "modelFallback": [] },
