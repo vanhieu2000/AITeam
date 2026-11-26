@@ -152,3 +152,4 @@
 {"type":"decision","id":"D-20261127000256-847a","at":"2026-11-27T00:02:56.4329424+05:30","kind":"merge","title":"Merge BE-03 VietMusic","project":"VietMusic","task":"BE-03","request":"R-021","detail":"Antigravity, vong 1, 159 test"}
 {"type":"decision","id":"D-20261127001150-f1f4","at":"2026-11-27T00:11:50.4927267+05:30","kind":"merge","title":"Merge BE-04 VietMusic","project":"VietMusic","task":"BE-04","request":"R-021","detail":"Antigravity xhigh, vong 1"}
 {"type":"decision","id":"D-20261127002748-2736","at":"2026-11-27T00:27:48.1961146+05:30","kind":"merge","title":"Merge BE-04B VietMusic","project":"VietMusic","task":"BE-04B","request":"R-021","detail":"Antigravity xhigh, vong 1"}
+{"type":"decision","id":"D-20261127005012-c37f","at":"2026-11-27T00:50:12.2630449+05:30","kind":"merge","title":"Merge BE-05 VietMusic","project":"VietMusic","task":"BE-05","request":"R-021","detail":"Antigravity, vong 1"}
