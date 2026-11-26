@@ -153,3 +153,4 @@
 {"type":"decision","id":"D-20261127001150-f1f4","at":"2026-11-27T00:11:50.4927267+05:30","kind":"merge","title":"Merge BE-04 VietMusic","project":"VietMusic","task":"BE-04","request":"R-021","detail":"Antigravity xhigh, vong 1"}
 {"type":"decision","id":"D-20261127002748-2736","at":"2026-11-27T00:27:48.1961146+05:30","kind":"merge","title":"Merge BE-04B VietMusic","project":"VietMusic","task":"BE-04B","request":"R-021","detail":"Antigravity xhigh, vong 1"}
 {"type":"decision","id":"D-20261127005012-c37f","at":"2026-11-27T00:50:12.2630449+05:30","kind":"merge","title":"Merge BE-05 VietMusic","project":"VietMusic","task":"BE-05","request":"R-021","detail":"Antigravity, vong 1"}
+{"type":"decision","id":"D-20261127011620-6405","at":"2026-11-27T01:16:20.8785910+05:30","kind":"merge","title":"Merge BE-08 VietMusic","project":"VietMusic","task":"BE-08","request":"R-021","detail":"Antigravity xhigh, vong 1; Claude sua Audius capability"}
