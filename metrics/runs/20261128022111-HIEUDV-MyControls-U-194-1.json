@@ -1,0 +1,41 @@
+{
+    "at":  "2026-11-28T02:21:11",
+    "head":  "5381f01da3467d9b49b559295760e8367a40df5c",
+    "machine":  "HIEUDV",
+    "project":  "MyControls",
+    "task":  "U-194",
+    "run":  "1",
+    "agent":  "A",
+    "model":  "gemini-4-hydrogen-high",
+    "findings":  [
+
+                 ],
+    "status":  "SUCCESS",
+    "durationSec":  452,
+    "tokensKnown":  true,
+    "inputTokens":  120084,
+    "outputTokens":  23749,
+    "thinkingTokens":  13093,
+    "totalTokens":  143833,
+    "maxMinutes":  60,
+    "difficulty":  "M",
+    "hasOutput":  true,
+    "linesAdded":  569,
+    "linesRemoved":  0,
+    "filesChanged":  4,
+    "verifyOk":  true,
+    "verifyFails":  0,
+    "autoRetry":  false,
+    "hungBackgroundTask":  false,
+    "log":  "U-194-1.json",
+    "conversationId":  "440536b1-a7a0-44d0-a5e9-1c0add80157d",
+    "request":  "R-024",
+    "flags":  [
+
+              ],
+    "pause":  false,
+    "failureFingerprint":  null,
+    "failureFingerprints":  [
+
+                            ]
+}
