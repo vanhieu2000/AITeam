@@ -45,17 +45,7 @@
     "stack": "C# .NET Framework 4.7.2 WinForms control library (SDK-style csproj), GDI+",
     "build": "dotnet build MyControls.sln -c Release",
     "test": "dotnet test MyControls.sln -c Release",
-    "uiLocked": [
-      "MyControls/Inputs/**",
-      "MyControls/Containers/**",
-      "MyControls/Navigation/**",
-      "MyControls/DataViews/**",
-      "MyControls/Feedback/**",
-      "MyControls/Industrial/**",
-      "MyControls/Scada/**",
-      "MyControls/Reports/**",
-      "MyControls/Core/**"
-    ],
+    "uiLocked":  [],
     "areas": {
       "A": "MyControls/Core, MyControls/Data, MyControls/Design (nền: theme, binder, designer)",
       "B": "MyControls/Inputs, Containers, Navigation, DataViews, Feedback (control cụ thể)"
