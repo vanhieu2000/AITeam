@@ -1,0 +1,41 @@
+{
+    "at":  "2026-11-28T00:35:14",
+    "head":  "36c1c3efcb8b87b1dd03ddd980412cb945201c8d",
+    "machine":  "HIEUDV",
+    "project":  "MyControls",
+    "task":  "U-180",
+    "run":  "3",
+    "agent":  "O",
+    "model":  "opencode/deepseek-v4.1-flash-free",
+    "findings":  [
+
+                 ],
+    "status":  "ERROR",
+    "durationSec":  233,
+    "tokensKnown":  true,
+    "inputTokens":  67388,
+    "outputTokens":  5811,
+    "thinkingTokens":  null,
+    "totalTokens":  1758167,
+    "maxMinutes":  30,
+    "difficulty":  "S",
+    "hasOutput":  false,
+    "linesAdded":  142,
+    "linesRemoved":  10,
+    "filesChanged":  4,
+    "verifyOk":  null,
+    "verifyFails":  null,
+    "autoRetry":  false,
+    "hungBackgroundTask":  false,
+    "log":  "U-180-3.json",
+    "conversationId":  "",
+    "request":  "R-023",
+    "flags":  [
+                  "TO"
+              ],
+    "pause":  false,
+    "failureFingerprint":  null,
+    "failureFingerprints":  [
+
+                            ]
+}
