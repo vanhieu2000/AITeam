@@ -1,0 +1,41 @@
+{
+    "at":  "2026-11-28T00:35:45",
+    "head":  "9a7cbcb52f16589200e08cff52c9e31c8fa24d1e",
+    "machine":  "HIEUDV",
+    "project":  "MyControls",
+    "task":  "U-181",
+    "run":  "1",
+    "agent":  "C",
+    "model":  "codex",
+    "findings":  [
+
+                 ],
+    "status":  "ERROR",
+    "durationSec":  4,
+    "tokensKnown":  false,
+    "inputTokens":  null,
+    "outputTokens":  null,
+    "thinkingTokens":  null,
+    "totalTokens":  null,
+    "maxMinutes":  30,
+    "difficulty":  "S",
+    "hasOutput":  false,
+    "linesAdded":  0,
+    "linesRemoved":  0,
+    "filesChanged":  0,
+    "verifyOk":  null,
+    "verifyFails":  null,
+    "autoRetry":  false,
+    "hungBackgroundTask":  false,
+    "log":  "U-181-1.json",
+    "conversationId":  "",
+    "request":  "R-023",
+    "flags":  [
+                  "HT"
+              ],
+    "pause":  false,
+    "failureFingerprint":  null,
+    "failureFingerprints":  [
+
+                            ]
+}
